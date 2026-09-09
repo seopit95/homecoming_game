@@ -1,0 +1,26 @@
+// All sounds are generated locally; the master gain bounds their combined level.
+export class HorrorAudio {
+  context: AudioContext | null = null;
+  master: GainNode | null = null;
+  volume = .42;
+  start() {
+    if(this.context){void this.context.resume();return;}
+    const ctx=this.context=new AudioContext();this.master=ctx.createGain();this.master.gain.value=this.volume*.48;this.master.connect(ctx.destination);
+    const noise=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate);const data=noise.getChannelData(0);
+    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.14;
+    const src=ctx.createBufferSource();src.buffer=noise;src.loop=true;const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=650;src.connect(filter);filter.connect(this.master);src.start();
+    for(const hz of [43,57.4,86.3]){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=hz;g.gain.value=.015;o.connect(g);g.connect(this.master);o.start();}
+  }
+  setVolume(v:number){this.volume=v;if(this.master)this.master.gain.setTargetAtTime(v*.48,this.context!.currentTime,.1);}
+  pause(){void this.context?.suspend();}
+  resume(){void this.context?.resume();}
+  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath',pan=0){
+    const ctx=this.context;if(!ctx||!this.master||ctx.state!=='running')return;
+    const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.master);
+    const o=ctx.createOscillator();o.connect(g);
+    const settings={step:[75,.09,.21],knock:[95,.29,.5],click:[380,.055,.14],phone:[730,.2,.075],dread:[49,2.8,.23],breath:[130,.75,.05]}[kind];
+    o.type=kind==='phone'?'sine':kind==='click'?'triangle':'sine';o.frequency.setValueAtTime(settings[0],t);o.frequency.exponentialRampToValueAtTime(Math.max(24,settings[0]*.45),t+settings[1]);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2],t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
+  }
+  dispose(){void this.context?.close();this.context=null;}
+}
