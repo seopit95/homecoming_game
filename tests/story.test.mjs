@@ -1,29 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialStory, transition, checkpoint } from '../lib/story.ts';
-
-test('the entrance cannot skip the investigation', () => {
-  assert.deepEqual(transition(initialStory(), 'door'), initialStory());
+import {initialStory, transition, checkpoint} from '../lib/story.ts';
+function apartmentExit(){let s=initialStory();for(const a of ['phone','breaker','shoes','radio','closet','survived','closet','door'])s=transition(s,a);return s;}
+test('leaving home continues instead of awarding the ending',()=>{const s=apartmentExit();assert.equal(s.stage,'lift_call');assert.equal(s.ending,null);});
+test('the complete route requires the lift, stairs, investigation and alarm',()=>{
+  let s=apartmentExit();
+  for(const [action,stage] of [['call','lift_wait'],['arrived','lift_enter'],['enter','lift_button'],['panel','descent'],['stopped','pry'],['pry','lift_exit'],['leave_lift','corridor_run'],['stairs','stairs_loop'],['down','stairs_clue'],['stair_note','stairs_reverse'],['up','office_record'],['record','office_fuse'],['fuse','office_power'],['security_power','office_tape'],['monitor','office_leave'],['service_exit','parking_gate'],['exit','parking_alarm'],['alarm','parking_run'],['exit','ended']]){s=transition(s,action);assert.equal(s.stage,stage,action);}
+  assert.equal(s.ending,'escaped');assert.ok(s.notes.length>=4);assert.deepEqual(transition(s,'caught'),s);
 });
-test('the complete hiding and escape route is reachable in order', () => {
-  let s = initialStory();
-  for (const [action, stage] of [['phone','power'],['breaker','shoes'],['shoes','radio'],['radio','hide'],['closet','wait']]) {
-    s = transition(s, action); assert.equal(s.stage, stage);
+test('wardrobe protects the player but leaving early resumes the threat',()=>{
+  let s=transition(checkpoint(),'radio');s=transition(s,'closet');assert.equal(s.hidden,true);assert.deepEqual(transition(s,'caught'),s);assert.deepEqual(transition(s,'door'),s);
+  const safe=transition(s,'survived');assert.equal(safe.stage,'escape');assert.deepEqual(transition(safe,'door'),safe);
+  s=transition(s,'closet');s=transition(s,'caught');assert.equal(s.ending,'caught');
+});
+test('shortcuts cannot skip the lift failure, stair clue, key or alarm',()=>{
+  for(const [stage,action] of [['phone','door'],['lift_wait','enter'],['descent','pry'],['pry','leave_lift'],['stairs_loop','up'],['stairs_clue','up'],['office_fuse','service_exit'],['parking_gate','alarm']]){const s={...initialStory(),stage};assert.deepEqual(transition(s,action),s,`${stage}: ${action}`);}
+  assert.equal(transition({...initialStory(),stage:'stairs_reverse'},'down').stage,'stairs_reverse');
+});
+test('each chase is lethal and retries restore its section with notes',()=>{
+  for(const [stage,want] of [['hide','radio'],['escape','radio'],['corridor_run','lift_exit'],['parking_run','parking_alarm']]){
+    const s={...initialStory(),stage,notes:['phone','record','monitor']};const caught=transition(s,'caught');assert.equal(caught.ending,'caught',stage);
+    const retry=checkpoint(caught);assert.equal(retry.stage,want,stage);assert.equal(retry.ending,null);assert.equal(retry.hidden,false);assert.deepEqual(retry.notes,s.notes);
   }
-  assert.equal(s.hidden, true);
-  assert.deepEqual(transition(s, 'caught'), s, 'the wardrobe must protect the player');
-  s = transition(s,'survived'); assert.equal(s.stage,'escape');
-  assert.deepEqual(transition(s,'door'),s,'cannot exit the apartment while still hiding');
-  s = transition(s,'closet'); assert.equal(s.hidden,false);
-  s = transition(s,'door'); assert.equal(s.ending,'escaped'); assert.equal(s.stage,'ended');
-});
-test('leaving hiding early resumes the threat and being caught ends the run', () => {
-  let s = checkpoint(); assert.equal(s.stage,'radio');
-  s=transition(s,'radio'); s=transition(s,'closet'); s=transition(s,'closet');
-  assert.equal(s.stage,'hide'); assert.equal(s.hidden,false);
-  s=transition(s,'caught'); assert.equal(s.ending,'caught');
-  assert.deepEqual(transition(s,'door'),s,'endings are terminal');
-});
-test('survival cannot be awarded outside the wardrobe sequence', () => {
-  assert.deepEqual(transition(initialStory(),'survived'),initialStory());
 });

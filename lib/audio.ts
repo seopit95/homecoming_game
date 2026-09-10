@@ -14,13 +14,14 @@ export class HorrorAudio {
   setVolume(v:number){this.volume=v;if(this.master)this.master.gain.setTargetAtTime(v*.48,this.context!.currentTime,.1);}
   pause(){void this.context?.suspend();}
   resume(){void this.context?.resume();}
-  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath',pan=0){
+  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'slam'|'metal'|'motor'|'chime'|'alarm',pan=0,level=1){
     const ctx=this.context;if(!ctx||!this.master||ctx.state!=='running')return;
     const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.master);
     const o=ctx.createOscillator();o.connect(g);
-    const settings={step:[75,.09,.21],knock:[95,.29,.5],click:[380,.055,.14],phone:[730,.2,.075],dread:[49,2.8,.23],breath:[130,.75,.05]}[kind];
-    o.type=kind==='phone'?'sine':kind==='click'?'triangle':'sine';o.frequency.setValueAtTime(settings[0],t);o.frequency.exponentialRampToValueAtTime(Math.max(24,settings[0]*.45),t+settings[1]);
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2],t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
+    const settings={step:[75,.09,.21],knock:[95,.29,.5],click:[380,.055,.14],phone:[730,.2,.075],dread:[49,2.8,.23],breath:[130,.75,.05],slam:[66,.8,.5],metal:[850,.38,.065],motor:[38,1.6,.08],chime:[880,.65,.1],alarm:[650,1.1,.13]}[kind];
+    o.type=kind==='metal'?'sawtooth':kind==='alarm'||kind==='click'?'triangle':'sine';o.frequency.setValueAtTime(settings[0],t);o.frequency.exponentialRampToValueAtTime(Math.max(24,settings[0]*.45),t+settings[1]);
+    if(kind==='alarm')o.frequency.exponentialRampToValueAtTime(950,t+.5);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
   dispose(){void this.context?.close();this.context=null;}
 }

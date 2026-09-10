@@ -1,10 +1,29 @@
 import * as T from 'three';
-import type { Action } from './story';
+import type { Action, Area } from './story';
+import {buildBuilding,makeFigure} from './building.ts';
 
-export type Solid = { x: number; z: number; w: number; d: number };
-export function canStandAt(x:number,z:number,solids:Solid[],r=.23){return Math.abs(x)<6.78&&Math.abs(z)<8.75&&!solids.some(s=>Math.abs(x-s.x)<s.w/2+r&&Math.abs(z-s.z)<s.d/2+r);}
+export type Bounds={x:number;z:number};
+export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number };
+export function canStandAt(x:number,z:number,solids:Solid[],r=.23,bounds:Bounds={x:6.78,z:8.75}){return Math.abs(x)<bounds.x&&Math.abs(z)<bounds.z&&!solids.some(s=>Math.abs(x-s.x)<s.w/2+r&&Math.abs(z-s.z)<s.d/2+r);}
+export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:number;z:number},solids:Solid[]){
+  const distance=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);
+  for(let s=.1;s<distance-.15;s+=.1){const t=s/distance,x=from.x+(to.x-from.x)*t,y=from.y+(to.y-from.y)*t,z=from.z+(to.z-from.z)*t;
+    if(solids.some(b=>Math.abs(x-b.x)<b.w/2&&Math.abs(z-b.z)<b.d/2&&y>(b.y??1.5)-(b.h??3)/2&&y<(b.y??1.5)+(b.h??3)/2))return false;
+  }
+  return true;
+}
 export type Target = { id: Action; point: T.Vector3; label: string; mesh: T.Object3D };
-export function buildWorld(scene: T.Scene) {
+export function buildWorld(scene:T.Scene,area:Area='apartment'){
+  const root=new T.Group();scene.add(root);
+  const content=area==='apartment'?{...buildApartment(root),bounds:{x:6.78,z:8.75},spawn:new T.Vector3(0,1.65,7.6),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined}:buildBuilding(root,area);
+  return {...content,root};
+}
+export function disposeWorld(root:T.Object3D){
+  const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();
+  root.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material])){materials.add(m);for(const v of Object.values(m))if(v instanceof T.Texture)textures.add(v);}}});
+  geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());root.removeFromParent();
+}
+function buildApartment(scene:T.Group) {
   const solids: Solid[] = [], targets: Target[] = [];
   let seed = 47;
   const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
@@ -31,7 +50,7 @@ export function buildWorld(scene: T.Scene) {
   const fabric=mat('#656856'), cream=mat('#a7a398'), metal=mat('#373e3c',.45,{metalness:.5});
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=scene){
     const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);
-    if(solid)solids.push({x,z,w,d});return mesh;
+    if(solid)solids.push({x,z,w,d,y,h});return mesh;
   }
   function cyl(x:number,y:number,z:number,r:number,h:number,m:T.Material,parent:T.Object3D=scene){
     const mesh=new T.Mesh(new T.CylinderGeometry(r,r,h,16),m);mesh.position.set(x,y,z);mesh.castShadow=true;parent.add(mesh);return mesh;
@@ -62,7 +81,7 @@ export function buildWorld(scene: T.Scene) {
   const door=box(0,1.22,-8.86,1.45,2.44,.13,mat('#33413b'));
   box(0,2.53,-8.73,1.65,.11,.18,wood);box(-.81,1.25,-8.73,.12,2.6,.18,wood);box(.81,1.25,-8.73,.12,2.6,.18,wood);
   box(0,1.2,-8.77,1.2,1.7,.045,mat('#394740'));box(.49,1.02,-8.63,.18,.055,.15,metal);
-  sign('403',0,1.98,-8.68,0,.32,.12);cyl(0,1.63,-8.65,.025,.03,metal).rotation.x=Math.PI/2;
+  sign('2803',0,1.98,-8.68,0,.32,.12);cyl(0,1.63,-8.65,.025,.03,metal).rotation.x=Math.PI/2;
   targets.push({id:'door',point:new T.Vector3(0,1.2,-8.6),label:'현관문',mesh:door});
   box(0,.012,-7.75,1.5,.025,.8,mat('#2d332d'));
   box(.99,.64,-8.1,.55,1.28,1.2,wood,true);
@@ -140,13 +159,6 @@ export function buildWorld(scene: T.Scene) {
   }
   const roomLight=new T.PointLight('#d7bc87',5,7);roomLight.position.set(-4,2.65,4.5);scene.add(roomLight);lamps.push(roomLight);
   const bedLight=new T.PointLight('#bcb991',3,6);bedLight.position.set(4,2.6,5);scene.add(bedLight);lamps.push(bedLight);
-  // A tall, unreadable silhouette. It is encountered in the actual space.
-  const figure=new T.Group();scene.add(figure);figure.visible=false;
-  const black=new T.MeshStandardMaterial({color:'#020403',roughness:1});
-  const body=new T.Mesh(new T.ConeGeometry(.34,1.58,8),black);body.position.y=.93;figure.add(body);
-  const head=new T.Mesh(new T.SphereGeometry(.17,16,12),black);head.scale.set(.82,1.3,.95);head.position.y=1.9;figure.add(head);
-  for(const x of [-.28,.28]){const arm=box(x,.95,0,.085,1.03,.11,black,false,figure);arm.rotation.z=x<0?-.09:.09;}
-  for(const x of [-.055,.055]){const eye=new T.Mesh(new T.SphereGeometry(.012,6,4),new T.MeshBasicMaterial({color:'#b5aa88'}));eye.position.set(x,1.93,.155);figure.add(eye);}
-  figure.position.set(0,0,-3);
+  const figure=makeFigure(scene);figure.position.set(0,0,-3);
   return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight};
 }
