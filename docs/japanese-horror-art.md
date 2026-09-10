@@ -14,7 +14,9 @@ The generated material atlases are sampled by a Three.js material shader. The fa
 
 ## Presentation
 
-Asymmetric shoulders and limbs, individual fingers, a canted head and independently moving hair and dress replace the earlier mannequin-like figure. Animation preserves the navigation root and freezes when paused. Reduced-motion preferences remove the abrupt head twitch.
+Asymmetric shoulders and limbs, individual fingers, a small narrow head with a forward-bent neck, a raised twisted arm and independently moving hair and dress replace the earlier mannequin-like figure. Strands partly obscure the face. Animation preserves the navigation root and freezes when paused. Reduced-motion preferences remove the abrupt head twitch.
+
+The opening begins seated on the sofa, watching an original animated Japanese weather broadcast. After seven seconds the TV and domestic lights go out together; the player stands in a clear position with a flashlight. Restoring the breaker restores the lights and starts the phone call. Investigating the wet shoes leads to the radio; switching it off creates a 2.8-second quiet interval before dragging/breathing cues and the wardrobe objective. Both timed sequences freeze when paused. Checkpoint retries still begin at the radio.
 
 The apartment has a tiled entrance, slippers, umbrellas, an oshiire-style wardrobe and a rainy city window. Other floors have management notices, intercoms, handrails, moisture stains and utility fixtures. These decorative details preserve the existing escape route and interaction points.
 

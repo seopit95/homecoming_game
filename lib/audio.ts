@@ -3,6 +3,7 @@ export class HorrorAudio {
   context: AudioContext | null = null;
   master: GainNode | null = null;
   noise: AudioBuffer | null = null;
+  tv: GainNode | null = null;
   volume = .42;
   start() {
     if(this.context){void this.context.resume();return;}
@@ -11,9 +12,11 @@ export class HorrorAudio {
     for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
     // Distant rain and ventilation stay quiet underneath positional sounds.
     for(const [hz,level] of [[650,.07],[2300,.018]]){const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();src.buffer=noise;src.loop=true;filter.type='lowpass';filter.frequency.value=hz;gain.gain.value=level;src.connect(filter);filter.connect(gain);gain.connect(this.master);src.start();}
+    const tvSource=ctx.createBufferSource(),tvFilter=ctx.createBiquadFilter();this.tv=ctx.createGain();this.tv.gain.value=0;tvSource.buffer=noise;tvSource.loop=true;tvFilter.type='bandpass';tvFilter.frequency.value=950;tvFilter.Q.value=1.1;tvSource.connect(tvFilter);tvFilter.connect(this.tv);this.tv.connect(this.master);tvSource.start();
     for(const hz of [43,57.4,86.3]){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=hz;g.gain.value=.015;o.connect(g);g.connect(this.master);o.start();}
   }
   setVolume(v:number){this.volume=v;if(this.master)this.master.gain.setTargetAtTime(v*.48,this.context!.currentTime,.1);}
+  setTV(on:boolean){if(this.tv)this.tv.gain.value=on?.12:0;}
   pause(){void this.context?.suspend();}
   resume(){void this.context?.resume();}
   sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm',pan=0,level=1){
@@ -29,5 +32,5 @@ export class HorrorAudio {
     if(kind==='alarm')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){void this.context?.close();this.context=null;this.master=null;this.noise=null;}
+  dispose(){void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;}
 }

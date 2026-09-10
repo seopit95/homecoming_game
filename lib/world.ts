@@ -17,7 +17,7 @@ export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:
 export type Target = { id: Action; point: T.Vector3; label: string; mesh: T.Object3D };
 export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
-  const content=area==='apartment'?{...buildApartment(root),bounds:{x:6.78,z:8.75},spawn:new T.Vector3(0,1.65,7.6),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined}:buildBuilding(root,area);
+  const content=area==='apartment'?{...buildApartment(root),bounds:{x:6.78,z:8.75},spawn:new T.Vector3(0,1.65,7.6),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined}:{...buildBuilding(root,area),setTV:undefined};
   return {...content,root};
 }
 export function disposeWorld(root:T.Object3D){
@@ -99,7 +99,23 @@ function buildApartment(scene:T.Group) {
   cyl(-4.3,.64,5.55,.11,.21,cream);cyl(-4.3,.751,5.55,.087,.004,mat('#201a13'));
   box(-3.9,.563,4.72,.45,.025,.33,cream);
   box(-4.2,.43,.13,3.2,.86,.68,wood,true);box(-4.2,1.43,.13,2,.99,.13,dark);
-  box(-4.2,1.43,.215,1.85,.83,.018,mat('#172422',.11));box(-4.2,.93,.23,.07,.22,.1,metal);
+  const tvCanvas=document.createElement('canvas');tvCanvas.width=640;tvCanvas.height=320;
+  const tvContext=tvCanvas.getContext('2d')!,tvTexture=new T.CanvasTexture(tvCanvas);tvTexture.colorSpace=T.SRGBColorSpace;
+  const tvMaterial=new T.MeshBasicMaterial({map:tvTexture,color:0x000000});
+  const tvScreen=new T.Mesh(new T.PlaneGeometry(1.85,.83),tvMaterial);tvScreen.position.set(-4.2,1.43,.229);tvScreen.name='apartment-tv-screen';scene.add(tvScreen);box(-4.2,.93,.23,.07,.22,.1,metal);
+  const tvLight=new T.PointLight('#a5bcdb',0,6);tvLight.position.set(-4.2,1.5,.65);tvLight.name='apartment-tv-light';scene.add(tvLight);
+  let tvFrame=-1;
+  function setTV(on:boolean,time:number){
+    tvMaterial.color.setHex(on?0xffffff:0x000000);tvLight.intensity=on?3.3+Math.sin(time*2)*.25:0;
+    if(!on||tvFrame===Math.floor(time*4))return;tvFrame=Math.floor(time*4);
+    const ctx=tvContext;ctx.fillStyle='#172b48';ctx.fillRect(0,0,640,320);
+    // Original late-night weather broadcast, with moving rain over a city skyline.
+    for(let i=0;i<18;i++){const h=35+(i*37)%100;ctx.fillStyle=i%2?'#263c56':'#0c1a2b';ctx.fillRect(i*37,260-h,32,h);ctx.fillStyle='#a9bfc5';for(let j=0;j<5;j++)ctx.fillRect(i*37+8,260-h+12+j*19,4,5);}
+    ctx.fillStyle='#6f8eac';for(let i=0;i<60;i++)ctx.fillRect((i*79)%640,(i*47+time*80)%260,1,13);
+    ctx.fillStyle='#e1e8eb';ctx.font='22px serif';ctx.fillText('深夜の天気予報',28,40);ctx.font='16px sans-serif';ctx.fillText('03:17   関東地方 / 雨',28,70);
+    ctx.fillStyle='#dde2df';ctx.fillRect(0,267,640,53);ctx.fillStyle='#192636';ctx.font='19px sans-serif';ctx.fillText('明け方まで強い雨  ·  外出はお控えください',24,300);
+    ctx.fillStyle='#152034';for(let y=0;y<260;y+=5)ctx.fillRect(0,y,640,1);tvTexture.needsUpdate=true;
+  }
   box(-6.49,1.02,1.26,.8,2.04,.7,wood,true);
   for(const y of [.1,.66,1.25,1.91])box(-6.47,y,1.26,.86,.07,.76,wood);
   for(let i=0;i<18;i++)box(-6.75+(i%6)*.11,.35+Math.floor(i/6)*.6,1.46,.08,.25+rand()*.22,.25,mat(['#4e4238','#515747','#655347'][i%3]));
@@ -116,7 +132,7 @@ function buildApartment(scene:T.Group) {
   box(5.97,1.22,2.15,.045,2.26,2.3,mat('#544333'));
   for(const z of [1.03,2.15,3.28])box(5.92,1.22,z,.07,2.26,.027,trim);
   for(const z of [2,2.28])box(5.9,1.17,z,.1,.24,.025,metal);
-  targets.push({id:'closet',point:new T.Vector3(5.82,1.25,2.15),label:'옷장',mesh:closet});
+  targets.push({id:'closet',point:new T.Vector3(5.82,1.25,2.15),label:'장롱에 숨기',mesh:closet});
   // Utility room and bathroom.
   box(-5.8,.54,-7.9,1.45,1.08,1.4,cream,true);const drum=cyl(-5.8,.57,-7.16,.39,.04,metal);drum.rotation.x=Math.PI/2;
   const breaker=box(-6.82,1.55,-5.35,.18,.87,.61,metal);
@@ -140,11 +156,12 @@ function buildApartment(scene:T.Group) {
   for(const z of [-6,-1,4,8]){
     cyl(0,2.91,z,.22,.12,metal);const shade=new T.Mesh(new T.ConeGeometry(.3,.22,20,1,true),mat('#454a3d',.8,{side:T.DoubleSide}));shade.rotation.x=Math.PI;shade.position.set(0,2.78,z);scene.add(shade);
     const glow=mat('#dec69d',.5,{emissive:'#f1bf70',emissiveIntensity:.35});cyl(0,2.77,z,.12,.035,glow);
-    const l=new T.PointLight('#ffd69a',5,7,2);l.position.set(0,2.56,z);scene.add(l);lamps.push(l);
+    const l=new T.PointLight('#ffd69a',5,7,2);l.userData.bulb=glow;l.position.set(0,2.56,z);scene.add(l);lamps.push(l);
   }
   const roomLight=new T.PointLight('#d7bc87',5,7);roomLight.position.set(-4,2.65,4.5);scene.add(roomLight);lamps.push(roomLight);
   const bedLight=new T.PointLight('#bcb991',3,6);bedLight.position.set(4,2.6,5);scene.add(bedLight);lamps.push(bedLight);
   dressApartment(scene,'apartment');
   const figure=makeFigure(scene);figure.position.set(0,0,-3);
-  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight};
+  lamps.forEach((lamp,i)=>{lamp.name=`apartment-lamp-${i}`;});
+  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,setTV};
 }

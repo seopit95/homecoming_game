@@ -32,7 +32,7 @@ export default function Home(){
     {!began&&<section className="title-screen" aria-label="게임 시작 화면">
       <div className="topline"><span className="edition">白鷺ハイツ · 야간 기록</span><span className="address">2803호<span/>03:17</span></div>
       <div className="title-content"><p className="overline"><i/>돌아온 것은, 누구인가.</p><h1>귀가<span>帰宅 ─ シラサギハイツ</span></h1>
-        <div className="story-intro"><p>비 오는 새벽 3시 17분.<br/>시라사기 하이츠, 28층 2803호.<br/>집에 돌아오자, 전기가 나갔다.</p><p>장롱 밖에서 누군가 내 이름을 부른다.<br/>이 건물에서, 어디까지 내려가야 끝날까.</p></div>
+        <div className="story-intro"><p>비 오는 새벽 3시 17분.<br/>시라사기 하이츠, 28층 2803호.<br/>TV를 보던 중, 갑자기 불이 꺼졌다.</p><p>라디오는 분명 껐다.<br/>그런데 복도에서, 누군가 다가오고 있다.</p></div>
         <button className="start-button" disabled={!ready} onClick={()=>game.current?.start()}><span>{ready?'집으로 들어가기':'집 안을 불러오는 중'}</span><ArrowRight size={21}/></button>
         <div className="start-meta"><span><Headphones size={15}/>헤드폰 권장</span><span>다섯 장 · 혼자 플레이</span></div>
         <button className="settings-toggle" aria-expanded={showSettings} onClick={()=>setShowSettings(!showSettings)}><SlidersHorizontal size={15}/>밝기 · 소리 · 시점 설정</button>{showSettings&&settingsPanel}

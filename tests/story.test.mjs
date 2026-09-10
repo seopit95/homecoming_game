@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialStory, transition, checkpoint} from '../lib/story.ts';
-function apartmentExit(){let s=initialStory();for(const a of ['phone','breaker','shoes','radio','closet','survived','closet','door'])s=transition(s,a);return s;}
+function apartmentExit(){let s=initialStory();for(const a of ['blackout','breaker','phone','shoes','radio','heard','closet','survived','closet','door'])s=transition(s,a);return s;}
+test('TV blackout precedes restoring power, and the radio goes silent before the threat',()=>{
+  let s=initialStory();assert.equal(s.stage,'tv');assert.deepEqual(transition(s,'breaker'),s);
+  for(const [action,stage] of [['blackout','power'],['breaker','phone'],['phone','shoes'],['shoes','radio'],['radio','listen'],['heard','hide']]){s=transition(s,action);assert.equal(s.stage,stage,action);}
+});
 test('leaving home continues instead of awarding the ending',()=>{const s=apartmentExit();assert.equal(s.stage,'lift_call');assert.equal(s.ending,null);});
 test('the complete route requires the lift, stairs, investigation and alarm',()=>{
   let s=apartmentExit();
@@ -9,7 +13,7 @@ test('the complete route requires the lift, stairs, investigation and alarm',()=
   assert.equal(s.ending,'escaped');assert.ok(s.notes.length>=4);assert.deepEqual(transition(s,'caught'),s);
 });
 test('wardrobe protects the player but leaving early resumes the threat',()=>{
-  let s=transition(checkpoint(),'radio');s=transition(s,'closet');assert.equal(s.hidden,true);assert.deepEqual(transition(s,'caught'),s);assert.deepEqual(transition(s,'door'),s);
+  let s=transition(transition(checkpoint(),'radio'),'heard');s=transition(s,'closet');assert.equal(s.hidden,true);assert.deepEqual(transition(s,'caught'),s);assert.deepEqual(transition(s,'door'),s);
   const safe=transition(s,'survived');assert.equal(safe.stage,'escape');assert.deepEqual(transition(safe,'door'),safe);
   s=transition(s,'closet');s=transition(s,'caught');assert.equal(s.ending,'caught');
 });

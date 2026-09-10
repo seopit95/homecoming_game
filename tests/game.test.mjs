@@ -4,10 +4,10 @@ import * as THREE from 'three';
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
-let renderedCamera;
-class Renderer{shadowMap={};setPixelRatio(){}setSize(){}render(_scene,camera){renderedCamera=camera;}dispose(){}}
+let renderedCamera,renderedScene;
+class Renderer{shadowMap={};setPixelRatio(){}setSize(){}render(scene,camera){renderedCamera=camera;renderedScene=scene;}dispose(){}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}setVolume(){}pause(){}resume(){}sound(){}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}setTV(){}setVolume(){}pause(){}resume(){}sound(){}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -21,6 +21,12 @@ function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.m
 test('real interaction loop reaches the ending, requires a held pry, and freezes on pause',()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));tick();game.start();tick();
+  assert.equal(game.snapshot().story.stage,'tv');assert.ok(renderedScene.getObjectByName('apartment-tv-light').intensity>0);
+  const screenUV=renderedScene.getObjectByName('apartment-tv-screen').geometry.getAttribute('uv');assert.deepEqual(new Set(screenUV.array),new Set([0,1]),'broadcast uses the full screen texture without world-space clamping');
+  const seated=renderedCamera.position.toArray();game.key('KeyW',true);tick(1);game.key('KeyW',false);assert.deepEqual(renderedCamera.position.toArray(),seated,'opening stays seated');
+  game.pause();tick(10);assert.equal(game.snapshot().story.stage,'tv','pause must freeze the scheduled blackout');game.pause(false);
+  tick(7);assert.equal(game.snapshot().story.stage,'power');assert.equal(renderedScene.getObjectByName('apartment-tv-light').intensity,0);assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0);
+  assert.equal(renderedCamera.position.y,1.65,'blackout stands the player up');
   function aim(pos,target,check=true){
     renderedCamera.position.set(...pos);
     const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2];
@@ -31,10 +37,15 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
     if(check)assert.ok(game.snapshot().prompt,`target prompt at ${pos}`);
   }
   function use(pos,target,stage){aim(pos,target);game.interact();assert.equal(game.snapshot().story.stage,stage);tick();}
-  use([-2.8,1.65,5.1],[-3.82,.58,5.02],'power');
-  use([-5.3,1.65,-5.35],[-6.6,1.6,-5.35],'shoes');
+  use([-5.3,1.65,-5.35],[-6.6,1.6,-5.35],'phone');
+  assert.ok(renderedScene.getObjectByName('apartment-lamp-0').intensity>0);
+  use([-2.8,1.65,5.1],[-3.82,.58,5.02],'shoes');
   use([0,1.65,-6],[0,.2,-7.3],'radio');
-  use([2.62,1.65,6.6],[2.62,1.1,7.8],'hide');
+  use([2.62,1.65,6.6],[2.62,1.1,7.8],'listen');
+  tick(1);assert.equal(game.snapshot().story.stage,'listen','there is a silence after turning the radio off');
+  game.pause();tick(5);assert.equal(game.snapshot().story.stage,'listen');game.pause(false);
+  tick(2);assert.equal(game.snapshot().story.stage,'hide');assert.match(game.snapshot().objective,/장롱/);
+  assert.ok(renderedScene.getObjectByName('apartment-lamp-0').intensity>0,'the restored lights do not go out just because the radio was switched off');
   use([5,1.65,2.15],[5.82,1.25,2.15],'wait');
   tick(35);assert.equal(game.snapshot().story.stage,'escape','ghost patrol must reach the other room');
   game.interact();assert.equal(game.snapshot().story.hidden,false);
@@ -71,5 +82,6 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   assert.equal(game.snapshot().story.stage,'parking_run','the alarm provides enough time for the real sprint route');assert.ok(Math.abs(renderedCamera.position.x)<.5);
   use([0,1.65,-23],[0,1.25,-24.48],'ended');
   assert.equal(game.snapshot().story.ending,'escaped');assert.deepEqual(errors,[]);
-  game.start();tick(.2);assert.equal(game.snapshot().story.stage,'phone');assert.ok(game.snapshot().elapsed<.3,'fresh restart resets elapsed time');game.dispose();
+  game.start();tick(.2);assert.equal(game.snapshot().story.stage,'tv');assert.ok(game.snapshot().elapsed<.3,'fresh restart resets elapsed time');
+  tick(7.1);game.key('KeyW',true);tick(.5);game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(new THREE.Vector3(-5.05,1.65,7.35))>.5,'the player can walk away from the sofa after the blackout');game.dispose();
 });
