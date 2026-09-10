@@ -8,7 +8,7 @@ export {createGhost as makeFigure} from './ghost.ts';
 import {createGhost as makeFigure} from './ghost.ts';
 export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
-  const bounds:Bounds=area==='corridor'?{x:3.8,z:26.8}:area==='parking'?{x:14.8,z:24.8}:area==='lift'?{x:1.8,z:2.8}:{x:6.8,z:8.8};
+  const bounds:Bounds=area==='corridor'?{x:14.8,z:38.8}:area==='parking'?{x:24.8,z:42.8}:area==='landing'?{x:10.8,z:19.8}:area==='office'?{x:11.8,z:15.8}:area==='lift'?{x:1.8,z:2.8}:{x:6.8,z:8.8};
   const mat=(color:string,extra:object={})=>new T.MeshStandardMaterial({color,roughness:.84,...extra});
   const wallMat=surface(area==='parking'||area==='stairs'?'concrete':'wall',area==='parking'?'#b3babd':'#bbbcb2'),floorMat=surface(area==='parking'||area==='stairs'?'concrete':'tile','#acaea6',{roughness:area==='parking'?.6:.44}),metal=mat('#4e5d60',{metalness:.65,roughness:.4}),dark=mat('#101a19'),wood=surface('wood','#aaa297'),stripe=mat('#a1a792');
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false){
@@ -37,15 +37,16 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     wall(-bx,0,.2,bz*2);wall(bx,0,.2,bz*2);wall(0,-bz,bx*2,.2);wall(0,bz,bx*2,.2);
   }
   if(area==='landing'||area==='lift'){
-    const dz=area==='landing'?-8.75:-2.75;
+    const dz=area==='landing'?-19.75:-2.75;
     const left=box(-.48,1.3,dz,.94,2.6,.11,metal),right=box(.48,1.3,dz,.94,2.6,.11,metal);liftDoors={left,right};
     box(-1.1,1.4,dz,.14,2.8,.18,dark);box(1.1,1.4,dz,.14,2.8,.18,dark);box(0,2.81,dz,2.3,.17,.18,dark);
     const display=label('28',0,2.46,dz+.16,0,.55,.25,'#e29a69','#08110f');setDisplay=display.update;
     if(area==='landing'){
-      label('28F',-4,1.8,-8.8,0,1.7,.75);label('2803  ←    エレベーター  ↑',0,2.7,4.5,0,3,.3);
+      spawn.set(0,1.65,17.5);label('28F',-4,1.8,-19.8,0,1.7,.75);label('2803  ←    エレベーター  ↑',0,2.7,4.5,0,3,.3);
       const call=box(1.48,1.3,dz+.1,.25,.44,.16,metal);label('▽',1.48,1.35,dz+.2,0,.17,.2,'#d19369');target('call','엘리베이터 호출',call,1.48,1.35,dz+.35);target('enter','엘리베이터에 타기',left,0,1.3,dz+.4);
-      for(const z of [-4,3])fixture(0,z);for(const x of [-5,5]){box(x,1.25,8.83,1.55,2.5,.12,wood);label(x<0?'2803':'2804',x,2,8.7,Math.PI,.5,.18);}
-      for(const z of [-5,0,5])box(-6.85,1.8,z,.03,1.65,1.8,mat('#1b3340',{emissive:'#142c40',emissiveIntensity:.5}));
+      for(const z of [-15,-7,3,12])fixture(0,z);for(const x of [-5,5]){box(x,1.25,19.83,1.55,2.5,.12,wood);label(x<0?'2803':'2804',x,2,19.7,Math.PI,.5,.18);}
+      for(const z of [-15,-5,5,15]){box(-10.85,1.8,z,.03,1.65,3.8,mat('#1b3340',{emissive:'#142c40',emissiveIntensity:.5}));for(const x of [-4,4])box(x,1.6,z,1.3,3.2,1.3,wallMat,true);}
+      for(const z of [-11,1,11]){box(8.8,.5,z,2.4,1,2.6,wood,true);label('避難通路',10.8,2.3,z,-Math.PI/2,1.6,.3);}
       box(5,.65,-6,1.3,1.3,1.1,wood,true);box(5,1.45,-6,.4,.6,.4,mat('#3d4936'));
     }else{
       spawn.set(0,1.65,1.5);heading=0;fixture(0,.2,'#d4d3ac');
@@ -57,13 +58,17 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     }
   }
   if(area==='corridor'){
-    spawn.set(0,1.65,24);heading=0;door('stairs','비상계단  EXIT',0,-26.78);
-    label('24F',-2,1.8,26.85,Math.PI,1.3,.65,'#aa947a');
-    for(let z=-21;z<25;z+=6){fixture(0,z,z%3===0?'#829d94':'#c29772');for(const x of [-3.83,3.83]){box(x,1.2,z,.1,2.4,1.4,wood);label(String(2400+Math.round((z+27)/6)+(x>0?10:0)),x*.991,2,z,x<0?Math.PI/2:-Math.PI/2,.5,.17);}}
-    for(const [x,z] of [[-2.4,13],[2.4,2],[-2.4,-9]]){box(x,.58,z,2,1.16,1.4,mat('#685b45'),true);box(x,.08,z,2.2,.15,1.6,dark);}
-    for(let z=-25;z<25;z+=2){box(-3.4,.014,z,.08,.025,1.2,mat('#acc09a',{emissive:'#8aae6d',emissiveIntensity:.6}));box(3.4,.014,z,.08,.025,1.2,stripe);}
-    cable(-2.7,0,52);light(0,2.4,-24,'#67b28f',10);
-    box(0,1.2,26.87,1.9,2.4,.1,metal);
+    spawn.set(0,1.65,37);heading=0;door('stairs','비상계단  EXIT',0,-38.78);
+    label('24F · 東西連絡廊下',0,2.6,38.85,Math.PI,4,.6,'#aa947a');
+    // Two apartment wings loop around service cores, connected by a cross passage.
+    for(const z of [-15,15]){box(0,1.6,z,12,3.2,24,wallMat,true);for(const x of [-6.06,6.06])label(z<0?'設備室 / 立入禁止':'共同洗濯室',x,2,z,x<0?-Math.PI/2:Math.PI/2,2,.35);}
+    for(let z=-33;z<=33;z+=6)for(const x of [-14.83,14.83]){box(x,1.2,z,.1,2.4,1.4,wood);label(String(2400+Math.round((z+39)/6)+(x>0?20:0)),x*.995,2,z,x<0?Math.PI/2:-Math.PI/2,.5,.17);}
+    for(const x of [-10,10])for(const z of [-32,-20,-8,8,20,32])fixture(x,z,'#83989f');
+    for(const x of [-12.7,12.7])for(const z of [-22,-8,8,22]){box(x,.58,z,2.1,1.16,2.6,wood,true);box(x,.08,z,2.3,.15,2.8,dark);}
+    for(const x of [-8,8])for(let z=-35;z<36;z+=3)box(x,.014,z,.08,.025,1.2,mat('#acc09a',{emissive:'#8aae6d',emissiveIntensity:.6}));
+    for(const z of [-30,0,30]){label('← 非常階段 →',0,2.6,z,0,3,.4);light(0,2.5,z,'#688d83',6);}
+    cable(-8,0,76);cable(8,0,76);light(0,2.4,-37,'#67b28f',10);
+    box(0,1.2,38.87,1.9,2.4,.1,metal);
   }
   if(area==='stairs'){
     // Two separate flights meet on the central landing; continuous collision height follows each flight.
@@ -83,6 +88,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     spawn.set(0,1.65,5.5);
   }
   if(area==='office'){
+    spawn.set(0,1.65,14);
     for(const x of [-1.35,1.35]){wall(x,-5.5,.16,6.5);wall(x,1,.16,2);wall(x,7.7,.16,2.5);}
     wall(-4.2,-1.5,5.5,.17);wall(4.2,-1.5,5.5,.17);
     // Gaps at z=-1.5..-2.25 and z=2..6.45 keep all rooms connected.
@@ -96,25 +102,28 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const power=box(6.78,1.5,-5,.19,1.2,.9,metal);target('security_power','퓨즈 장착 · CCTV 전원 복구',power,6.52,1.5,-5);label('監視カメラ 電源',6.65,2.3,-5,-Math.PI/2,1.3,.26);
     // The rear archive rooms open from the corridor near z=-2.
     light(-4.5,2.7,-5,'#a29578',5);light(4,2.7,-5,'#7c9f9d',5);light(-4.4,2.7,5,'#bfa16f',6);
-    door('service_exit','B1 비상 연결계단',0,-8.8);label('17F  管理室',0,2.7,8.7,Math.PI,2.1,.34);
+    door('service_exit','B1 비상 연결계단',0,-15.8);label('17F  管理室',0,2.7,15.7,Math.PI,2.1,.34);
     for(let z=1;z<7;z+=1.4)box(6.85,1.75,z,.035,1.6,.8,mat('#122824',{emissive:'#132e27',emissiveIntensity:.4}));
+    for(const x of [-9,9])for(const z of [-11,-3,5,12]){box(x,1.1,z,1.2,2.2,3.1,wood,true);for(const y of [.4,1.1,1.8])box(x,y,z,1.3,.07,3.3,metal);}
+    for(const x of [-5,5]){box(x,.7,11.5,3,1.4,1.5,wood,true);fixture(x,12);label(x<0?'記録保管庫':'旧管理室',x,2.5,15.85,Math.PI,2,.4);}
+    label('C · しゃがんで隠れる',0,2.6,13,0,3,.3);light(0,2.6,-12,'#687f83',5);
   }
   if(area==='parking'){
-    spawn.set(0,1.65,22.5);door('exit','보행자 출구  EXIT',0,-24.78);
-    light(0,2.5,-23,'#8ad9ab',12);label('B1',0,2.6,24.8,Math.PI,2,.8,'#b5bba3');
-    for(const x of [-9,9])for(const z of [-15,-3,9]){box(x,1.6,z,.9,3.2,.9,wallMat,true);for(let y=.2;y<1.4;y+=.3)box(x,y,z,.94,.12,.94,mat('#c1a345'));label('B1',x,2,z+.48,0,.7,.3);}
-    for(const x of [-5,5])for(const z of [-17,-7,3,13]){
+    spawn.set(0,1.65,40.5);door('exit','보행자 출구  EXIT',0,-42.78);
+    light(0,2.5,-41,'#8ad9ab',12);label('B1 · 第三駐車場',0,2.6,42.8,Math.PI,4,.8,'#b5bba3');
+    for(const x of [-20,0,20])for(const z of [-28,-10,8,26]){box(x,1.6,z,.9,3.2,.9,wallMat,true);for(let y=.2;y<1.4;y+=.3)box(x,y,z,.94,.12,.94,mat('#c1a345'));label('B1',x,2,z+.48,0,.7,.3);}
+    for(const x of [-16,-6,6,16])for(const z of [-33,-21,-9,3,15,27]){
       const paint=mat(x<0?'#405c61':'#655853',{metalness:.4});box(x,.65,z,2,1.1,4.2,paint,true);box(x,1.35,z-.2,1.8,.65,2,dark);
       for(const dx of [-1.03,1.03])for(const dz of [-1.3,1.3])box(x+dx,.36,z+dz,.16,.54,.54,dark);
       for(const dx of [-.65,.65])box(x+dx,.7,z+2.12,.35,.18,.03,mat('#b5c9be',{emissive:'#4a6662',emissiveIntensity:.35}));
       box(x,1.16,z+1.18,1.8,.08,.7,paint);for(const xx of [x-1.4,x+1.4])box(xx,.006,z,.07,.015,4.7,stripe);
     }
-    for(const z of [-19,-7,5,17])for(const x of [-11,0,11])fixture(x,z,'#869f9b');
-    for(const x of [-12,-1,12])cable(x,0,48);
-    const alarm=box(-13.5,1.4,16,.5,.65,.3,mat('#962f25',{emissive:'#681a10',emissiveIntensity:.5}));target('alarm','화재경보기 작동',alarm,-13.3,1.4,16.3);label('火災報知器',-13.5,2.1,16.18,0,1.3,.3,'#e2c6a1','#651b13');
-    light(-13,2.6,16,'#d15338',5);box(0,2.2,-24.7,2.1,.05,.06,stripe);
-    for(let z=-22;z<22;z+=3)box(0,.012,z,.06,.02,1.4,mat('#b1ac80'));
-    figure.position.set(.8,0,-22.9);figure.visible=true;
+    for(const z of [-37,-19,-1,17,35])for(const x of [-22,-11,0,11,22])fixture(x,z,'#869f9b');
+    for(const x of [-22,-1,22])cable(x,0,84);
+    const alarm=box(-23.5,1.4,30,.5,.65,.3,mat('#962f25',{emissive:'#681a10',emissiveIntensity:.5}));target('alarm','화재경보기 작동',alarm,-23.3,1.4,30.3);label('火災報知器',-23.5,2.1,30.18,0,1.3,.3,'#e2c6a1','#651b13');
+    light(-23,2.6,30,'#d15338',5);box(0,2.2,-42.7,2.1,.05,.06,stripe);
+    for(let z=-40;z<41;z+=3)box(2,.012,z,.06,.02,1.4,mat('#b1ac80'));
+    figure.position.set(11,0,-26);figure.visible=true;
   }
   dressApartment(root,area);
   return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,bounds,spawn,heading,heightAt,liftDoors,setDisplay};

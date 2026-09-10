@@ -1,9 +1,14 @@
-// All sounds are generated locally; the master gain bounds their combined level.
+export type GhostLine='where'|'here'|'found'|'come'|'cry';
+// Local voice clips and procedural effects share a bounded master volume.
 export class HorrorAudio {
   context: AudioContext | null = null;
   master: GainNode | null = null;
   noise: AudioBuffer | null = null;
   tv: GainNode | null = null;
+  voices:Partial<Record<GhostLine,AudioBuffer>>={};
+  voiceSource:AudioBufferSourceNode|null=null;
+  voiceNodes:AudioNode[]=[];
+  cleanupTimer:ReturnType<typeof setTimeout>|undefined;
   volume = .42;
   start() {
     if(this.context){void this.context.resume();return;}
@@ -14,11 +19,21 @@ export class HorrorAudio {
     for(const [hz,level] of [[650,.07],[2300,.018]]){const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();src.buffer=noise;src.loop=true;filter.type='lowpass';filter.frequency.value=hz;gain.gain.value=level;src.connect(filter);filter.connect(gain);gain.connect(this.master);src.start();}
     const tvSource=ctx.createBufferSource(),tvFilter=ctx.createBiquadFilter();this.tv=ctx.createGain();this.tv.gain.value=0;tvSource.buffer=noise;tvSource.loop=true;tvFilter.type='bandpass';tvFilter.frequency.value=950;tvFilter.Q.value=1.1;tvSource.connect(tvFilter);tvFilter.connect(this.tv);this.tv.connect(this.master);tvSource.start();
     for(const hz of [43,57.4,86.3]){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=hz;g.gain.value=.015;o.connect(g);g.connect(this.master);o.start();}
+    for(const line of ['where','here','found','come','cry'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
   setVolume(v:number){this.volume=v;if(this.master)this.master.gain.setTargetAtTime(v*.48,this.context!.currentTime,.1);}
   setTV(on:boolean){if(this.tv)this.tv.gain.value=on?.12:0;}
   pause(){void this.context?.suspend();}
   resume(){void this.context?.resume();}
+  stopVoices(){clearTimeout(this.cleanupTimer);if(this.voiceSource){this.voiceSource.onended=null;try{this.voiceSource.stop();}catch{}this.voiceSource=null;}this.voiceNodes.forEach(n=>n.disconnect());this.voiceNodes=[];}
+  voice(line:GhostLine,pan=0,level=1){
+    const ctx=this.context,buffer=this.voices[line];if(!ctx||!this.master||ctx.state!=='running')return;
+    if(!buffer){this.sound('breath',pan,level);return;}
+    this.stopVoices();const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),panner=ctx.createStereoPanner(),delay=ctx.createDelay(.5),echo=ctx.createGain();
+    source.buffer=buffer;source.playbackRate.value=line==='cry'?.94:.86;filter.type='lowpass';filter.frequency.value=1900;gain.gain.value=.64*level;panner.pan.value=Math.max(-1,Math.min(1,pan));delay.delayTime.value=.23;echo.gain.value=.22;
+    source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.master);
+    this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
+  }
   sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm',pan=0,level=1){
     const ctx=this.context;if(!ctx||!this.master||ctx.state!=='running')return;
     const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.master);
@@ -32,5 +47,5 @@ export class HorrorAudio {
     if(kind==='alarm')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;}
+  dispose(){this.stopVoices();void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};}
 }

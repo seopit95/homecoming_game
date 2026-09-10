@@ -18,8 +18,17 @@ test('wardrobe protects the player but leaving early resumes the threat',()=>{
   s=transition(s,'closet');s=transition(s,'caught');assert.equal(s.ending,'caught');
 });
 test('shortcuts cannot skip the lift failure, stair clue, key or alarm',()=>{
-  for(const [stage,action] of [['phone','door'],['lift_wait','enter'],['descent','pry'],['pry','leave_lift'],['stairs_loop','up'],['stairs_clue','up'],['office_fuse','service_exit'],['parking_gate','alarm']]){const s={...initialStory(),stage};assert.deepEqual(transition(s,action),s,`${stage}: ${action}`);}
+  for(const [stage,action] of [['tv','door'],['lift_wait','enter'],['descent','pry'],['pry','leave_lift'],['stairs_loop','up'],['stairs_clue','up'],['office_fuse','service_exit'],['parking_gate','alarm']]){const s={...initialStory(),stage};assert.deepEqual(transition(s,action),s,`${stage}: ${action}`);}
   assert.equal(transition({...initialStory(),stage:'stairs_reverse'},'down').stage,'stairs_reverse');
+});
+test('the open front door allows an early escape, while hiding still prevents leaving',()=>{
+  for(const stage of ['power','phone','shoes','radio','listen','hide','escape'])assert.equal(transition({...initialStory(),stage},'door').stage,'lift_call');
+  assert.equal(transition({...initialStory(),stage:'wait',hidden:true},'door').stage,'wait');
+});
+test('the hunt continues through the hall, stairs and archive with nearby retry points',()=>{
+  for(const [stage,resume] of [['lift_wait','lift_call'],['stairs_reverse','stairs_loop'],['office_fuse','office_record']]){
+    const caught=transition({...initialStory(),stage},'caught');assert.equal(caught.ending,'caught');assert.equal(checkpoint(caught).stage,resume);
+  }
 });
 test('each chase is lethal and retries restore its section with notes',()=>{
   for(const [stage,want] of [['hide','radio'],['escape','radio'],['corridor_run','lift_exit'],['parking_run','parking_alarm']]){

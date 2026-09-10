@@ -42,3 +42,14 @@ test('the collectible fuse is visible outside its opaque cabinet',()=>{
   const bounds=new THREE.Box3().setFromObject(fuse.mesh);
   assert.equal(world.solids.some(s=>bounds.min.x>=s.x-s.w/2&&bounds.max.x<=s.x+s.w/2&&bounds.min.z>=s.z-s.d/2&&bounds.max.z<=s.z+s.d/2&&bounds.min.y>=(s.y??1.5)-(s.h??3)/2&&bounds.max.y<=(s.y??1.5)+(s.h??3)/2),false,'the pickup must not be completely enclosed in opaque geometry');
 });
+test('the large apartment floor offers two connected routes around its service cores',async()=>{
+  const {findPath}=await import('../lib/navigation.ts'),w=buildWorld(new THREE.Scene(),'corridor');
+  assert.ok(w.bounds.x>=14&&w.bounds.z>=38);
+  for(const x of [-10,10]){const path=findPath(w.spawn,{x,z:-32},w.solids,w.bounds);assert.ok(path.length>0);assert.ok(path.some(p=>Math.abs(p.x)>6));}
+  assert.ok(findPath({x:-10,z:0},{x:10,z:0},w.solids,w.bounds).length>0,'the middle passage connects the wings');
+});
+test('crouching behind a desk breaks the ghost sightline',()=>{
+  const cover=[{x:0,z:0,w:3,d:1,y:.7,h:1.4}],ghost={x:0,y:1.55,z:-2};
+  assert.equal(hasLineOfSight(ghost,{x:0,y:1.65,z:1},cover),true);
+  assert.equal(hasLineOfSight(ghost,{x:0,y:1,z:1},cover),false);
+});

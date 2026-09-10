@@ -53,7 +53,7 @@ function buildApartment(scene:T.Group) {
   }
   // One continuous apartment; the gaps in the internal walls are actual walkable doorways.
   box(0,-.12,0,14,.24,18,floorMat);box(0,3.07,0,14,.14,18,surface('wall','#7e827e'));
-  wall(0,-9,14,.2);wall(0,9,14,.2);wall(-7,0,.2,18);wall(7,0,.2,18);
+  wall(-3.925,-9,6.15,.2);wall(3.925,-9,6.15,.2);wall(0,9,14,.2);wall(-7,0,.2,18);wall(7,0,.2,18);
   for(const x of [-1.45,1.45]) {
     wall(x,-8,.17,2);wall(x,-2.5,.17,4);wall(x,1.5,.17,3);wall(x,7.75,.17,2.5);
     box(x,2.75,-5.5,.2,.5,3,wood);box(x,2.75,4.75,.2,.5,3.5,wood);
@@ -63,11 +63,13 @@ function buildApartment(scene:T.Group) {
   sign('洗面所',-1.32,2.52,-5.4,Math.PI/2,.85,.18);
   sign('和 室',1.33,2.52,4.8,-Math.PI/2,.7,.18);
   // Entrance door, chain and frosted transom.
-  const door=box(0,1.22,-8.86,1.45,2.44,.13,mat('#33413b'));
+  const door=new T.Group();door.name='open-front-door';door.position.set(-.75,0,-8.86);door.rotation.y=1.18;scene.add(door);
+  box(.725,1.22,0,1.45,2.44,.13,mat('#33413b'),false,door);
   box(0,2.53,-8.73,1.65,.11,.18,wood);box(-.81,1.25,-8.73,.12,2.6,.18,wood);box(.81,1.25,-8.73,.12,2.6,.18,wood);
-  box(0,1.2,-8.77,1.2,1.7,.045,mat('#394740'));box(.49,1.02,-8.63,.18,.055,.15,metal);
-  sign('2803',0,1.98,-8.68,0,.32,.12);cyl(0,1.63,-8.65,.025,.03,metal).rotation.x=Math.PI/2;
-  targets.push({id:'door',point:new T.Vector3(0,1.2,-8.6),label:'현관문',mesh:door});
+  box(.725,1.2,.08,1.2,1.7,.045,mat('#394740'),false,door);box(1.22,1.02,.17,.18,.055,.15,metal,false,door);
+  sign('2803',-.94,1.98,-8.68,0,.32,.12);
+  box(0,-.11,-10.7,4,.2,3.4,floorMat);box(0,1.5,-12.4,4,3,.15,wallMat);box(-2,1.5,-10.7,.15,3,3.4,wallMat);box(2,1.5,-10.7,.15,3,3.4,wallMat);
+  targets.push({id:'door',point:new T.Vector3(0,1.2,-8.6),label:'열린 현관으로 나가기',mesh:door});
   box(0,.012,-7.75,1.5,.025,.8,mat('#2d332d'));
   box(.99,.64,-8.1,.55,1.28,1.2,wood,true);
   const shoes=new T.Group();scene.add(shoes);shoes.visible=false;
@@ -138,7 +140,7 @@ function buildApartment(scene:T.Group) {
   const breaker=box(-6.82,1.55,-5.35,.18,.87,.61,metal);
   for(let i=0;i<3;i++)box(-6.7,1.42+i*.16,-5.35,.08,.1,.3,trim);
   sign('分電盤',-6.7,2.12,-5.35,Math.PI/2,.7,.2);
-  targets.push({id:'breaker',point:new T.Vector3(-6.6,1.6,-5.35),label:'차단기 올리기',mesh:breaker});
+  targets.push({id:'breaker',point:new T.Vector3(-6.6,1.6,-5.35),label:'차단기 확인',mesh:breaker});
   box(-4.1,1.17,-8.56,2.4,2.35,.48,wood,true);
   for(let y=.4;y<2.3;y+=.5)box(-4.1,y,-8.25,2.3,.08,.7,wood);
   for(let i=0;i<7;i++)box(-4.95+(i%4)*.5,.66+Math.floor(i/4)*.52,-8.2,.36,.44,.38,mat('#706b55'));
