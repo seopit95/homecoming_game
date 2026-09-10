@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {boxUV,surface,softBox} from './materials.ts';
+import {spaceFurniture} from './apartment-layout.ts';
 import type {Area} from './story';
 
 // Dressing is kept against walls or on existing furniture; it never changes escape routes.
@@ -20,20 +21,23 @@ export function dressApartment(root:T.Group,area:Area){
   function extinguisher(x:number,z:number){const red=new T.MeshStandardMaterial({color:'#773b31',metalness:.2,roughness:.5});cylinder(x,.36,z,.11,.58,red);box(x,.7,z,.21,.05,.1,dark);rod(new T.Vector3(x+.11,.68,z),new T.Vector3(x+.15,.23,z),.016,dark);}
   function ceilingStains(x:number,z:number,w:number,d:number){box(x,3.155,z,w,.008,d,surface('concrete','#646961'));}
   if(area==='apartment'){
+    const {at,finish}=spaceFurniture(root);at(0,-5.15);
     box(0,.008,-5.15,2.65,.012,1.9,surface('tile','#b9bdb4',{roughness:.47}));
     for(const x of [-.82,-.58])box(x,.044,-4.55,.19,.075,.37,paper);
-    cylinder(-1.05,.3,-5.8,.14,.6,steel);for(let i=0;i<3;i++)rod(new T.Vector3(-1.12+i*.07,.15,-5.8),new T.Vector3(-1.2+i*.11,1.15+i*.12,-5.82),.016,dark);
-    notice(['白鷺ハイツ','第三棟 2803号室','夜間は静かに','管理組合'],1.02,1.85,-5.83,0,.23,.38);
-    for(const z of [1.05,2.05])box(5.556,1.24,z,.018,2.02,.96,paper);
+    at(-1.05,-5.8);cylinder(-1.05,.3,-5.8,.14,.6,steel);for(let i=0;i<3;i++)rod(new T.Vector3(-1.12+i*.07,.15,-5.8),new T.Vector3(-1.2+i*.11,1.15+i*.12,-5.82),.016,dark);
+    at(0,-6.25);notice(['白鷺ハイツ','第三棟 2803号室','夜間は静かに','管理組合'],1.02,1.85,-5.83,0,.23,.38);
+    at(6.08,1.55);for(const z of [1.05,2.05])box(5.556,1.24,z,.018,2.02,.96,paper);
     for(const y of [.23,1.22,2.25])box(5.532,y,1.55,.03,.034,2.04,wood);
     for(const z of [.53,1.55,2.57])box(5.526,1.25,z,.035,2.07,.027,wood);
     for(const z of [1.44,1.69]){const pull=cylinder(5.498,1.22,z,.04,.012,dark);pull.rotation.z=Math.PI/2;}
-    notice(['家賃振込票','白鷺管理事務所'],-3.1,.586,1.91,0,.33,.23).rotation.x=-Math.PI/2;
-    box(0,2.58,6.02,1.34,.36,.25,paper);for(let i=0;i<8;i++)box(-.51+i*.145,2.46,5.85,.085,.027,.03,dark);
+    at(-3.15,2.4);notice(['家賃振込票','白鷺管理事務所'],-3.1,.586,1.91,0,.33,.23).rotation.x=-Math.PI/2;
+    at(0,6.25);box(0,2.58,6.02,1.34,.36,.25,paper);for(let i=0;i<8;i++)box(-.51+i*.145,2.46,5.85,.085,.027,.03,dark);
     for(const [x,z,ry] of [[-6.43,4.8,Math.PI/2],[6.43,3.2,-Math.PI/2]]){
+      at(x<0?-6.46:6.46,z);
       const glass=new T.Mesh(new T.PlaneGeometry(1.45,1.53),nightWindow());glass.position.set(x,1.9,z);glass.rotation.y=ry;root.add(glass);
       for(const zz of [z-.77,z,z+.77])box(x*.998,1.9,zz,.04,1.65,.035,steel);box(x*.998,1.9,z,.04,.04,1.6,steel);
     }
+    finish();
   }else if(area==='landing'){
     notice(['白鷺ハイツ','掲示板','夜間巡回 03:00','防犯カメラ作動中','管理組合'],10.83,1.75,.4,-Math.PI/2,1.55,1.8);
     for(const z of [3,3.55,4.1])for(const y of [1.1,1.45]){box(10.83,y,z,.12,.3,.47,steel);box(10.74,y+.055,z,.02,.025,.28,dark);}

@@ -1,8 +1,25 @@
-// Metres: 13.2 × 12.5 = 165 m², approximately 50 pyeong.
+import type {Object3D} from 'three';
+
+// Double the floor area by spreading the plan along both axes, keeping human-scale furniture.
+export const apartmentScale=Math.SQRT2;
+const s=apartmentScale;
+export const homePosition=(x:number,y:number,z:number):[number,number,number]=>[x*s,y,z*s];
 export const apartment={
-  width:13.2,depth:12.5,bounds:{x:6.38,z:6.03},
-  stand:[0,1.65,4.8],seat:[-1.2,1.15,2.5],
-  door:[0,1.2,-5.86],shoes:[0,.2,-4.65],phone:[-3.15,.58,2.4],
-  radio:[2.75,1.1,5.15],breaker:[2.05,1.6,-4.75],closet:[5.43,1.25,1.55],
-  hidden:[5.38,1.48,1.55],search:[4.85,0,1.55],bath:{x:5.1,z:-3.7},haunt:[0,0,-2.6],
+  width:13.2*s,depth:12.5*s,bounds:{x:6.6*s-.22,z:6.25*s-.22},
+  stand:homePosition(0,1.65,4.8),seat:homePosition(-1.2,1.15,2.5),sleep:homePosition(4.8,.98,4.7),title:homePosition(0,1.63,5.65),
+  door:[0,1.2,-6.25*s+.39],shoes:homePosition(0,.2,-4.65),phone:homePosition(-3.15,.58,2.4),
+  radio:homePosition(2.75,1.1,5.15),radioStart:[2.75*s,1.65,5.15*s-1.25],breaker:homePosition(2.05,1.6,-4.75),closet:[6.08*s-.65,1.25,1.55*s],
+  hidden:[6.08*s-.7,1.48,1.55*s],search:[6.08*s-2.1,0,1.55*s],bath:{x:5.1*s,z:-3.7*s},haunt:homePosition(0,0,-2.6),
 } as const;
+
+// Move a furniture assembly as one unit; its dimensions and small component offsets stay unchanged.
+export function spaceFurniture(root:Object3D,solids:{x:number;z:number}[]=[]){
+  let anchor:{x:number;z:number;child:number;solid:number}|undefined;
+  function finish(){
+    if(!anchor)return;const dx=anchor.x*(s-1),dz=anchor.z*(s-1);
+    for(const child of root.children.slice(anchor.child)){child.position.x+=dx;child.position.z+=dz;}
+    for(const solid of solids.slice(anchor.solid)){solid.x+=dx;solid.z+=dz;}
+    anchor=undefined;
+  }
+  return {finish,at:(x:number,z:number)=>{finish();anchor={x,z,child:root.children.length,solid:solids.length};}};
+}

@@ -9,17 +9,33 @@ export class HorrorAudio {
   voiceSource:AudioBufferSourceNode|null=null;
   voiceNodes:AudioNode[]=[];
   cleanupTimer:ReturnType<typeof setTimeout>|undefined;
+  haunt:GainNode|null=null;
+  weather:GainNode|null=null;
+  hauntLevel=-1;
   volume = .42;
   start() {
     if(this.context){void this.context.resume();return;}
     const ctx=this.context=new AudioContext();this.master=ctx.createGain();this.master.gain.value=this.volume*.48;this.master.connect(ctx.destination);
     const noise=this.noise=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate);const data=noise.getChannelData(0);
     for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+    this.weather=ctx.createGain();this.weather.connect(this.master);
+    this.haunt=ctx.createGain();this.haunt.gain.value=0;this.haunt.connect(this.master);
+    // Detuned low strings and a slow breathing pulse fade in with the apparition.
+    for(const [hz,level] of [[54.5,.1],[57.1,.07],[109,.045],[116.5,.035],[233,.025],[247,.02]]){
+      const tone=ctx.createOscillator(),gain=ctx.createGain(),pulse=ctx.createOscillator(),depth=ctx.createGain();
+      tone.type=hz<100?'triangle':'sine';tone.frequency.value=hz;gain.gain.value=level;pulse.frequency.value=.14+hz/1800;depth.gain.value=level*.45;
+      pulse.connect(depth);depth.connect(gain.gain);tone.connect(gain);gain.connect(this.haunt);tone.start();pulse.start();
+    }
+    const wind=ctx.createBufferSource(),windFilter=ctx.createBiquadFilter(),windGain=ctx.createGain();wind.buffer=noise;wind.loop=true;windFilter.type='bandpass';windFilter.frequency.value=420;windFilter.Q.value=3;windGain.gain.value=.13;wind.connect(windFilter);windFilter.connect(windGain);windGain.connect(this.haunt);wind.start();
     // Distant rain and ventilation stay quiet underneath positional sounds.
-    for(const [hz,level] of [[650,.07],[2300,.018]]){const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();src.buffer=noise;src.loop=true;filter.type='lowpass';filter.frequency.value=hz;gain.gain.value=level;src.connect(filter);filter.connect(gain);gain.connect(this.master);src.start();}
+    for(const [hz,level] of [[650,.07],[2300,.018]]){const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();src.buffer=noise;src.loop=true;filter.type='lowpass';filter.frequency.value=hz;gain.gain.value=level;src.connect(filter);filter.connect(gain);gain.connect(this.weather);src.start();}
     const tvSource=ctx.createBufferSource(),tvFilter=ctx.createBiquadFilter();this.tv=ctx.createGain();this.tv.gain.value=0;tvSource.buffer=noise;tvSource.loop=true;tvFilter.type='bandpass';tvFilter.frequency.value=950;tvFilter.Q.value=1.1;tvSource.connect(tvFilter);tvFilter.connect(this.tv);this.tv.connect(this.master);tvSource.start();
     for(const hz of [43,57.4,86.3]){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=hz;g.gain.value=.015;o.connect(g);g.connect(this.master);o.start();}
     for(const line of ['where','here','found','come','cry','scream'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
+  }
+  setHaunt(value:number){
+    const level=Math.max(0,Math.min(1,value));if(!this.context||!this.haunt||!this.weather||Math.abs(level-this.hauntLevel)<.02)return;
+    this.hauntLevel=level;const t=this.context.currentTime;this.haunt.gain.setTargetAtTime(level,t,.65);this.weather.gain.setTargetAtTime(1-level*.6,t,.9);
   }
   setVolume(v:number){this.volume=v;if(this.master)this.master.gain.setTargetAtTime(v*.48,this.context!.currentTime,.1);}
   setTV(on:boolean){if(this.tv)this.tv.gain.value=on?.12:0;}
@@ -47,5 +63,5 @@ export class HorrorAudio {
     if(kind==='alarm')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.stopVoices();void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};}
+  dispose(){this.stopVoices();void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;}
 }

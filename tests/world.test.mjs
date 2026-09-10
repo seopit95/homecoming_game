@@ -53,9 +53,9 @@ test('crouching behind a desk breaks the ghost sightline',()=>{
   assert.equal(hasLineOfSight(ghost,{x:0,y:1.65,z:1},cover),true);
   assert.equal(hasLineOfSight(ghost,{x:0,y:1,z:1},cover),false);
 });
-test('the home has a 165 square metre footprint and a broad connected living area',()=>{
+test('the home has a 330 square metre footprint and a broad connected living area',()=>{
   const w=buildWorld(new THREE.Scene()),floor=w.root.getObjectByName('apartment-floor');assert.ok(floor);
-  const size=new THREE.Box3().setFromObject(floor).getSize(new THREE.Vector3());assert.ok(Math.abs(size.x*size.z-165)<.1);
+  const size=new THREE.Box3().setFromObject(floor).getSize(new THREE.Vector3());assert.ok(Math.abs(size.x*size.z-330)<.1);
   for(const [x,z] of [[0,4.8],[0,0],[0,-4],[1,2],[2.6,2],[-2,0],[-4,0]])assert.ok(canStandAt(x,z,w.solids,.4,w.bounds),`wide passage at ${x},${z}`);
 });
 test('memory rain and windshield lines release their GPU resources on teardown',async()=>{

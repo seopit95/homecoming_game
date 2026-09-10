@@ -1,13 +1,14 @@
 import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/apartment-layout.ts';
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
-let renderedCamera,renderedScene;const voiceCalls=[];
+let renderedCamera,renderedScene;const voiceCalls=[];let hauntLevel=0;
 class Renderer{shadowMap={};setPixelRatio(){}setSize(){}render(scene,camera){renderedCamera=camera;renderedScene=scene;}dispose(){}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setVolume(){}pause(){}resume(){}sound(){}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setHaunt(value){hauntLevel=value;}setVolume(){}pause(){}resume(){}sound(){}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -42,26 +43,27 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   function use(pos,target,stage){aim(pos,target);game.interact();assert.equal(game.snapshot().story.stage,stage);tick();}
   function runTo(x,z){const pos=renderedCamera.position.toArray(),distance=Math.hypot(x-pos[0],z-pos[2]);aim(pos,[x,pos[1],z],false);game.key('KeyW',true);game.key('ShiftLeft',true);tick(distance/3.5);game.key('KeyW',false);game.key('ShiftLeft',false);assert.ok(!['dying','ended'].includes(game.snapshot().story.stage),`survive route to ${x},${z}`);assert.ok(Math.hypot(renderedCamera.position.x-x,renderedCamera.position.z-z)<.15,`walkable route to ${x},${z}`);}
 
-  runTo(0,-1.4);runTo(2.9,-1.4);runTo(2.9,-4.1);
-  use([3,1.65,-4.3],[2.05,1.6,-4.75],'phone');
+  const runHome=(x,z)=>runTo(x*S,z*S),useHome=(pos,target,stage)=>use(H(...pos),H(...target),stage);
+  runHome(0,-1.4);runHome(2.9,-1.4);runHome(2.9,-4.1);
+  useHome([3,1.65,-4.3],[2.05,1.6,-4.75],'phone');
   assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0,'the broken breaker must not restore apartment lighting');
-  runTo(2.9,-1.4);runTo(0,-1.4);runTo(-2.1,0);runTo(-2.1,2.4);
-  use([-2.1,1.65,2.4],[-3.15,.58,2.4],'shoes');
-  runTo(-2.1,0);runTo(0,0);runTo(0,-3.5);
-  use([0,1.65,-3.5],[0,.2,-4.65],'radio');
-  runTo(0,2);runTo(2.75,2);runTo(2.75,3.9);
-  use([2.75,1.65,3.9],[2.75,1.1,5.15],'listen');
+  runHome(2.9,-1.4);runHome(0,-1.4);runHome(-2.1,0);runHome(-2.1,2.4);
+  useHome([-2.1,1.65,2.4],[-3.15,.58,2.4],'shoes');
+  runHome(-2.1,0);runHome(0,0);runHome(0,-3.5);
+  useHome([0,1.65,-3.5],[0,.2,-4.65],'radio');
+  runHome(0,2);runHome(2.75,2);runHome(2.75,3.9);
+  useHome([2.75,1.65,3.9],[2.75,1.1,5.15],'listen');
   tick(1);assert.equal(game.snapshot().story.stage,'listen','there is a silence after turning the radio off');
   game.pause();tick(5);assert.equal(game.snapshot().story.stage,'listen');game.pause(false);
   tick(2);assert.equal(game.snapshot().story.stage,'hide');assert.match(game.snapshot().objective,/장롱/);
   assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0,'the apartment stays dark throughout the encounter');
-  runTo(2.75,2);runTo(4.65,1.55);
-  use([4.65,1.65,1.55],[5.43,1.25,1.55],'wait');
-  tick(1.4);assert.match(game.snapshot().whisper,/어디 있지/);game.pause();tick(4);assert.match(game.snapshot().whisper,/어디 있지/);game.pause(false);
-  tick(33.6);assert.equal(game.snapshot().story.stage,'escape','ghost patrol must reach the other room');
+  runHome(2.75,2);runHome(4.65,1.55);
+  useHome([4.65,1.65,1.55],[5.43,1.25,1.55],'wait');
+  for(let i=0;i<1600&&!/어디 있지/.test(game.snapshot().whisper);i++)tick(.025);assert.match(game.snapshot().whisper,/어디 있지/);game.pause();tick(4);assert.match(game.snapshot().whisper,/어디 있지/);game.pause(false);
+  for(let i=0;i<2400&&game.snapshot().story.stage==='wait';i++)tick(.025);assert.equal(game.snapshot().story.stage,'escape','ghost patrol must reach the other room');
   game.interact();assert.equal(game.snapshot().story.hidden,false);
-  runTo(0,1.55);runTo(0,-4.7);
-  use([0,1.65,-4.7],[0,1.2,-5.86],'lift_call');
+  runHome(0,1.55);runHome(0,-4.7);
+  useHome([0,1.65,-4.7],[0,1.2,-5.86],'lift_call');
   runTo(0,-18.2);use([1.48,1.65,-18.2],[1.48,1.35,-19.4],'lift_wait');
   tick(8);assert.equal(game.snapshot().story.stage,'lift_enter');
   use([0,1.65,-18.2],[0,1.3,-19.35],'lift_button');
@@ -95,14 +97,14 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   use([0,1.65,-41],[0,1.25,-42.48],'ended');
   assert.equal(game.snapshot().story.ending,'escaped');assert.deepEqual(errors,[]);
   game.start();tick(.2);assert.equal(game.snapshot().story.stage,'drive');game.skipMemory();assert.ok(game.snapshot().elapsed<.3,'fresh restart resets elapsed time');
-  tick(7.1);game.key('KeyW',true);tick(.5);game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(new THREE.Vector3(0,1.65,4.8))>.5,'the player can walk away from the sofa after the blackout');game.dispose();
+  tick(7.1);game.key('KeyW',true);tick(.5);game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(new THREE.Vector3(...home.stand))>.5,'the player can walk away from the sofa after the blackout');game.dispose();
 });
 
 test('contact screams once, locks controls and falls before death; manual pause freezes it',()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();game.start(true);tick();
   // Leave via the already open door, then allow the actual pursuit to catch the player.
-  renderedCamera.position.set(0,1.65,-4.7);
+  renderedCamera.position.set(0,1.65,home.door[2]+1.16);
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
   const desiredPitch=Math.atan2(-.45,1.16);
   event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(desiredPitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();
@@ -145,4 +147,41 @@ test('desktop memory leaves the cursor available for skip, including after pause
     game.pause();game.pause(false);assert.equal(locks,0);game.skipMemory();tick();assert.equal(locks,1);assert.equal(doc.pointerLockElement,canvas);
     game.start();tick();assert.equal(game.snapshot().story.stage,'drive');assert.equal(doc.pointerLockElement,null);assert.equal(locks,1);
   }finally{game.dispose();win.matchMedia=previousMedia;doc.pointerLockElement=null;}
+});
+
+async function wardrobeFixture(){
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();game.start(true);tick();
+  const aim=(pos,target)=>{
+    renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));
+    event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
+  };
+  aim([home.radio[0],1.65,home.radio[2]-1.25],home.radio);game.interact();tick(3);assert.equal(game.snapshot().story.stage,'hide');
+  aim([home.closet[0]-.8,1.65,home.closet[2]],home.closet);const ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(0,0,0);
+  return {game,ghost,home,aim};
+}
+test('hiding never teleports the distant ghost to the wardrobe',async()=>{
+  const {game,ghost}=await wardrobeFixture();try{const before=ghost.position.clone();game.interact();assert.equal(game.snapshot().story.stage,'wait');tick(.1);assert.ok(ghost.position.distanceTo(before)<.15,'approach is limited by actual walking speed');assert.ok(ghost.position.distanceTo(renderedCamera.position)>3);}finally{game.dispose();}
+});
+test('leaving the wardrobe into the ghost is immediately lethal',async()=>{
+  const {game,ghost}=await wardrobeFixture();try{const exit=renderedCamera.position.clone();game.interact();tick();ghost.position.set(exit.x,0,exit.z);game.interact();tick();assert.equal(game.snapshot().story.stage,'dying','there is no immunity after leaving early');}finally{game.dispose();}
+});
+test('the bathroom distraction never disables contact detection',async()=>{
+  const {game,ghost}=await wardrobeFixture();try{game.interact();for(let i=0;i<3000&&game.snapshot().story.stage==='wait';i++)tick(.025);assert.equal(game.snapshot().story.stage,'escape');game.interact();ghost.position.set(renderedCamera.position.x+.3,0,renderedCamera.position.z);tick();assert.equal(game.snapshot().story.stage,'dying');}finally{game.dispose();}
+});
+
+test('the wardrobe search stops at a distance and the apparition changes the ambience',async()=>{
+  const {game,ghost}=await wardrobeFixture();try{
+    assert.ok(hauntLevel>.5,'the apparition fades in ominous music');game.interact();let nearest=Infinity;
+    for(let i=0;i<2400&&game.snapshot().story.stage==='wait';i++){tick(.025);nearest=Math.min(nearest,Math.hypot(ghost.position.x-renderedCamera.position.x,ghost.position.z-renderedCamera.position.z));}
+    assert.equal(game.snapshot().story.stage,'escape');assert.ok(nearest>1.1,`the closed wardrobe retains a gap: ${nearest}`);
+    game.start();tick();assert.equal(hauntLevel,0,'a new prologue restores the calm soundscape');
+  }finally{game.dispose();}
+});
+test('seeing the player interrupts the bathroom route before its timer expires',async()=>{
+  const {game,ghost}=await wardrobeFixture();try{
+    game.interact();for(let i=0;i<3000&&game.snapshot().story.stage==='wait';i++)tick(.025);game.interact();
+    renderedCamera.position.set(0,1.65,2*S);ghost.position.set(0,0,0);const before=ghost.position.clone();tick(.2);
+    assert.equal(game.snapshot().story.stage,'escape');assert.ok(ghost.position.z>before.z,'the ghost turns toward the visible player, away from its bathroom destination');assert.ok(game.snapshot().threat>.5);
+  }finally{game.dispose();}
 });

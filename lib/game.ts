@@ -5,7 +5,7 @@ export {prepareVisuals} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
 import {initialStory,checkpoint,transition,objectives,areaFor,chapters,chaseStages,opening,isMemory,type Story,type Action,type Area} from './story.ts';
 import {findPath,type Point} from './navigation.ts';
-import {apartment as home} from './apartment-layout.ts';
+import {apartment as home,apartmentScale as S} from './apartment-layout.ts';
 import {buildRoad} from './prologue.ts';
 
 export type GameView={started:boolean;memoryFade:number;memoryLabel:string;memoryText:string;deathProgress:number;paused:boolean;crouched:boolean;whisper:string;story:Story;prompt:string;message:string;objective:string;location:string;floor:string;chapter:string;chapterNumber:string;chapterCard:boolean;flashlight:boolean;threat:number;elapsed:number;holdProgress:number;holding:boolean;liftFloor:number;checkpointLabel:string};
@@ -27,7 +27,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   let crouched=false,runningNoise=false,walkPhase=0,whisper='',whisperUntil=0,lastVoice=-20,voiceBeat=0,tracking=false,seenAt=0,patrol=0;
   let lastSeen:Point|null=null;
   let hover:Target|undefined,dragging=false,previousX=0,previousY=0,holdProgress=0,holding=false,doorOpen=0,lastDisplay='',threat=0;
-  let enemyPath:Point[]=[],repathAt=0,scriptBeat=0;
+  let enemyPath:Point[]=[],repathAt=0,scriptBeat=0,searchTime=-1;
   const deathOrigin=new T.Vector3(),deathDirection=new T.Vector3(),deathFace=new T.Vector3();let deathFloor=0,deathEye=1.65;
   const hiddenPosition=new T.Vector3(),direction=new T.Vector3(),delta=new T.Vector3();
   let settings:Settings={volume:.42,brightness:1.25,sensitivity:1,bob:false};
@@ -35,7 +35,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const getLiftFloor=()=>story.stage==='descent'?Math.max(24,28-Math.floor(stageTime/4)):['pry','lift_exit'].includes(story.stage)?24:28;
   function location(){
     if(isMemory(story.stage))return story.stage==='sleep'?'사흘 전 · 침실':'사흘 전 · 귀갓길';
-    if(area==='apartment')return camera.position.x>1.9?(camera.position.z>-.5?'침실':camera.position.x>4?'욕실':'다용도실'):camera.position.x< -2.7&&camera.position.z< -2.4?'서재':camera.position.x< -2&&camera.position.z<0?'주방':camera.position.z< -3?'현관':'거실 · 다이닝';
+    if(area==='apartment')return camera.position.x/S>1.9?(camera.position.z/S>-.5?'침실':camera.position.x/S>4?'욕실':'다용도실'):camera.position.x/S< -2.7&&camera.position.z/S< -2.4?'서재':camera.position.x/S< -2&&camera.position.z/S<0?'주방':camera.position.z/S< -3?'현관':'거실 · 다이닝';
     if(area==='office')return camera.position.x< -1.6?(camera.position.z< -1.5?'문서 보관실':'야간 관리실'):camera.position.x>1.6?'전기실':'관리실 복도';
     return {landing:'엘리베이터 홀',lift:'엘리베이터',corridor:'정전된 복도',stairs:'비상계단',parking:'지하 주차장'}[area];
   }
@@ -76,6 +76,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function advance(action:Action){
     const next=transition(story,action);if(next===story)return false;
+    if(next.stage==='wait'){searchTime=-1;lastSeen=null;tracking=false;}
     story=next;stageTime=0;scriptBeat=0;voiceBeat=0;holdProgress=0;enemyPath=[];repathAt=0;
     if(story.stage==='ended'){keys.clear();holding=false;hover=undefined;threat=0;audio.stopVoices();whisper='';if(document.pointerLockElement===canvas)document.exitPointerLock();audio.sound('dread');emit();return true;}
     if(story.stage==='dying'){
@@ -97,7 +98,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='tv'){camera.position.set(...home.seat);yaw=Math.PI/2;pitch=.05;audio.setTV(true);say('사고 후 사흘이 지났다. 그날 이후 밤마다 03:17에 눈이 떠진다.\nTV에서는 사흘 전 뺑소니 사고를 보도하고 있었다.',7);}
     if(story.stage==='impact'){audio.sound('slam',0,.8);audio.sound('metal',0,.5);}
     if(story.stage==='flee')audio.sound('motor',0,.8);
-    if(story.stage==='sleep'){audio.sound('slam',0,.22);camera.position.set(4.8,.98,4.7);yaw=0;pitch=.85;}
+    if(story.stage==='sleep'){audio.sound('slam',0,.22);camera.position.set(...home.sleep);yaw=0;pitch=.85;}
   }
   function start(retry=false){
     try{audio.start();audio.setVolume(settings.volume);}catch{onError('소리를 시작하지 못했습니다. 소리 없이도 플레이할 수 있습니다.');}
@@ -105,7 +106,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     lastStep=elapsed;lastEmit=elapsed-1;loadArea(areaFor(story));
     audio.setTV(story.stage==='tv');
     if(isMemory(story.stage)||story.stage==='tv')openingScene();
-    if(retry&&story.stage==='radio'){camera.position.set(2.75,1.65,3.9);yaw=Math.PI;}
+    if(retry&&story.stage==='radio'){camera.position.set(...home.radioStart);yaw=Math.PI;}
     if(retry&&story.stage==='lift_exit')doorOpen=1;
     if(retry&&story.stage==='parking_alarm'){camera.position.set(-22.1,1.65,32);yaw=.4;}
     if(retry)say(objectives[story.stage]+'\nShift 달리기 · C 몸 낮추기. 엄폐물 뒤에서는 손전등을 끄자.',6);lock();emit();
@@ -135,6 +136,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   };
   function interact(){
     if(!started||paused||isMemory(story.stage)||story.stage==='ended'||story.stage==='dying'||story.stage==='tv')return;
+    if(contact())return;
     findTarget();const action:Action|undefined=story.hidden?'closet':hover?.id;if(!action)return;
     if(action==='pry'){say('문을 바라본 채 E 또는 화면의 문 벌리기 버튼을 길게 누르세요.',4);return;}
     const wasHidden=story.hidden;
@@ -157,7 +159,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(action==='security_power'){audio.sound('slam',.8);ghostVoice('cry',true);}
     if(action==='monitor'){world.setDisplay?.('帰宅者 2名 / 2803');ghostVoice('found',true);}
     if(action==='alarm'){audio.sound('alarm',-.8);chapterUntil=0;}
-    emit();
+    if(contact())return;emit();
   }
   function keydown(e:KeyboardEvent){
     if(!started)return;
@@ -203,35 +205,49 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const turn=T.MathUtils.euclideanModulo(Math.atan2(dx,dz)-world.figure.rotation.y+Math.PI,Math.PI*2)-Math.PI;
     world.figure.rotation.y+=turn*Math.min(1,dt*10);
   }
+  function contact(){
+    if(story.hidden||!world.figure.visible||!chaseStages.includes(story.stage))return false;
+    const p=world.figure.position;
+    return Math.hypot(p.x-camera.position.x,p.z-camera.position.z)<.67&&Math.abs(p.y+1.25-camera.position.y)<1.2&&hasLineOfSight(camera.position,{x:p.x,y:p.y+1.4,z:p.z},world.solids)?advance('caught'):false;
+  }
+  function detectsPlayer(){
+    if(story.hidden)return false;
+    const p=world.figure.position,distance=Math.hypot(p.x-camera.position.x,p.z-camera.position.z);
+    return runningNoise&&distance<22||distance<(torch?25:crouched?7:15)&&hasLineOfSight({x:p.x,y:p.y+1.55,z:p.z},camera.position,world.solids);
+  }
   function hunt(speed:number,dt:number){
     const p=world.figure.position,distance=Math.hypot(p.x-camera.position.x,p.z-camera.position.z);
-    const visible=distance<(torch?25:crouched?7:15)&&hasLineOfSight({x:p.x,y:p.y+1.55,z:p.z},camera.position,world.solids);
-    const heard=runningNoise&&distance<22;
-    if(visible||heard){lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;if(!tracking)ghostVoice('found');tracking=true;}
+    if(detectsPlayer()){lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;if(!tracking)ghostVoice('found');tracking=true;}
     else if(tracking&&elapsed-seenAt>2){tracking=false;ghostVoice('here');}
     const reached=lastSeen&&Math.hypot(p.x-lastSeen.x,p.z-lastSeen.z)<.6;
     if(lastSeen&&(!reached||elapsed-seenAt<2))followEnemy(lastSeen,speed,dt);
     else{
-      const points=area==='apartment'?[home.bath,{x:0,z:-3},{x:0,z:3},{x:3.5,z:2}]:area==='office'?[{x:0,z:0},{x:0,z:-12},{x:8,z:8},{x:-8,z:8}]:area==='landing'?[{x:0,z:-18},{x:8,z:0},{x:0,z:15}]:area==='stairs'?[{x:3.5,z:-7},{x:0,z:6},{x:-3.5,z:-7}]:area==='parking'?[{x:11,z:-36},{x:-22,z:30},{x:22,z:30}]:[{x:-10,z:-32},{x:10,z:0},{x:-10,z:32}];
+      const points=area==='apartment'?[home.bath,{x:0,z:-3*S},{x:0,z:3*S},{x:3.5*S,z:2*S}]:area==='office'?[{x:0,z:0},{x:0,z:-12},{x:8,z:8},{x:-8,z:8}]:area==='landing'?[{x:0,z:-18},{x:8,z:0},{x:0,z:15}]:area==='stairs'?[{x:3.5,z:-7},{x:0,z:6},{x:-3.5,z:-7}]:area==='parking'?[{x:11,z:-36},{x:-22,z:30},{x:22,z:30}]:[{x:-10,z:-32},{x:10,z:0},{x:-10,z:32}];
       const target=points[patrol%points.length];if(Math.hypot(p.x-target.x,p.z-target.z)<.8)patrol++;followEnemy(target,speed*.68,dt);if(elapsed-lastVoice>14)ghostVoice(patrol%2?'where':'cry');
     }
     threat=Math.max(threat,tracking?T.MathUtils.clamp(1-distance/24,.18,.9):.12);
   }
   function danger(dt:number){
-    threat=0;
+    threat=0;if(contact())return;
     if(story.stage==='wait'){
       world.figure.visible=true;
-      if(stageTime<7){world.figure.position.set(...home.search);world.figure.lookAt(camera.position.x,0,camera.position.z);}
-      else followEnemy(home.bath,1.3,dt);
-      if(stageTime>1.2&&voiceBeat===0){voiceBeat=1;ghostVoice('where',true);}
-      if(stageTime>4.5&&voiceBeat===1){voiceBeat=2;audio.sound('knock',.8,.6);ghostVoice('come',true);}
-      if(stageTime>9&&voiceBeat===2){voiceBeat=3;ghostVoice('here',true);}
-      if(stageTime>7&&scriptBeat===0){scriptBeat=1;say('발소리가 멀어진다. 아직 기다려. 욕실 문이 열리는 소리가 난다.',6);}
-      if(stageTime>16&&Math.hypot(world.figure.position.x-home.bath.x,world.figure.position.z-home.bath.z)<.5){advance('survived');say('욕실에서 수도꼭지가 돌아갔다.\n지금이다. 장롱에서 나와 열린 현관으로!',8);}
+      if(searchTime<0){
+        followEnemy({x:home.search[0],z:home.search[2]},1.3,dt);
+        if(world.figure.position.distanceTo(new T.Vector3(...home.search))<.25){searchTime=0;enemyPath=[];repathAt=0;ghostMotion=0;}
+      }else{
+        searchTime+=dt;
+        if(searchTime<5){world.figure.lookAt(camera.position.x,world.figure.position.y,camera.position.z);ghostMotion=0;}
+        else followEnemy(home.bath,1.3,dt);
+        if(searchTime>1&&voiceBeat===0){voiceBeat=1;ghostVoice('where',true);}
+        if(searchTime>3.5&&voiceBeat===1){voiceBeat=2;audio.sound('knock',.8,.6);ghostVoice('come',true);}
+        if(searchTime>8&&voiceBeat===2){voiceBeat=3;ghostVoice('here',true);}
+        if(searchTime>5&&scriptBeat===0){scriptBeat=1;say('발소리가 멀어진다. 아직 기다려. 다른 방을 살피러 간다.',6);}
+        if(searchTime>8&&Math.hypot(world.figure.position.x-home.bath.x,world.figure.position.z-home.bath.z)<.5){advance('survived');say('욕실에서 수도꼭지가 돌아갔다.\n장롱에서 나와 현관으로! 다시 마주치지 않게 조심하자.',8);}
+      }
     }else if(story.stage==='escape'){
       world.figure.visible=true;
-      if(stageTime<12)followEnemy(home.bath,1.4,dt);
-      else{hunt(2.65,dt);if(scriptBeat===0){scriptBeat=1;say('수돗물이 멎었다. 그것이 다시 나오고 있다!',5);audio.sound('slam');ghostVoice('found',true);}}
+      if(stageTime<12&&!tracking&&!detectsPlayer())followEnemy(home.bath,1.4,dt);
+      else{hunt(2.65,dt);if(scriptBeat===0){scriptBeat=1;say('그것이 고개를 돌렸다. 나를 찾고 있다!',5);audio.sound('slam');ghostVoice('found',true);}}
     }else if(story.stage==='hide'){world.figure.visible=true;followEnemy(camera.position,stageTime<4?1.2:1.8,dt);threat=Math.min(.8,stageTime/15);}
     else if(area==='landing'){if(areaTime>4.5)hunt(2.5,dt);}
     else if(story.stage==='corridor_run'){world.figure.visible=true;if(stageTime>3.2)hunt(3.15,dt);threat=Math.max(.25,threat);}
@@ -243,11 +259,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       threat=Math.max(threat,stageTime<32?.18:.35);
       if(stageTime>32&&scriptBeat===0){scriptBeat=1;say('경보 소리가 끊겼다.\n그것이 다시 나를 찾고 있다!',5);ghostVoice('where',true);}
     }else if(area==='parking')hunt(2.65,dt);
-    if(chaseStages.includes(story.stage)&&!story.hidden){
-      const p=world.figure.position,distance=Math.hypot(p.x-camera.position.x,p.z-camera.position.z);
-      const safe=story.stage==='hide'?stageTime<2.5:story.stage==='escape'?stageTime<12:area==='landing'?areaTime<4.5:area==='corridor'?stageTime<3.2:area==='stairs'?areaTime<5:area==='office'?areaTime<6:areaTime<3;
-      if(!safe&&distance<.67&&Math.abs(p.y+1.25-camera.position.y)<1.2&&hasLineOfSight(camera.position,{x:p.x,y:p.y+1.4,z:p.z},world.solids))advance('caught');
-    }
+    if(contact())return;
     if(world.figure.visible&&story.stage!=='dying'){
       const p=world.figure.position,distance=Math.hypot(p.x-camera.position.x,p.z-camera.position.z),travel=Math.hypot(p.x-lastGhostPosition.x,p.z-lastGhostPosition.z);
       const before=Math.floor(walkPhase/Math.PI);walkPhase+=Math.min(travel,.3)*Math.PI*2/1.7;ghostMotion=T.MathUtils.clamp(travel/Math.max(dt,.001)/2.5,0,1);lastGhostPosition.copy(p);
@@ -308,7 +320,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function renderWorld(dt:number){
     const time=started?elapsed:performance.now()/1000;
     if(road){ambient.intensity=.2;flashlight.intensity=0;fill.intensity=0;(scene.fog as T.FogExp2).density=.025;road.pose(story.stage,stageTime,camera,reducedMotion);camera.updateMatrixWorld();return;}
-    if(story.stage==='sleep'){camera.position.set(4.8,.98,4.7);pitch=.85+T.MathUtils.smoothstep(stageTime,0,5)*.15;yaw=0;}
+    if(story.stage==='sleep'){camera.position.set(...home.sleep);pitch=.85+T.MathUtils.smoothstep(stageTime,0,5)*.15;yaw=0;}
     if(area==='apartment')(scene.fog as T.FogExp2).density=.016;
     if(world.figure.visible&&story.stage!=='dying'&&story.stage!=='ended')animateGhost(world.figure,time,ghostMotion,threat,reducedMotion,walkPhase);
     const deathRoll=story.stage==='dying'?deathPose():0;
@@ -333,7 +345,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function frame(ms:number){
     if(disposed)return;frameId=requestAnimationFrame(frame);const dt=Math.min((ms-lastFrame)/1000||0,.05);lastFrame=ms;
-    if(!started){camera.position.set(0,1.63,5.65);yaw=.1+Math.sin(ms*.0001)*.04;pitch=-.015;}
+    if(!started){camera.position.set(...home.title);yaw=.1+Math.sin(ms*.0001)*.04;pitch=-.015;}
     else if(!paused&&!document.hidden&&story.stage==='dying'){elapsed+=dt;stageTime+=dt;if(stageTime>=3.2)advance('dead');}
     else if(!paused&&!document.hidden&&story.stage!=='ended'){
       elapsed+=dt;stageTime+=dt;areaTime+=dt;runningNoise=false;
@@ -351,6 +363,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       camera.rotation.set(pitch,yaw,0,'YXZ');camera.updateMatrixWorld();findTarget();scripted(dt);if(!isMemory(story.stage))danger(dt);
       if(message&&elapsed>messageUntil)message='';if(whisper&&elapsed>whisperUntil)whisper='';
     }
+    audio.setHaunt(started&&world.figure.visible&&!isMemory(story.stage)&&story.stage!=='ended'?.55+threat*.45:0);
     renderWorld(dt);
     if(started&&!paused&&story.stage!=='ended')findTarget();
     if(started&&!paused&&elapsed-lastEmit>.09){lastEmit=elapsed;emit();}
