@@ -1,6 +1,8 @@
 import * as T from 'three';
 import type { Action, Area } from './story';
 import {buildBuilding,makeFigure} from './building.ts';
+import {surface,boxUV,softBox} from './materials.ts';
+import {dressApartment} from './japan.ts';
 
 export type Bounds={x:number;z:number};
 export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number };
@@ -27,29 +29,12 @@ function buildApartment(scene:T.Group) {
   const solids: Solid[] = [], targets: Target[] = [];
   let seed = 47;
   const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  function texture(kind: 'wood' | 'wall') {
-    const c = document.createElement('canvas'); c.width = c.height = 512;
-    const ctx = c.getContext('2d')!;
-    ctx.fillStyle = kind === 'wood' ? '#62513d' : '#8a8a76'; ctx.fillRect(0,0,512,512);
-    for (let i=0;i<14000;i++) {
-      ctx.fillStyle = `rgba(${rand()>.5?'255,235,198':'15,21,19'},${rand()*.09})`;
-      ctx.fillRect(rand()*512,rand()*512,kind==='wood'?rand()*90:rand()*3,1);
-    }
-    if (kind === 'wood') {
-      ctx.strokeStyle='#2e2a20';ctx.lineWidth=2;
-      for(let y=0;y<512;y+=64){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(512,y);ctx.stroke();
-        for(let x=(y%128?80:250);x<512;x+=300){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+64);ctx.stroke();}}
-    } else { ctx.fillStyle='rgba(30,38,28,.1)'; for(let x=0;x<512;x+=16)ctx.fillRect(x,0,2,512); }
-    const tex=new T.CanvasTexture(c);tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.colorSpace=T.SRGBColorSpace;
-    tex.repeat.set(kind==='wood'?3:2,kind==='wood'?5:1);tex.anisotropy=4;return tex;
-  }
-  const woodTex=texture('wood'), wallTex=texture('wall');
   const mat=(color:string, roughness=.86,extra:object={})=>new T.MeshStandardMaterial({color,roughness,...extra});
-  const wallMat=mat('#96998a',.95,{map:wallTex}), lowerMat=mat('#485650');
-  const floorMat=mat('#87775f',.7,{map:woodTex}), wood=mat('#493b2d',.85), dark=mat('#111816'), trim=mat('#252b25');
+  const wallMat=surface('wall','#c3c0b4'), lowerMat=surface('wall','#aca99a');
+  const floorMat=surface('wood','#b3a994',{roughness:.54}), wood=surface('wood','#aaa18d'), dark=mat('#111816'), trim=mat('#252b25');
   const fabric=mat('#656856'), cream=mat('#a7a398'), metal=mat('#373e3c',.45,{metalness:.5});
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=scene){
-    const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);
+    const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);
     if(solid)solids.push({x,z,w,d,y,h});return mesh;
   }
   function cyl(x:number,y:number,z:number,r:number,h:number,m:T.Material,parent:T.Object3D=scene){
@@ -67,7 +52,7 @@ function buildApartment(scene:T.Group) {
     const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:print(text),roughness:.85}));mesh.position.set(x,y,z);mesh.rotation.y=ry;scene.add(mesh);return mesh;
   }
   // One continuous apartment; the gaps in the internal walls are actual walkable doorways.
-  box(0,-.12,0,14,.24,18,floorMat);box(0,3.07,0,14,.14,18,mat('#51564d'));
+  box(0,-.12,0,14,.24,18,floorMat);box(0,3.07,0,14,.14,18,surface('wall','#7e827e'));
   wall(0,-9,14,.2);wall(0,9,14,.2);wall(-7,0,.2,18);wall(7,0,.2,18);
   for(const x of [-1.45,1.45]) {
     wall(x,-8,.17,2);wall(x,-2.5,.17,4);wall(x,1.5,.17,3);wall(x,7.75,.17,2.5);
@@ -75,8 +60,8 @@ function buildApartment(scene:T.Group) {
     for(const z of [-7,-4,3,6.5])box(x,1.25,z,.25,2.5,.12,wood);
   }
   wall(-4.2,-.5,5.5,.18);wall(4.2,-.5,5.5,.18);
-  sign('다용도실',-1.32,2.52,-5.4,Math.PI/2,.85,.18);
-  sign('침 실',1.33,2.52,4.8,-Math.PI/2,.7,.18);
+  sign('洗面所',-1.32,2.52,-5.4,Math.PI/2,.85,.18);
+  sign('和 室',1.33,2.52,4.8,-Math.PI/2,.7,.18);
   // Entrance door, chain and frosted transom.
   const door=box(0,1.22,-8.86,1.45,2.44,.13,mat('#33413b'));
   box(0,2.53,-8.73,1.65,.11,.18,wood);box(-.81,1.25,-8.73,.12,2.6,.18,wood);box(.81,1.25,-8.73,.12,2.6,.18,wood);
@@ -100,8 +85,8 @@ function buildApartment(scene:T.Group) {
   const clock=sign('03:17',0,2.65,8.87,Math.PI,.75,.25);
   clock.material.map=print('03:17','#c07052','#151914',55);clock.material.emissive.set('#c07052');clock.material.emissiveMap=clock.material.map;clock.material.emissiveIntensity=.8;
   // Living room: couch, rug, coffee table, phone, bookshelf, television.
-  box(-4.15,.018,5.2,4.6,.035,4.3,mat('#514e3e'));
-  for(let z=3.15;z<7.3;z+=.1)box(-4.15,.04,z,4.4,.005,.017,mat('#69614c'));
+  box(-4.15,.018,5.2,4.6,.035,4.3,mat('#81795c'));
+  for(let z=3.15;z<7.3;z+=.1)box(-4.15,.04,z,4.4,.005,.017,mat('#645f47'));
   box(-6.06,.35,5,1.38,.5,3.5,wood,true);box(-6.48,.89,5,.38,1,3.6,fabric);
   for(const z of [3.5,6.5])box(-6,.69,z,1.5,.5,.35,fabric);
   for(const z of [4.1,5,5.9])box(-5.96,.65,z,1.16,.23,.82,fabric);
@@ -136,7 +121,7 @@ function buildApartment(scene:T.Group) {
   box(-5.8,.54,-7.9,1.45,1.08,1.4,cream,true);const drum=cyl(-5.8,.57,-7.16,.39,.04,metal);drum.rotation.x=Math.PI/2;
   const breaker=box(-6.82,1.55,-5.35,.18,.87,.61,metal);
   for(let i=0;i<3;i++)box(-6.7,1.42+i*.16,-5.35,.08,.1,.3,trim);
-  sign('분전함',-6.7,2.12,-5.35,Math.PI/2,.7,.2);
+  sign('分電盤',-6.7,2.12,-5.35,Math.PI/2,.7,.2);
   targets.push({id:'breaker',point:new T.Vector3(-6.6,1.6,-5.35),label:'차단기 올리기',mesh:breaker});
   box(-4.1,1.17,-8.56,2.4,2.35,.48,wood,true);
   for(let y=.4;y<2.3;y+=.5)box(-4.1,y,-8.25,2.3,.08,.7,wood);
@@ -159,6 +144,7 @@ function buildApartment(scene:T.Group) {
   }
   const roomLight=new T.PointLight('#d7bc87',5,7);roomLight.position.set(-4,2.65,4.5);scene.add(roomLight);lamps.push(roomLight);
   const bedLight=new T.PointLight('#bcb991',3,6);bedLight.position.set(4,2.6,5);scene.add(bedLight);lamps.push(bedLight);
+  dressApartment(scene,'apartment');
   const figure=makeFigure(scene);figure.position.set(0,0,-3);
   return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight};
 }

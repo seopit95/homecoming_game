@@ -4,13 +4,13 @@ import {ArrowRight,Headphones,Pause,Play,RotateCcw,SlidersHorizontal,Volume2,Exp
 import type {Game,GameView,Settings} from '../lib/game';
 import {registerGameTools} from '../lib/webmcp';
 import {journal,type Action} from '../lib/story';
-const initialSettings:Settings={volume:.42,brightness:1.1,sensitivity:1,bob:false};
+const initialSettings:Settings={volume:.42,brightness:1.25,sensitivity:1,bob:false};
 export default function Home(){
   const canvas=useRef<HTMLCanvasElement>(null),root=useRef<HTMLElement>(null),game=useRef<Game|null>(null);
   const [view,setView]=useState<GameView|null>(null),[error,setError]=useState(''),[settings,setSettings]=useState(initialSettings),[showSettings,setShowSettings]=useState(false),[ready,setReady]=useState(false),[showNotes,setShowNotes]=useState(false);
   useEffect(()=>{
     let dead=false;let instance:Game|null=null;let unregister=()=>{};
-    import('../lib/game').then(({createGame})=>{if(dead||!canvas.current)return;try{instance=createGame(canvas.current,setView,setError);game.current=instance;unregister=registerGameTools(instance);setReady(true);}catch(e){console.error(e);setError('화면을 열 수 없습니다. 하드웨어 가속을 지원하는 최신 브라우저에서 다시 열어주세요.');}}).catch(()=>setError('게임을 불러오지 못했습니다. 연결을 확인하고 새로고침해 주세요.'));
+    import('../lib/game').then(async({createGame,prepareVisuals})=>{await prepareVisuals();if(dead||!canvas.current)return;try{instance=createGame(canvas.current,setView,setError);game.current=instance;unregister=registerGameTools(instance);setReady(true);}catch(e){console.error(e);setError('화면을 열 수 없습니다. 하드웨어 가속을 지원하는 최신 브라우저에서 다시 열어주세요.');}}).catch(()=>setError('게임을 불러오지 못했습니다. 연결을 확인하고 새로고침해 주세요.'));
     return()=>{dead=true;unregister();instance?.dispose();game.current=null;};
   },[]);
   useEffect(()=>{const key=(e:KeyboardEvent)=>{const state=game.current?.snapshot();if(e.code==='KeyJ'&&state?.started&&state.story.stage!=='ended'){e.preventDefault();setShowNotes(true);game.current?.pause(true);}};document.addEventListener('keydown',key);return()=>document.removeEventListener('keydown',key);},[]);
@@ -28,16 +28,16 @@ export default function Home(){
 
   return <main className={`game-shell ${began?'is-playing':''} ${hidden?'is-hidden':''}`} ref={root}>
     <canvas ref={canvas} className="world" aria-label="정전된 아파트를 탐색하는 1인칭 공포게임 화면"/>
-    <div className="vignette"/><div className="film-grain"/>
+    <div className="vignette"/><div className="film-grain"/><div className="lens-edge"/>
     {!began&&<section className="title-screen" aria-label="게임 시작 화면">
-      <div className="topline"><span className="edition">1인칭 심리 공포</span><span className="address">2803호<span/>03:17</span></div>
-      <div className="title-content"><p className="overline"><i/>누군가, 먼저 와 있다.</p><h1>귀가<span>歸家</span></h1>
-        <div className="story-intro"><p>새벽 3시 17분. 28층, 2803호.<br/>집에 돌아오자, 전기가 나갔다.</p><p>장롱 밖에서 누군가 내 이름을 부른다.<br/>이 건물에서, 어디까지 내려가야 끝날까.</p></div>
+      <div className="topline"><span className="edition">白鷺ハイツ · 야간 기록</span><span className="address">2803호<span/>03:17</span></div>
+      <div className="title-content"><p className="overline"><i/>돌아온 것은, 누구인가.</p><h1>귀가<span>帰宅 ─ シラサギハイツ</span></h1>
+        <div className="story-intro"><p>비 오는 새벽 3시 17분.<br/>시라사기 하이츠, 28층 2803호.<br/>집에 돌아오자, 전기가 나갔다.</p><p>장롱 밖에서 누군가 내 이름을 부른다.<br/>이 건물에서, 어디까지 내려가야 끝날까.</p></div>
         <button className="start-button" disabled={!ready} onClick={()=>game.current?.start()}><span>{ready?'집으로 들어가기':'집 안을 불러오는 중'}</span><ArrowRight size={21}/></button>
         <div className="start-meta"><span><Headphones size={15}/>헤드폰 권장</span><span>다섯 장 · 혼자 플레이</span></div>
         <button className="settings-toggle" aria-expanded={showSettings} onClick={()=>setShowSettings(!showSettings)}><SlidersHorizontal size={15}/>밝기 · 소리 · 시점 설정</button>{showSettings&&settingsPanel}
       </div>
-      <div className="title-caption"><span>귀가 기록 / 01</span><p>28층에서 시작된 밤.<br/>1층은 아직 멀다.</p></div>
+      <div className="title-caption"><span lang="ja">帰 宅 記 録</span><p>28층에서 시작된 밤.<br/>1층은 아직 멀다.</p></div>
       <div className="controls-strip"><span><kbd>W A S D</kbd> 이동</span><span><kbd>마우스</kbd> 둘러보기</span><span><kbd>Shift</kbd> 달리기</span><span><kbd>E</kbd> 확인 · 숨기</span><span><kbd>F</kbd> 손전등</span><span><kbd>ESC</kbd> 일시정지</span><small>화살표 키 / 화면 드래그로도 조작 가능</small></div>
       <div className="touch-intro">화면을 드래그해 둘러보고, 이동 버튼으로 걸으세요. 「달리기 ↑」를 누른 채 이동할 수 있습니다.</div>
     </section>}
