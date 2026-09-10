@@ -1,6 +1,6 @@
-export type Stage = 'tv'|'phone'|'power'|'shoes'|'radio'|'listen'|'hide'|'wait'|'escape'|'lift_call'|'lift_wait'|'lift_enter'|'lift_button'|'descent'|'pry'|'lift_exit'|'corridor_run'|'stairs_loop'|'stairs_clue'|'stairs_reverse'|'office_record'|'office_fuse'|'office_power'|'office_tape'|'office_leave'|'parking_gate'|'parking_alarm'|'parking_run'|'ended';
+export type Stage = 'tv'|'phone'|'power'|'shoes'|'radio'|'listen'|'hide'|'wait'|'escape'|'lift_call'|'lift_wait'|'lift_enter'|'lift_button'|'descent'|'pry'|'lift_exit'|'corridor_run'|'stairs_loop'|'stairs_clue'|'stairs_reverse'|'office_record'|'office_fuse'|'office_power'|'office_tape'|'office_leave'|'parking_gate'|'parking_alarm'|'parking_run'|'dying'|'ended';
 export type Area = 'apartment'|'landing'|'lift'|'corridor'|'stairs'|'office'|'parking';
-export type Action = 'blackout'|'phone'|'breaker'|'shoes'|'radio'|'heard'|'closet'|'survived'|'door'|'caught'|'call'|'arrived'|'enter'|'panel'|'stopped'|'pry'|'leave_lift'|'stairs'|'down'|'stair_note'|'up'|'record'|'fuse'|'security_power'|'monitor'|'service_exit'|'exit'|'alarm';
+export type Action = 'blackout'|'phone'|'breaker'|'shoes'|'radio'|'heard'|'closet'|'survived'|'door'|'caught'|'call'|'arrived'|'enter'|'panel'|'stopped'|'pry'|'leave_lift'|'stairs'|'down'|'stair_note'|'up'|'record'|'fuse'|'security_power'|'monitor'|'service_exit'|'exit'|'alarm'|'dead';
 export type Story = {stage:Stage;hidden:boolean;ending:'escaped'|'caught'|null;resume:Stage;notes:string[]};
 export const chaseStages:Stage[]=['hide','escape','lift_call','lift_wait','lift_enter','corridor_run','stairs_loop','stairs_clue','stairs_reverse','office_record','office_fuse','office_power','office_tape','office_leave','parking_gate','parking_alarm','parking_run'];
 export function initialStory():Story{return {stage:'tv',hidden:false,ending:null,resume:'radio',notes:[]};}
@@ -18,9 +18,10 @@ const steps:Partial<Record<Stage,[Action,Stage]>>={
 };
 export function transition(state:Story,action:Action):Story{
   if(state.stage==='ended')return state;
+  if(state.stage==='dying')return action==='dead'?{...state,stage:'ended'}:state;
   if(action==='caught'&&chaseStages.includes(state.stage)&&!state.hidden){
     const resume=state.stage==='corridor_run'?'lift_exit':state.stage==='parking_run'?'parking_alarm':state.stage.startsWith('parking')?'parking_gate':state.stage.startsWith('office')?'office_record':state.stage.startsWith('stairs')?'stairs_loop':state.stage.startsWith('lift')?'lift_call':'radio';
-    return {...state,stage:'ended',ending:'caught',resume};
+    return {...state,stage:'dying',ending:'caught',resume};
   }
   if(action==='closet'){
     if(state.stage==='hide')return {...state,stage:'wait',hidden:true};
@@ -51,7 +52,7 @@ export const objectives:Record<Stage,string>={
   tv:'소파에서 심야 방송을 보고 있다',phone:'거실 탁자에서 울리는 휴대전화를 확인하세요',power:'정전이다. 손전등을 들고 다용도실의 차단기를 확인하세요',shoes:'현관에서 들린 소리를 확인하세요',radio:'침실에서 혼자 켜진 라디오를 끄세요',listen:'라디오는 꺼졌다. 그런데 복도에서 무슨 소리가…',hide:'침실 장롱에 숨으세요 · Shift 달리기',wait:'발소리가 다른 방으로 이동할 때까지 기다리세요',escape:'귀신이 욕실을 살피는 사이, 열린 현관으로 빠져나가세요',
   lift_call:'뒤따라온다! 긴 홀 끝의 엘리베이터를 호출하세요',lift_wait:'기둥을 돌며 버티세요. 엘리베이터가 오고 있습니다',lift_enter:'문이 열렸다! 엘리베이터로 뛰어드세요',lift_button:'오른쪽 조작반에서 1층을 누르세요',descent:'1층으로 내려가는 중',pry:'문 가까이에서 E를 길게 눌러 문을 벌리세요',lift_exit:'벌어진 문으로 탈출하세요',corridor_run:'좌우 복도로 우회하세요! 반대편 녹색 비상계단으로!',
   stairs_loop:'비상계단을 따라 아래층으로 내려가세요',stairs_clue:'또 23층이다. 벽에 붙은 점검 메모를 읽으세요',stairs_reverse:'메모를 따라 위쪽 계단으로 올라가세요',office_record:'관리실 책상의 야간 근무일지를 확인하세요',office_fuse:'서고의 선반에서 예비 퓨즈를 찾으세요',office_power:'오른쪽 전기실에 퓨즈를 꽂아 CCTV 전원을 복구하세요',office_tape:'관리실 CCTV 화면을 확인하고 비상 열쇠를 챙기세요',office_leave:'복도 끝 비상문을 열고 지하로 내려가세요',
-  parking_gate:'주차장 반대편의 보행자 출구를 확인하세요',parking_alarm:'입구 쪽 붉은 화재경보기를 울려 출구에서 귀신을 유인하세요',parking_run:'경보 소리를 따라가는 동안, 보행자 출구로 달리세요!',ended:'',
+  parking_gate:'주차장 반대편의 보행자 출구를 확인하세요',parking_alarm:'입구 쪽 붉은 화재경보기를 울려 출구에서 귀신을 유인하세요',parking_run:'경보 소리를 따라가는 동안, 보행자 출구로 달리세요!',dying:'',ended:'',
 };
 export const journal:Partial<Record<Action,{title:string;text:string}>>={
   phone:{title:'28층 · 정전 뒤의 전화',text:'TV를 보던 중 불이 꺼졌다. 차단기를 올려도 불은 돌아오지 않았다. 그때 휴대전화가 울렸다.\n「2803호 맞죠? 불은 켜지지 않을 거예요. 현관문, 아까부터 열려 있었죠? 신발은 건드리지 마세요. 당신 것 말고, 다른 한 켤레요.」\n\n이사한 지 사흘째다. 아직 누구에게도 호수를 말하지 않았다.'},

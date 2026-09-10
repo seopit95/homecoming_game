@@ -36,3 +36,9 @@ test('each chase is lethal and retries restore its section with notes',()=>{
     const retry=checkpoint(caught);assert.equal(retry.stage,want,stage);assert.equal(retry.ending,null);assert.equal(retry.hidden,false);assert.deepEqual(retry.notes,s.notes);
   }
 });
+test('contact enters a locked death sequence before the retry screen',()=>{
+  const caught=transition({...initialStory(),stage:'corridor_run',notes:['phone']},'caught');
+  assert.equal(caught.stage,'dying');assert.equal(caught.resume,'lift_exit');
+  for(const action of ['stairs','closet','door','caught'])assert.equal(transition(caught,action),caught);
+  const dead=transition(caught,'dead');assert.equal(dead.stage,'ended');assert.equal(dead.ending,'caught');assert.deepEqual(checkpoint(dead).notes,['phone']);
+});

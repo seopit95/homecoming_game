@@ -7,9 +7,9 @@ const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillT
 Object.defineProperty(globalThis,'document',{value:{createElement:()=>({width:0,height:0,getContext:()=>context})},configurable:true});
 test('every required interaction has a reachable position inside the apartment',()=>{
   const {solids,targets}=buildWorld(new THREE.Scene());
-  assert.equal(canStandAt(0,7.5,solids),true);
+  assert.equal(canStandAt(0,4.8,solids),true);
   assert.equal(canStandAt(0,-9,solids),false);
-  const queue=[[0,30]],seen=new Set(['0,30']);
+  const queue=[[0,19]],seen=new Set(['0,19']);
   for(let i=0;i<queue.length;i++){
     const [x,z]=queue[i];
     for(const [dx,dz] of [[0,1],[0,-1],[1,0],[-1,0]]){
@@ -52,4 +52,9 @@ test('crouching behind a desk breaks the ghost sightline',()=>{
   const cover=[{x:0,z:0,w:3,d:1,y:.7,h:1.4}],ghost={x:0,y:1.55,z:-2};
   assert.equal(hasLineOfSight(ghost,{x:0,y:1.65,z:1},cover),true);
   assert.equal(hasLineOfSight(ghost,{x:0,y:1,z:1},cover),false);
+});
+test('the home has a 165 square metre footprint and a broad connected living area',()=>{
+  const w=buildWorld(new THREE.Scene()),floor=w.root.getObjectByName('apartment-floor');assert.ok(floor);
+  const size=new THREE.Box3().setFromObject(floor).getSize(new THREE.Vector3());assert.ok(Math.abs(size.x*size.z-165)<.1);
+  for(const [x,z] of [[0,4.8],[0,0],[0,-4],[1,2],[2.6,2],[-2,0],[-4,0]])assert.ok(canStandAt(x,z,w.solids,.4,w.bounds),`wide passage at ${x},${z}`);
 });

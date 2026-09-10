@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {surface,faceMaterial} from './materials.ts';
 
-type Rig={torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
+type Rig={eyes:T.Group;mouth:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
 const rigs=new WeakMap<T.Group,Rig>();
 export function createGhost(parent:T.Object3D){
   const figure=new T.Group();figure.name='resident-remains';figure.rotation.order='YXZ';parent.add(figure);figure.visible=false;
@@ -34,6 +34,18 @@ export function createGhost(parent:T.Object3D){
     if(i<cols&&j<rows){const k=j*(cols+1)+i;indices.push(k,k+1,k+cols+1,k+1,k+cols+2,k+cols+1);}
   }
   const face=new T.BufferGeometry();face.setAttribute('position',new T.Float32BufferAttribute(positions,3));face.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));face.setIndex(indices);face.computeVertexNormals();mesh(face,faceMaterial(),head);
+  // Only the attack exposes the stretched mouth; ordinary walking retains the small head.
+  const mouth=new T.Group();mouth.name='ghost-attack-mouth';mouth.position.set(0,-.025,.183);head.add(mouth);
+  const voidMat=new T.MeshStandardMaterial({color:'#080506',roughness:1});
+  ellipsoid(mouth,0,0,0,.09,.12,.022,voidMat);
+  const lip=mesh(new T.TorusGeometry(1,.11,8,32),wound,mouth,0,0,.014);lip.scale.set(.092,.12,.035);
+  const tooth=new T.MeshStandardMaterial({color:'#ada998',roughness:.85});
+  for(const side of [-1,1])for(let i=0;i<6;i++){const t=mesh(new T.ConeGeometry(.009,.031+(i%3)*.007,5),tooth,mouth,(i-2.5)*.024,side*(.088-Math.abs(i-2.5)*.004),.025);t.rotation.z=side>0?Math.PI:0;}
+  const eyes=new T.Group();head.add(eyes);
+  for(const side of [-1,1]){
+    ellipsoid(eyes,side*.067,.185+side*.013,.164,.036,.029,.015,voidMat);
+    ellipsoid(eyes,side*.067,.187+side*.013,.177,.021,.017,.011,tooth);
+  }
   const hair=new T.Group();head.add(hair);
   // Individual swept locks have depth from the side and cast real shadows on the face.
   for(let i=0;i<40;i++){
@@ -65,10 +77,11 @@ export function createGhost(parent:T.Object3D){
     const ankle=new T.Group();ankle.name=`ghost-ankle-${side}`;ankle.position.y=-.42;knee.add(ankle);ankles.push(ankle);ellipsoid(ankle,0,-.04,.07,.055,.045,.13,skin);
     for(let i=0;i<5;i++)ellipsoid(ankle,(i-2)*.019,-.048,.19,.012,.025,.05,skin);
   }
-  rigs.set(figure,{torso,head,arms,forearms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
+  rigs.set(figure,{eyes,mouth,torso,head,arms,forearms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
 }
 export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1){
   const rig=rigs.get(figure);if(!rig)return;
+  rig.mouth.visible=false;rig.eyes.visible=false;
   const step=Math.sin(phase),drag=Math.sin(phase/2),jerk=reducedMotion?0:Math.pow(Math.max(0,Math.sin(time*1.7)),22);
   rig.torso.rotation.set(.22+drag*.025*moving,Math.sin(time*.8)*.06,-.14+step*.035*moving);
   rig.torso.position.y=1.16+Math.abs(step)*.014*moving;
@@ -85,4 +98,16 @@ export function animateGhost(figure:T.Group,time:number,moving:number,proximity:
   const p=rig.gown.geometry.getAttribute('position');
   for(let i=0;i<p.count;i++){const x=rig.hem[i*3],y=rig.hem[i*3+1],z=rig.hem[i*3+2],weight=Math.max(0,-y);p.setXYZ(i,x+Math.sin(time*2.2+y*6)*.022*weight,y,z+Math.cos(time*2.5+x*8)*.022*weight);}
   p.needsUpdate=true;
+}
+
+export function animateGhostAttack(figure:T.Group,time:number,reducedMotion:boolean,eyeHeight=1.65){
+  animateGhost(figure,time,0,1,reducedMotion,0);
+  const rig=rigs.get(figure);if(!rig)return;
+  const convulsion=reducedMotion?.025:.17,envelope=Math.min(1,time*7),fall=T.MathUtils.smoothstep(time,1.05,2.55);
+  rig.torso.position.y=T.MathUtils.lerp(eyeHeight-.48,1.16,fall);
+  rig.torso.rotation.set(.02+Math.sin(time*17)*convulsion*.4,Math.sin(time*13)*convulsion*.3,-.06+Math.sin(time*19)*convulsion*.4);
+  rig.head.rotation.set(-.07+Math.sin(time*31)*convulsion,.08+Math.sin(time*23)*convulsion,-.1+Math.sin(time*27)*convulsion*1.2);
+  rig.mouth.visible=true;rig.eyes.visible=true;rig.mouth.scale.set(1+envelope*.15,.3+envelope*(1.25+Math.sin(time*33)*.1),1);
+  rig.hair.rotation.set(-.2+Math.sin(time*19)*convulsion,0,Math.sin(time*29)*convulsion);
+  for(let i=0;i<2;i++){const side=i===0?-1:1;rig.arms[i].rotation.set(-2.05+Math.sin(time*18+i)*convulsion*2,side*.3,side*.35);rig.forearms[i].rotation.set(-.8+Math.sin(time*21+i)*convulsion,0,side*.2);}
 }

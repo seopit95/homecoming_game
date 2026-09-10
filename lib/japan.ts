@@ -20,26 +20,19 @@ export function dressApartment(root:T.Group,area:Area){
   function extinguisher(x:number,z:number){const red=new T.MeshStandardMaterial({color:'#773b31',metalness:.2,roughness:.5});cylinder(x,.36,z,.11,.58,red);box(x,.7,z,.21,.05,.1,dark);rod(new T.Vector3(x+.11,.68,z),new T.Vector3(x+.15,.23,z),.016,dark);}
   function ceilingStains(x:number,z:number,w:number,d:number){box(x,3.155,z,w,.008,d,surface('concrete','#646961'));}
   if(area==='apartment'){
-    box(0,.008,-7.7,2.65,.012,2.4,surface('tile','#b9bdb4',{roughness:.47}));
-    for(const x of [-.82,-.58]){box(x,.044,-6.83,.19,.075,.37,new T.MeshStandardMaterial({color:'#746f5b',roughness:.9}));box(x,.094,-6.76,.2,.05,.16,paper);}
-    cylinder(-1.05,.3,-8.3,.14,.6,steel);for(let i=0;i<3;i++)rod(new T.Vector3(-1.12+i*.07,.15,-8.3),new T.Vector3(-1.2+i*.11,1.15+i*.12,-8.32),.016,dark);
-    notice(['白鷺ハイツ','第三棟 2803号室','夜間は静かに','管理組合'],1.02,1.85,-8.58,0,.23,.38);
-    // Sliding paper fronts and heavy wooden rails turn the wardrobe into an oshiire.
-    for(const z of [1.6,2.72])box(5.895,1.24,z,.018,2.02,1.03,paper);
-    for(const y of [.23,1.22,2.25])box(5.872,y,2.15,.03,.034,2.14,wood);
-    for(const z of [1.07,2.15,3.24])box(5.866,1.25,z,.035,2.07,.027,wood);
-    for(const z of [2.04,2.29]){const pull=cylinder(5.838,1.22,z,.04,.012,dark);pull.rotation.z=Math.PI/2;}
-    // Six woven mat seams and a low lived-in table retain the existing collision geometry.
-    for(const x of [-5.25,-4.12,-2.99])box(x,.042,5.2,.026,.012,4.05,wood);
-    box(-4.13,.042,5.2,4.35,.012,.024,wood);
-    box(-4.5,.56,4.9,.38,.022,.28,paper);notice(['家賃振込票','白鷺管理事務所'], -4.5,.575,4.9,0,.33,.23).rotation.x=-Math.PI/2;
-    cylinder(-4.35,.65,5.57,.1,.19,new T.MeshStandardMaterial({color:'#b6b7aa',roughness:.32}));
-    // A wall-mounted air conditioner, louvres and braided power lead.
-    box(0,2.58,8.72,1.34,.36,.25,new T.MeshStandardMaterial({color:'#b3b5a8',roughness:.62}));for(let i=0;i<8;i++)box(-.51+i*.145,2.46,8.55,.085,.027,.03,dark);
-    for(const [x,z,ry] of [[-6.83,7.8,Math.PI/2],[6.83,5.15,-Math.PI/2]]){
+    box(0,.008,-5.15,2.65,.012,1.9,surface('tile','#b9bdb4',{roughness:.47}));
+    for(const x of [-.82,-.58])box(x,.044,-4.55,.19,.075,.37,paper);
+    cylinder(-1.05,.3,-5.8,.14,.6,steel);for(let i=0;i<3;i++)rod(new T.Vector3(-1.12+i*.07,.15,-5.8),new T.Vector3(-1.2+i*.11,1.15+i*.12,-5.82),.016,dark);
+    notice(['白鷺ハイツ','第三棟 2803号室','夜間は静かに','管理組合'],1.02,1.85,-5.83,0,.23,.38);
+    for(const z of [1.05,2.05])box(5.556,1.24,z,.018,2.02,.96,paper);
+    for(const y of [.23,1.22,2.25])box(5.532,y,1.55,.03,.034,2.04,wood);
+    for(const z of [.53,1.55,2.57])box(5.526,1.25,z,.035,2.07,.027,wood);
+    for(const z of [1.44,1.69]){const pull=cylinder(5.498,1.22,z,.04,.012,dark);pull.rotation.z=Math.PI/2;}
+    notice(['家賃振込票','白鷺管理事務所'],-3.1,.586,1.91,0,.33,.23).rotation.x=-Math.PI/2;
+    box(0,2.58,6.02,1.34,.36,.25,paper);for(let i=0;i<8;i++)box(-.51+i*.145,2.46,5.85,.085,.027,.03,dark);
+    for(const [x,z,ry] of [[-6.43,4.8,Math.PI/2],[6.43,3.2,-Math.PI/2]]){
       const glass=new T.Mesh(new T.PlaneGeometry(1.45,1.53),nightWindow());glass.position.set(x,1.9,z);glass.rotation.y=ry;root.add(glass);
-      for(const zz of [z-.77,z,z+.77])box(x*.998,1.9,zz,.04,1.65,.035,steel);
-      box(x*.998,1.9,z,.04,.04,1.6,steel);
+      for(const zz of [z-.77,z,z+.77])box(x*.998,1.9,zz,.04,1.65,.035,steel);box(x*.998,1.9,z,.04,.04,1.6,steel);
     }
   }else if(area==='landing'){
     notice(['白鷺ハイツ','掲示板','夜間巡回 03:00','防犯カメラ作動中','管理組合'],10.83,1.75,.4,-Math.PI/2,1.55,1.8);

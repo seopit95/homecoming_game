@@ -30,3 +30,17 @@ test('turning toward the player never leaves the navigation root upside down',()
   assert.ok(Math.abs(figure.rotation.x)<.001&&Math.abs(figure.rotation.z)<.001);
   figure.rotation.y=Math.PI*.9;const forward=new T.Vector3();figure.getWorldDirection(forward);assert.ok(forward.z<-.9);
 });
+
+test('attack framing stays finite for crouching, standing and reduced motion without changing head scale',async()=>{
+  const {animateGhostAttack,animateGhost}=await import('../lib/ghost.ts');
+  for(const reduced of [false,true])for(const eye of [1,1.65]){
+    const figure=makeFigure(new T.Group()),head=figure.getObjectByName('ghost-head'),scale=head.scale.toArray();figure.position.set(0,0,-.49);figure.rotation.y=0;
+    for(const t of [0,.1,.4,1,1.7,2.8,3.2]){
+      animateGhostAttack(figure,t,reduced,eye);figure.updateMatrixWorld(true);
+      assert.deepEqual(head.scale.toArray(),scale);assert.ok(figure.getObjectByName('ghost-attack-mouth').visible);
+      const face=head.localToWorld(new T.Vector3(0,.13,.16));assert.ok(face.toArray().every(Number.isFinite));assert.ok(face.z<-.12,'face remains beyond the near clipping plane');
+      assert.deepEqual(figure.position.toArray(),[0,0,-.49]);
+    }
+    animateGhost(figure,0,0,0,reduced);assert.equal(figure.getObjectByName('ghost-attack-mouth').visible,false);
+  }
+});
