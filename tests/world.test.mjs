@@ -58,3 +58,9 @@ test('the home has a 165 square metre footprint and a broad connected living are
   const size=new THREE.Box3().setFromObject(floor).getSize(new THREE.Vector3());assert.ok(Math.abs(size.x*size.z-165)<.1);
   for(const [x,z] of [[0,4.8],[0,0],[0,-4],[1,2],[2.6,2],[-2,0],[-4,0]])assert.ok(canStandAt(x,z,w.solids,.4,w.bounds),`wide passage at ${x},${z}`);
 });
+test('memory rain and windshield lines release their GPU resources on teardown',async()=>{
+  const {buildRoad}=await import('../lib/prologue.ts'),{disposeWorld}=await import('../lib/world.ts');
+  const road=buildRoad(new THREE.Scene());let expected=0,disposed=0;
+  road.root.traverse(o=>{if(o instanceof THREE.Line){for(const resource of [o.geometry,o.material]){expected++;resource.addEventListener('dispose',()=>disposed++);}}});
+  assert.ok(expected>=4);disposeWorld(road.root);assert.equal(disposed,expected);assert.equal(road.root.parent,null);
+});

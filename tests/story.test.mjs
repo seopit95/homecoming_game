@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialStory, transition, checkpoint} from '../lib/story.ts';
-function apartmentExit(){let s=initialStory();for(const a of ['blackout','breaker','phone','shoes','radio','heard','closet','survived','closet','door'])s=transition(s,a);return s;}
+function apartmentExit(){let s=transition(initialStory(),'skip_memory');for(const a of ['blackout','breaker','phone','shoes','radio','heard','closet','survived','closet','door'])s=transition(s,a);return s;}
 test('TV blackout precedes restoring power, and the radio goes silent before the threat',()=>{
-  let s=initialStory();assert.equal(s.stage,'tv');assert.deepEqual(transition(s,'breaker'),s);
+  let s=transition(initialStory(),'skip_memory');assert.equal(s.stage,'tv');assert.deepEqual(transition(s,'breaker'),s);
   for(const [action,stage] of [['blackout','power'],['breaker','phone'],['phone','shoes'],['shoes','radio'],['radio','listen'],['heard','hide']]){s=transition(s,action);assert.equal(s.stage,stage,action);}
 });
 test('leaving home continues instead of awarding the ending',()=>{const s=apartmentExit();assert.equal(s.stage,'lift_call');assert.equal(s.ending,null);});
@@ -41,4 +41,11 @@ test('contact enters a locked death sequence before the retry screen',()=>{
   assert.equal(caught.stage,'dying');assert.equal(caught.resume,'lift_exit');
   for(const action of ['stairs','closet','door','caught'])assert.equal(transition(caught,action),caught);
   const dead=transition(caught,'dead');assert.equal(dead.stage,'ended');assert.equal(dead.ending,'caught');assert.deepEqual(checkpoint(dead).notes,['phone']);
+});
+test('the fatal hit-and-run memory precedes the haunting three nights later',()=>{
+  let s=initialStory();assert.equal(s.stage,'drive');
+  for(const [action,stage] of [['collision','impact'],['fled','flee'],['home','sleep'],['wake','tv']]){s=transition(s,action);assert.equal(s.stage,stage);}
+  assert.ok(s.notes.includes('wake'));assert.equal(transition(s,'blackout').stage,'power');
+  const skipped=transition(initialStory(),'skip_memory');assert.equal(skipped.stage,'tv');assert.deepEqual(skipped.notes,s.notes);
+  assert.equal(transition({...s,stage:'hide'},'skip_memory').stage,'hide');
 });

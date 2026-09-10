@@ -118,6 +118,14 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       for(const dx of [-.65,.65])box(x+dx,.7,z+2.12,.35,.18,.03,mat('#b5c9be',{emissive:'#4a6662',emissiveIntensity:.35}));
       box(x,1.16,z+1.18,1.8,.08,.7,paint);for(const xx of [x-1.4,x+1.4])box(xx,.006,z,.07,.015,4.7,stripe);
     }
+    // The car from the opening, beside the exit and outside both escape lanes.
+    const ownPaint=mat('#1c2327',{metalness:.5});box(5,.65,-39,2,1.1,4.2,ownPaint,true).name='hit-and-run-car';
+    box(5,1.35,-39.2,1.8,.65,2,dark);
+    const dent=box(5,1.13,-37.6,1.8,.08,.85,ownPaint);dent.rotation.z=-.1;dent.rotation.x=.13;
+    for(const x of [3.97,6.03])for(const z of [-40.3,-37.7])box(x,.36,z,.16,.54,.54,dark);
+    const fracture:number[]=[];for(let i=0;i<9;i++){const angle=i*2.4;fracture.push(5.15,1.39,-38.18,5.15+Math.cos(angle)*(.2+i*.055),1.39+Math.sin(angle)*(.08+i*.02),-38.18);}
+    root.add(new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(fracture,3)),new T.LineBasicMaterial({color:'#b4c7c5',transparent:true,opacity:.65})));
+    label('03-17',5,.65,-36.88,0,.55,.16,'#25322b','#b9bdb0');label('2803',5,2,-42.72,0,.75,.22);
     for(const z of [-37,-19,-1,17,35])for(const x of [-22,-11,0,11,22])fixture(x,z,'#869f9b');
     for(const x of [-22,-1,22])cable(x,0,84);
     const alarm=box(-23.5,1.4,30,.5,.65,.3,mat('#962f25',{emissive:'#681a10',emissiveIntensity:.5}));target('alarm','화재경보기 작동',alarm,-23.3,1.4,30.3);label('火災報知器',-23.5,2.1,30.18,0,1.3,.3,'#e2c6a1','#651b13');

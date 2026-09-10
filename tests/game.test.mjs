@@ -20,7 +20,7 @@ function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.m
 
 test('real interaction loop reaches the ending, requires a held pry, and freezes on pause',()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));tick();game.start();tick();
+  const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));tick();game.start();game.skipMemory();tick();
   event(win,'blur',{});event(doc,'pointerlockchange',{});assert.equal(game.snapshot().paused,false,'losing focus or pointer lock must not open a pause menu');
   doc.hidden=true;event(doc,'visibilitychange',{});const backgroundAt=game.snapshot().elapsed;tick(5);assert.equal(game.snapshot().paused,false);assert.equal(game.snapshot().elapsed,backgroundAt);doc.hidden=false;event(doc,'visibilitychange',{});
   assert.equal(game.snapshot().story.stage,'tv');assert.ok(renderedScene.getObjectByName('apartment-tv-light').intensity>0);
@@ -94,7 +94,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   runTo(-23.3,-40);runTo(0,-40);
   use([0,1.65,-41],[0,1.25,-42.48],'ended');
   assert.equal(game.snapshot().story.ending,'escaped');assert.deepEqual(errors,[]);
-  game.start();tick(.2);assert.equal(game.snapshot().story.stage,'tv');assert.ok(game.snapshot().elapsed<.3,'fresh restart resets elapsed time');
+  game.start();tick(.2);assert.equal(game.snapshot().story.stage,'drive');game.skipMemory();assert.ok(game.snapshot().elapsed<.3,'fresh restart resets elapsed time');
   tick(7.1);game.key('KeyW',true);tick(.5);game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(new THREE.Vector3(0,1.65,4.8))>.5,'the player can walk away from the sofa after the blackout');game.dispose();
 });
 
@@ -116,4 +116,33 @@ test('contact screams once, locks controls and falls before death; manual pause 
   tick(2.6);assert.equal(game.snapshot().story.stage,'dying');assert.ok(renderedCamera.position.y<initialY-1);assert.ok(game.snapshot().deathProgress>.8);assert.equal(renderedScene.getObjectByName('resident-remains'),root,'death stays in the place of contact');
   tick(.7);assert.equal(game.snapshot().story.stage,'ended');assert.equal(game.snapshot().story.ending,'caught');
   game.start(true);tick();assert.equal(game.snapshot().story.stage,'lift_call');assert.equal(game.snapshot().deathProgress,0);assert.equal(renderedCamera.position.y,1.65);game.dispose();
+});
+
+test('the remembered drive, fatal collision, escape and sleep lead to TV three nights later',()=>{
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();game.start();tick(.1);
+  assert.equal(game.snapshot().story.stage,'drive');assert.match(game.snapshot().memoryText,/술을 마셨다/);
+  const road=renderedScene.getObjectByName('accident-memory');assert.ok(road);assert.equal(renderedScene.getObjectByName('apartment-tv-light').parent.visible,false);
+  assert.equal(road.getObjectByName('memory-cracked-glass').visible,false);
+  game.interact();game.crouch();game.torch();game.key('KeyW',true);assert.equal(game.snapshot().crouched,false);assert.equal(game.snapshot().flashlight,false);assert.equal(game.snapshot().story.stage,'drive');
+  game.pause();const pos=renderedCamera.position.toArray(),at=game.snapshot().elapsed;tick(10);assert.deepEqual(renderedCamera.position.toArray(),pos);assert.equal(game.snapshot().elapsed,at);game.skipMemory();assert.equal(game.snapshot().story.stage,'drive');game.pause(false);
+  doc.hidden=true;event(doc,'visibilitychange',{});tick(10);assert.equal(game.snapshot().elapsed,at);assert.equal(game.snapshot().paused,false);doc.hidden=false;event(doc,'visibilitychange',{});
+  tick(8);assert.equal(game.snapshot().story.stage,'impact');assert.equal(road.getObjectByName('memory-cracked-glass').visible,true);
+  tick(2.5);assert.equal(game.snapshot().story.stage,'flee');assert.match(game.snapshot().memoryText,/사람을 치어 죽였다/);
+  tick(6);assert.equal(game.snapshot().story.stage,'sleep');assert.equal(renderedScene.getObjectByName('accident-memory'),undefined);assert.equal(renderedCamera.position.y,.98);
+  tick(4.5);assert.ok(game.snapshot().memoryFade>.8);tick(1.5);assert.equal(game.snapshot().story.stage,'tv');assert.ok(game.snapshot().story.notes.includes('wake'));assert.match(game.snapshot().memoryLabel,/사흘 뒤/);assert.ok(renderedScene.getObjectByName('apartment-tv-light').intensity>0);
+  tick(7);assert.equal(game.snapshot().story.stage,'power');assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0);
+  game.start();tick();const previous=renderedScene.getObjectByName('accident-memory');game.start();tick();assert.notEqual(renderedScene.getObjectByName('accident-memory'),previous);assert.equal(previous.parent,null,'restart disposes the old memory');
+  game.skipMemory();tick();assert.equal(game.snapshot().story.stage,'tv');assert.equal(renderedScene.getObjectByName('accident-memory'),undefined);assert.ok(game.snapshot().story.notes.includes('wake'));game.dispose();
+});
+test('desktop memory leaves the cursor available for skip, including after pause and restart',()=>{
+  const previousMedia=win.matchMedia;win.matchMedia=()=>({matches:false});let locks=0;
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){},requestPointerLock(){locks++;doc.pointerLockElement=canvas;return Promise.resolve();}});
+  doc.exitPointerLock=()=>{doc.pointerLockElement=null;event(doc,'pointerlockchange',{});};
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  try{
+    tick();game.start();tick();assert.equal(locks,0);assert.equal(doc.pointerLockElement,null);
+    game.pause();game.pause(false);assert.equal(locks,0);game.skipMemory();tick();assert.equal(locks,1);assert.equal(doc.pointerLockElement,canvas);
+    game.start();tick();assert.equal(game.snapshot().story.stage,'drive');assert.equal(doc.pointerLockElement,null);assert.equal(locks,1);
+  }finally{game.dispose();win.matchMedia=previousMedia;doc.pointerLockElement=null;}
 });

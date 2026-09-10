@@ -23,7 +23,7 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
 }
 export function disposeWorld(root:T.Object3D){
   const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();
-  root.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material])){materials.add(m);for(const v of Object.values(m))if(v instanceof T.Texture)textures.add(v);}}});
+  root.traverse(o=>{if(o instanceof T.Mesh||o instanceof T.Line){geometries.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material])){materials.add(m);for(const v of Object.values(m))if(v instanceof T.Texture)textures.add(v);}}});
   geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());root.removeFromParent();
 }
 function buildApartment(scene:T.Group) {
@@ -93,11 +93,11 @@ function buildApartment(scene:T.Group) {
     tvMaterial.color.setHex(on?0xffffff:0x000000);tvLight.intensity=on?3.3+Math.sin(time*2)*.25:0;
     if(!on||tvFrame===Math.floor(time*4))return;tvFrame=Math.floor(time*4);
     const ctx=tvContext;ctx.fillStyle='#172b48';ctx.fillRect(0,0,640,320);
-    // Original late-night weather broadcast, with moving rain over a city skyline.
+    // Original late-night news broadcast, with moving rain over a city skyline.
     for(let i=0;i<18;i++){const h=35+(i*37)%100;ctx.fillStyle=i%2?'#263c56':'#0c1a2b';ctx.fillRect(i*37,260-h,32,h);ctx.fillStyle='#a9bfc5';for(let j=0;j<5;j++)ctx.fillRect(i*37+8,260-h+12+j*19,4,5);}
     ctx.fillStyle='#6f8eac';for(let i=0;i<60;i++)ctx.fillRect((i*79)%640,(i*47+time*80)%260,1,13);
-    ctx.fillStyle='#e1e8eb';ctx.font='22px serif';ctx.fillText('深夜の天気予報',28,40);ctx.font='16px sans-serif';ctx.fillText('03:17   関東地方 / 雨',28,70);
-    ctx.fillStyle='#dde2df';ctx.fillRect(0,267,640,53);ctx.fillStyle='#192636';ctx.font='19px sans-serif';ctx.fillText('明け方まで強い雨  ·  外出はお控えください',24,300);
+    ctx.fillStyle='#e1e8eb';ctx.font='22px serif';ctx.fillText('深夜ニュース',28,40);ctx.font='16px sans-serif';ctx.fillText('03:17   関東地方 / 雨',28,70);
+    ctx.fillStyle='#dde2df';ctx.fillRect(0,267,640,53);ctx.fillStyle='#192636';ctx.font='19px sans-serif';ctx.fillText('三日前の死亡ひき逃げ事件  ·  情報提供を',24,300);
     ctx.fillStyle='#152034';for(let y=0;y<260;y+=5)ctx.fillRect(0,y,640,1);tvTexture.needsUpdate=true;
   }
   // Full kitchen, dining area and a separate study give the home a lived-in scale.
