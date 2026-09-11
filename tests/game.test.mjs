@@ -5,10 +5,10 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
-let renderedCamera,renderedScene;const voiceCalls=[];let hauntLevel=0;
+let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0;
 class Renderer{shadowMap={};setPixelRatio(){}setSize(){}render(scene,camera){renderedCamera=camera;renderedScene=scene;}dispose(){}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setHaunt(value){hauntLevel=value;}setVolume(){}pause(){}resume(){}sound(){}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setHaunt(value){hauntLevel=value;}setVolume(){}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -64,9 +64,9 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   game.interact();assert.equal(game.snapshot().story.hidden,false);
   runHome(0,1.55);runHome(0,-4.7);
   useHome([0,1.65,-4.7],[0,1.2,-5.86],'lift_call');
-  runTo(0,-18.2);use([1.48,1.65,-18.2],[1.48,1.35,-19.4],'lift_wait');
+  runTo(0,-30.2);use([1.48,1.65,-30.2],[1.48,1.35,-31.4],'lift_wait');
   tick(8);assert.equal(game.snapshot().story.stage,'lift_enter');
-  use([0,1.65,-18.2],[0,1.3,-19.35],'lift_button');
+  use([0,1.65,-30.2],[0,1.3,-31.35],'lift_button');
   use([.5,1.65,-1.2],[1.5,1.5,-1.2],'descent');
   tick(8);assert.equal(game.snapshot().liftFloor,26);
   const pausedAt=game.snapshot().elapsed;game.pause();tick(3);assert.equal(game.snapshot().elapsed,pausedAt);game.pause(false);
@@ -147,6 +147,29 @@ test('desktop memory leaves the cursor available for skip, including after pause
     game.pause();game.pause(false);assert.equal(locks,0);game.skipMemory();tick();assert.equal(locks,1);assert.equal(doc.pointerLockElement,canvas);
     game.start();tick();assert.equal(game.snapshot().story.stage,'drive');assert.equal(doc.pointerLockElement,null);assert.equal(locks,1);
   }finally{game.dispose();win.matchMedia=previousMedia;doc.pointerLockElement=null;}
+});
+
+test('the exterior fall plays once on the way to the elevator, without stopping pursuit or player control',()=>{
+  const fallsBefore=soundCalls.filter(s=>s==='fall').length;
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  try{
+    tick();game.start(true);tick();renderedCamera.position.set(0,1.65,home.door[2]+1.16);
+    event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
+    event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(Math.atan2(-.45,1.16)-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();tick();
+    const falling=renderedScene.getObjectByName('falling-apparition');assert.ok(falling,'a separate exterior apparition exists');assert.equal(falling.visible,false);
+    game.key('KeyW',true);game.key('ShiftLeft',true);
+    for(let i=0;i<600&&!falling.visible;i++)tick(.025);
+    assert.equal(falling.visible,true);assert.equal(game.snapshot().story.stage,'lift_call');assert.equal(game.snapshot().paused,false);assert.equal(soundCalls.filter(s=>s==='fall').length,fallsBefore+1);
+    const ghost=renderedScene.getObjectByName('resident-remains'),ghostBefore=ghost.position.clone(),playerBefore=renderedCamera.position.clone(),high=falling.position.y;
+    tick(.3);assert.ok(falling.position.y<high-.4,'the body accelerates downwards');assert.ok(renderedCamera.position.distanceTo(playerBefore)>.8,'movement remains available');assert.ok(ghost.position.distanceTo(ghostBefore)>.3,'the pursuer continues walking');
+    tick(.4);const frustum=new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(renderedCamera.projectionMatrix,renderedCamera.matrixWorldInverse));
+    assert.ok(frustum.intersectsBox(new THREE.Box3().setFromObject(falling)),'a player running toward the lift can see the falling body ahead');
+    game.pause();const frozen=falling.position.toArray();tick(5);assert.deepEqual(falling.position.toArray(),frozen);game.pause(false);
+    tick(4);assert.equal(falling.visible,false);assert.equal(game.snapshot().story.stage,'lift_call');
+    renderedCamera.position.set(0,1.65,10);tick(.05);renderedCamera.position.z=7;tick(1);assert.equal(falling.visible,false,'crossing the trigger again cannot replay the fall');
+    assert.equal(soundCalls.filter(s=>s==='fall').length,fallsBefore+1,'the falling sound plays exactly once');
+  }finally{game.dispose();}
 });
 
 async function wardrobeFixture(){

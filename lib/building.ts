@@ -2,13 +2,15 @@ import * as T from 'three';
 import type {Area,Action} from './story';
 import type {Bounds,Solid,Target} from './world';
 import {surface,boxUV,softBox} from './materials.ts';
-import {dressApartment} from './japan.ts';
+import {dressApartment,nightWindow} from './japan.ts';
+
+export const landing={halfWidth:3,halfLength:32,spawnZ:29.5,liftZ:-31.75,fallTriggerZ:12,fallZ:-4} as const;
 
 export {createGhost as makeFigure} from './ghost.ts';
 import {createGhost as makeFigure} from './ghost.ts';
 export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
-  const bounds:Bounds=area==='corridor'?{x:14.8,z:38.8}:area==='parking'?{x:24.8,z:42.8}:area==='landing'?{x:10.8,z:19.8}:area==='office'?{x:11.8,z:15.8}:area==='lift'?{x:1.8,z:2.8}:{x:6.8,z:8.8};
+  const bounds:Bounds=area==='corridor'?{x:14.8,z:38.8}:area==='parking'?{x:24.8,z:42.8}:area==='landing'?{x:landing.halfWidth-.2,z:landing.halfLength-.2}:area==='office'?{x:11.8,z:15.8}:area==='lift'?{x:1.8,z:2.8}:{x:6.8,z:8.8};
   const mat=(color:string,extra:object={})=>new T.MeshStandardMaterial({color,roughness:.84,...extra});
   const wallMat=surface(area==='parking'||area==='stairs'?'concrete':'wall',area==='parking'?'#b3babd':'#bbbcb2'),floorMat=surface(area==='parking'||area==='stairs'?'concrete':'tile','#acaea6',{roughness:area==='parking'?.6:.44}),metal=mat('#4e5d60',{metalness:.65,roughness:.4}),dark=mat('#101a19'),wood=surface('wood','#aaa297'),stripe=mat('#a1a792');
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false){
@@ -30,24 +32,42 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   const spawn=new T.Vector3(0,1.65,7);let heading=0,heightAt:((x:number,z:number)=>number)=()=>0;
   let liftDoors:{left:T.Mesh;right:T.Mesh}|undefined;
   let setDisplay:((text:string)=>void)|undefined;
+  let fallingFigure:T.Group|undefined;
   const figure=makeFigure(root),shoes=new T.Group(),phoneGlow=new T.PointLight(),radioLight=new T.PointLight();
   const bx=bounds.x+.2,bz=bounds.z+.2;
   if(area!=='stairs'){
     box(0,-.12,0,bx*2,.24,bz*2,floorMat);box(0,3.25,0,bx*2,.15,bz*2,mat('#394643'));
-    wall(-bx,0,.2,bz*2);wall(bx,0,.2,bz*2);wall(0,-bz,bx*2,.2);wall(0,bz,bx*2,.2);
+    if(area!=='landing')wall(-bx,0,.2,bz*2);
+    wall(bx,0,.2,bz*2);wall(0,-bz,bx*2,.2);wall(0,bz,bx*2,.2);
   }
   if(area==='landing'||area==='lift'){
-    const dz=area==='landing'?-19.75:-2.75;
+    const dz=area==='landing'?landing.liftZ:-2.75;
     const left=box(-.48,1.3,dz,.94,2.6,.11,metal),right=box(.48,1.3,dz,.94,2.6,.11,metal);liftDoors={left,right};
     box(-1.1,1.4,dz,.14,2.8,.18,dark);box(1.1,1.4,dz,.14,2.8,.18,dark);box(0,2.81,dz,2.3,.17,.18,dark);
     const display=label('28',0,2.46,dz+.16,0,.55,.25,'#e29a69','#08110f');setDisplay=display.update;
     if(area==='landing'){
-      spawn.set(0,1.65,17.5);label('28F',-4,1.8,-19.8,0,1.7,.75);label('2803  ←    エレベーター  ↑',0,2.7,4.5,0,3,.3);
+      spawn.set(0,1.65,landing.spawnZ);label('28F',-1.9,2,-31.8,0,.9,.55);label('エレベーター  ↑',0,2.72,17,0,2.3,.26);
       const call=box(1.48,1.3,dz+.1,.25,.44,.16,metal);label('▽',1.48,1.35,dz+.2,0,.17,.2,'#d19369');target('call','엘리베이터 호출',call,1.48,1.35,dz+.35);target('enter','엘리베이터에 타기',left,0,1.3,dz+.4);
-      for(const z of [-15,-7,3,12])fixture(0,z);for(const x of [-5,5]){box(x,1.25,19.83,1.55,2.5,.12,wood);label(x<0?'2803':'2804',x,2,19.7,Math.PI,.5,.18);}
-      for(const z of [-15,-5,5,15]){box(-10.85,1.8,z,.03,1.65,3.8,mat('#1b3340',{emissive:'#142c40',emissiveIntensity:.5}));for(const x of [-4,4])box(x,1.6,z,1.3,3.2,1.3,wallMat,true);}
-      for(const z of [-11,1,11]){box(8.8,.5,z,2.4,1,2.6,wood,true);label('避難通路',10.8,2.3,z,-Math.PI/2,1.6,.3);}
-      box(5,.65,-6,1.3,1.3,1.1,wood,true);box(5,1.45,-6,.4,.6,.4,mat('#3d4936'));
+      const stained=surface('concrete','#858d83'),rust=surface('concrete','#65544b',{metalness:.45}),oldDoor=surface('concrete','#727d70',{metalness:.28});
+      box(-3,.45,0,.22,.9,64,stained,true).name='landing-parapet';
+      for(const y of [.97,1.27])box(-3,y,0,.075,.06,64,rust);
+      for(let z=-31;z<=31;z+=1.25)box(-3,1.11,z,.04,.3,.04,rust);
+      box(-2.74,.006,0,.25,.016,64,mat('#303c3b'));box(2.72,.035,0,.38,.07,64,stained);
+      for(let z=-29;z<=31;z+=6){
+        box(-2.95,1.62,z,.23,3.24,.25,stained,true);box(-2.95,2.99,z,.42,.24,.42,stained);
+        box(2.87,1.2,z-1.5,.16,2.4,1.12,oldDoor);box(2.76,1.17,z-1.12,.09,.045,.16,rust);
+        label(z===31?'2803':String(2804+(31-z)/6),2.755,2.48,z-1.5,-Math.PI/2,.43,.16,'#c3c3aa','#35423b');
+        box(2.83,1.4,z+.7,.2,.55,.42,rust);box(2.76,2.2,z+.7,.06,1.2,.06,rust);
+      }
+      for(let z=-28;z<=28;z+=8)fixture(.45,z,'#8eaaa0');
+      cable(2.55,0,63);box(2.72,2.85,0,.1,.1,63,rust);
+      // The exposed slab edge and repeated lower floors establish the 28-storey drop.
+      for(let y=-3.2;y>=-80;y-=3.2){box(-.05,y-.1,0,6.1,.22,64,stained);box(-3,y+.45,0,.18,.9,64,stained);}
+      for(const y of [3.2,6.4,9.6]){box(-.05,y+3.15,0,6.1,.18,64,stained);box(-3,y+.45,0,.18,.9,64,stained);}
+      const skyline=new T.Mesh(new T.PlaneGeometry(120,90),nightWindow());skyline.position.set(-36,-26,-5);skyline.rotation.y=Math.PI/2;root.add(skyline);
+      fallingFigure=makeFigure(root);fallingFigure.name='falling-apparition';fallingFigure.position.set(-4.15,9,landing.fallZ);fallingFigure.rotation.set(.25,Math.PI/2,-.45);fallingFigure.visible=false;
+      // A small fill makes the pale silhouette readable against the open night sky.
+      const fallLight=new T.PointLight('#c2d5df',5,4,2);fallLight.position.set(-1,1,1);fallingFigure.add(fallLight);
     }else{
       spawn.set(0,1.65,1.5);heading=0;fixture(0,.2,'#d4d3ac');
       for(const x of [-1.7,1.7])box(x,1.02,0,.055,.07,4.4,metal);
@@ -134,5 +154,5 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     figure.position.set(11,0,-26);figure.visible=true;
   }
   dressApartment(root,area);
-  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,bounds,spawn,heading,heightAt,liftDoors,setDisplay};
+  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,bounds,spawn,heading,heightAt,liftDoors,setDisplay,fallingFigure};
 }

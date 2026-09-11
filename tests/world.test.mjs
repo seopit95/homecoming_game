@@ -58,6 +58,14 @@ test('the home has a 330 square metre footprint and a broad connected living are
   const size=new THREE.Box3().setFromObject(floor).getSize(new THREE.Vector3());assert.ok(Math.abs(size.x*size.z-330)<.1);
   for(const [x,z] of [[0,4.8],[0,0],[0,-4],[1,2],[2.6,2],[-2,0],[-4,0]])assert.ok(canStandAt(x,z,w.solids,.4,w.bounds),`wide passage at ${x},${z}`);
 });
+test('the exterior apartment gallery has a long clear route and an open view above its guardrail',()=>{
+  const w=buildWorld(new THREE.Scene(),'landing'),call=w.targets.find(t=>t.id==='call');
+  assert.ok(w.spawn.distanceTo(call.point)>55,'the elevator is at the far end of a long gallery');
+  for(let z=-30;z<=29;z++)assert.ok(canStandAt(0,z,w.solids,.4,w.bounds),`clear route at ${z}`);
+  assert.equal(hasLineOfSight({x:0,y:1.65,z:5},{x:-4,y:1.8,z:0},w.solids),true,'the falling shape can be seen outside');
+  assert.equal(canStandAt(-3.4,0,w.solids,.23,w.bounds),false,'the player cannot walk off the balcony');
+  assert.equal(hasLineOfSight({x:0,y:.7,z:0},{x:-4,y:.7,z:0},w.solids),false,'the solid lower guardrail remains');
+});
 test('memory rain and windshield lines release their GPU resources on teardown',async()=>{
   const {buildRoad}=await import('../lib/prologue.ts'),{disposeWorld}=await import('../lib/world.ts');
   const road=buildRoad(new THREE.Scene());let expected=0,disposed=0;

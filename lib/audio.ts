@@ -50,9 +50,16 @@ export class HorrorAudio {
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.master);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }
-  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm',pan=0,level=1){
+  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm',pan=0,level=1){
     const ctx=this.context;if(!ctx||!this.master||ctx.state!=='running')return;
     const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.master);
+    if(kind==='fall'){
+      const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),cry=ctx.createOscillator(),cryGain=ctx.createGain();
+      src.buffer=this.noise;filter.type='bandpass';filter.frequency.setValueAtTime(1900,t);filter.frequency.exponentialRampToValueAtTime(170,t+1.8);filter.Q.value=1.2;src.connect(filter);filter.connect(g);
+      cry.type='triangle';cry.frequency.setValueAtTime(780,t);cry.frequency.exponentialRampToValueAtTime(90,t+1.8);cryGain.gain.value=.17;cry.connect(cryGain);cryGain.connect(g);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.36*level,t+.16);g.gain.exponentialRampToValueAtTime(.0001,t+2.1);src.start(t);cry.start(t);src.stop(t+2.15);cry.stop(t+2.15);
+      src.onended=()=>{src.disconnect();filter.disconnect();cry.disconnect();cryGain.disconnect();g.disconnect();p.disconnect();};return;
+    }
     if(kind==='breath'||kind==='drag'){
       const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter();src.buffer=this.noise;src.connect(filter);filter.type='bandpass';filter.frequency.setValueAtTime(kind==='breath'?620:1500,t);filter.frequency.exponentialRampToValueAtTime(kind==='breath'?260:540,t+.65);filter.Q.value=kind==='breath'?.7:1.8;filter.connect(g);
       const duration=kind==='breath'?1.45:.72;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((kind==='breath'?.22:.17)*level,t+.12);g.gain.exponentialRampToValueAtTime(.0001,t+duration);src.start(t,Math.random());src.stop(t+duration+.05);src.onended=()=>{src.disconnect();filter.disconnect();g.disconnect();p.disconnect();};return;

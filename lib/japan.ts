@@ -39,10 +39,18 @@ export function dressApartment(root:T.Group,area:Area){
     }
     finish();
   }else if(area==='landing'){
-    notice(['白鷺ハイツ','掲示板','夜間巡回 03:00','防犯カメラ作動中','管理組合'],10.83,1.75,.4,-Math.PI/2,1.55,1.8);
-    for(const z of [3,3.55,4.1])for(const y of [1.1,1.45]){box(10.83,y,z,.12,.3,.47,steel);box(10.74,y+.055,z,.02,.025,.28,dark);}
-    extinguisher(-10.6,-16.4);ceilingStains(4,0,2.5,4);
-    notice(['白鷺ハイツ','SHIRASAGI HEIGHTS','第三棟'],0,1.85,19.84,Math.PI,1.7,.7);
+    const rust=surface('concrete','#786151',{roughness:.94,metalness:.3});
+    notice(['白鷺ハイツ','外壁補修のお知らせ','工事日程 未定','手すりに寄りかからないで','管理組合'],2.87,1.8,25,-Math.PI/2,.95,1.25);
+    notice(['昭和五十九年 竣工','白鷺ハイツ 第三棟'],0,1.8,31.84,Math.PI,1.65,.5);
+    notice(['エレベーター','この先  →'],2.87,2.45,-15,-Math.PI/2,1.1,.28);
+    for(const z of [-26,-14,-2,10,22]){
+      rod(new T.Vector3(2.8,.12,z),new T.Vector3(2.8,3.05,z),.055,rust);
+      box(2.72,.95,z,.03,.6,.42,surface('concrete','#576653'));
+      ceilingStains(1,z,2,2.4);box(-2.98,.44,z,.014,.66,1.7,surface('concrete','#585c51'));
+      box(2.67,.45,z+1,.33,.9,.46,paper);for(const y of [.18,.4,.62])box(2.49,y,z+1,.015,.035,.35,dark);
+    }
+    for(const z of [-23,7,19]){box(2.48,.22,z,.45,.44,.48,rust);for(let i=0;i<5;i++)rod(new T.Vector3(2.48,.4,z),new T.Vector3(2.4+Math.sin(i)*.16,.9+i*.045,z+Math.cos(i)*.18),.012,wood);}
+    extinguisher(2.63,-29);extinguisher(2.63,19.7);
   }else if(area==='lift'){
     notice(['安全のために','ドアにご注意','異常時は','非常ボタン'], -1.82,1.95,.2,Math.PI/2,.55,.78);
     box(0,.006,0,3.3,.01,4.9,surface('tile','#b4b5a8',{roughness:.32}));
@@ -77,7 +85,7 @@ export function dressApartment(root:T.Group,area:Area){
     extinguisher(-24.5,29);ceilingStains(-5,0,6,12);
   }
 }
-function nightWindow(){
+export function nightWindow(){
   return new T.ShaderMaterial({
     vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
     fragmentShader:`varying vec2 vUv;
