@@ -183,6 +183,26 @@ async function wardrobeFixture(){
   aim([home.closet[0]-.8,1.65,home.closet[2]],home.closet);const ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(0,0,0);
   return {game,ghost,home,aim};
 }
+test('the real capture camera keeps the opening mouth and dropped chin in view',async()=>{
+  for(const reduced of [false,true])for(const crouched of [false,true]){
+  const media=win.matchMedia;win.matchMedia=()=>({matches:reduced});
+  const {game,ghost}=await wardrobeFixture();try{
+    if(crouched)game.crouch();
+    ghost.position.set(renderedCamera.position.x+.3,0,renderedCamera.position.z);tick(.025);assert.equal(game.snapshot().story.stage,'dying');
+    for(let i=0;i<14;i++){
+      tick(.2);const mouth=ghost.getObjectByName('ghost-attack-mouth'),jaw=ghost.getObjectByName('ghost-jaw');
+      for(const mesh of [mouth.children[1],...jaw.children.filter(c=>c.isMesh)]){
+        const positions=mesh.geometry.getAttribute('position');
+        for(let j=0;j<positions.count;j++){
+          const point=mesh.localToWorld(new THREE.Vector3().fromBufferAttribute(positions,j)),depth=-point.clone().applyMatrix4(renderedCamera.matrixWorldInverse).z,screen=point.project(renderedCamera);
+          assert.ok(depth>renderedCamera.near,`mouth/chin outside near plane at ${i}: ${depth}`);
+          assert.ok(Math.abs(screen.x)<1&&Math.abs(screen.y)<1,`mouth/chin in view at ${i}: ${screen.toArray()}`);
+        }
+      }
+    }
+  }finally{game.dispose();win.matchMedia=media;}
+  }
+});
 test('hiding never teleports the distant ghost to the wardrobe',async()=>{
   const {game,ghost}=await wardrobeFixture();try{const before=ghost.position.clone();game.interact();assert.equal(game.snapshot().story.stage,'wait');tick(.1);assert.ok(ghost.position.distanceTo(before)<.15,'approach is limited by actual walking speed');assert.ok(ghost.position.distanceTo(renderedCamera.position)>3);}finally{game.dispose();}
 });

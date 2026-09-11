@@ -44,3 +44,25 @@ test('attack framing stays finite for crouching, standing and reduced motion wit
     animateGhost(figure,0,0,0,reduced);assert.equal(figure.getObjectByName('ghost-attack-mouth').visible,false);
   }
 });
+
+test('the attack drops the jaw and opens a recessed mouth, then restores the resting face',async()=>{
+  const {animateGhostAttack,animateGhost}=await import('../lib/ghost.ts');
+  const figure=makeFigure(new T.Group()),jaw=figure.getObjectByName('ghost-jaw');
+  assert.ok(jaw,'the lower jaw must move independently');
+  const rest=jaw.position.y;animateGhostAttack(figure,.08,false);const first=jaw.position.y;
+  animateGhostAttack(figure,.65,false);assert.ok(jaw.position.y<first-.18,'the jaw descends when the mouth tears open');
+  const mouth=figure.getObjectByName('ghost-attack-mouth');assert.ok(mouth.visible);
+  const size=new T.Box3().setFromObject(mouth).getSize(new T.Vector3());assert.ok(size.z>.04,'the mouth has depth instead of a flat sticker');
+  const cavity=mouth.children[0],rim=mouth.children[1];cavity.geometry.computeBoundingBox();rim.geometry.computeBoundingBox();
+  figure.updateMatrixWorld(true);
+  const ray=new T.Raycaster(mouth.localToWorld(new T.Vector3(0,-.105,1)),new T.Vector3(0,0,-1).applyQuaternion(mouth.getWorldQuaternion(new T.Quaternion())));
+  const hit=ray.intersectObject(cavity)[0];assert.ok(hit);assert.ok(mouth.worldToLocal(hit.point.clone()).z<rim.position.z-.04,'the throat must recede behind the lip');
+  animateGhost(figure,0,0,0,false);assert.equal(jaw.position.y,rest);assert.equal(mouth.visible,false);
+});
+test('blood droplets move with simulation time and reset deterministically when paused',async()=>{
+  const {animateGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group());
+  const blood=figure.getObjectByName('ghost-blood-drops');assert.ok(blood);
+  const pose=()=>{figure.updateMatrixWorld(true);return blood.children.flatMap(o=>[...o.position.toArray(),...o.scale.toArray()]);};
+  animateGhost(figure,1,1,.8,false);const initial=pose();animateGhost(figure,1.2,1,.8,false);assert.notDeepEqual(pose(),initial);
+  const stopped=pose();animateGhost(figure,1.2,1,.8,false);assert.deepEqual(pose(),stopped);
+});

@@ -8,7 +8,7 @@ export function prepareVisuals(){
   if(!loading)loading=(async()=>{
     const loader=new T.TextureLoader();
     const results=await Promise.allSettled((['surfaces','remains','face'] as const).map(async key=>{
-      const texture=await loader.loadAsync(`/textures/${key}.png`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
+      const texture=await loader.loadAsync(`/textures/${key==='face'?'reference-face':key}.png`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     }));
     if(results.some(r=>r.status==='rejected')){for(const r of results)if(r.status==='fulfilled')r.value.texture.dispose();loading=undefined;throw new Error('Visual asset loading failed');}
     for(const r of results)if(r.status==='fulfilled')sources[r.value.key]=r.value.texture;

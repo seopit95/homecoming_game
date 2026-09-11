@@ -322,11 +322,11 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function deathPose(){
     const t=Math.min(stageTime,3.2),fall=T.MathUtils.smoothstep(t,1.05,2.55),lunge=T.MathUtils.smoothstep(t,0,.32);
-    world.figure.position.copy(deathOrigin).addScaledVector(deathDirection,T.MathUtils.lerp(.78,.49,lunge));world.figure.position.y=deathFloor;
+    world.figure.position.copy(deathOrigin).addScaledVector(deathDirection,T.MathUtils.lerp(1.03,.85,lunge));world.figure.position.y=deathFloor;
     world.figure.rotation.set(0,Math.atan2(-deathDirection.x,-deathDirection.z),0,'YXZ');
     animateGhostAttack(world.figure,t,reducedMotion,deathEye);
     camera.position.copy(deathOrigin).addScaledVector(deathDirection,-fall*.2);camera.position.y=T.MathUtils.lerp(deathOrigin.y,deathFloor+.27,fall);
-    world.figure.updateMatrixWorld(true);world.figure.getObjectByName('ghost-head')!.localToWorld(deathFace.set(0,.13,.16));
+    world.figure.updateMatrixWorld(true);world.figure.getObjectByName('ghost-head')!.localToWorld(deathFace.set(0,-.055,.18));
     const dx=deathFace.x-camera.position.x,dy=deathFace.y-camera.position.y,dz=deathFace.z-camera.position.z;
     yaw=Math.atan2(-dx,-dz);pitch=Math.atan2(dy,Math.hypot(dx,dz));
     return fall*(reducedMotion?.12:.86)+(reducedMotion?0:Math.sin(t*37)*.016*(1-fall));
