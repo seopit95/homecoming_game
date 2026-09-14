@@ -112,19 +112,20 @@ export function animateGhost(figure:T.Group,time:number,moving:number,proximity:
   const rig=rigs.get(figure);if(!rig)return;
   rig.mouth.visible=false;rig.eyes.visible=false;rig.teeth.visible=false;rig.jaw.getObjectByName('ghost-lower-teeth')!.visible=false;rig.jaw.position.set(0,0,0);rig.jaw.rotation.set(0,0,0);
   const step=Math.sin(phase),drag=Math.sin(phase/2),jerk=reducedMotion?0:Math.pow(Math.max(0,Math.sin(time*1.7)),22);
-  rig.torso.rotation.set(.1+drag*.025*moving,Math.sin(time*.8)*.045,-.08+step*.025*moving);
+  rig.torso.rotation.set(.13+drag*.035*moving,Math.sin(time*.8)*.035,-.09+Math.max(0,step)*.045*moving);
   rig.torso.position.set(.035,1.16+Math.abs(step)*.014*moving,.02);
   rig.head.rotation.set(.16+Math.sin(time*.9)*.025,-.08+Math.sin(time*.73)*.045+jerk*.19,-.43-jerk*.12+proximity*.06);
   rig.arms[0].rotation.set(.1+step*.14*moving,-.1,.08);rig.arms[1].rotation.set(-.13-step*.1*moving,.15,-.16);
   rig.forearms[0].rotation.set(-.17,.1,.08);rig.forearms[1].rotation.set(-.36+jerk*.13,.2,-.22);
   for(let i=0;i<2;i++){
-    const a=phase+i*Math.PI,lift=Math.max(0,Math.sin(a)),z=-Math.cos(a)*.23*moving,y=-.785+lift*.16*moving;
+    const a=T.MathUtils.euclideanModulo(phase+i*Math.PI,Math.PI*2),swing=a<Math.PI,lift=swing?Math.sin(a):0;
+    const stride=.39,z=(swing?-Math.cos(a)*stride:stride-(a-Math.PI)/Math.PI*stride*2)*moving,y=-.75+lift*(i===0?.16:.065)*moving;
     const distance=Math.min(.839,Math.hypot(y,z)),bend=Math.acos(distance/.84),hip=Math.atan2(-z,-y)-bend;
     rig.legs[i].rotation.set(hip,0,i===0?.035:-.035);rig.knees[i].rotation.x=bend*2;
-    rig.ankles[i].rotation.x=-hip-bend*2+Math.sin(a)*.18*moving;
+    rig.ankles[i].rotation.x=-hip-bend*2+(swing?Math.sin(a)*(i===0?.17:.08):0)*moving;
   }
-  rig.hair.rotation.set(Math.sin(time*1.6)*.026,Math.sin(time*.8)*.017,Math.sin(time*1.4)*.045);
-  rig.tails.rotation.set(Math.sin(time*1.4)*.018,Math.sin(time*.8)*.018,Math.sin(time*1.7)*.026);
+  rig.hair.rotation.set(Math.sin(time*1.6)*.016+Math.sin(phase-.35)*.023*moving,Math.sin(time*.8)*.012,Math.sin(phase-.5)*.028*moving);
+  rig.tails.rotation.set(Math.sin(phase-.65)*.023*moving,Math.sin(time*.8)*.012,Math.sin(phase-.85)*.04*moving);
   rig.blood.children.forEach((drop,i)=>{const t=(time*.72+i*.173)%1,height=i%3===0?1.35:.55;drop.position.set(i%3===0?.08:i%3===1?-.27:.27,Math.max(.025,height-t*t*height),.12+Math.sin(i)*.06);drop.scale.set(.007,.014+t*.025,.007);});
   const p=rig.gown.geometry.getAttribute('position');
   for(let i=0;i<p.count;i++){const x=rig.hem[i*3],y=rig.hem[i*3+1],z=rig.hem[i*3+2],weight=Math.max(0,-y);p.setXYZ(i,x+Math.sin(time*2.2+y*6)*.022*weight,y,z+Math.cos(time*2.5+x*8)*.022*weight);}

@@ -19,7 +19,7 @@ export type Target = { id: Action; point: T.Vector3; label: string; mesh: T.Obje
 export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
   const content=area==='apartment'?{...buildApartment(root),bounds:home.bounds,spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined}:{...buildBuilding(root,area),setTV:undefined};
-  return {...content,root};
+  return {updateStory:undefined,...content,root};
 }
 export function disposeWorld(root:T.Object3D){
   const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();
@@ -122,6 +122,8 @@ function buildApartment(scene:T.Group) {
   at(-4.2,5.15);
   box(-4.2,.76,5.15,2.05,.12,.95,wood,true);for(const x of [-4.95,-3.45])for(const z of [4.9,5.4])box(x,.38,z,.07,.75,.07,wood);
   for(const x of [-4.85,-3.55])for(const z of [4.42,5.84]){box(x,.42,z,.48,.08,.44,wood,true);box(x,.68,z+(z>5?.19:-.19),.48,.52,.07,wood);}
+  at(-4.2,5.15);
+  const timer=cyl(-4.2,.9,5.15,.105,.16,cream);targets.push({id:'lure',point:new T.Vector3(-4.2*S,.94,5.15*S),label:'주방 타이머 울리기',mesh:timer});
   at(-5.3,-5.6);
   box(-5.3,.74,-5.6,2.1,.12,.8,wood,true);at(-6.12,-3.4);
   box(-6.12,1.15,-3.4,.65,2.3,1.4,wood,true);
@@ -159,6 +161,8 @@ function buildApartment(scene:T.Group) {
     cyl(x,2.91,z,.3,.12,metal);const glow=mat('#dec69d',.5,{emissive:'#f1bf70',emissiveIntensity:.35});cyl(x,2.83,z,.24,.035,glow);
     const light=new T.PointLight('#ffd69a',5,7,2);light.userData.bulb=glow;light.position.set(x,2.56,z);scene.add(light);lamps.push(light);
   }
-  finish();dressApartment(scene,'apartment');const figure=makeFigure(scene);figure.position.set(...home.haunt);lamps.forEach((lamp,i)=>{lamp.name=`apartment-lamp-${i}`;});
+  finish();
+  const doorwayGlow=new T.SpotLight('#98b2bf',12,13,.56,.8,1.7);doorwayGlow.position.set(0,2.3,home.door[2]-.6);doorwayGlow.target.position.set(0,.1,home.door[2]+5);scene.add(doorwayGlow,doorwayGlow.target);
+  dressApartment(scene,'apartment');const figure=makeFigure(scene);figure.position.set(...home.haunt);lamps.forEach((lamp,i)=>{lamp.name=`apartment-lamp-${i}`;});
   return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,setTV};
 }

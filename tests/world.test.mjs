@@ -20,7 +20,7 @@ test('every required interaction has a reachable position inside the apartment',
   }
   for(const target of targets){assert.ok(queue.some(([x,z])=>Math.hypot(x/4-target.point.x,z/4-target.point.z)<1.25),`${target.id} must be reachable without walking through walls`);}
 });
-for(const area of ['landing','lift','corridor','stairs','office','parking'])test(`${area}: all required interactions are reachable from the spawn`,()=>{
+for(const area of ['landing','lift','corridor','stairs','resident','office','parking','aftermath'])test(`${area}: all required interactions are reachable from the spawn`,()=>{
   const world=buildWorld(new THREE.Scene(),area);assert.ok(world.bounds,`${area} must provide its own walkable area`);
   const {solids,targets,bounds,spawn,heightAt}=world;
   const start=[Math.round(spawn.x*4),Math.round(spawn.z*4)];
@@ -36,6 +36,14 @@ test('interaction rays respect wall height while allowing a tabletop object',asy
   const {hasLineOfSight}=await import('../lib/world.ts');assert.equal(typeof hasLineOfSight,'function');
   assert.equal(hasLineOfSight({x:0,y:1.65,z:2},{x:0,y:1.3,z:-2},[{x:0,z:0,w:4,d:.2,y:1.5,h:3}]),false);
   assert.equal(hasLineOfSight({x:0,y:1.65,z:2},{x:0,y:.9,z:0},[{x:0,z:0,w:1,d:1,y:.4,h:.8}]),true);
+});
+test('after leaving the accident car, its body blocks movement and the road stays reachable',async()=>{
+  const {findPath}=await import('../lib/navigation.ts'),world=buildWorld(new THREE.Scene(),'aftermath');
+  world.updateStory('road_exit',0);assert.ok(canStandAt(world.spawn.x,world.spawn.z,world.solids,.23,world.bounds));
+  world.updateStory('road_evidence',1);
+  assert.equal(canStandAt(-2,8,world.solids,.23,world.bounds),false);
+  assert.ok(canStandAt(-.4,8.6,world.solids,.23,world.bounds));
+  assert.ok(findPath({x:-.4,z:8.6},{x:.8,z:-2},world.solids,world.bounds).length>0);
 });
 test('the collectible fuse is visible outside its opaque cabinet',()=>{
   const world=buildWorld(new THREE.Scene(),'office'),fuse=world.targets.find(t=>t.id==='fuse');

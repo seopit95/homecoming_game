@@ -3,12 +3,14 @@ import type {Area,Action} from './story';
 import type {Bounds,Solid,Target} from './world';
 import {surface,boxUV,softBox} from './materials.ts';
 import {dressApartment,nightWindow} from './japan.ts';
+import {buildStoryRoom} from './chapters.ts';
 
 export const landing={halfWidth:3,halfLength:32,spawnZ:29.5,liftZ:-31.75,fallTriggerZ:12,fallZ:-4} as const;
 
 export {createGhost as makeFigure} from './ghost.ts';
 import {createGhost as makeFigure} from './ghost.ts';
 export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
+  if(area==='resident'||area==='aftermath')return buildStoryRoom(root,area);
   const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
   const bounds:Bounds=area==='corridor'?{x:14.8,z:38.8}:area==='parking'?{x:24.8,z:42.8}:area==='landing'?{x:landing.halfWidth-.2,z:landing.halfLength-.2}:area==='office'?{x:11.8,z:15.8}:area==='lift'?{x:1.8,z:2.8}:{x:6.8,z:8.8};
   const mat=(color:string,extra:object={})=>new T.MeshStandardMaterial({color,roughness:.84,...extra});
@@ -52,7 +54,8 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       box(-3,.45,0,.22,.9,64,stained,true).name='landing-parapet';
       for(const y of [.97,1.27])box(-3,y,0,.075,.06,64,rust);
       for(let z=-31;z<=31;z+=1.25)box(-3,1.11,z,.04,.3,.04,rust);
-      box(-2.74,.006,0,.25,.016,64,mat('#303c3b'));box(2.72,.035,0,.38,.07,64,stained);
+      box(-2.74,.006,0,.25,.016,64,mat('#303c3b'));
+      for(const z of [-24,-8,7,19]){const puddle=new T.Mesh(new T.CircleGeometry(.9,24),mat('#4c626b',{roughness:.05,transparent:true,opacity:.38}));puddle.rotation.x=-Math.PI/2;puddle.position.set(-1.9,.015,z);puddle.scale.set(.65,2,1);root.add(puddle);}box(2.72,.035,0,.38,.07,64,stained);
       for(let z=-29;z<=31;z+=6){
         box(-2.95,1.62,z,.23,3.24,.25,stained,true);box(-2.95,2.99,z,.42,.24,.42,stained);
         box(2.87,1.2,z-1.5,.16,2.4,1.12,oldDoor);box(2.76,1.17,z-1.12,.09,.045,.16,rust);
@@ -154,5 +157,5 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     figure.position.set(11,0,-26);figure.visible=true;
   }
   dressApartment(root,area);
-  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,bounds,spawn,heading,heightAt,liftDoors,setDisplay,fallingFigure};
+  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,bounds,spawn,heading,heightAt,liftDoors,setDisplay,fallingFigure,updateStory:undefined};
 }
