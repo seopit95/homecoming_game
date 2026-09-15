@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {surface,boxUV,softBox} from './materials.ts';
+import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {createGhost} from './ghost.ts';
 import {nightWindow} from './japan.ts';
 import type {Solid,Target} from './world.ts';
@@ -39,9 +39,9 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     label('管理室は裏の連絡扉から',0,2.3,5.82,1.45,.22,Math.PI);
     for(let i=0;i<3;i++)rod(new T.Vector3(3.9+i*.11,.1,5.2),new T.Vector3(3.85+i*.11,1.05,5.22),.025,dark);
     // Low table, a cushion, untouched tea and an answering machine.
-    box(-2.8,.035,2.4,2.8,.05,2.5,surface('cloth','#88846a'));
+    box(-2.8,.035,2.4,2.8,.05,2.5,upholstery('#88846a'));
     box(-2.6,.39,2.2,1.45,.12,.85,wood,true);for(const x of [-3.2,-2])for(const z of [1.9,2.5])box(x,.17,z,.07,.34,.07,wood);
-    box(-2.6,.1,3.3,.75,.16,.6,surface('cloth','#536264'));
+    box(-2.6,.1,3.3,.75,.16,.6,upholstery('#536264'));
     const machine=box(-3.8,.77,3.6,.5,.18,.38,metal);box(-3.8,.35,3.6,.8,.7,.62,wood,true);
     box(-3.8,.88,3.6,.31,.04,.15,dark);const led=light(-3.8,.92,3.55,'#be6951',.24,1.3);led.name='answering-machine-led';
     target('answerphone','留守番電話 · 녹음 재생',machine,-3.8,.94,3.3);
@@ -50,7 +50,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     box(3.6,1.08,1.65,.65,.025,.6,metal);for(const z of [2.6,3.1]){const ring=new T.Mesh(new T.TorusGeometry(.15,.02,8,20),dark);ring.position.set(3.6,1.1,z);ring.rotation.x=Math.PI/2;root.add(ring);}
     box(3.8,1.02,4.4,.75,2.04,.85,paper,true);
     const note=label('次は、晴れた日に。\n明日 14:00',3.8,1.5,3.96,.48,.42,Math.PI);target('portrait','냉장고에 남겨진 약속',note,3.8,1.5,3.95);
-    box(-2.9,.15,-3.4,2,.3,3.1,wood,true);box(-2.9,.38,-3.4,1.9,.25,3,surface('cloth','#b0a68c'));box(-2.9,.55,-4.4,1.25,.18,.48,paper);
+    box(-2.9,.15,-3.4,2,.3,3.1,wood,true);box(-2.9,.38,-3.4,1.9,.25,3,upholstery('#b0a68c'));box(-2.9,.55,-4.4,1.25,.18,.48,upholstery('#c3bba7'));
     for(let i=0;i<5;i++)box(-4.45,.5+i*.38,-3.9,.3,.3,1.8,wood);
     box(3,.75,-4.65,2,.12,.65,wood,true);box(3,.86,-4.65,.42,.1,.26,paper);label('水野 紗恵',3,1.35,-5.82,.7,.3);
     const window=new T.Mesh(new T.PlaneGeometry(2.4,1.5),nightWindow());window.position.set(2.7,1.85,-5.83);root.add(window);

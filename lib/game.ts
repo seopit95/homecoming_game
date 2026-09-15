@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,type Target} from './world.ts';
+import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,clampLightOrigin,type Target} from './world.ts';
 import {animateGhost,animateGhostAttack} from './ghost.ts';
 export {prepareVisuals} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
@@ -9,6 +9,7 @@ import {apartment as home,apartmentScale as S} from './apartment-layout.ts';
 import {buildRoad} from './prologue.ts';
 import {landing} from './building.ts';
 import {perceives} from './perception.ts';
+import {createViewmodel} from './viewmodel.ts';
 import {defaultSettings,normalizeSettings,readSettings,readProgress,writeProgress,writeSettings,PROGRESS_KEY,keyLabel,type Settings} from './preferences.ts';
 export type {Settings} from './preferences.ts';
 
@@ -21,14 +22,15 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
   const scene=new T.Scene();scene.background=new T.Color('#080b10');scene.fog=new T.FogExp2('#14191d',.016);
   const ambient=new T.HemisphereLight('#a8b4c4','#302925',.7);scene.add(ambient);
-  const camera=new T.PerspectiveCamera(68,1,.06,85);camera.rotation.order='YXZ';
+  const camera=new T.PerspectiveCamera(68,1,.06,85);camera.rotation.order='YXZ';const hands=createViewmodel();
   let road:ReturnType<typeof buildRoad>|null=null;
   let area:Area='apartment',world=buildWorld(scene);const audio=new HorrorAudio();
   const flashlight=new T.SpotLight('#f0e9d9',42,24,Math.PI/7,.83,1.7);flashlight.castShadow=true;flashlight.shadow.mapSize.set(window.matchMedia('(pointer:coarse)').matches?1024:2048,window.matchMedia('(pointer:coarse)').matches?1024:2048);flashlight.shadow.bias=-.0002;
+  flashlight.shadow.camera.near=.02;flashlight.shadow.camera.updateProjectionMatrix();
   scene.add(flashlight,flashlight.target);const fill=new T.PointLight('#dadde0',.6,3.5);scene.add(fill);
   let story=initialStory(),started=false,paused=false,disposed=false,torch=true,elapsed=0,yaw=0,pitch=0,frameId=0;
   let message='',messageUntil=0,lastFrame=0,lastEmit=0,lastStep=0,stageTime=0,areaTime=0,lastSound=0,lastBreath=0,lastDrip=0,chapterUntil=0;
-  let crouched=false,runningNoise=false,walkPhase=0,whisper='',whisperUntil=0,lastVoice=-20,voiceBeat=0,tracking=false,seenAt=0,patrol=0;
+  let crouched=false,runningNoise=false,walkPhase=0,playerMoving=false,playerRunning=false,whisper='',whisperUntil=0,lastVoice=-20,voiceBeat=0,tracking=false,seenAt=0,patrol=0;
   let lastSeen:Point|null=null;
   let hover:Target|undefined,dragging=false,previousX=0,previousY=0,holdProgress=0,holding=false,doorOpen=0,lastDisplay='',threat=0;
   let enemyPath:Point[]=[],repathAt=0,scriptBeat=0,searchTime=-1;
@@ -375,13 +377,16 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function renderWorld(dt:number){
     const time=started?elapsed:performance.now()/1000;
+    const handPose={time:elapsed,moving:playerMoving,running:playerRunning,crouched,torch,visible:started&&!story.hidden&&!isMemory(story.stage)&&!['tv','dying','ended','road_exit'].includes(story.stage),reducedMotion,aspect:camera.aspect,fov:camera.fov};hands.update(handPose);
     if(road){ambient.intensity=.2;flashlight.intensity=0;fill.intensity=0;(scene.fog as T.FogExp2).density=.025;road.pose(story.stage,stageTime,camera,reducedMotion);camera.updateMatrixWorld();return;}
     if(story.stage==='sleep'){camera.position.set(...home.sleep);pitch=.85+T.MathUtils.smoothstep(stageTime,0,5)*.15;yaw=0;}
     if(area==='apartment')(scene.fog as T.FogExp2).density=.016;
     if(world.figure.visible&&story.stage!=='dying'&&story.stage!=='ended')animateGhost(world.figure,time,ghostMotion,threat,reducedMotion,walkPhase);
     const deathRoll=story.stage==='dying'?deathPose():0;
     camera.rotation.set(pitch,yaw,story.stage==='dying'?deathRoll:story.stage==='pry'&&stageTime<.7?Math.sin(stageTime*48)*.022:0,'YXZ');camera.updateMatrixWorld();
-    flashlight.position.copy(camera.position).add(new T.Vector3(.11,-.13,0).applyQuaternion(camera.quaternion));camera.getWorldDirection(direction);flashlight.target.position.copy(camera.position).addScaledVector(direction,6);flashlight.intensity=torch&&!story.hidden&&story.stage!=='road_exit'?42:0;fill.position.copy(camera.position);fill.intensity=story.stage==='dying'?1.1:story.hidden||story.stage==='road_exit'?.2:.65;
+    flashlight.position.copy(hands.beamOrigin).applyQuaternion(camera.quaternion).add(camera.position);
+    if(clampLightOrigin(camera.position,flashlight.position,world.solids)){hands.update({...handPose,obstructed:true});flashlight.position.copy(hands.beamOrigin).applyQuaternion(camera.quaternion).add(camera.position);clampLightOrigin(camera.position,flashlight.position,world.solids);}
+    camera.getWorldDirection(direction);flashlight.target.position.copy(camera.position).addScaledVector(direction,6);flashlight.intensity=torch&&!story.hidden&&story.stage!=='road_exit'?42:0;fill.position.copy(camera.position);fill.intensity=story.stage==='dying'?1.1:story.hidden||story.stage==='road_exit'?.2:.35;
     const powered=story.stage==='tv';world.shoes.visible=area==='apartment'&&!['tv','phone','power'].includes(story.stage);
     if(area==='apartment'){ambient.intensity=powered?.7:.2;world.setTV?.(started&&story.stage==='tv',time);}
     for(let i=0;i<world.lamps.length;i++){
@@ -405,7 +410,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(!started){camera.position.set(...home.title);yaw=.1+Math.sin(ms*.0001)*.04;pitch=-.015;}
     else if(!paused&&!document.hidden&&story.stage==='dying'){elapsed+=dt;stageTime+=dt;if(stageTime>=3.2)advance('dead');}
     else if(!paused&&!document.hidden&&story.stage!=='ended'){
-      elapsed+=dt;stageTime+=dt;areaTime+=dt;runningNoise=false;
+      elapsed+=dt;stageTime+=dt;areaTime+=dt;runningNoise=false;playerMoving=false;playerRunning=false;
       if(!story.hidden&&!isMemory(story.stage)&&story.stage!=='tv'){if(keys.has('ArrowLeft'))yaw+=dt*1.55;if(keys.has('ArrowRight'))yaw-=dt*1.55;}
       if(!story.hidden&&!isMemory(story.stage)&&story.stage!=='tv'&&story.stage!=='road_exit'){
         const forward=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown')),side=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));
@@ -415,6 +420,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
         const moving=Math.hypot(camera.position.x-px,camera.position.z-pz)>.001;
         runningNoise=moving&&running;
         const floor=area==='stairs'?'metal':area==='apartment'||area==='resident'?'wood':area==='landing'&&camera.position.x<-.9?'wet':'tile';
+        playerMoving=moving;playerRunning=moving&&running;
         if(elapsed>noiseUntil)noiseRadius=moving?(crouched?0:running?(floor==='wet'?10:22):floor==='metal'?7:3):0;
         camera.position.y=world.heightAt(camera.position.x,camera.position.z)+(crouched?1:1.65)+(settings.bob&&!reducedMotion&&moving?Math.sin(elapsed*(running?13:9))*.018:0);
         if(moving&&elapsed-lastStep>(running?.32:.48)){audio.footstep(floor,Math.sin(elapsed*3)*.2,crouched?.15:running?.65:.35);lastStep=elapsed;}
@@ -427,6 +433,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(started&&!paused&&story.stage!=='ended')findTarget();
     if(started&&!paused&&elapsed-lastEmit>.09){lastEmit=elapsed;emit();}
     renderer.render(scene,camera);
+    if(hands.root.visible){renderer.autoClear=false;renderer.clearDepth();renderer.render(hands.scene,hands.camera);renderer.autoClear=true;}
   }
   frameId=requestAnimationFrame(frame);emit();
   function crouch(){if(!started||paused||story.hidden||isMemory(story.stage)||story.stage==='tv'||story.stage==='ended'||story.stage==='dying')return;crouched=!crouched;emit();}
@@ -434,7 +441,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   return {start,pause,skipDeath(){if(story.stage==='dying'&&stageTime>1.2)advance('dead');},getSettings:()=>({...settings,bindings:{...settings.bindings}}),continueGame(){if(saved)start('continue');},skipMemory(){if(started&&!paused&&isMemory(story.stage)){advance('skip_memory');lock();}},interact,snapshot,configure,crouch,hold(active:boolean){if(!paused&&!isMemory(story.stage)&&story.stage!=='dying'&&story.stage!=='ended')holding=active;},torch(){if(paused||isMemory(story.stage)||story.stage==='ended'||story.stage==='dying'||story.stage==='tv')return;torch=!torch;emit();},key(code:string,down:boolean){if(paused||isMemory(story.stage)||story.stage==='ended'||story.stage==='dying')return;if(down)keys.add(code);else keys.delete(code);},dispose(){
     disposed=true;cancelAnimationFrame(frameId);observer.disconnect();audio.dispose();if(document.pointerLockElement===canvas)document.exitPointerLock();
     document.removeEventListener('keydown',keydown);document.removeEventListener('keyup',keyup);document.removeEventListener('pointermove',pointermove);document.removeEventListener('pointerup',pointerup);document.removeEventListener('pointerlockchange',lockchange);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('blur',blur);canvas.removeEventListener('pointerdown',pointerdown);
-    if(road)disposeWorld(road.root);disposeWorld(world.root);flashlight.shadow.map?.dispose();renderer.dispose();
+    if(road)disposeWorld(road.root);disposeWorld(world.root);disposeWorld(hands.scene);flashlight.shadow.map?.dispose();renderer.dispose();
   }};
 }
 export type Game=ReturnType<typeof createGame>;

@@ -37,6 +37,13 @@ test('interaction rays respect wall height while allowing a tabletop object',asy
   assert.equal(hasLineOfSight({x:0,y:1.65,z:2},{x:0,y:1.3,z:-2},[{x:0,z:0,w:4,d:.2,y:1.5,h:3}]),false);
   assert.equal(hasLineOfSight({x:0,y:1.65,z:2},{x:0,y:.9,z:0},[{x:0,z:0,w:1,d:1,y:.4,h:.8}]),true);
 });
+test('a held light cannot cross a reachable divider or originate inside its wall',async()=>{
+  const {clampLightOrigin}=await import('../lib/world.ts'),world=buildWorld(new THREE.Scene());
+  const eye=new THREE.Vector3(2.220584,1.65,0),lens=new THREE.Vector3(2.839783,1.462685,.192659);
+  assert.ok(canStandAt(eye.x,eye.z,world.solids));assert.equal(clampLightOrigin(eye,lens,world.solids),true);
+  assert.ok(lens.x<2.46,'origin remains on the player side of the wall');assert.ok(hasLineOfSight(eye,lens,world.solids));
+  const clear=new THREE.Vector3(0,1.5,3),before=clear.clone();assert.equal(clampLightOrigin(new THREE.Vector3(0,1.65,4),clear,[]),false);assert.deepEqual(clear.toArray(),before.toArray());
+});
 test('after leaving the accident car, its body blocks movement and the road stays reachable',async()=>{
   const {findPath}=await import('../lib/navigation.ts'),world=buildWorld(new THREE.Scene(),'aftermath');
   world.updateStory('road_exit',0);assert.ok(canStandAt(world.spawn.x,world.spawn.z,world.solids,.23,world.bounds));

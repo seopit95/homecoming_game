@@ -2,13 +2,13 @@ import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 // Decode each source once; floor changes own disposable texture clones.
-const sources:Partial<Record<'surfaces'|'remains'|'face',T.Texture>>={};
+const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand',T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
     const loader=new T.TextureLoader();
-    const results=await Promise.allSettled((['surfaces','remains','face'] as const).map(async key=>{
-      const texture=await loader.loadAsync(`/textures/${key==='face'?'reference-face':key}.png`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
+    const results=await Promise.allSettled((['surfaces','remains','face','hand'] as const).map(async key=>{
+      const texture=await loader.loadAsync(`/textures/${key==='face'?'reference-face':key==='surfaces'?'home-surfaces-v2':key==='hand'?'hand-skin':key}.png`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     }));
     if(results.some(r=>r.status==='rejected')){for(const r of results)if(r.status==='fulfilled')r.value.texture.dispose();loading=undefined;throw new Error('Visual asset loading failed');}
     for(const r of results)if(r.status==='fulfilled')sources[r.value.key]=r.value.texture;
@@ -21,18 +21,29 @@ const fallback:Record<Surface,string>={wall:'#a7a59a',tile:'#898c86',concrete:'#
 export function surface(kind:Surface,color='#ffffff',options:T.MeshStandardMaterialParameters={}){
   const source=sources[['skin','cloth','hair','wound'].includes(kind)?'remains':'surfaces'];
   const map=source?.clone();if(map){map.needsUpdate=true;map.wrapS=map.wrapT=T.RepeatWrapping;}
-  const material=new T.MeshStandardMaterial({color:map?color:fallback[kind],roughness:kind==='skin'?.53:kind==='hair'?.29:kind==='tile'?.45:.88,map:map??null,bumpMap:map??null,bumpScale:kind==='wood'?.012:kind==='skin'?.007:.022,...options});
+  const material=new T.MeshStandardMaterial({color:map?color:fallback[kind],roughness:kind==='skin'?.53:kind==='hair'?.29:kind==='tile'?.36:.88,map:map??null,bumpMap:map??null,bumpScale:kind==='wall'?.0005:kind==='wood'?.004:kind==='skin'?.007:.012,...options});
   if(map){
-    const [x,y]=tiles[kind],uv=`vec2(${x===0?'0.002':'0.502'},${y===0?'0.002':'0.502'}) + fract(uv) * 0.496`;
+    const [x,y]=tiles[kind],uv=`vec2(${x===0?'0.002':'0.502'},${y===0?'0.002':'0.502'}) + fract(uv * ${kind==='wall'?'3.0':kind==='wood'?'1.4':'1.0'}) * 0.496`;
     material.onBeforeCompile=shader=>{
       shader.fragmentShader=`vec2 atlasUv(vec2 uv){return ${uv};}\n`+shader.fragmentShader;
       shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',T.ShaderChunk.map_fragment.replace('texture2D( map, vMapUv )','texture2D( map, atlasUv(vMapUv) )'));
       const bump=T.ShaderChunk.bumpmap_pars_fragment.replace('texture2D( bumpMap, vBumpMapUv )','texture2D( bumpMap, atlasUv(vBumpMapUv) )').replace('texture2D( bumpMap, vBumpMapUv + dSTdx )','texture2D( bumpMap, atlasUv(vBumpMapUv + dSTdx) )').replace('texture2D( bumpMap, vBumpMapUv + dSTdy )','texture2D( bumpMap, atlasUv(vBumpMapUv + dSTdy) )');
       shader.fragmentShader=shader.fragmentShader.replace('#include <bumpmap_pars_fragment>',bump);
     };
-    material.customProgramCacheKey=()=>`apartment-atlas-${kind}-1`;
+    material.customProgramCacheKey=()=>`apartment-atlas-${kind}-2`;
   }
   return material;
+}
+export function upholstery(color:string){
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const ctx=canvas.getContext('2d')!;
+  ctx.fillStyle='#a19e93';ctx.fillRect(0,0,128,128);
+  for(let i=0;i<128;i+=4){ctx.fillStyle='#817e77';ctx.fillRect(i,0,1,128);ctx.fillStyle='#c0bcb0';ctx.fillRect(0,i,128,1);}
+  const map=new T.CanvasTexture(canvas);map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.set(12,12);
+  return new T.MeshStandardMaterial({color,roughness:.96,bumpMap:map,bumpScale:.0012});
+}
+export function handSkinMaterial(){
+  const map=sources.hand?.clone();if(map){map.needsUpdate=true;map.wrapS=map.wrapT=T.RepeatWrapping;}
+  return new T.MeshPhysicalMaterial({color:map?'#cdc7bc':'#a47a60',map:map??null,bumpMap:map??null,bumpScale:.0003,roughness:.68,sheen:.2,sheenColor:'#ba9177'});
 }
 export function faceMaterial(){
   const map=sources.face?.clone();if(map)map.needsUpdate=true;
@@ -47,6 +58,6 @@ export function boxUV(geometry:T.BufferGeometry,x=0,y=0,z=0,scale=1.8){
   uv.needsUpdate=true;return geometry;
 }
 
-export function softBox(w:number,h:number,d:number){
-  const small=Math.min(w,h,d);return small>=.12&&Math.max(w,h,d)<=4?new RoundedBoxGeometry(w,h,d,1,Math.min(.045,small*.12)):new T.BoxGeometry(w,h,d);
+export function softBox(w:number,h:number,d:number,radius=Math.min(.045,Math.min(w,h,d)*.12)){
+  const small=Math.min(w,h,d);return small>=.12&&Math.max(w,h,d)<=4?new RoundedBoxGeometry(w,h,d,radius>.045?3:1,Math.min(radius,small*.45)):new T.BoxGeometry(w,h,d);
 }

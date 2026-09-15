@@ -2,11 +2,22 @@ import * as T from 'three';
 import {apartment as home,apartmentScale as S,spaceFurniture} from './apartment-layout.ts';
 import type { Action, Area } from './story';
 import {buildBuilding,makeFigure} from './building.ts';
-import {surface,boxUV,softBox} from './materials.ts';
+import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {dressApartment} from './japan.ts';
 
 export type Bounds={x:number;z:number};
 export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number };
+const lightRay=new T.Ray(),lightBox=new T.Box3(),lightHit=new T.Vector3();
+export function clampLightOrigin(eye:T.Vector3,lens:T.Vector3,solids:Solid[]){
+  const distance=eye.distanceTo(lens);if(distance<.001)return false;
+  lightRay.set(eye,lightHit.copy(lens).sub(eye).normalize());let nearest=distance;
+  for(const s of solids){const y=s.y??1.5,h=s.h??3;lightBox.min.set(s.x-s.w/2,y-h/2,s.z-s.d/2);lightBox.max.set(s.x+s.w/2,y+h/2,s.z+s.d/2);
+    if(lightBox.containsPoint(eye))continue;
+    if(lightRay.intersectBox(lightBox,lightHit))nearest=Math.min(nearest,eye.distanceTo(lightHit));
+  }
+  if(nearest>=distance)return false;
+  lens.copy(eye).addScaledVector(lightRay.direction,Math.max(0,nearest-.06));return true;
+}
 export function canStandAt(x:number,z:number,solids:Solid[],r=.23,bounds:Bounds=home.bounds){return Math.abs(x)<bounds.x&&Math.abs(z)<bounds.z&&!solids.some(s=>Math.abs(x-s.x)<s.w/2+r&&Math.abs(z-s.z)<s.d/2+r);}
 export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:number;z:number},solids:Solid[]){
   const distance=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);
@@ -23,6 +34,7 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
 }
 export function disposeWorld(root:T.Object3D){
   const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();
+  root.traverse(o=>{if(o instanceof T.SpotLight||o instanceof T.PointLight||o instanceof T.DirectionalLight)o.shadow.map?.dispose();});
   root.traverse(o=>{if(o instanceof T.Mesh||o instanceof T.Line){geometries.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material])){materials.add(m);for(const v of Object.values(m))if(v instanceof T.Texture)textures.add(v);}}});
   geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());root.removeFromParent();
 }
@@ -32,9 +44,9 @@ function buildApartment(scene:T.Group) {
   let seed = 47;
   const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const mat=(color:string, roughness=.86,extra:object={})=>new T.MeshStandardMaterial({color,roughness,...extra});
-  const wallMat=surface('wall','#c3c0b4'), lowerMat=surface('wall','#aca99a');
-  const floorMat=surface('wood','#b3a994',{roughness:.54}), wood=surface('wood','#aaa18d'), dark=mat('#111816'), trim=mat('#252b25');
-  const fabric=mat('#656856'), cream=mat('#a7a398'), metal=mat('#373e3c',.45,{metalness:.5});
+  const wallMat=surface('wall','#dedad1');
+  const floorMat=surface('wood','#cdc6b6',{roughness:.43}), wood=surface('wood','#b8ac98'), dark=mat('#111816'), trim=mat('#6d6051');
+  const fabric=upholstery('#676c62'), cream=mat('#bab8ac'), metal=mat('#66716d',.32,{metalness:.72});
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=scene){
     const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);
     if(solid)solids.push({x,z,w,d,y,h});return mesh;
@@ -44,7 +56,7 @@ function buildApartment(scene:T.Group) {
   }
   function wall(x:number,z:number,w:number,d:number){
     x*=S;z*=S;if(w>.3)w*=S;if(d>.3)d*=S;
-    box(x,1.5,z,w,3,d,wallMat,true);box(x,.48,z,w+.02,.95,d+.02,lowerMat);box(x,1,z,w+.035,.045,d+.035,trim);box(x,.07,z,w+.05,.14,d+.05,trim);
+    box(x,1.5,z,w,3,d,wallMat,true);box(x,.055,z,w+.035,.11,d+.035,trim);box(x,2.94,z,w+.045,.1,d+.045,cream);
   }
   function print(text:string,fg='#c6c6b5',bg='#232b27',size=35,w=512,h=128){
     const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d')!;
@@ -80,11 +92,10 @@ function buildApartment(scene:T.Group) {
   const clock=sign('03:17',0,2.65,6.13,Math.PI,.75,.25);clock.material.map=print('03:17','#c07052','#151914',55);clock.material.emissive.set('#c07052');clock.material.emissiveMap=clock.material.map;clock.material.emissiveIntensity=.8;
   // A broad lounge looks across to the television, with circulation on both sides.
   at(-3.2,2.4);
-  box(-3.2,.018,2.4,5.2,.035,3.7,mat('#81795c'));
-  for(let z=.6;z<4.2;z+=.1)box(-3.2,.04,z,5,.005,.017,mat('#645f47'));
+  box(-3.2,.018,2.4,5.2,.035,3.7,upholstery('#7b7967'));
   at(-1.2,2.5);
   box(-1.2,.35,2.5,1.1,.5,3.2,wood,true);box(-.78,.89,2.5,.26,1,3.2,fabric);
-  for(const z of [1,4])box(-1.2,.69,z,1.1,.5,.25,fabric);for(const z of [1.55,2.5,3.45])box(-1.28,.65,z,.85,.23,.85,fabric);
+  for(const z of [1,4])box(-1.2,.69,z,1.1,.5,.25,fabric);for(const z of [1.55,2.5,3.45]){const cushion=box(-1.28,.65,z,.85,.23,.85,fabric);cushion.geometry.dispose();cushion.geometry=softBox(.85,.23,.85,.1);}
   at(-3.15,2.4);
   box(-3.15,.47,2.4,1.2,.13,1.8,wood,true);for(const x of [-3.62,-2.68])for(const z of [1.65,3.15])box(x,.22,z,.075,.45,.075,wood);
   const phone=box(-3.15,.562,2.4,.19,.035,.37,dark);
@@ -121,7 +132,7 @@ function buildApartment(scene:T.Group) {
   for(const x of [-5.5,-4.5,-3.5])box(x,2.1,-2.14,.9,.8,.32,wood);
   at(-4.2,5.15);
   box(-4.2,.76,5.15,2.05,.12,.95,wood,true);for(const x of [-4.95,-3.45])for(const z of [4.9,5.4])box(x,.38,z,.07,.75,.07,wood);
-  for(const x of [-4.85,-3.55])for(const z of [4.42,5.84]){box(x,.42,z,.48,.08,.44,wood,true);box(x,.68,z+(z>5?.19:-.19),.48,.52,.07,wood);}
+  for(const x of [-4.85,-3.55])for(const z of [4.42,5.84]){box(x,.42,z,.48,.08,.44,wood,true);box(x,.68,z+(z>5?.19:-.19),.48,.52,.07,wood);for(const dx of [-.17,.17])for(const dz of [-.16,.16])box(x+dx,.2,z+dz,.045,.4,.045,wood);}
   at(-4.2,5.15);
   const timer=cyl(-4.2,.9,5.15,.105,.16,cream);targets.push({id:'lure',point:new T.Vector3(-4.2*S,.94,5.15*S),label:'주방 타이머 울리기',mesh:timer});
   at(-5.3,-5.6);
@@ -132,7 +143,7 @@ function buildApartment(scene:T.Group) {
   box(-5.3,.82,-5.6,.6,.04,.4,cream);sign('白鷺ハイツ',-4.8,1.9,-6.12,0,.9,.3);
   // Bedroom wardrobe faces a generous clear floor, away from the bed.
   at(4.8,4.6);
-  box(4.8,.25,4.6,2.3,.5,2.5,wood,true);box(4.8,.6,4.6,2.2,.23,2.4,cream);box(4.8,.76,4.25,2.18,.13,1.55,mat('#556361'));box(4.8,1.02,5.91,2.4,1.2,.13,wood);
+  box(4.8,.25,4.6,2.3,.5,2.5,wood,true);box(4.8,.6,4.6,2.2,.23,2.4,upholstery('#cac5b6'));box(4.8,.76,4.25,2.18,.13,1.55,upholstery('#596966'));box(4.8,1.02,5.91,2.4,1.2,.13,wood);
   for(const x of [4.25,5.35])box(x,.8,5.43,.85,.2,.44,cream);
   at(2.75,5.15);
   box(2.75,.47,5.15,.61,.94,.7,wood,true);const radio=box(2.75,1.07,5.15,.48,.28,.26,mat('#4d4638'));
@@ -153,7 +164,7 @@ function buildApartment(scene:T.Group) {
     at(x,z);
     const pane=new T.Mesh(new T.PlaneGeometry(1.5,1.6),new T.MeshBasicMaterial({color:'#283e46'}));pane.position.set(x,1.9,z);pane.rotation.y=ry;scene.add(pane);
     for(const zz of [z-.87,z+.87])box(x*.985,1.83,zz,.1,2.1,.27,mat('#5c665c'));
-    const light=new T.PointLight('#80a9b9',5,7,2);light.position.set(x*.89,2,z);scene.add(light);
+    const light=new T.SpotLight('#93aebe',14,11,.92,.65,2);light.position.set(x*.89,2.6,z);light.target.position.set(x*.48,.3,z-1);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.bias=-.0004;scene.add(light,light.target);
   }
   const lamps:T.PointLight[]=[];
   for(const [x,z] of [[0,-4],[0,0],[-3.5,2.5],[-4,5],[4,2],[3,-3]]){

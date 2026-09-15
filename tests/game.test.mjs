@@ -6,7 +6,7 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
 let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0;
-class Renderer{shadowMap={};setPixelRatio(){}setSize(){}render(scene,camera){renderedCamera=camera;renderedScene=scene;}dispose(){}}
+class Renderer{shadowMap={};setPixelRatio(){}setSize(){}clearDepth(){}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setHaunt(value){hauntLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
@@ -18,6 +18,19 @@ Object.assign(globalThis,{ResizeObserver:class{observe(){}disconnect(){}},reques
 const {createGame}=await import('../lib/game.ts');
 const event=(target,type,properties)=>{const e=new Event(type);Object.assign(e,properties);target.dispatchEvent(e);};
 function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.min(.025,left)*1000;nextFrame(clock);}}
+
+test('a close divider stays within the held flashlight shadow frustum',()=>{
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},()=>{});tick();game.start();game.skipMemory();tick(7);
+  renderedCamera.position.set(2.220584,1.65,0);
+  event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
+  event(doc,'pointermove',{clientX:-(-Math.PI/2-renderedCamera.rotation.y)/.0021,clientY:0});event(doc,'pointerup',{});tick();
+  const light=renderedScene.children.find(o=>o instanceof THREE.SpotLight&&o.distance===24);
+  renderedScene.updateMatrixWorld(true);light.shadow.updateMatrices(light);
+  const occluder=new THREE.Vector3(2.4607,light.position.y,light.position.z);
+  const frustum=new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(light.shadow.camera.projectionMatrix,light.shadow.camera.matrixWorldInverse));
+  assert.ok(frustum.containsPoint(occluder),'the nearby wall must cast a shadow into the next room');game.dispose();
+});
 
 test('real interaction loop reaches the ending, requires a held pry, and freezes on pause',()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});

@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {boxUV,surface,softBox} from './materials.ts';
+import {boxUV,surface,softBox,upholstery} from './materials.ts';
 import {spaceFurniture} from './apartment-layout.ts';
 import type {Area} from './story';
 
@@ -37,6 +37,46 @@ export function dressApartment(root:T.Group,area:Area){
       const glass=new T.Mesh(new T.PlaneGeometry(1.45,1.53),nightWindow());glass.position.set(x,1.9,z);glass.rotation.y=ry;root.add(glass);
       for(const zz of [z-.77,z,z+.77])box(x*.998,1.9,zz,.04,1.65,.035,steel);box(x*.998,1.9,z,.04,.04,1.6,steel);
     }
+    const linen=upholstery('#b4afa0'),cotton=upholstery('#6e7873'),ceramic=new T.MeshStandardMaterial({color:'#c6c3b6',roughness:.22});
+    function cloth(x:number,y:number,z:number,w:number,h:number,rotation:number){
+      const g=new T.PlaneGeometry(w,h,24,12),p=g.getAttribute('position');
+      for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(p.getX(i)*43)*.037+Math.sin(p.getY(i)*5+p.getX(i)*14)*.006);
+      g.computeVertexNormals();const m=new T.Mesh(g,linen);m.position.set(x,y,z);m.rotation.y=rotation;m.material.side=T.DoubleSide;m.castShadow=true;m.receiveShadow=true;root.add(m);
+    }
+    function contact(x:number,z:number,w:number,d:number,y=.012){
+      const m=new T.Mesh(new T.PlaneGeometry(w,d),new T.ShaderMaterial({transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,vertexShader:'varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 v;void main(){vec2 p=abs(v*2.-1.);float a=(1.-smoothstep(.55,1.,max(p.x,p.y)))*.27;gl_FragColor=vec4(.045,.036,.025,a);}'}));m.position.set(x,y,z);m.rotation.x=-Math.PI/2;root.add(m);
+    }
+    for(const [x,z,ry] of [[-6.4,4.8,Math.PI/2],[6.4,3.2,-Math.PI/2]]){
+      at(x<0?-6.46:6.46,z);
+      rod(new T.Vector3(x*.978,2.82,z-1.18),new T.Vector3(x*.978,2.82,z+1.18),.019);
+      for(const side of [-1,1]){cloth(x*.972,1.78,z+side*.95,.47,2.04,ry);box(x*.982,.86,z,.26,.065,1.78,wood);for(let i=0;i<4;i++){const ring=new T.Mesh(new T.TorusGeometry(.028,.004,6,12),steel);ring.position.set(x*.978,2.79,z+side*.76+side*i*.105);ring.rotation.y=Math.PI/2;root.add(ring);}}
+    }
+    at(-1.2,2.5);
+    for(const z of [1.6,3.45]){const pillow=new T.Mesh(softBox(.28,.44,.54,.1),cotton);pillow.position.set(-1.01,.93,z);pillow.rotation.z=-.18;pillow.rotation.y=z>2?.08:-.09;pillow.castShadow=true;pillow.receiveShadow=true;root.add(pillow);}
+    contact(-1.2,2.5,1.35,3.5,.04);
+    at(-3.15,2.4);contact(-3.15,2.4,1.48,2.05,.04);
+    const mugHandle=new T.Mesh(new T.TorusGeometry(.062,.018,10,20),ceramic);mugHandle.position.set(-3.45,.66,2.98);root.add(mugHandle);
+    at(-4.5,-1.7);
+    for(const x of [-5.6,-4.5,-3.4]){
+      box(x,.43,-1.235,1.06,.82,.026,surface('wood','#b5ab96'));box(x,.73,-1.207,.45,.012,.018,dark);
+      rod(new T.Vector3(x-.15,.67,-1.18),new T.Vector3(x+.15,.67,-1.18),.012);
+      box(x,.08,-1.2,1.06,.09,.065,dark);
+    }
+    for(const x of [-5.5,-4.5,-3.5]){box(x,2.1,-1.967,.84,.73,.027,wood);rod(new T.Vector3(x+.29,1.98,-1.94),new T.Vector3(x+.29,2.19,-1.94),.01);}
+    const faucet=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([new T.Vector3(-5.3,.99,-1.97),new T.Vector3(-5.3,1.31,-1.97),new T.Vector3(-5.3,1.38,-1.72),new T.Vector3(-5.3,1.2,-1.66)]),22,.018,10,false),steel);root.add(faucet);
+    for(const x of [-5.67,-4.93])box(x,.996,-1.7,.025,.025,.61,steel);for(const z of [-2.01,-1.39])box(-5.3,.996,z,.76,.025,.026,steel);
+    cylinder(-5.3,.999,-1.7,.047,.005,dark);
+    for(let i=0;i<4;i++){const dish=new T.Mesh(new T.TorusGeometry(.13,.014,10,28),ceramic);dish.position.set(-5.85+i*.075,1.08,-1.62);dish.rotation.y=.15;root.add(dish);}
+    const kettle=new T.Mesh(new T.SphereGeometry(.14,20,14),steel);kettle.scale.y=.85;kettle.position.set(-3.8,1.09,-1.7);root.add(kettle);cylinder(-3.8,1.22,-1.7,.06,.025,dark);
+    at(-6.04,-.65);for(const y of [.95,1.65])rod(new T.Vector3(-5.625,y-.12,-.4),new T.Vector3(-5.625,y+.12,-.4),.018);
+    at(-4.2,5.15);contact(-4.2,5.15,2.3,1.25);
+    for(const x of [-4.82,-3.6]){cylinder(x,.836,5.15,.16,.025,ceramic);cylinder(x,.88,5.4,.065,.1,ceramic);rod(new T.Vector3(x-.17,.837,4.95),new T.Vector3(x+.15,.837,4.95),.004,wood);}
+    at(4.8,4.6);contact(4.8,4.6,2.55,2.75);
+    for(const x of [4.25,5.35]){const pillow=new T.Mesh(softBox(.86,.23,.46,.1),linen);pillow.position.set(x,.84,5.43);pillow.rotation.y=x<4.8?.04:-.06;root.add(pillow);}
+    at(2.9,-5.5);
+    const rim=new T.Mesh(new T.TorusGeometry(.315,.032,12,32),steel);rim.position.set(2.9,.57,-4.90);root.add(rim);
+    const glass=new T.Mesh(new T.CircleGeometry(.278,32),new T.MeshPhysicalMaterial({color:'#354240',roughness:.12,metalness:.32}));glass.position.set(2.9,.57,-4.883);root.add(glass);box(2.9,1,-4.94,1.12,.11,.035,ceramic);
+    for(const z of [-3,0,5.75]){at(-6.6,z);box(-6.476,.31,z,.017,.12,.19,ceramic);for(const dz of [-.045,.045])box(-6.463,.31,z+dz,.01,.029,.008,dark);}
     finish();
   }else if(area==='landing'){
     const rust=surface('concrete','#786151',{roughness:.94,metalness:.3});
