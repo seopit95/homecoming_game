@@ -59,9 +59,9 @@ test('the collectible fuse is visible outside its opaque cabinet',()=>{
 });
 test('the large apartment floor offers two connected routes around its service cores',async()=>{
   const {findPath}=await import('../lib/navigation.ts'),w=buildWorld(new THREE.Scene(),'corridor');
-  assert.ok(w.bounds.x>=14&&w.bounds.z>=38);
-  for(const x of [-10,10]){const path=findPath(w.spawn,{x,z:-32},w.solids,w.bounds);assert.ok(path.length>0);assert.ok(path.some(p=>Math.abs(p.x)>6));}
-  assert.ok(findPath({x:-10,z:0},{x:10,z:0},w.solids,w.bounds).length>0,'the middle passage connects the wings');
+  assert.ok(w.bounds.x<3.6&&w.bounds.z>=19);
+  for(const x of [-2.6,2.6]){const path=findPath(w.spawn,{x,z:-17},w.solids,w.bounds);assert.ok(path.length>0);assert.ok(path.some(p=>Math.abs(p.x)>2));}
+  assert.ok(findPath({x:-2.6,z:0},{x:2.6,z:0},w.solids,w.bounds).length>0,'the middle passage connects the wings');
 });
 test('crouching behind a desk breaks the ghost sightline',()=>{
   const cover=[{x:0,z:0,w:3,d:1,y:.7,h:1.4}],ghost={x:0,y:1.55,z:-2};
@@ -75,10 +75,10 @@ test('the home has a 330 square metre footprint and a broad connected living are
 });
 test('the exterior apartment gallery has a long clear route and an open view above its guardrail',()=>{
   const w=buildWorld(new THREE.Scene(),'landing'),call=w.targets.find(t=>t.id==='call');
-  assert.ok(w.spawn.distanceTo(call.point)>55,'the elevator is at the far end of a long gallery');
-  for(let z=-30;z<=29;z++)assert.ok(canStandAt(0,z,w.solids,.4,w.bounds),`clear route at ${z}`);
+  assert.ok(w.spawn.distanceTo(call.point)>40,'the elevator is at the far end of a long gallery');
+  for(let z=-21;z<=21;z++)assert.ok(canStandAt(0,z,w.solids,.4,w.bounds),`clear route at ${z}`);
   assert.equal(hasLineOfSight({x:0,y:1.65,z:5},{x:-4,y:1.8,z:0},w.solids),true,'the falling shape can be seen outside');
-  assert.equal(canStandAt(-3.4,0,w.solids,.23,w.bounds),false,'the player cannot walk off the balcony');
+  assert.equal(canStandAt(-1.6,0,w.solids,.23,w.bounds),false,'the player cannot walk off the balcony');
   assert.equal(hasLineOfSight({x:0,y:.7,z:0},{x:-4,y:.7,z:0},w.solids),false,'the solid lower guardrail remains');
 });
 test('memory rain and windshield lines release their GPU resources on teardown',async()=>{
@@ -86,4 +86,17 @@ test('memory rain and windshield lines release their GPU resources on teardown',
   const road=buildRoad(new THREE.Scene());let expected=0,disposed=0;
   road.root.traverse(o=>{if(o instanceof THREE.Line){for(const resource of [o.geometry,o.material]){expected++;resource.addEventListener('dispose',()=>disposed++);}}});
   assert.ok(expected>=4);disposeWorld(road.root);assert.equal(disposed,expected);assert.equal(road.root.parent,null);
+});
+
+test('opened home and elevator portals expose their adjoining spaces',()=>{
+ const home=buildWorld(new THREE.Scene()),door=home.root.getObjectByName('front-door'),z=door.position.z;
+ const a={x:0,y:1.6,z:z+1},b={x:0,y:1.6,z:z-3};
+ home.updateStory('light_switch',0,false);assert.equal(hasLineOfSight(a,b,home.solids),false);
+ home.updateStory('hide',1,false);home.updateStory('hide',3,false);assert.ok(door.rotation.y>1.3);assert.equal(hasLineOfSight(a,b,home.solids),true);
+ for(const area of ['lift','landing']){const w=buildWorld(new THREE.Scene(),area),dz=w.liftDoors.left.position.z;assert.equal(hasLineOfSight({x:0,y:1.6,z:dz+.7},{x:0,y:1.6,z:dz-2},w.solids),true,`${area} opening is not filled by the building enclosure`);}
+});
+
+test('the pursuer can enter the electrical room and reach every office patrol destination',async()=>{
+ const {findPath}=await import('../lib/navigation.ts'),w=buildWorld(new THREE.Scene(),'office');
+ for(const target of [{x:3.8,z:-4},{x:0,z:0},{x:0,z:-6},{x:3,z:5.6},{x:-3,z:4}])assert.ok(findPath(w.spawn,target,w.solids,w.bounds).length,`enemy route to ${JSON.stringify(target)}`);
 });

@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {handSkinMaterial} from './materials.ts';
+import {handSkinMaterial,cutoutMaterial} from './materials.ts';
 
 // A separate depth pass keeps the forearm out of walls without drawing through its own fingers.
 export function createViewmodel(){
@@ -51,6 +51,9 @@ export function createViewmodel(){
   const lens=new T.Mesh(new T.CircleGeometry(.032,32),new T.MeshStandardMaterial({color:'#a8b9b5',metalness:.2,roughness:.12,emissive:'#e5e5ce',emissiveIntensity:1,side:T.DoubleSide}));lens.position.z=-.19;torch.add(lens);
   ellipsoid(torch,[0,.031,.078],[.009,.0025,.015],rubber);
   curve(torch,[[.016,-.012,.103],[.06,-.095,.17],[.055,-.13,.145],[-.004,-.025,.1]],.0025,rubber);
+  const photographic=cutoutMaterial('hand-view');
+  let handPlate:T.Mesh|undefined;
+  if(photographic){arm.visible=false;hand.visible=false;torch.visible=false;handPlate=new T.Mesh(new T.PlaneGeometry(.61,.61),photographic);handPlate.name='natural-hand-cutout';handPlate.position.set(.05,-.14,.04);root.add(handPlate);}
   const beamOrigin=new T.Vector3();
   function update(p:{time:number;moving:boolean;running:boolean;crouched:boolean;torch:boolean;visible:boolean;reducedMotion:boolean;aspect:number;fov:number;obstructed?:boolean}){
     root.visible=p.visible;
@@ -58,6 +61,7 @@ export function createViewmodel(){
     root.position.set(.285*Math.min(1,p.aspect/(16/9))+Math.sin(phase)*motion,-.105+(p.torch?0:-.085)+(p.crouched?-.025:0)+(p.obstructed?-.13:0)+Math.cos(phase*2)*motion*.55,p.obstructed?-.34:-.56);
     root.rotation.set(p.torch?(p.obstructed?.32:-.065):.28,.065,Math.sin(phase)*motion*1.2);
     lens.material.emissiveIntensity=p.torch?.7:0;
+    if(photographic)photographic.color.setScalar(p.torch?.62:.22);
     key.intensity=p.torch?1.7:.35;ambient.intensity=p.torch?1:.45;
     camera.aspect=p.aspect;camera.fov=p.fov;camera.updateProjectionMatrix();camera.updateMatrixWorld();
     scene.updateMatrixWorld(true);lens.getWorldPosition(beamOrigin);

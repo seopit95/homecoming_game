@@ -13,6 +13,11 @@ test('the apparition crossfades a connected music layer through volume and pause
     const count=audio.haunt.gain.targets.length;audio.setHaunt(1);assert.equal(audio.haunt.gain.targets.length,count,'steady frames do not reschedule fades');
     audio.mix({music:0,effects:.4,voice:.7});assert.equal(audio.musicBus.gain.targets.at(-1)[0],0);assert.equal(audio.voiceBus.gain.targets.at(-1)[0],.7);assert.equal(audio.effectsBus.gain.targets.at(-1)[0],.4);audio.setVolume(0);assert.equal(audio.master.gain.targets.at(-1)[0],0);audio.pause();assert.equal(ctx.state,'suspended');audio.resume();assert.equal(ctx.state,'running');
     audio.setDrive(9);assert.ok(audio.driveBus.connections.includes(audio.effectsBus),'engine and tyres follow the effects volume');assert.ok(audio.driveTone.frequency.targets.at(-1)[0]>50);audio.sound('glass');const shardSound=ctx.nodes.find(n=>n.buffer===audio.noise&&!n.loop);audio.setDrive(null);assert.deepEqual(shardSound.stopArgs,[],'skipping cancels pending collision sounds immediately');assert.equal(audio.driveBus.gain.targets.at(-1)[0],0,'skipping stops road audio');
-    audio.setHaunt(0);assert.equal(audio.haunt.gain.targets.at(-1)[0],0);audio.dispose();assert.equal(ctx.state,'closed');assert.equal(audio.haunt,null);
+    audio.clips['phone-ring']={duration:9};audio.clips['radio-tuning-broadcast']={duration:12};audio.clips['male-surprise']={duration:.67};
+    audio.setDevice('phone',.8,-.3);const ring=audio.deviceLoops.get('phone');assert.equal(ring.source.loop,true);assert.ok(ring.pan.connections.includes(audio.effectsBus));
+    audio.setDevice('phone',.2,.4);assert.equal(audio.deviceLoops.get('phone'),ring,'position changes keep the same ringing loop');assert.equal(ring.pan.pan.value,.4);
+    audio.pause();assert.equal(ctx.state,'suspended');audio.resume();audio.setDevice('phone',0);assert.equal(audio.deviceLoops.size,0);assert.deepEqual(ring.source.stopArgs,[]);
+    audio.setDevice('radio',.5);audio.recorded('male-surprise');const gasp=[...audio.roadSounds][0];audio.setDrive(null);assert.deepEqual(gasp.stopArgs,[],'skip also cancels recorded opening voices');
+    audio.setHaunt(0);assert.equal(audio.haunt.gain.targets.at(-1)[0],0);audio.dispose();assert.equal(ctx.state,'closed');assert.equal(audio.haunt,null);assert.equal(audio.deviceLoops.size,0);
   }finally{audio.dispose();globalThis.fetch=previousFetch;globalThis.AudioContext=previousContext;}
 });

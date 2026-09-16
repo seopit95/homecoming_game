@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {surface,boxUV,softBox,handSkinMaterial,upholstery} from './materials.ts';
+import {surface,boxUV,softBox,handSkinMaterial,upholstery,cutoutMaterial} from './materials.ts';
 import {opening,type Stage} from './story.ts';
 
 // All motion is sampled from simulation time: pause, skip and replay never leave a cutscene running.
@@ -56,7 +56,7 @@ export function buildRoad(scene:T.Scene){
   box(-.4,5.45,-6,1.18,.4,.28,rubber);
   for(let i=0;i<3;i++){const lens=mesh(new T.CircleGeometry(.12,24),i===2?red:darkGlass,[-.79+i*.38,5.45,-5.849]);box(-.79+i*.38,5.6,-5.79,.28,.075,.26,rubber);lens.castShadow=false;}
   const crossingLight=new T.SpotLight('#c4d1d6',70,22,.85,.85,2);crossingLight.position.set(3.5,6,-2);crossingLight.target.position.set(-1,0,-2);crossingLight.castShadow=true;crossingLight.shadow.mapSize.set(1024,1024);crossingLight.shadow.bias=-.0005;root.add(crossingLight,crossingLight.target);
-  label('白鷺ハイツ  ｜  徐行',2.4,.42,[3.4,3.6,-5.8]);
+  label('백로아파트  ｜  서행',2.4,.42,[3.4,3.6,-5.8]);
   box(4.92,1.18,7.4,.25,2.35,.25,concrete);box(5.35,.45,7.4,.8,.9,1.9,concrete);
   // A parked delivery van partially screens the pedestrian on the near pavement.
   box(3.38,.58,7.8,1.45,.9,3.5,body);box(3.38,1.4,8.1,1.4,1.08,2.3,concrete);box(3.38,1.57,9.27,1.23,.62,.035,darkGlass);
@@ -64,7 +64,7 @@ export function buildRoad(scene:T.Scene){
   // Volumetric rain wraps around the camera; individual drops on the glass are a separate layer.
   const rainPoints=[];for(let i=0;i<600;i++){const x=Math.sin(i*73.1)*8,y=(i*.173)%7,z=-42+(i*7.31)%53;rainPoints.push(x,y,z,x-.025,y-.22,z);}
   const rain=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(rainPoints,3)),new T.LineBasicMaterial({color:'#a4bcc9',transparent:true,opacity:.2,depthWrite:false}));root.add(rain);
-  const car=new T.Group();car.name='memory-car';root.add(car);
+  const car=new T.Group();car.name='memory-car';car.scale.x=-1;root.add(car);
   const dash=upholstery('#22292d');dash.bumpScale=.0006;
   box(0,.65,-1.1,1.91,.25,.71,dash,car);box(0,.51,-.78,1.89,.3,.34,rubber,car);
   const hood=box(0,.58,-2.16,1.83,.12,1.49,body,car);hood.name='memory-hood';hood.rotation.x=-.035;
@@ -120,7 +120,7 @@ export function buildRoad(scene:T.Scene){
   function renderMirror(renderer:T.WebGLRenderer){
     const previous=renderer.getRenderTarget(),shadows=renderer.shadowMap.autoUpdate;
     car.visible=false;renderer.shadowMap.autoUpdate=false;
-    mirrorCamera.position.set(car.position.x+.35,1.35,car.position.z+.75);mirrorCamera.rotation.y=Math.PI;
+    mirrorCamera.position.set(car.position.x-.35,1.35,car.position.z+.75);mirrorCamera.rotation.y=Math.PI;
     try{renderer.setRenderTarget(mirrorTarget);renderer.render(scene,mirrorCamera);}
     finally{renderer.setRenderTarget(previous);renderer.shadowMap.autoUpdate=shadows;car.visible=true;}
   }
@@ -141,6 +141,14 @@ export function buildRoad(scene:T.Scene){
   const fractures:number[]=[];
   for(let i=0;i<13;i++){const a=i*2.399,r=.15+(i%5)*.055;let px=-.05,py=.86;for(let j=1;j<5;j++){const nx=-.05+Math.cos(a+j*.06)*r*j/4,ny=.86+Math.sin(a)*r*j/4;fractures.push(px,py,-1.25-(py-.7)*.53,nx,ny,-1.25-(ny-.7)*.53);px=nx;py=ny;}}
   const cracks=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(fractures,3)),new T.LineBasicMaterial({color:'#b4c8cf',transparent:true,opacity:.66}));cracks.name='memory-cracked-glass';car.add(cracks);
+  const cockpitMaterial=cutoutMaterial('cockpit');
+  if(cockpitMaterial){
+    for(const child of car.children)if(!(child instanceof T.Light)&&child.position.y<1.15&&child.position.z> -1.15)child.visible=false;
+    cockpitMaterial.color.setScalar(.55);cockpitMaterial.depthWrite=true;
+    const photo=mesh(new T.PlaneGeometry(3.2,2.1333),cockpitMaterial,[.35,1.13,-1.03],car);photo.name='photographic-cockpit';photo.scale.x=-1;photo.castShadow=false;photo.receiveShadow=false;steering.visible=false;
+  }
+  const distraction=box(-.64,.75,-.72,.12,.028,.22,rubber,car);distraction.rotation.z=.09;
+  const message=label('수신 메시지',.1,.16,[0,.02,0],distraction,'#1d343b','#a8c6c2');message.rotation.x=-Math.PI/2;
   // The victim is still a living person here: natural proportions, a coat, shoes and a shoulder bag.
   const victim=new T.Group();victim.name='memory-pedestrian';root.add(victim);
   const coat=upholstery('#6c7674'),pants=new T.MeshStandardMaterial({color:'#30383d',roughness:.93});
@@ -176,24 +184,25 @@ export function buildRoad(scene:T.Scene){
     const brake=driving?Math.max(0,t-10):0;
     const speed=driving?10-brake*.6:impact?Math.max(0,8.8-t*9.7778):Math.min(10,t*2.1);
     const z=driving?120-t*10+brake*brake*.3:impact?1.2-8.8*Math.min(t,.9)+4.888889*Math.min(t,.9)**2:stopZ-(t<10/2.1?1.05*t*t:10*t-100/4.2);
-    const x=driving?-1.65+(reduced?0:Math.sin(t*.7)*.045*Math.sin(Math.PI*t/driveDuration)): -1.65;
+    const x=driving?1.65+(reduced?0:Math.sin(t*.7)*.045*Math.sin(Math.PI*t/driveDuration)): 1.65;
     car.position.set(x,0,z);
     streetLights.forEach((light,i)=>{const lampZ=-135+(Math.floor((z+135)/18)-2+i)*18;light.position.set(3.8,5.25,lampZ);light.target.position.set(1.7,0,lampZ);});
     const jolt=impact&&!reduced?Math.exp(-t*6)*Math.sin(t*29):0;
-    camera.position.set(x+.35,1.23+(reduced?0:Math.sin(clock*15)*.003*speed/10)-jolt*.025,z+.06-jolt*.07);
-    camera.rotation.set(-.055-jolt*.09,impact?T.MathUtils.smoothstep(t,3,5)*.045:stage==='flee'?.045*(1-T.MathUtils.smoothstep(t,0,1)):0,reduced?0:jolt*.018,'YXZ');
+    camera.position.set(x-.35,1.23+(reduced?0:Math.sin(clock*15)*.003*speed/10)-jolt*.025,z+.06-jolt*.07);
+    const glance=driving?T.MathUtils.smoothstep(t,4.2,5.6)*(1-T.MathUtils.smoothstep(t,9.1,10.8)):0;
+    camera.rotation.set(-.055-jolt*.09-glance*.34,driving?-glance*.56:impact?T.MathUtils.smoothstep(t,3,5)*.045:stage==='flee'?.045*(1-T.MathUtils.smoothstep(t,0,1)):0,reduced?0:jolt*.018,'YXZ');
     wheel.rotation.z=driving?Math.sin(t*.7)*.027:impact?-.04*T.MathUtils.smoothstep(t,0,.35):-.04*(1-T.MathUtils.smoothstep(t,0,2));
     needles[0].rotation.z=2.3-speed/14*4.6;needles[1].rotation.z=2.3-(speed>0?.7+speed*.085:.5);
     wipers.forEach(w=>{w.rotation.z=.79-(.5-.5*Math.cos(clock*3.69599))*1.65;});
     windshieldMat.uniforms.time.value=clock;
     hood.rotation.x=-.035+(driving?0:.07*T.MathUtils.smoothstep(hitTime,0,.25));cracks.visible=!driving;
     victim.visible=true;
-    if(driving){victim.position.set(4.7-Math.max(0,t-7)*1.17,0,-1.85);victim.rotation.set(0,-Math.PI/2,0);}
-    else{const flight=T.MathUtils.smoothstep(hitTime,0,1.1);victim.position.set(-1.15-flight*1.18,Math.sin(flight*Math.PI)*.68+flight*.28,-1.85-flight*3.9);victim.rotation.set(-flight*Math.PI/2,-Math.PI/2+flight*.8,flight*.015,'YXZ');}
+    if(driving){victim.position.set(-4.7+Math.max(0,t-7)*1.37,0,-1.85);victim.rotation.set(0,Math.PI/2,0);}
+    else{const flight=T.MathUtils.smoothstep(hitTime,0,1.1);victim.position.set(2.15+flight*1.18,Math.sin(flight*Math.PI)*.68+flight*.28,-1.85-flight*3.9);victim.rotation.set(-flight*Math.PI/2,Math.PI/2-flight*.8,flight*.015,'YXZ');}
     torso.rotation.z=driving?Math.sin(clock*5)*.016:0;head.rotation.y=driving?T.MathUtils.smoothstep(t,10.7,11.8)*.75:0;
     limbs.forEach((limb,i)=>{limb.rotation.x=driving?Math.sin(clock*5+(i<2?0:Math.PI))*(i%2?.16:.3):Math.sin(Math.min(hitTime,1.2)*3+i)*.15;});
     if(driving){bag.position.set(victim.position.x+.04,.69,-1.59);bag.rotation.set(0,0,0);phone.visible=false;}
-    else{const scatter=T.MathUtils.smoothstep(hitTime,.15,1.15);bag.position.set(-1.11+scatter*.6,.69*(1-scatter)+scatter*.11,-1.59-scatter*2);bag.rotation.set(scatter*1.3,scatter*.7,scatter*.2);phone.visible=hitTime>.35;phone.position.set(-.4,.041,-3.9);phone.rotation.y=.8;}
+    else{const scatter=T.MathUtils.smoothstep(hitTime,.15,1.15);bag.position.set(2.19+scatter*.6,.69*(1-scatter)+scatter*.11,-1.59-scatter*2);bag.rotation.set(scatter*1.3,scatter*.7,scatter*.2);phone.visible=hitTime>.35;phone.position.set(3.1,.041,-3.9);phone.rotation.y=.8;}
     rain.position.set(x,-(clock*4.6)%6,z);
     return speed;
   }

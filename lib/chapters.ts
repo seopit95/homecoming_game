@@ -35,8 +35,8 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     for(const x of [-2.85,2.85])box(x,1.4,.3,3.5,2.8,.13,wall,true);
     box(0,.008,4.8,1.6,.02,1.8,surface('tile','#a5aaa2'));
     const shoe=box(1.6,.1,4.8,.2,.16,.48,dark);shoe.rotation.y=.45;target('belongings','신발과 이름이 적힌 봉투',shoe,1.6,.3,4.8);
-    box(2.4,.52,5.45,1.25,1.04,.62,wood,true);label('1704 · 水野 紗恵',2.4,1.1,5.15,.9,.23,Math.PI);
-    label('管理室は裏の連絡扉から',0,2.3,5.82,1.45,.22,Math.PI);
+    box(2.4,.52,5.45,1.25,1.04,.62,wood,true);label('1704 · 한서연',2.4,1.1,5.15,.9,.23,Math.PI);
+    label('관리실은 뒤쪽 연결문으로',0,2.3,5.82,1.45,.22,Math.PI);
     for(let i=0;i<3;i++)rod(new T.Vector3(3.9+i*.11,.1,5.2),new T.Vector3(3.85+i*.11,1.05,5.22),.025,dark);
     // Low table, a cushion, untouched tea and an answering machine.
     box(-2.8,.035,2.4,2.8,.05,2.5,upholstery('#88846a'));
@@ -44,18 +44,18 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     box(-2.6,.1,3.3,.75,.16,.6,upholstery('#536264'));
     const machine=box(-3.8,.77,3.6,.5,.18,.38,metal);box(-3.8,.35,3.6,.8,.7,.62,wood,true);
     box(-3.8,.88,3.6,.31,.04,.15,dark);const led=light(-3.8,.92,3.55,'#be6951',.24,1.3);led.name='answering-machine-led';
-    target('answerphone','留守番電話 · 녹음 재생',machine,-3.8,.94,3.3);
+    target('answerphone','자동응답기 · 녹음 재생',machine,-3.8,.94,3.3);
     box(-2.7,.49,2.2,.25,.09,.22,paper);box(-2.35,.49,2.3,.12,.09,.12,metal);
     box(3.6,.5,2.5,1.6,1,2.6,wood,true);box(3.6,1.03,2.5,1.65,.08,2.65,paper);
     box(3.6,1.08,1.65,.65,.025,.6,metal);for(const z of [2.6,3.1]){const ring=new T.Mesh(new T.TorusGeometry(.15,.02,8,20),dark);ring.position.set(3.6,1.1,z);ring.rotation.x=Math.PI/2;root.add(ring);}
     box(3.8,1.02,4.4,.75,2.04,.85,paper,true);
-    const note=label('次は、晴れた日に。\n明日 14:00',3.8,1.5,3.96,.48,.42,Math.PI);target('portrait','냉장고에 남겨진 약속',note,3.8,1.5,3.95);
+    const note=label('다음에는 맑은 날에.\n내일 오후 두 시',3.8,1.5,3.96,.48,.42,Math.PI);target('portrait','냉장고에 남겨진 약속',note,3.8,1.5,3.95);
     box(-2.9,.15,-3.4,2,.3,3.1,wood,true);box(-2.9,.38,-3.4,1.9,.25,3,upholstery('#b0a68c'));box(-2.9,.55,-4.4,1.25,.18,.48,upholstery('#c3bba7'));
     for(let i=0;i<5;i++)box(-4.45,.5+i*.38,-3.9,.3,.3,1.8,wood);
-    box(3,.75,-4.65,2,.12,.65,wood,true);box(3,.86,-4.65,.42,.1,.26,paper);label('水野 紗恵',3,1.35,-5.82,.7,.3);
+    box(3,.75,-4.65,2,.12,.65,wood,true);box(3,.86,-4.65,.42,.1,.26,paper);label('한서연',3,1.35,-5.82,.7,.3);
     const window=new T.Mesh(new T.PlaneGeometry(2.4,1.5),nightWindow());window.position.set(2.7,1.85,-5.83);root.add(window);
     for(const x of [1.45,2.7,3.95])box(x,1.85,-5.8,.04,1.6,.06,metal);box(2.7,1.85,-5.79,2.55,.04,.08,metal);
-    const passage=box(0,1.2,-5.83,1.55,2.4,.12,metal);label('管理室  →',0,2.6,-5.74,1.25,.25);target('resident_leave','뒤쪽 연결문으로 나가기',passage,0,1.25,-5.65);
+    const passage=box(0,1.2,-5.83,1.55,2.4,.12,metal);label('관리실 →',0,2.6,-5.74,1.25,.25);target('resident_leave','뒤쪽 연결문으로 나가기',passage,0,1.25,-5.65);
     light(2.7,2,-4.9,'#6a899e',4.5,10);light(-4,2.25,4.6,'#aa936c',1.9,7);light(0,2.4,-5.2,'#84a49b',1.7,6);
     for(let i=0;i<8;i++){const print=new T.Mesh(new T.CircleGeometry(.1,12),wet);print.rotation.x=-Math.PI/2;print.scale.y=1.8;print.position.set((i%2?.16:-.16),.012,4.2-i*.56);print.name='return-footprint';print.visible=false;root.add(print);}
     figure.position.set(0,0,5.2);

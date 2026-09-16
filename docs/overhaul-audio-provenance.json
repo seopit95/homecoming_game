@@ -1,0 +1,165 @@
+{
+  "prepared_date": "2026-09-16",
+  "purpose": "Horror game audio assets",
+  "license_summary": "All selected source recordings are offered under CC0 1.0 on the linked Freesound source pages. Attribution is optional under CC0; credits are included for provenance.",
+  "download_note": "Downloaded publicly exposed Freesound high-quality MP3 preview assets. Original full-quality WAV/FLAC downloads require an account, so delivered WAVs are decoded/edited from compressed MP3 previews. No login, signup, paid assets, video extraction, TTS, or external generation API was used.",
+  "validation": "All six source MP3 files decoded successfully with macOS afconvert; all five output WAVs reopened with Python wave, had nonzero signal and duration, and were decoded again by afconvert. Metadata and checksums below. No subjective listening verification is claimed.",
+  "assets": [
+    {
+      "file": "male-surprise.wav",
+      "path": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/male-surprise.wav",
+      "duration_seconds": 0.67,
+      "sample_rate": 44100,
+      "channels": 1,
+      "encoding": "PCM signed 16-bit little-endian WAV",
+      "bytes": 59138,
+      "peak_dbfs": -6.0,
+      "sha256": "1f57d1a7f74f4631ece066ca9a596f4200ea957eb8f36c0666be1176780eafc0",
+      "source_categories": [
+        "male-gasp"
+      ],
+      "edits": "Excerpt 1.35–2.02 seconds, short edge fades, peak normalized to -6 dBFS."
+    },
+    {
+      "file": "female-collision-scream.wav",
+      "path": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/female-collision-scream.wav",
+      "duration_seconds": 1.65,
+      "sample_rate": 44100,
+      "channels": 1,
+      "encoding": "PCM signed 16-bit little-endian WAV",
+      "bytes": 145574,
+      "peak_dbfs": -6.0,
+      "sha256": "ff08b2028df5759e7d0c62ff100e6c3c2fe6d30393f7730b18e75c1631d5b0ef",
+      "source_categories": [
+        "female-scream"
+      ],
+      "edits": "Excerpt 0.10–1.75 seconds, short edge fades, peak normalized to -6 dBFS."
+    },
+    {
+      "file": "phone-ring.wav",
+      "path": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/phone-ring.wav",
+      "duration_seconds": 9.0,
+      "sample_rate": 48000,
+      "channels": 2,
+      "encoding": "PCM signed 16-bit little-endian WAV",
+      "bytes": 1728044,
+      "peak_dbfs": -8.0,
+      "sha256": "07282098f05ae255e75dc0a9319b4c1dddad591384325cc074ceef82c15bcbb4",
+      "source_categories": [
+        "telephone"
+      ],
+      "edits": "Excerpt 0.00–9.00 seconds, short edge fades, peak normalized to -8 dBFS."
+    },
+    {
+      "file": "collision-impact.wav",
+      "path": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/collision-impact.wav",
+      "duration_seconds": 2.76,
+      "sample_rate": 44100,
+      "channels": 1,
+      "encoding": "PCM signed 16-bit little-endian WAV",
+      "bytes": 243476,
+      "peak_dbfs": -4.0,
+      "sha256": "723f450a9fd132de89c0a7011903c97ab96ab2949bfa4ba1c053b2f1327ed3eb",
+      "source_categories": [
+        "impact"
+      ],
+      "edits": "Excerpt 0.54–3.30 seconds, short edge fades, peak normalized to -4 dBFS."
+    },
+    {
+      "file": "radio-tuning-broadcast.wav",
+      "path": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/radio-tuning-broadcast.wav",
+      "duration_seconds": 12.0,
+      "sample_rate": 48000,
+      "channels": 1,
+      "encoding": "PCM signed 16-bit little-endian WAV",
+      "bytes": 1152044,
+      "peak_dbfs": -8.0,
+      "sha256": "af99b90ca5288f72c6adb28e0d9eddb02edada52554d29ea72c615af8be63d01",
+      "source_categories": [
+        "radio-tuning",
+        "radio-voice"
+      ],
+      "edits": "12 seconds of original tuning/static; original voice excerpt 1.0–6.2 seconds mixed at 2.4 seconds, edge fades and peak normalization. Voice is deliberately unintelligible; this is a staged radio sound, not an actual station broadcast."
+    }
+  ],
+  "sources": [
+    {
+      "category": "male-gasp",
+      "creator": "esperar",
+      "id": "171942",
+      "source_url": "https://freesound.org/people/esperar/sounds/171942/",
+      "download_url": "https://cdn.freesound.org/previews/171/171942_377731-hq.mp3",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "raw_file": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/sources/male-gasp.mp3",
+      "title": "surprise_gasps.wav",
+      "source_evidence": "Uploader describes a man gasping in surprise for an animated training video. Selected one nonverbal gasp; no Korean words. Performer age is not independently documented.",
+      "credit": "\"surprise_gasps.wav\" by esperar, Freesound, CC0 1.0 — https://freesound.org/people/esperar/sounds/171942/"
+    },
+    {
+      "category": "female-scream",
+      "creator": "starnezio",
+      "id": "609973",
+      "source_url": "https://freesound.org/people/starnezio/sounds/609973/",
+      "download_url": "https://cdn.freesound.org/previews/609/609973_10386673-hq.mp3",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "raw_file": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/sources/female-scream.mp3",
+      "title": "woman scream.wav",
+      "source_evidence": "Original theatre cast member recording; source explicitly says the actor granted Creative Commons upload permission. Selected the scream and decay. Performer age is not independently documented.",
+      "credit": "\"woman scream.wav\" by starnezio, Freesound, CC0 1.0 — https://freesound.org/people/starnezio/sounds/609973/"
+    },
+    {
+      "category": "telephone",
+      "creator": "robotjay",
+      "id": "275163",
+      "source_url": "https://freesound.org/people/robotjay/sounds/275163/",
+      "download_url": "https://cdn.freesound.org/previews/275/275163_476277-hq.mp3",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "raw_file": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/sources/telephone.mp3",
+      "title": "Phone Old Landline Ringing",
+      "source_evidence": "Original recording of a circa-1990s Telecom NZ landline, recorded with a Zoom H4n. Selected three approximately 3-second ring cycles for looping.",
+      "credit": "\"Phone Old Landline Ringing\" by robotjay, Freesound, CC0 1.0 — https://freesound.org/people/robotjay/sounds/275163/"
+    },
+    {
+      "category": "radio-tuning",
+      "creator": "jascha23",
+      "id": "161083",
+      "source_url": "https://freesound.org/people/jascha23/sounds/161083/",
+      "download_url": "https://cdn.freesound.org/previews/161/161083_146317-hq.mp3",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "raw_file": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/sources/radio-tuning.mp3",
+      "title": "radio_static.wav",
+      "source_evidence": "Uploader says static/tuning was synthesized from scratch with SuperCollider; not a station broadcast.",
+      "credit": "\"radio_static.wav\" by jascha23, Freesound, CC0 1.0 — https://freesound.org/people/jascha23/sounds/161083/"
+    },
+    {
+      "category": "radio-voice",
+      "creator": "unfa",
+      "id": "245660",
+      "source_url": "https://freesound.org/people/unfa/sounds/245660/",
+      "download_url": "https://cdn.freesound.org/previews/245/245660_1038806-hq.mp3",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "raw_file": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/sources/radio-voice.mp3",
+      "title": "Unintelligible Radio Chatter",
+      "source_evidence": "Uploader explicitly identifies the recording as their own voice, processed with Audacity. Intentionally distorted and unintelligible.",
+      "credit": "\"Unintelligible Radio Chatter\" by unfa, Freesound, CC0 1.0 — https://freesound.org/people/unfa/sounds/245660/"
+    },
+    {
+      "category": "impact",
+      "creator": "vestibule-door",
+      "id": "669685",
+      "source_url": "https://freesound.org/people/vestibule-door/sounds/669685/",
+      "download_url": "https://cdn.freesound.org/previews/669/669685_14100561-hq.mp3",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "raw_file": "/Users/kds_mac/PhpstormProjects/horror-overhaul-assets/audio/sources/impact.mp3",
+      "title": "body impact metal clang cabbage thrown at a bin.wav",
+      "source_evidence": "Foley: cabbage thrown at a metal bin, Zoom H2n recording, edited by uploader; no real collision or injury recording.",
+      "credit": "\"body impact metal clang cabbage thrown at a bin.wav\" by vestibule-door, Freesound, CC0 1.0 — https://freesound.org/people/vestibule-door/sounds/669685/"
+    }
+  ]
+}
