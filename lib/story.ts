@@ -3,11 +3,11 @@ export type Area = 'apartment'|'landing'|'lift'|'corridor'|'stairs'|'office'|'pa
 export type Action = 'collision'|'fled'|'home'|'wake'|'skip_memory'|'blackout'|'phone'|'breaker'|'shoes'|'radio'|'heard'|'closet'|'survived'|'door'|'caught'|'call'|'arrived'|'enter'|'panel'|'stopped'|'pry'|'leave_lift'|'stairs'|'down'|'stair_note'|'up'|'record'|'fuse'|'security_power'|'monitor'|'service_exit'|'exit'|'alarm'|'dead'|'belongings'|'portrait'|'answerphone'|'resident_leave'|'car_door'|'road_bag'|'road_phone'|'stay'|'lure';
 export type Story = {stage:Stage;hidden:boolean;ending:'escaped'|'caught'|null;resume:Stage;notes:string[]};
 export const chaseStages:Stage[]=['hide','escape','lift_call','lift_wait','lift_enter','corridor_run','stairs_loop','stairs_clue','stairs_reverse','office_record','office_fuse','office_power','office_tape','office_leave','parking_gate','parking_alarm','parking_run','resident_return'];
-export const opening:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string}>>={
-  drive:{duration:8,action:'collision',label:'사흘 전 · 새벽 03:17',text:'술을 마셨다. 운전하면 안 된다는 걸 알면서도 핸들을 잡았다.\n빗소리 때문에, 사람이 다가오는 줄도 몰랐다.'},
-  impact:{duration:2.5,action:'fled',label:'03:17',text:'사람이었다.'},
-  flee:{duration:6,action:'home',label:'그날 밤 · 돌아보지 않았다',text:'나는 사람을 치어 죽였다. 차에서 내리지도, 신고하지도 않았다.\n그대로 액셀을 밟고 달아났다.'},
-  sleep:{duration:6,action:'wake',label:'그날 새벽 · 28층 2803호',text:'집으로 도망와 젖은 옷 그대로 침대에 누웠다.\n아무 일도 없었던 것처럼, 잠들었다.'},
+export const opening:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={
+  drive:{duration:12,action:'collision',label:'사흘 전 · 새벽 03:17',text:'술을 마셨다. 대리운전은 잡히지 않았다.\n집까지 얼마 안 남았다는 생각으로 운전대를 잡았다.',cues:[{at:4.5,text:'와이퍼가 지나갈 때마다 차선이 잠깐씩 보였다.\n익숙한 길이었다. 그래서 괜찮을 줄 알았다.'},{at:9.5,text:'빨간불이었다.\n브레이크를 밟았을 때는 이미 늦었다.'}]},
+  impact:{duration:8,action:'fled',label:'03:17 · 시라사기 하이츠 앞',text:'',cues:[{at:1.8,text:'…사람이었다.'},{at:4,text:'내려야 한다. 전화를 해야 한다.\n그런데 손이 운전대에서 떨어지지 않았다.'},{at:6.1,text:'조수석 쪽에서 무언가 문을 긁었다.\n나는 그쪽을 보지 않았다.'}]},
+  flee:{duration:7,action:'home',label:'03:17 · 현장을 떠났다',text:'발을 브레이크에서 뗐다.\n아무도 보지 않았을 거라고 생각했다.',cues:[{at:3.2,text:'차에서 내리지 않았다. 신고하지 않았다.\n백미러 속 횡단보도가 빗속으로 멀어졌다.'}]},
+  sleep:{duration:6,action:'wake',label:'그날 새벽 · 28층 2803호',text:'현관에서 신발도 제대로 벗지 못했다.\n젖은 소매를 붙잡은 채 침대에 쓰러졌다.',cues:[{at:3.1,text:'눈을 감아도 충돌하는 소리가 들렸다.\n얼마나 누워 있었는지 모른다.'}]},
 };
 export function isMemory(stage:Stage){return opening[stage]!==undefined;}
 export function initialStory():Story{return {stage:'drive',hidden:false,ending:null,resume:'radio',notes:[]};}

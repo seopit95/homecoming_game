@@ -13,6 +13,9 @@ export class HorrorAudio {
   cleanupTimer:ReturnType<typeof setTimeout>|undefined;
   haunt:GainNode|null=null;
   weather:GainNode|null=null;
+  driveBus:GainNode|null=null;driveTone:OscillatorNode|null=null;tyres:GainNode|null=null;
+  driveSpeed=-2;
+  roadSounds=new Set<AudioBufferSourceNode>();
   hauntLevel=-1;
   volume = .42;
   start() {
@@ -33,12 +36,27 @@ export class HorrorAudio {
     // Distant rain and ventilation stay quiet underneath positional sounds.
     for(const [hz,level] of [[650,.07],[2300,.018]]){const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();src.buffer=noise;src.loop=true;filter.type='lowpass';filter.frequency.value=hz;gain.gain.value=level;src.connect(filter);filter.connect(gain);gain.connect(this.weather);src.start();}
     const tvSource=ctx.createBufferSource(),tvFilter=ctx.createBiquadFilter();this.tv=ctx.createGain();this.tv.gain.value=0;tvSource.buffer=noise;tvSource.loop=true;tvFilter.type='bandpass';tvFilter.frequency.value=950;tvFilter.Q.value=1.1;tvSource.connect(tvFilter);tvFilter.connect(this.tv);this.tv.connect(this.effectsBus!);tvSource.start();
+    this.driveBus=ctx.createGain();this.driveBus.gain.value=0;this.driveBus.connect(this.effectsBus!);
+    this.driveTone=ctx.createOscillator();this.driveTone.type='triangle';this.driveTone.frequency.value=48;
+    const engineFilter=ctx.createBiquadFilter(),engineGain=ctx.createGain();engineFilter.type='lowpass';engineFilter.frequency.value=220;engineGain.gain.value=.13;
+    this.driveTone.connect(engineFilter);engineFilter.connect(engineGain);engineGain.connect(this.driveBus);this.driveTone.start();
+    const road=ctx.createBufferSource(),roadFilter=ctx.createBiquadFilter();road.buffer=noise;road.loop=true;roadFilter.type='lowpass';roadFilter.frequency.value=1200;
+    this.tyres=ctx.createGain();this.tyres.gain.value=0;road.connect(roadFilter);roadFilter.connect(this.tyres);this.tyres.connect(this.driveBus);road.start();
     for(const hz of [43,57.4,86.3]){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=hz;g.gain.value=.015;o.connect(g);g.connect(this.musicBus!);o.start();}
     for(const line of ['where','here','found','come','cry','scream','memory'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
   setHaunt(value:number){
     const level=Math.max(0,Math.min(1,value));if(!this.context||!this.haunt||!this.weather||Math.abs(level-this.hauntLevel)<.02)return;
     this.hauntLevel=level;const t=this.context.currentTime;this.haunt.gain.setTargetAtTime(level,t,.65);this.weather.gain.setTargetAtTime(1-level*.6,t,.9);
+  }
+  setDrive(speed:number|null){
+    if(speed===null){for(const source of this.roadSounds){try{source.stop();}catch{}}this.roadSounds.clear();}
+    const value=speed===null?-1:Math.max(0,Math.min(15,speed));
+    if(!this.context||!this.driveBus||!this.driveTone||!this.tyres||Math.abs(value-this.driveSpeed)<.08)return;
+    this.driveSpeed=value;const t=this.context.currentTime;
+    this.driveBus.gain.setTargetAtTime(value<0?0:1,t,.12);
+    this.driveTone.frequency.setTargetAtTime(43+Math.max(0,value)*4.7,t,.08);
+    this.tyres.gain.setTargetAtTime(.035+Math.max(0,value)*.012,t,.12);
   }
   mix(levels:{music:number;effects:number;voice:number}){this.levels={music:levels.music,effects:levels.effects,voice:levels.voice};if(!this.context)return;for(const [key,bus] of [['music',this.musicBus],['effects',this.effectsBus],['voice',this.voiceBus]] as const)bus?.gain.setTargetAtTime(this.levels[key],this.context.currentTime,.12);}
   recording(){this.voice('memory',0,.85);}
@@ -62,9 +80,17 @@ export class HorrorAudio {
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.voiceBus!);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }
-  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren',pan=0,level=1){
+  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren'|'wiper'|'brake'|'crash'|'glass',pan=0,level=1){
     const ctx=this.context;if(!ctx||!this.master||ctx.state!=='running')return;
     const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.effectsBus!);
+    if(kind==='wiper'||kind==='brake'||kind==='crash'||kind==='glass'){
+      const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter();source.buffer=this.noise;source.connect(filter);filter.connect(g);
+      this.roadSounds.add(source);p.disconnect();p.connect(this.driveBus??this.effectsBus!);
+      const duration=kind==='wiper'?.38:kind==='brake'?.95:kind==='crash'?.65:1.1;
+      filter.type=kind==='crash'?'lowpass':'bandpass';filter.frequency.setValueAtTime(kind==='wiper'?800:kind==='brake'?1750:kind==='crash'?450:4700,t);filter.frequency.exponentialRampToValueAtTime(kind==='crash'?70:kind==='wiper'?420:900,t+duration);filter.Q.value=kind==='brake'?2.8:.8;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((kind==='crash'?.72:kind==='wiper'?.055:kind==='brake'?.16:.13)*level,t+(kind==='crash'?.008:.06));g.gain.exponentialRampToValueAtTime(.0001,t+duration);
+      source.start(t,Math.random());source.stop(t+duration+.03);source.onended=()=>{this.roadSounds.delete(source);source.disconnect();filter.disconnect();g.disconnect();p.disconnect();};return;
+    }
     if(kind==='fall'){
       const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),cry=ctx.createOscillator(),cryGain=ctx.createGain();
       src.buffer=this.noise;filter.type='bandpass';filter.frequency.setValueAtTime(1900,t);filter.frequency.exponentialRampToValueAtTime(170,t+1.8);filter.Q.value=1.2;src.connect(filter);filter.connect(g);
@@ -82,5 +108,5 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.stopVoices();void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;}
+  dispose(){this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }

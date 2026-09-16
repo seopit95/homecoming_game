@@ -1,14 +1,15 @@
 import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import {opening} from '../lib/story.ts';
 import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/apartment-layout.ts';
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
 let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0;
-class Renderer{shadowMap={};setPixelRatio(){}setSize(){}clearDepth(){}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){}}
+class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setHaunt(value){hauntLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setHaunt(value){hauntLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -155,9 +156,9 @@ test('the remembered drive, fatal collision, escape and sleep lead to TV three n
   game.interact();game.crouch();game.torch();game.key('KeyW',true);assert.equal(game.snapshot().crouched,false);assert.equal(game.snapshot().flashlight,false);assert.equal(game.snapshot().story.stage,'drive');
   game.pause();const pos=renderedCamera.position.toArray(),at=game.snapshot().elapsed;tick(10);assert.deepEqual(renderedCamera.position.toArray(),pos);assert.equal(game.snapshot().elapsed,at);game.skipMemory();assert.equal(game.snapshot().story.stage,'drive');game.pause(false);
   doc.hidden=true;event(doc,'visibilitychange',{});tick(10);assert.equal(game.snapshot().elapsed,at);assert.equal(game.snapshot().paused,false);doc.hidden=false;event(doc,'visibilitychange',{});
-  tick(8);assert.equal(game.snapshot().story.stage,'impact');assert.equal(road.getObjectByName('memory-cracked-glass').visible,true);
-  tick(2.5);assert.equal(game.snapshot().story.stage,'flee');assert.match(game.snapshot().memoryText,/사람을 치어 죽였다/);
-  tick(6);assert.equal(game.snapshot().story.stage,'sleep');assert.equal(renderedScene.getObjectByName('accident-memory'),undefined);assert.equal(renderedCamera.position.y,.98);
+  tick(opening.drive.duration);assert.equal(game.snapshot().story.stage,'impact');assert.equal(road.getObjectByName('memory-cracked-glass').visible,true);
+  tick(opening.impact.duration);assert.equal(game.snapshot().story.stage,'flee');assert.ok(game.snapshot().memoryText.length>0);
+  tick(opening.flee.duration);assert.equal(game.snapshot().story.stage,'sleep');assert.equal(renderedScene.getObjectByName('accident-memory'),undefined);assert.equal(renderedCamera.position.y,.98);
   tick(4.5);assert.ok(game.snapshot().memoryFade>.8);tick(1.5);assert.equal(game.snapshot().story.stage,'tv');assert.ok(game.snapshot().story.notes.includes('wake'));assert.match(game.snapshot().memoryLabel,/사흘 뒤/);assert.ok(renderedScene.getObjectByName('apartment-tv-light').intensity>0);
   tick(7);assert.equal(game.snapshot().story.stage,'power');assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0);
   game.start();tick();const previous=renderedScene.getObjectByName('accident-memory');game.start();tick();assert.notEqual(renderedScene.getObjectByName('accident-memory'),previous);assert.equal(previous.parent,null,'restart disposes the old memory');
