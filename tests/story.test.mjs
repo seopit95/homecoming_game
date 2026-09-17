@@ -72,3 +72,8 @@ test('the fatal hit-and-run memory precedes the haunting three nights later',()=
   const skipped=transition(initialStory(),'skip_memory');assert.equal(skipped.stage,'wake_ring');assert.deepEqual(skipped.notes,s.notes);
   assert.equal(transition({...s,stage:'hide'},'skip_memory').stage,'hide');
 });
+
+test('rereading a collected resident clue leaves the pursuit timeline unchanged',()=>{
+ const s={...initialStory(),stage:'resident_return',notes:['belongings','answerphone','portrait']};
+ for(const action of s.notes)assert.equal(transition(s,action),s);
+});

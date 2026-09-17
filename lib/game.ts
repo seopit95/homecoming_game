@@ -7,6 +7,7 @@ import {initialStory,checkpoint,transition,objectives,areaFor,chapters,chaseStag
 import {findPath,type Point} from './navigation.ts';
 import {apartment as home,apartmentScale as S} from './apartment-layout.ts';
 import {buildRoad} from './prologue.ts';
+import {accidentCar} from './chapters.ts';
 import {landing,buildingLayout as layout} from './building.ts';
 import {freshStamina,stepStamina,canSprint} from './stamina.ts';
 import {perceives} from './perception.ts';
@@ -107,7 +108,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(isMemory(story.stage)||story.stage==='tv'||story.stage==='wake_ring')openingScene();
     if(action==='awake'){camera.position.set(...home.wakeStand);yaw=2.045;pitch=-.137;keys.clear();say('전화벨에 잠이 깼다. 방이 너무 어둡다. 침실 입구 스위치를 눌러 보자.',7);}
     if(action==='flashlight'){torch=true;audio.sound('click');}
-    if(story.stage==='road_evidence'){camera.position.set(-.4,1.65,8.6);yaw=0;pitch=0;}
+    if(story.stage==='road_evidence'){camera.position.set(accidentCar.exitX,1.65,accidentCar.exitZ);yaw=0;pitch=0;}
     persist();emit();return true;
   }
   function openingScene(){
@@ -139,10 +140,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const dialogue:Partial<Record<Action,string>>={
     switch:'딸깍. 아무 반응이 없다.\n침실 서랍장 위에 손전등을 둔 기억이 난다.',
     flashlight:'손전등을 찾았다.\n다용도실 차단기를 확인하자. 전화벨은 계속 울린다.',
-    car_search:'배수 설비 열쇠다. 좌우 급수 밸브를 먼저 잠그라는 쪽지가 있다.\n벽을 따라 서측과 동측 밸브를 찾아야 한다.',
+    car_search:'CCTV에서 그녀가 내려놓은 열쇠다. 꼬리표에 「배수 설비」라고 적혀 있다.\n양쪽 급수 밸브를 잠근 뒤 서측 펌프로 가야 한다.',
     valve_a:'서측 급수관을 잠갔다. 금속 마찰음이 주차장에 울렸다.',
-    valve_b:'동측 급수관을 잠갔다. 서측 펌프실로 돌아가야 한다.',
-    pump:'물이 빠지며 출구 잠금 표시가 켜졌다.\n그녀는 아직 출구 앞에 있다. 입구 경보로 유인하자.',
+    valve_b:'동측 급수관을 잠갔다. 금속 마찰음이 주차장에 울렸다.',
+    pump:'물이 빠지며 문 아래에 끼어 있던 잔해가 드러났다. 이제 출구를 밀 수 있다.\n경보로 그녀의 시선을 돌린 뒤 빠져나가자.',
 
     phone:'발신자 표시 제한. 수화기에서 빗소리와 와이퍼 소리가 들린다.\n「그날은 안 멈췄잖아. 오늘은 문을 열어.」\n현관에서 젖은 무언가가 떨어졌다.',
     breaker:'차단기를 올려도 불은 돌아오지 않는다. 건물 전체가 정전된 모양이다.\n어둠 속 거실에서 전화벨이 끊이지 않는다.',
@@ -156,21 +157,21 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     leave_lift:'바로 옆에 있다.\n중앙 설비실을 피해 좌우 복도로 돌아! 반대편 녹색 비상계단으로!',
     stairs:'비상문을 닫자, 손톱 긁는 소리가 따라 내려온다.\n아래층으로 가야 한다.',
     down:'한 층을 내려왔다.\n그런데 벽에는 다시 「23F」라고 쓰여 있다.',
-    stair_note:'「같은 층이 두 번 보이면 더 내려가지 마세요.\n한 층 올라가면 관리실로 연결됩니다.」',
-    up:'17층. 열린 문에 1704라고 적혀 있다.\n발소리가 멎었다. 안에서 전화기 불빛이 깜박인다.',
-    belongings:'검은 신발 한 짝. 봉투에는 「한서연」.\n현관에 놓인 우산은 아직 마르지 않았다.',
+    stair_note:'「같은 층이 두 번 보이면 더 내려가지 마세요.\n위층 문 너머에서 전화벨이 들립니다.」',
+    up:'분명 한 층을 올라왔는데, 17층이다.\n1704호. 문 안에서 전화기 불빛이 깜박인다.',
+    belongings:'검은 신발 한 짝. 봉투에는 「1704호 한서연」.\n야간 당직 안내에는 관리실 내선 17이 적혀 있다.',
     portrait:'「다음에는 맑은 날에.」\n내일도 살아 있을 거라 믿고 적은 약속이다.',
     answerphone:'03:16. 「거의 다 왔어. 먼저 자. 내일 전화할게.」\n테이프가 끝난 뒤에도, 젖은 발소리는 계속된다.',
-    resident_leave:'벽 너머의 안내 방송이 멎었다. 관리실이다.\n그녀가 집으로 돌아오던 장면이, 여기 남아 있다.',
+    resident_leave:'문 너머는 폐쇄된 임시 관리실이다.\n야간 근무표에 한서연의 이름이 남아 있다.',
     car_door:'문을 열었다. 차가운 비가 손등을 때린다.\n그날 나는 이 문을 열지 않았다.',
-    road_bag:'1704호 열쇠. 전송되지 않은 메시지.\n「도착하면 연락할게.」',
+    road_bag:'1704호 열쇠. 가방 곁의 전화기는 화면에 금이 갔지만 아직 켜져 있다.\n「도착하면 연락할게.」',
     road_phone:'「제가 사람을 치었습니다. 술을 마셨고, 도망쳤습니다.」\n「이번에는 여기 있겠습니다.」',
     record:'03:26. 운전자는 내린 뒤 조수석 쪽에서 난 소리에 멈춰 섰다.\n9초 동안 서 있다가 고개를 돌리고 엘리베이터로 갔다.\n서고의 퓨즈를 찾은 뒤 B 접지 → A 입력 → C 감시 순서로 연결한다.\nCCTV는 사고 시각이 아닌, 내 차가 입차한 03:26 기록을 찾아야 한다.',
     fuse:'예비 퓨즈를 챙겼다.\n오른쪽 배전반의 세 스위치를 근무일지 순서대로 올려야 한다.',
     security_power:'CCTV가 켜졌다. 사흘 전 주차장 기록이다.\n찌그러진 내 차가 들어오고 있다.',
-    monitor:'내가 떠난 뒤, 빈 조수석에서 그 여자가 내렸다.\n그날부터 나와 함께 집에 있었다. 화면 속 여자가 나를 쳐다본다.\n비상 열쇠를 챙겼다. 지하로 내려가자.',
+    monitor:'내가 떠난 뒤, 빈 조수석에서 그 여자가 내렸다.\n배수 설비 열쇠를 좌석에 남긴 채 카메라를 올려다본다.\n그날부터 집 안에 있었다. 모니터 옆 비상 열쇠를 챙겼다.',
     service_exit:'계단 끝에서 차가운 바람이 불었다. 지하 1층.\n주차장 건너편 녹색 보행자 출구가 보인다.',
-    exit:'출구 옆에 그날의 내 차가 있다. 조수석만 젖어 있다.\n출구가 침수돼 전기 잠금장치가 단락됐다.\n내 차 조수석에서 배수 설비 열쇠를 찾아야 한다.',
+    exit:'물이 고인 출구 아래에 잔해가 걸렸다. 이대로는 문이 열리지 않는다.\nCCTV 속 그녀가 조수석에 남긴 배수 설비 열쇠. 그걸 찾아야 한다.',
     alarm:'경보가 울린다. 그것이 고개를 돌렸다.\n지금이야. 차들 사이로 빠져나가 출구까지 달려!',
   };
   function interact(){
@@ -181,22 +182,26 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(action==='lure'){
       if(lureUsed){say('태엽이 다 풀렸다.',2);return;}lureUsed=true;const point=hover!.point;lastSeen={x:point.x,z:point.z};seenAt=elapsed;tracking=true;noiseRadius=0;audio.sound('alarm',-.65,.45);say('태엽 소리가 울린다. 멀리서 발소리가 방향을 바꿨다.',4);return;
     }
-    const wasHidden=story.hidden;
+    const wasHidden=story.hidden,previousStage=story.stage;
     if(action==='stay'){say(stageTime<12?'전화 너머에서 주소를 확인한다. 사이렌이 가까워진다.':'통화를 유지한 채 잠시 기다리자.',5);return;}
-    if(action==='resident_leave'&&story.stage==='resident_return'&&stageTime<9){say('테이프가 아직 돌아간다. 문 너머에서 같은 목소리가 들린다.',4);return;}
+    if(action==='resident_leave'&&story.stage==='resident_return'&&stageTime<9){say('문 바로 너머에서 젖은 발이 끌린다. 손잡이를 쥔 채 지나가기를 기다린다.',4);return;}
     if(area==='stairs'&&action==='down'&&story.stage!=='stairs_loop'){
       camera.position.copy(world.spawn);yaw=Math.PI;pitch=0;audio.sound('dread');say('또 23층이다.\n아래로 내려가는 발소리는, 내 발소리가 아니었다.',7);return;
     }
     if(!advance(action)){
       const responses:Partial<Record<Action,string>>={resident_leave:'뒤쪽 문 너머에서 내선 전화가 울린다. 이 집의 녹음을 먼저 확인해야겠다.',door:'문이 꿈쩍하지 않는다. 안쪽 잠금쇠는 풀려 있는데…',closet:'장롱 안에 몸을 숨길 수 있다.',up:'문이 움직이지 않는다. 먼저 아래쪽 계단을 확인하자.',fuse:'먼저 관리실 책상의 근무일지를 살펴보자.',security_power:'퓨즈가 빠져 있다. 서고의 예비 부품을 찾아야 한다.',monitor:story.stage==='office_tape'?'이 시각에는 내 차가 없다. 근무일지의 입차 시각을 다시 확인하자.':'화면이 꺼져 있다. 기록과 전원을 확인해야 한다.',service_exit:'비상 열쇠가 필요하다. CCTV 옆 열쇠함이 보인다.'};
       if(action==='monitor'&&story.stage==='office_tape'){audio.sound('alarm',0,.25);noiseRadius=22;noiseUntil=elapsed+3;}
+      if(action==='pump'&&story.stage==='parking_pump'){say(story.notes.includes('valve_a')?'동측 급수관이 아직 열려 있다. 물부터 차단해야 한다.':story.notes.includes('valve_b')?'서측 급수관이 아직 열려 있다. 물부터 차단해야 한다.':'압력계가 흔들린다. 양쪽 급수 밸브를 먼저 잠가야 한다.',5);return;}
+      if(action==='phone'&&!story.notes.includes('phone')){say(hasFlashlight(story)?'전화벨이 끊이지 않는다. 먼저 다용도실 차단기를 확인하자.':'어둡다. 침실의 스위치를 확인하고 손전등부터 찾아야 한다.',5);return;}
+      if(story.notes.includes(action)&&['belongings','portrait','answerphone'].includes(action)){say(dialogue[action]!,6);return;}
       say(responses[action]||'이미 확인했다. 다음 단서를 찾아야 한다.',4);return;
     }
     audio.sound(action==='door'||action==='stairs'||action==='service_exit'?'slam':'click');
     if(action==='closet'){
       if(!wasHidden){hiddenPosition.copy(camera.position);camera.position.set(...home.hidden);yaw=Math.PI/2;pitch=0;say('장롱 문틈으로 복도가 보인다. 숨을 죽였다.',4);}
       else{camera.position.copy(hiddenPosition);camera.position.y=1.65;say('문을 조금 밀고 밖으로 나왔다.',2);noiseUntil=elapsed+.3;noiseRadius=2;}
-    }else if(dialogue[action]&&story.ending===null)say(dialogue[action]!,['record','monitor','phone'].includes(action)?12:8);
+    }else if(action==='exit'&&previousStage==='parking_run')say('잔해를 걷어내고 출구를 밀었다. 그런데 다시 차 안이다. 횡단보도, 비, 03:17.\n이번에는 차 문을 연다.',9);
+    else if(dialogue[action]&&story.ending===null)say(dialogue[action]!,['record','monitor','phone'].includes(action)?12:8);
     if(action==='breaker')audio.sound('click');
     if(action==='phone')audio.setDevice('phone',0);
     if(action==='radio')audio.setDevice('radio',0);
@@ -209,7 +214,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       else say(`회로 연결 ${story.circuit.length} / 3`,2);
     }
     if(action==='tape_next'){world.setDisplay?.(tapeTimes[story.tapeIndex]);say(`선택된 기록: ${tapeTimes[story.tapeIndex]}. 화면을 확인해 재생한다.`,3);}
-    if(action==='valve_a'||action==='valve_b'){audio.sound('metal');noiseRadius=12;noiseUntil=elapsed+2;}
+    if(action==='valve_a'||action==='valve_b'){audio.sound('metal');noiseRadius=12;noiseUntil=elapsed+2;say(['valve_a','valve_b'].every(n=>story.notes.includes(n))?'두 급수관을 모두 잠갔다. 서측 펌프를 가동하자.':action==='valve_a'?'서측 급수관을 잠갔다. 동측 밸브가 아직 남아 있다.':'동측 급수관을 잠갔다. 서측 밸브가 아직 남아 있다.',5);}
     if(action==='pump'){audio.sound('motor');noiseRadius=22;noiseUntil=elapsed+3;}
     if(action==='security_power'){audio.sound('slam',.8);world.figure.visible=true;lastSeen={x:camera.position.x,z:camera.position.z};tracking=true;ghostVoice('cry',true);}
     if(action==='monitor'){world.setDisplay?.('귀가자 2명 / 2803');ghostVoice('found',true);}
@@ -325,7 +330,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     else if(area==='office'){if(world.figure.visible)hunt(1.8,dt);}
     else if(story.stage==='parking_run'){
       world.figure.visible=true;
-      if(stageTime<25)followEnemy(layout.parking.alarm,2.8,dt);else hunt(2.7,dt);
+      if(stageTime<25)followEnemy(layout.parking.alarmApproach,2.8,dt);else hunt(2.7,dt);
       threat=Math.max(threat,stageTime<25?.18:.35);
       if(stageTime>25&&scriptBeat===0){scriptBeat=1;say('경보 소리가 끊겼다.\n그것이 다시 나를 찾고 있다!',5);ghostVoice('where',true);}
     }else if(area==='parking')hunt(2.2,dt);

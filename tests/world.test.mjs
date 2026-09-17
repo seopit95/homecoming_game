@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {buildWorld,canStandAt,hasLineOfSight} from '../lib/world.ts';
+import {accidentCar} from '../lib/chapters.ts';
 // Canvas texturing is irrelevant to this geometry test; no renderer is mocked.
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 Object.defineProperty(globalThis,'document',{value:{createElement:()=>({width:0,height:0,getContext:()=>context})},configurable:true});
@@ -48,9 +49,9 @@ test('after leaving the accident car, its body blocks movement and the road stay
   const {findPath}=await import('../lib/navigation.ts'),world=buildWorld(new THREE.Scene(),'aftermath');
   world.updateStory('road_exit',0);assert.ok(canStandAt(world.spawn.x,world.spawn.z,world.solids,.23,world.bounds));
   world.updateStory('road_evidence',1);
-  assert.equal(canStandAt(-2,8,world.solids,.23,world.bounds),false);
-  assert.ok(canStandAt(-.4,8.6,world.solids,.23,world.bounds));
-  assert.ok(findPath({x:-.4,z:8.6},{x:.8,z:-2},world.solids,world.bounds).length>0);
+  assert.equal(canStandAt(accidentCar.x,accidentCar.z,world.solids,.23,world.bounds),false);
+  assert.ok(canStandAt(accidentCar.exitX,accidentCar.exitZ,world.solids,.23,world.bounds));
+  assert.ok(findPath({x:accidentCar.exitX,z:accidentCar.exitZ},{x:.8,z:-2},world.solids,world.bounds).length>0);
 });
 test('the collectible fuse is visible outside its opaque cabinet',()=>{
   const world=buildWorld(new THREE.Scene(),'office'),fuse=world.targets.find(t=>t.id==='fuse');
@@ -99,4 +100,11 @@ test('opened home and elevator portals expose their adjoining spaces',()=>{
 test('the pursuer can enter the electrical room and reach every office patrol destination',async()=>{
  const {findPath}=await import('../lib/navigation.ts'),w=buildWorld(new THREE.Scene(),'office');
  for(const target of [{x:3.8,z:-4},{x:0,z:0},{x:0,z:-6},{x:3,z:5.6},{x:-3,z:4}])assert.ok(findPath(w.spawn,target,w.solids,w.bounds).length,`enemy route to ${JSON.stringify(target)}`);
+});
+
+test('the parking alarm has a clear approach for the distracted pursuer',async()=>{
+ const {findPath}=await import('../lib/navigation.ts'),{buildingLayout}=await import('../lib/building.ts'),w=buildWorld(new THREE.Scene(),'parking');
+ const goal=buildingLayout.parking.alarmApproach;
+ assert.ok(canStandAt(goal.x,goal.z,w.solids,.23,w.bounds),'the attraction point cannot be inside the new mounting wall');
+ assert.ok(findPath(w.figure.position,goal,w.solids,w.bounds).length>0);
 });

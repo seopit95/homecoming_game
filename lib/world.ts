@@ -73,7 +73,6 @@ function buildApartment(scene:T.Group) {
   wall(4.2,-.5,4.8,.18);wall(4,-4.3,.17,3.9);
   wall(-4.65,-2.4,3.9,.18);wall(-2.7,-5.35,.17,1.8);
   box(1.8*S,2.83,2.23*S,.2,.34,3.45*S,wood);box(1.8*S,2.83,-1.43*S,.2,.34,1.85*S,wood);
-  sign('욕실',4.12*S,2.48,-1.5*S,Math.PI/2,.7,.18);sign('침실',1.67*S,2.52,2.2*S,-Math.PI/2,.7,.18);
   at(0,-6.25);
   const door=new T.Group();door.name='front-door';door.position.set(-.75,0,-6.11);door.rotation.y=0;scene.add(door);
   box(.725,1.22,0,1.45,2.44,.13,mat('#33413b'),false,door);box(.725,1.2,.08,1.2,1.7,.045,mat('#394740'),false,door);box(1.22,1.02,.17,.18,.055,.15,metal,false,door);
@@ -102,6 +101,7 @@ function buildApartment(scene:T.Group) {
   box(-3.2,.018,2.4,5.2,.035,3.7,upholstery('#7b7967'));
   at(-1.2,2.5);
   box(-1.2,.35,2.5,1.1,.5,3.2,wood,true);box(-.78,.89,2.5,.26,1,3.2,fabric);
+  for(const x of [-1.6,-.8])for(const z of [1.12,3.88])box(x,.06,z,.09,.12,.09,trim);
   for(const z of [1,4])box(-1.2,.69,z,1.1,.5,.25,fabric);for(const z of [1.55,2.5,3.45]){const cushion=box(-1.28,.65,z,.85,.23,.85,fabric);cushion.geometry.dispose();cushion.geometry=softBox(.85,.23,.85,.1);}
   at(-3.15,2.4);
   box(-3.15,.47,2.4,1.2,.13,1.8,wood,true);for(const x of [-3.62,-2.68])for(const z of [1.65,3.15])box(x,.22,z,.075,.45,.075,wood);
@@ -112,7 +112,7 @@ function buildApartment(scene:T.Group) {
   scene.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(cord),80,.007,5,false),dark));
   const ps=new T.Mesh(new T.PlaneGeometry(.15,.07),new T.MeshBasicMaterial({map:print('03:17','#c3d9c8','#24483e',45,256,512)}));ps.position.set(-3.15,.667,2.32);ps.rotation.x=-Math.PI/2;scene.add(ps);
   targets.push({id:'phone',point:new T.Vector3(...home.phone),label:'전화 받기',mesh:phone});const phoneGlow=new T.PointLight('#8cbf9f',.6,2);phoneGlow.position.set(-3.15,.8,2.4);scene.add(phoneGlow);
-  cyl(-3.35,.64,2.98,.11,.21,cream);cyl(-3.35,.751,2.98,.087,.004,mat('#201a13'));box(-3.1,.563,1.91,.45,.025,.33,cream);
+  cyl(-3.35,.64,2.98,.11,.21,cream);cyl(-3.35,.751,2.98,.087,.004,mat('#201a13'));box(-3.1,.545,1.91,.45,.02,.33,cream);
   at(-6.12,2.4);
   box(-6.12,.43,2.4,.62,.86,2.8,wood,true);box(-6.39,1.43,2.4,.13,1.13,2.3,dark);
   const tvCanvas=document.createElement('canvas');tvCanvas.width=640;tvCanvas.height=320;
@@ -133,23 +133,28 @@ function buildApartment(scene:T.Group) {
     ctx.fillStyle='#152034';for(let y=0;y<260;y+=5)ctx.fillRect(0,y,640,1);tvTexture.needsUpdate=true;
   }
   // Full kitchen, dining area and a separate study give the home a lived-in scale.
-  at(-4.5,-1.7);
+  at(-4.5,-1.7,0,-.45);
   box(-4.5,.46,-1.7,3.5,.92,.9,wood,true);box(-4.5,.95,-1.7,3.55,.06,.94,cream);
   box(-5.3,.986,-1.7,.72,.018,.58,metal);cyl(-5.3,1.08,-1.97,.027,.2,metal);
   for(const x of [-4.1,-3.72])for(const z of [-1.52,-1.87])cyl(x,.99,z,.12,.015,dark);
   at(-6.04,-.65);
   box(-6.04,1,-.65,.78,2,.83,cream,true);box(-5.64,1,-.65,.03,.05,.77,metal);
-  at(-4.5,-1.7);
-  for(const x of [-5.5,-4.5,-3.5])box(x,2.1,-2.14,.9,.8,.32,wood);
+  at(-4.5,-1.7,0,-.45);
+  for(const x of [-5.5,-4.5,-3.5])box(x,2.1,-1.97,.9,.8,.36,wood);
   at(-4.2,5.15);
   box(-4.2,.76,5.15,2.05,.12,.95,wood,true);for(const x of [-4.95,-3.45])for(const z of [4.9,5.4])box(x,.38,z,.07,.75,.07,wood);
   for(const x of [-4.85,-3.55])for(const z of [4.42,5.84]){box(x,.42,z,.48,.08,.44,wood,true);box(x,.68,z+(z>5?.19:-.19),.48,.52,.07,wood);for(const dx of [-.17,.17])for(const dz of [-.16,.16])box(x+dx,.2,z+dz,.045,.4,.045,wood);}
   at(-4.2,5.15);
   const timer=cyl(-4.2,.9,5.15,.105,.16,cream);targets.push({id:'lure',point:new T.Vector3(-4.2*S,.94,5.15*S),label:'주방 타이머 울리기',mesh:timer});
   at(-5.3,-5.6);
-  box(-5.3,.74,-5.6,2.1,.12,.8,wood,true);at(-6.12,-3.4);
-  box(-6.12,1.15,-3.4,.65,2.3,1.4,wood,true);
-  for(let i=0;i<15;i++)box(-5.75,.4+Math.floor(i/5)*.65,-3.94+(i%5)*.23,.15,.4,.16,mat(['#4e4238','#515747','#655347'][i%3]));
+  box(-5.3,.74,-5.6,2.1,.12,.8,wood,true);
+  for(const x of [-6.18,-4.42])for(const z of [-5.86,-5.34])box(x,.34,z,.085,.68,.085,wood);
+  box(-5.3,.59,-5.88,1.85,.18,.065,wood);
+  at(-6.12,-3.4);
+  solids.push({x:-6.12,z:-3.4,w:.65,d:1.4,y:1.15,h:2.3});
+  box(-6.4,1.15,-3.4,.09,2.3,1.4,wood);for(const z of [-4.055,-2.745])box(-6.12,1.15,z,.65,2.3,.09,wood);
+  for(const y of [.045,.2,.85,1.5,2.255])box(-6.12,y,-3.4,.65,.045,1.4,wood);
+  for(let i=0;i<15;i++)box(-5.88,.423+Math.floor(i/5)*.65,-3.94+(i%5)*.23,.15,.4,.16,mat(['#4e4238','#515747','#655347'][i%3]));
   at(-5.3,-5.6);
   box(-5.3,.82,-5.6,.6,.04,.4,cream);sign('백로아파트',-4.8,1.9,-6.12,0,.9,.3);
   // Bedroom wardrobe faces a generous clear floor, away from the bed.
@@ -160,22 +165,23 @@ function buildApartment(scene:T.Group) {
   box(2.75,.47,5.15,.61,.94,.7,wood,true);const radio=box(2.75,1.07,5.15,.48,.28,.26,mat('#4d4638'));
   for(let i=0;i<8;i++)box(2.57+i*.035,1.07,5.007,.012,.19,.014,dark);
   const radioLight=new T.PointLight('#c87445',.25,2);radioLight.position.set(2.75,1.23,5.15);scene.add(radioLight);targets.push({id:'radio',point:new T.Vector3(...home.radio),label:'라디오 끄기',mesh:radio});
-  at(1.99,4.2);
-  const lightSwitch=box(1.99,1.35,4.2,.06,.15,.1,cream);box(2.028,1.35,4.2,.025,.09,.065,metal);
-  box(2.042,1.39,4.2,.009,.012,.025,new T.MeshBasicMaterial({color:'#778667'}));
+  at(1.8,4.2);
+  const lightSwitch=box(1.915,1.35,4.2,.06,.15,.1,cream);box(1.953,1.35,4.2,.025,.09,.065,metal);
+  box(1.967,1.39,4.2,.009,.012,.025,new T.MeshBasicMaterial({color:'#778667'}));
   targets.push({id:'switch',point:new T.Vector3(...home.switch),label:'전등 스위치 켜기',mesh:lightSwitch});
   at(3.65,2.65);
   box(3.65,.43,2.65,1.1,.86,.5,wood,true);for(const y of [.2,.47,.72])box(3.65,y,2.38,.96,.2,.025,trim);
   const torchPickup=new T.Group();torchPickup.name='flashlight-pickup';scene.add(torchPickup);
-  const torchBody=cyl(3.65,.92,2.65,.035,.24,dark,torchPickup);torchBody.rotation.x=Math.PI/2;
-  const torchHead=cyl(3.65,.92,2.52,.05,.065,metal,torchPickup);torchHead.rotation.x=Math.PI/2;
+  const torchBody=cyl(3.65,.91,2.65,.035,.24,dark,torchPickup);torchBody.rotation.x=Math.PI/2;
+  const torchHead=cyl(3.65,.91,2.52,.05,.065,metal,torchPickup);torchHead.rotation.x=Math.PI/2;
+  const torchCap=cyl(3.65,.91,2.76,.05,.025,dark,torchPickup);torchCap.rotation.x=Math.PI/2;
   targets.push({id:'flashlight',point:new T.Vector3(...home.flashlight),label:'손전등 집어 들기',mesh:torchPickup});
   at(6.08,1.55);
   const closet=box(6.08,1.2,1.55,.95,2.4,2.1,wood,true);box(5.59,1.22,1.55,.045,2.26,2,mat('#544333'));targets.push({id:'closet',point:new T.Vector3(...home.closet),label:'장롱에 숨기',mesh:closet});
   at(2.9,-5.5);
   box(2.9,.54,-5.5,1.3,1.08,1.1,cream,true);const drum=cyl(2.9,.57,-4.93,.35,.04,metal);drum.rotation.x=Math.PI/2;
-  at(2.05,-4.75);
-  const breaker=box(1.94,1.55,-4.75,.18,.87,.61,metal);for(let i=0;i<3;i++)box(2.05,1.42+i*.16,-4.75,.08,.1,.3,trim);sign('분전반',2.06,2.12,-4.75,Math.PI/2,.7,.2);targets.push({id:'breaker',point:new T.Vector3(...home.breaker),label:'차단기 확인',mesh:breaker});
+  at(1.8,-4.75);
+  const breaker=box(1.975,1.55,-4.75,.18,.87,.61,metal);for(let i=0;i<3;i++)box(2.08,1.42+i*.16,-4.75,.08,.1,.3,trim);sign('분전반',1.891,2.12,-4.75,Math.PI/2,.7,.2);targets.push({id:'breaker',point:new T.Vector3(...home.breaker),label:'차단기 확인',mesh:breaker});
   at(5.4,-5.35);
   box(5.4,.42,-5.35,1.65,.84,1.4,cream,true);box(5.4,.85,-5.35,1.45,.05,1.2,mat('#526d68',.15));at(6.08,-1.5);
   box(6.08,.52,-1.5,.65,1.04,1.1,cream,true);
@@ -190,7 +196,7 @@ function buildApartment(scene:T.Group) {
   const lamps:T.PointLight[]=[];
   for(const [x,z] of [[0,-4],[0,0],[-3.5,2.5],[-4,5],[4,2],[3,-3]]){
     at(x,z);
-    cyl(x,2.91,z,.3,.12,metal);const glow=mat('#dec69d',.5,{emissive:'#f1bf70',emissiveIntensity:.35});cyl(x,2.83,z,.24,.035,glow);
+    cyl(x,2.95,z,.3,.1,metal);const glow=mat('#dec69d',.5,{emissive:'#f1bf70',emissiveIntensity:.35});cyl(x,2.891,z,.24,.02,glow);
     const light=new T.PointLight('#ffd69a',5,7,2);light.userData.bulb=glow;light.position.set(x,2.56,z);scene.add(light);lamps.push(light);
   }
   finish();

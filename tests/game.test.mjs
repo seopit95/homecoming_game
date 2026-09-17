@@ -2,6 +2,7 @@ import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {opening} from '../lib/story.ts';
+import {accidentCar} from '../lib/chapters.ts';
 import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/apartment-layout.ts';
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
@@ -107,13 +108,13 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   renderedScene.getObjectByName('resident-remains').position.set(0,0,-5);aim([-2.5,1.65,-5],[-2.5,1.65,-7],false);
   game.key('ShiftLeft',true);tick(6.1);assert.ok(game.snapshot().threat<.2,'holding Shift behind a wall is silent');
   game.key('KeyW',true);tick(.3);game.key('KeyW',false);game.key('ShiftLeft',false);assert.ok(game.snapshot().threat>.5,'actual running behind the wall attracts the ghost');
-  use([-3.7,1.65,2.8],[-3.7,1.5,1.8],'office_fuse');
-  use([-2.1,1.65,-4.5],[-2.1,1.32,-5.37],'office_power');
-  use([3.8,1.65,-4],[4.63,1.45,-4],'office_power');
-  use([3.8,1.65,-4.55],[4.63,1.45,-4.55],'office_power');
-  use([3.8,1.65,-3.45],[4.63,1.45,-3.45],'office_tape');
-  use([-1.95,1.65,2.6],[-1.95,1.48,1.8],'office_tape');
-  use([-2.65,1.65,2.6],[-2.65,1.75,1.76],'office_leave');
+  use([-3.7,1.65,2.8],[-3.7,.86,1.8],'office_fuse');
+  use([-2.1,1.65,-4.5],[-2.1,1.38,-5.37],'office_power');
+  use([3.8,1.65,-4],[5.34,1.45,-4],'office_power');
+  use([3.8,1.65,-4.55],[5.34,1.45,-4.55],'office_power');
+  use([3.8,1.65,-3.45],[5.34,1.45,-3.45],'office_tape');
+  use([-1.95,1.65,2.6],[-1.95,.9,1.8],'office_tape');
+  use([-2.65,1.65,2.6],[-2.65,1.17,1.79],'office_leave');
   use([0,1.65,-6.3],[0,1.25,-7.48],'parking_gate');
   runTo(2,20);runTo(2,-20.3);
   use([0,1.65,-20.3],[0,1.25,-21.68],'parking_key');
@@ -122,11 +123,13 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   use([-9.8,1.65,1.8],[-10.8,1.2,1.2],'parking_pump');
   use([-10.5,1.65,-15.4],[-10.5,1.3,-16.65],'parking_alarm');
   use([-10.8,1.65,17.4],[-10.8,1.4,16.18],'parking_run');
+  const lured=renderedScene.getObjectByName('resident-remains'),beforeLure=lured.position.clone();tick(1);assert.ok(lured.position.distanceTo(beforeLure)>.8,'the apparition actually follows the alarm around the mounting wall');
   runTo(-2.2,17.4);runTo(-2.2,-20);runTo(0,-20);
   use([0,1.65,-20.3],[0,1.25,-21.68],'road_exit');
+  assert.doesNotMatch(game.snapshot().message,/배수|침수|조수석에서/,'the final exit must introduce the returned accident scene');
   const seatedAgain=renderedCamera.position.clone();game.key('KeyW',true);tick(.5);game.key('KeyW',false);assert.deepEqual(renderedCamera.position.toArray(),seatedAgain.toArray());
   const beforeTurn=renderedCamera.rotation.y;game.key('ArrowLeft',true);tick(.5);game.key('ArrowLeft',false);assert.ok(renderedCamera.rotation.y>beforeTurn+.5,'keyboard look works inside the stopped car');
-  use([-1.65,1.13,9.2],[-.95,1,8.8],'road_evidence');
+  use([accidentCar.driverX,1.13,9.2],[accidentCar.doorX,1,8.8],'road_evidence');
   assert.equal(renderedCamera.position.y,1.65,'opening the door exits the car');
   use([.8,1.65,-2.1],[.8,.3,-3.5],'road_call');
   use([.15,1.65,-1.8],[.15,.12,-3.2],'road_wait');

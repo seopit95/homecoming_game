@@ -30,7 +30,7 @@ export function dressApartment(root:T.Group,area:Area){
     for(const y of [.23,1.22,2.25])box(5.532,y,1.55,.03,.034,2.04,wood);
     for(const z of [.53,1.55,2.57])box(5.526,1.25,z,.035,2.07,.027,wood);
     for(const z of [1.44,1.69]){const pull=cylinder(5.498,1.22,z,.04,.012,dark);pull.rotation.z=Math.PI/2;}
-    at(-3.15,2.4);notice(['관리비 납부서','백로 관리사무소'],-3.1,.586,1.91,0,.33,.23).rotation.x=-Math.PI/2;
+    at(-3.15,2.4);notice(['관리비 납부서','백로 관리사무소'],-3.1,.556,1.91,0,.33,.23).rotation.x=-Math.PI/2;
     at(0,6.25);box(0,2.58,6.02,1.34,.36,.25,paper);for(let i=0;i<8;i++)box(-.51+i*.145,2.46,5.85,.085,.027,.03,dark);
     for(const [x,z,ry] of [[-6.43,4.8,Math.PI/2],[6.43,3.2,-Math.PI/2]]){
       at(x<0?-6.46:6.46,z);
@@ -56,18 +56,21 @@ export function dressApartment(root:T.Group,area:Area){
     contact(-1.2,2.5,1.35,3.5,.04);
     at(-3.15,2.4);contact(-3.15,2.4,1.48,2.05,.04);
     const mugHandle=new T.Mesh(new T.TorusGeometry(.062,.018,10,20),ceramic);mugHandle.position.set(-3.45,.66,2.98);root.add(mugHandle);
-    at(-4.5,-1.7);
+    at(-4.5,-1.7,0,-.45);
     for(const x of [-5.6,-4.5,-3.4]){
       box(x,.43,-1.235,1.06,.82,.026,surface('wood','#b5ab96'));box(x,.73,-1.207,.45,.012,.018,dark);
       rod(new T.Vector3(x-.15,.67,-1.18),new T.Vector3(x+.15,.67,-1.18),.012);
+      for(const dx of [-.15,.15])rod(new T.Vector3(x+dx,.67,-1.225),new T.Vector3(x+dx,.67,-1.18),.012);
       box(x,.08,-1.2,1.06,.09,.065,dark);
     }
-    for(const x of [-5.5,-4.5,-3.5]){box(x,2.1,-1.967,.84,.73,.027,wood);rod(new T.Vector3(x+.29,1.98,-1.94),new T.Vector3(x+.29,2.19,-1.94),.01);}
+    for(const x of [-5.5,-4.5,-3.5]){box(x,2.1,-1.777,.84,.73,.027,wood);rod(new T.Vector3(x+.29,1.98,-1.75),new T.Vector3(x+.29,2.19,-1.75),.01);for(const y of [2,2.17])rod(new T.Vector3(x+.29,y,-1.79),new T.Vector3(x+.29,y,-1.75),.01);}
     const faucet=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([new T.Vector3(-5.3,.99,-1.97),new T.Vector3(-5.3,1.31,-1.97),new T.Vector3(-5.3,1.38,-1.72),new T.Vector3(-5.3,1.2,-1.66)]),22,.018,10,false),steel);root.add(faucet);
     for(const x of [-5.67,-4.93])box(x,.996,-1.7,.025,.025,.61,steel);for(const z of [-2.01,-1.39])box(-5.3,.996,z,.76,.025,.026,steel);
     cylinder(-5.3,.999,-1.7,.047,.005,dark);
-    for(let i=0;i<4;i++){const dish=new T.Mesh(new T.TorusGeometry(.13,.014,10,28),ceramic);dish.position.set(-5.85+i*.075,1.08,-1.62);dish.rotation.y=.15;root.add(dish);}
+    box(-5.74,.993,-1.62,.5,.025,.37,steel);
+    for(let i=0;i<4;i++){const dish=new T.Mesh(new T.CylinderGeometry(.13,.13,.014,28),ceramic);dish.position.set(-5.85+i*.075,1.12,-1.62);dish.rotation.set(Math.PI/2,.15,0);root.add(dish);}
     const kettle=new T.Mesh(new T.SphereGeometry(.14,20,14),steel);kettle.scale.y=.85;kettle.position.set(-3.8,1.09,-1.7);root.add(kettle);cylinder(-3.8,1.22,-1.7,.06,.025,dark);
+    const handle=new T.Mesh(new T.TorusGeometry(.145,.015,8,20,Math.PI),dark);handle.position.set(-3.8,1.17,-1.7);root.add(handle);rod(new T.Vector3(-3.91,1.11,-1.7),new T.Vector3(-4.08,1.2,-1.7),.026,steel);
     at(-6.04,-.65);for(const y of [.95,1.65])rod(new T.Vector3(-5.625,y-.12,-.4),new T.Vector3(-5.625,y+.12,-.4),.018);
     at(-4.2,5.15);contact(-4.2,5.15,2.3,1.25);
     for(const x of [-4.82,-3.6]){cylinder(x,.836,5.15,.16,.025,ceramic);cylinder(x,.88,5.4,.065,.1,ceramic);rod(new T.Vector3(x-.17,.837,4.95),new T.Vector3(x+.15,.837,4.95),.004,wood);}
@@ -76,7 +79,7 @@ export function dressApartment(root:T.Group,area:Area){
     at(2.9,-5.5);
     const rim=new T.Mesh(new T.TorusGeometry(.315,.032,12,32),steel);rim.position.set(2.9,.57,-4.90);root.add(rim);
     const glass=new T.Mesh(new T.CircleGeometry(.278,32),new T.MeshPhysicalMaterial({color:'#354240',roughness:.12,metalness:.32}));glass.position.set(2.9,.57,-4.883);root.add(glass);box(2.9,1,-4.94,1.12,.11,.035,ceramic);
-    for(const z of [-3,0,5.75]){at(-6.6,z);box(-6.476,.31,z,.017,.12,.19,ceramic);for(const dz of [-.045,.045])box(-6.463,.31,z+dz,.01,.029,.008,dark);}
+    for(const z of [-3,0,5.75]){at(-6.6,z);box(-6.492,.31,z,.017,.12,.19,ceramic);for(const dz of [-.045,.045])box(-6.479,.31,z+dz,.01,.029,.008,dark);}
     finish();
   }else if(area==='landing'){
     const rust=surface('concrete','#786151',{roughness:.94,metalness:.3});
