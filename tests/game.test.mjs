@@ -36,7 +36,8 @@ test('a close divider stays within the held flashlight shadow frustum',()=>{
 
 test('real interaction loop reaches the ending, requires a held pry, and freezes on pause',()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));tick();game.start();game.skipMemory();tick();
+  const media=win.matchMedia;win.matchMedia=query=>({matches:query.includes('pointer:coarse')});
+  const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));win.matchMedia=media;tick();game.start();game.skipMemory();tick();
   event(win,'blur',{});event(doc,'pointerlockchange',{});assert.equal(game.snapshot().paused,false,'losing focus or pointer lock must not open a pause menu');
   doc.hidden=true;event(doc,'visibilitychange',{});const backgroundAt=game.snapshot().elapsed;tick(5);assert.equal(game.snapshot().paused,false);assert.equal(game.snapshot().elapsed,backgroundAt);doc.hidden=false;event(doc,'visibilitychange',{});
   assert.equal(game.snapshot().story.stage,'wake_ring');assert.equal(game.snapshot().hasFlashlight,false);
@@ -69,6 +70,17 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   useHome([-2.1,1.65,2.4],[-3.15,.58,2.4],'shoes');
   runHome(-2.1,0);runHome(0,0);runHome(0,-3.5);
   useHome([0,1.65,-3.5],[0,.2,-4.65],'radio');
+  assert.equal(deviceLevels.radio,0,'the radio waits until the discovery reaction has finished');
+  const evidencePosition=renderedCamera.position.toArray();
+  game.key('KeyW',true);tick(.8);game.key('KeyW',false);
+  assert.deepEqual(renderedCamera.position.toArray(),evidencePosition,'the short inspection stays at the discovered evidence');
+  assert.match(game.snapshot().message,/뭐야, 이게/);assert.equal(soundCalls.filter(c=>c==='player-evidence').length,1);
+  game.interact();assert.match(game.snapshot().message,/뭐야, 이게/,'repeated interaction must not replace the reaction');
+  game.pause();const reactionTime=game.snapshot().elapsed;tick(6);assert.equal(game.snapshot().elapsed,reactionTime);assert.equal(deviceLevels.radio,0);game.pause(false);
+  tick(2.5);assert.match(game.snapshot().message,/도로에 두고 왔는데/);
+  const shoePitch=renderedCamera.rotation.x;tick(1.5);assert.ok(renderedCamera.rotation.x<shoePitch-.03,'the gaze follows the water closer to the player');
+  tick(1.5);assert.ok(deviceLevels.radio>0,'the radio leads into the next objective after the reaction');
+  useHome([0,1.65,-3.5],[0,.2,-4.65],'radio');assert.equal(soundCalls.filter(c=>c==='player-evidence').length,1,'discovery speech is not repeated');
   runHome(0,2);runHome(2.75,2);runHome(2.75,3.9);
   useHome([2.75,1.65,3.9],[2.75,1.1,5.15],'listen');
   tick(1);assert.equal(game.snapshot().story.stage,'listen','there is a silence after turning the radio off');
