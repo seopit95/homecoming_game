@@ -1,7 +1,8 @@
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {surface,boxUV,softBox,handSkinMaterial,upholstery,cutoutMaterial} from './materials.ts';
-import {opening,type Stage} from './story.ts';
+import {createLeatherShoe} from './entry-props.ts';
+import {opening,openingTiming as beats,type Stage} from './story.ts';
 
 // All motion is sampled from simulation time: pause, skip and replay never leave a cutscene running.
 export function buildRoad(scene:T.Scene){
@@ -147,8 +148,21 @@ export function buildRoad(scene:T.Scene){
     cockpitMaterial.color.setScalar(.55);cockpitMaterial.depthWrite=true;
     const photo=mesh(new T.PlaneGeometry(3.2,2.1333),cockpitMaterial,[.35,1.13,-1.03],car);photo.name='photographic-cockpit';photo.scale.x=-1;photo.castShadow=false;photo.receiveShadow=false;steering.visible=false;
   }
-  const distraction=box(-.64,.75,-.72,.12,.028,.22,rubber,car);distraction.rotation.z=.09;
-  const message=label('수신 메시지',.1,.16,[0,.02,0],distraction,'#1d343b','#a8c6c2');message.rotation.x=-Math.PI/2;
+  // Complete the passenger-side cabin behind the photographic dashboard cutout.
+  // The glance must never reveal road markings through a missing floor or door.
+  box(0,.18,.05,1.94,.1,2.65,dash,car);
+  for(const side of [-1,1]){
+    box(side*.96,.6,-.04,.12,.8,2.3,dash,car);
+    box(side*.895,.74,-.1,.05,.07,.75,rubber,car);
+    box(side*.886,.69,-.25,.022,.045,.18,steel,car);
+  }
+  box(-.54,.4,.32,.7,.19,.83,upholstery('#343a3b'),car);
+  const seatBack=box(-.54,.89,.76,.7,.83,.19,upholstery('#343a3b'),car);seatBack.rotation.x=.13;
+  // A short dashboard mount supports the phone in the driver's brief glance.
+  mesh(new T.CylinderGeometry(.042,.048,.018,20),rubber,[-.26,.784,-1.08],car);
+  rod([-.26,.793,-1.08],[-.26,.89,-1.015],.014,rubber,car);
+  const distraction=box(-.26,.92,-1,.09,.016,.18,rubber,car);distraction.rotation.x=.85;
+  const message=label('새 메시지',.078,.15,[0,.02,0],distraction,'#1d343b','#a8c6c2');message.rotation.x=-Math.PI/2;
   // The victim is still a living person here: natural proportions, a coat, shoes and a shoulder bag.
   const victim=new T.Group();victim.name='memory-pedestrian';root.add(victim);
   const coat=upholstery('#6c7674'),pants=new T.MeshStandardMaterial({color:'#30383d',roughness:.93});
@@ -175,34 +189,44 @@ export function buildRoad(scene:T.Scene){
     sphere([side*.014,-.558,.066],[.033,.065,.028],skin,arm);
   }
   const bag=new T.Group();root.add(bag);box(0,0,0,.26,.24,.095,pants,bag);tube([[-.1,.1,0],[-.08,.25,0],[.1,.1,0]],.012,rubber,bag);
-  const phone=box(0,.045,0,.068,.012,.138,rubber);const phoneScreen=label('03:17',.06,.1,[0,.052,0],phone);phoneScreen.rotation.x=-Math.PI/2;phoneScreen.position.set(0,.009,0);
+  const phone=box(0,.045,0,.068,.012,.138,rubber);const phoneScreen=label('수신 중',.06,.1,[0,.052,0],phone);phoneScreen.rotation.x=-Math.PI/2;phoneScreen.position.set(0,.009,0);
   const driveDuration=opening.drive!.duration,impactDuration=opening.impact!.duration;
-  const stopZ=-2.76;
+  const cruiseSpeed=8,braking=driveDuration-beats.brake,deceleration=1.8,impactSpeed=cruiseSpeed-braking*deceleration,stopZ=1.2-impactSpeed*.45;
+  const looseShoe=createLeatherShoe();looseShoe.name='memory-lost-shoe';root.add(looseShoe);
   function pose(stage:Stage,time:number,camera:T.PerspectiveCamera,reduced:boolean){
     const driving=stage==='drive',impact=stage==='impact',t=Math.max(0,time),hitTime=impact?t:stage==='flee'?impactDuration:0;
     const clock=driving?t:driveDuration+(impact?t:impactDuration+t);
-    const brake=driving?Math.max(0,t-10):0;
-    const speed=driving?10-brake*.6:impact?Math.max(0,8.8-t*9.7778):Math.min(10,t*2.1);
-    const z=driving?120-t*10+brake*brake*.3:impact?1.2-8.8*Math.min(t,.9)+4.888889*Math.min(t,.9)**2:stopZ-(t<10/2.1?1.05*t*t:10*t-100/4.2);
+    const brake=driving?Math.max(0,t-beats.brake):0;
+    const speed=driving?cruiseSpeed-brake*deceleration:impact?Math.max(0,impactSpeed*(1-t/.9)):Math.min(10,t*2.1);
+    const z=driving?1.2+cruiseSpeed*(driveDuration-t)-.5*deceleration*braking**2+.5*deceleration*brake**2:impact?1.2-impactSpeed*Math.min(t,.9)+impactSpeed/(2*.9)*Math.min(t,.9)**2:stopZ-(t<10/2.1?1.05*t*t:10*t-100/4.2);
     const x=driving?1.65+(reduced?0:Math.sin(t*.7)*.045*Math.sin(Math.PI*t/driveDuration)): 1.65;
     car.position.set(x,0,z);
     streetLights.forEach((light,i)=>{const lampZ=-135+(Math.floor((z+135)/18)-2+i)*18;light.position.set(3.8,5.25,lampZ);light.target.position.set(1.7,0,lampZ);});
     const jolt=impact&&!reduced?Math.exp(-t*6)*Math.sin(t*29):0;
     camera.position.set(x-.35,1.23+(reduced?0:Math.sin(clock*15)*.003*speed/10)-jolt*.025,z+.06-jolt*.07);
-    const glance=driving?T.MathUtils.smoothstep(t,4.2,5.6)*(1-T.MathUtils.smoothstep(t,9.1,10.8)):0;
-    camera.rotation.set(-.055-jolt*.09-glance*.34,driving?-glance*.56:impact?T.MathUtils.smoothstep(t,3,5)*.045:stage==='flee'?.045*(1-T.MathUtils.smoothstep(t,0,1)):0,reduced?0:jolt*.018,'YXZ');
+    const glance=driving?T.MathUtils.smoothstep(t,beats.phoneBuzz,beats.phoneBuzz+.55)*(1-T.MathUtils.smoothstep(t,beats.lookUp,beats.lookUp+.65)):0;
+    const lookAtVictim=impact?T.MathUtils.smoothstep(t,2.4,4.2)*(1-T.MathUtils.smoothstep(t,10.3,12.4)):0;
+    const lookAtMirror=stage==='flee'?T.MathUtils.smoothstep(t,.7,1.7)*(1-T.MathUtils.smoothstep(t,3,4.3)):0;
+    camera.rotation.set(-.055-jolt*.09-glance*.22-lookAtVictim*.12+lookAtMirror*.17,driving?-glance*.42:impact?-lookAtVictim*.43:lookAtMirror*-.25,reduced?0:jolt*.018,'YXZ');
+    message.visible=driving&&t>=beats.phoneBuzz;
+    distraction.position.x=-.26+(driving&&t>=beats.phoneBuzz&&t<beats.phoneBuzz+.6?Math.sin(t*90)*.003:0);
+
     wheel.rotation.z=driving?Math.sin(t*.7)*.027:impact?-.04*T.MathUtils.smoothstep(t,0,.35):-.04*(1-T.MathUtils.smoothstep(t,0,2));
     needles[0].rotation.z=2.3-speed/14*4.6;needles[1].rotation.z=2.3-(speed>0?.7+speed*.085:.5);
     wipers.forEach(w=>{w.rotation.z=.79-(.5-.5*Math.cos(clock*3.69599))*1.65;});
     windshieldMat.uniforms.time.value=clock;
     hood.rotation.x=-.035+(driving?0:.07*T.MathUtils.smoothstep(hitTime,0,.25));cracks.visible=!driving;
     victim.visible=true;
-    if(driving){victim.position.set(-4.7+Math.max(0,t-7)*1.37,0,-1.85);victim.rotation.set(0,Math.PI/2,0);}
+    if(driving){victim.position.set(-4.7+T.MathUtils.clamp(t-(driveDuration-5),0,5)*1.37,0,-1.85);victim.rotation.set(0,Math.PI/2,0);}
     else{const flight=T.MathUtils.smoothstep(hitTime,0,1.1);victim.position.set(2.15+flight*1.18,Math.sin(flight*Math.PI)*.68+flight*.28,-1.85-flight*3.9);victim.rotation.set(-flight*Math.PI/2,Math.PI/2-flight*.8,flight*.015,'YXZ');}
-    torso.rotation.z=driving?Math.sin(clock*5)*.016:0;head.rotation.y=driving?T.MathUtils.smoothstep(t,10.7,11.8)*.75:0;
+    torso.rotation.z=driving?Math.sin(clock*5)*.016:0;head.rotation.y=driving?T.MathUtils.smoothstep(t,driveDuration-1.3,driveDuration-.2)*.75:0;
     limbs.forEach((limb,i)=>{limb.rotation.x=driving?Math.sin(clock*5+(i<2?0:Math.PI))*(i%2?.16:.3):Math.sin(Math.min(hitTime,1.2)*3+i)*.15;});
     if(driving){bag.position.set(victim.position.x+.04,.69,-1.59);bag.rotation.set(0,0,0);phone.visible=false;}
-    else{const scatter=T.MathUtils.smoothstep(hitTime,.15,1.15);bag.position.set(2.19+scatter*.6,.69*(1-scatter)+scatter*.11,-1.59-scatter*2);bag.rotation.set(scatter*1.3,scatter*.7,scatter*.2);phone.visible=hitTime>.35;phone.position.set(3.1,.041,-3.9);phone.rotation.y=.8;}
+    else{const scatter=T.MathUtils.smoothstep(hitTime,.15,1.15);bag.position.set(2.19+scatter*.6,.69*(1-scatter)+scatter*.11,-1.59-scatter*2);bag.rotation.set(scatter*1.3,scatter*.7,scatter*.2);phone.visible=hitTime>.35;phone.position.set(3.1,.009,-3.9);phone.rotation.y=.8;}
+    const detached=!driving&&hitTime>.25;victim.getObjectByName('memory-shoe')!.visible=!detached;looseShoe.visible=detached;
+    const shoeFall=T.MathUtils.smoothstep(hitTime,.25,1.1);looseShoe.position.set(2.08+shoeFall*.55,Math.sin(shoeFall*Math.PI)*.28+.026,-2.25-shoeFall*1.65);looseShoe.rotation.set(0,shoeFall*1.6,0);
+    const ringing=!driving&&hitTime>=beats.victimCall;
+    (phoneScreen.material as T.MeshBasicMaterial).color.setScalar(ringing?.6+Math.sin(clock*5)*.25:.18);
     rain.position.set(x,-(clock*4.6)%6,z);
     return speed;
   }

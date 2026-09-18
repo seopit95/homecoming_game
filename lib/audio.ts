@@ -100,15 +100,15 @@ export class HorrorAudio {
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.voiceBus!);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }
-  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren'|'wiper'|'brake'|'crash'|'glass',pan=0,level=1){
+  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren'|'wiper'|'vibrate'|'brake'|'crash'|'glass',pan=0,level=1){
     const ctx=this.context;if(!ctx||!this.master||ctx.state!=='running')return;
     const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.effectsBus!);
-    if(kind==='wiper'||kind==='brake'||kind==='crash'||kind==='glass'){
+    if(kind==='wiper'||kind==='vibrate'||kind==='brake'||kind==='crash'||kind==='glass'){
       const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter();source.buffer=this.noise;source.connect(filter);filter.connect(g);
       this.roadSounds.add(source);p.disconnect();p.connect(this.driveBus??this.effectsBus!);
-      const duration=kind==='wiper'?.38:kind==='brake'?.95:kind==='crash'?.65:1.1;
-      filter.type=kind==='crash'?'lowpass':'bandpass';filter.frequency.setValueAtTime(kind==='wiper'?800:kind==='brake'?1750:kind==='crash'?450:4700,t);filter.frequency.exponentialRampToValueAtTime(kind==='crash'?70:kind==='wiper'?420:900,t+duration);filter.Q.value=kind==='brake'?2.8:.8;
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((kind==='crash'?.72:kind==='wiper'?.055:kind==='brake'?.16:.13)*level,t+(kind==='crash'?.008:.06));g.gain.exponentialRampToValueAtTime(.0001,t+duration);
+      const duration=kind==='vibrate'?.55:kind==='wiper'?.38:kind==='brake'?.95:kind==='crash'?.65:1.1;
+      filter.type=kind==='crash'?'lowpass':'bandpass';filter.frequency.setValueAtTime(kind==='wiper'?800:kind==='brake'?1750:kind==='crash'?450:kind==='vibrate'?150:4700,t);filter.frequency.exponentialRampToValueAtTime(kind==='crash'?70:kind==='wiper'?420:kind==='vibrate'?105:900,t+duration);filter.Q.value=kind==='brake'?2.8:kind==='vibrate'?5:.8;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((kind==='crash'?.72:kind==='wiper'?.055:kind==='brake'?.16:kind==='vibrate'?.09:.13)*level,t+(kind==='crash'?.008:.06));g.gain.exponentialRampToValueAtTime(.0001,t+duration);
       source.start(t,Math.random());source.stop(t+duration+.03);source.onended=()=>{this.roadSounds.delete(source);source.disconnect();filter.disconnect();g.disconnect();p.disconnect();};return;
     }
     if(kind==='fall'){

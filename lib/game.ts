@@ -4,7 +4,7 @@ import {animateLiftHand} from './lift-hand.ts';
 import {animateGhost,animateGhostAttack} from './ghost.ts';
 export {prepareVisuals} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
-import {initialStory,checkpoint,transition,objectives,areaFor,chapters,chaseStages,opening,isMemory,hasFlashlight,tapeTimes,type Story,type Action,type Area} from './story.ts';
+import {initialStory,checkpoint,transition,objectives,areaFor,chapters,chaseStages,opening,openingTiming as beats,isMemory,hasFlashlight,tapeTimes,type Story,type Action,type Area} from './story.ts';
 import {findPath,type Point} from './navigation.ts';
 import {apartment as home,apartmentScale as S} from './apartment-layout.ts';
 import {buildRoad} from './prologue.ts';
@@ -56,7 +56,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function snapshot():GameView{
     const chapter=chapters[area];
     const retryLabels:Partial<Record<typeof story.stage,string>>={lift_call:'28층 외부 복도부터 다시',lift_exit:'24층 엘리베이터부터 다시',lift_button:'엘리베이터 안에서 다시',stairs_loop:'23층 비상계단부터 다시',resident_entry:'1704호 입구부터 다시',road_exit:'사고 현장부터 다시',office_record:'17층 관리실부터 다시',parking_gate:'지하 주차장 입구부터 다시',parking_alarm:'주차장 경보기부터 다시'};
-    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:story.stage==='road_wait'?'03:18':'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,1.5,5):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:opening[story.stage]?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:opening[story.stage]?.cues?.findLast(cue=>stageTime>=cue.at)?.text??opening[story.stage]?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,notes:[...story.notes]},prompt:story.hidden?'장롱에서 나오기':hover?.label||'',message,objective:settings.hints?objectives[story.stage]:'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holding:holding||keys.has('KeyE'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||'28층 라디오 장면부터 다시'};
+    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:story.stage==='road_wait'?'03:18':'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,2.8,5.7):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:opening[story.stage]?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:opening[story.stage]?.cues?.findLast(cue=>stageTime>=cue.at)?.text??opening[story.stage]?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,notes:[...story.notes]},prompt:story.hidden?'장롱에서 나오기':hover?.label||'',message,objective:settings.hints?objectives[story.stage]:'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holding:holding||keys.has('KeyE'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||'28층 라디오 장면부터 다시'};
   }
   const emit=()=>onChange(snapshot());
   function say(text:string,seconds=7){message=text;messageUntil=elapsed+seconds;emit();}
@@ -359,11 +359,12 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(road){
         const roadClock=story.stage==='drive'?stageTime:opening.drive!.duration+(story.stage==='impact'?stageTime:opening.impact!.duration+stageTime);
         if(Math.floor(roadClock/.85)!==Math.floor((roadClock-dt)/.85))audio.sound('wiper',-.12,.8);
-        if(story.stage==='drive'&&stageTime>=10.9&&scriptBeat===0){scriptBeat=1;audio.recorded('male-surprise',1);audio.sound('brake',0,.65);}
-        if(story.stage==='drive'&&stageTime>=11.7&&scriptBeat===1){scriptBeat=2;audio.recorded('female-collision-scream',.9,.35);}
+        if(story.stage==='drive'&&stageTime>=beats.phoneBuzz&&scriptBeat===0){scriptBeat=1;audio.sound('vibrate',.7,.8);}
+        if(story.stage==='drive'&&stageTime>=memory.duration-.65&&scriptBeat===1){scriptBeat=2;audio.recorded('male-surprise',1);audio.sound('brake',0,.65);}
+        if(story.stage==='drive'&&stageTime>=memory.duration-.2&&scriptBeat===2){scriptBeat=3;audio.recorded('female-collision-scream',.9,.35);}
         if(story.stage==='impact'){
           if(stageTime>2.2&&scriptBeat===0){scriptBeat=1;audio.sound('breath',0,.55);}
-          if(stageTime>5.8&&scriptBeat===1){scriptBeat=2;audio.sound('drag',-.85,.36);audio.sound('knock',-.85,.16);}
+          if(stageTime>=beats.lock&&scriptBeat===1){scriptBeat=2;audio.sound('click',.7,.7);}
         }
       }
       if(stageTime>=memory.duration)advance(memory.action);return;
@@ -442,7 +443,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function renderWorld(dt:number){
     const time=started?elapsed:performance.now()/1000;
     const handPose={time:elapsed,moving:playerMoving,running:playerRunning,crouched,torch,visible:started&&hasFlashlight(story)&&!story.hidden&&!isMemory(story.stage)&&!['tv','dying','ended','road_exit'].includes(story.stage),reducedMotion,aspect:camera.aspect,fov:camera.fov};hands.update(handPose);
-    if(road){ambient.intensity=.32;flashlight.intensity=0;fill.intensity=0;(scene.fog as T.FogExp2).density=.025;const speed=road.pose(story.stage,stageTime,camera,reducedMotion);audio.setDrive(speed);camera.updateMatrixWorld();return;}
+    if(road){ambient.intensity=.32;flashlight.intensity=0;fill.intensity=0;(scene.fog as T.FogExp2).density=.025;const speed=road.pose(story.stage,stageTime,camera,reducedMotion);audio.setDrive(speed);audio.setDevice('phone',story.stage==='impact'&&stageTime>=beats.victimCall?.55:story.stage==='flee'?.55*Math.max(0,1-stageTime/4.4)**2:0,.7);camera.updateMatrixWorld();return;}
     if(story.stage==='wake_ring'){camera.position.set(...home.sleep);pitch=.85*(1-T.MathUtils.smoothstep(stageTime,1,4.8));yaw=.45;}
     if(story.stage==='sleep'){camera.position.set(...home.sleep);pitch=.85+T.MathUtils.smoothstep(stageTime,0,5)*.15;yaw=0;}
     if(area==='apartment')(scene.fog as T.FogExp2).density=.016;

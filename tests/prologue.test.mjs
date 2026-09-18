@@ -40,3 +40,18 @@ test('pausing the opening freezes the windshield and restarting clears the colli
   road.pose('drive',0,camera,false);
   assert.equal(road.root.getObjectByName('memory-cracked-glass').visible,false);
 });
+
+test('the opening has room to follow the aftermath without becoming a long unskippable film',()=>{
+  const seconds=Object.values(opening).reduce((sum,s)=>sum+s.duration,0);
+  assert.ok(seconds>=45&&seconds<=55,`memory lasts ${seconds}s before waking`);
+  assert.ok(opening.impact.duration>=11,'the player can register the victim and the ignored phone before departure');
+});
+
+test('the phone distraction is brief and the pedestrian reaches the bumper only at impact',()=>{
+  const road=buildRoad(new T.Scene()),camera=new T.PerspectiveCamera(68,16/9,.06,160);
+  let distracted=0;
+  for(let t=0;t<opening.drive.duration;t+=.05){road.pose('drive',t,camera,true);if(camera.rotation.y<-.15)distracted+=.05;}
+  assert.ok(distracted>=1&&distracted<2.5,`a glance, not ${distracted}s looking away`);
+  road.pose('drive',opening.drive.duration-5,camera,true);const car=road.root.getObjectByName('memory-car'),person=road.root.getObjectByName('memory-pedestrian');assert.ok(car.position.z-person.position.z>30);
+  road.pose('drive',opening.drive.duration,camera,true);assert.ok(Math.abs(car.position.z-2.92-person.position.z)<.2,'collision happens at the front bumper');
+});

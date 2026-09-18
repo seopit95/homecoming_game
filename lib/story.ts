@@ -4,11 +4,30 @@ export type Action = 'collision'|'fled'|'home'|'wake'|'skip_memory'|'blackout'|'
 export type Story = {stage:Stage;hidden:boolean;ending:'escaped'|'caught'|null;resume:Stage;notes:string[];circuit:Action[];tapeIndex:number};
 export const chaseStages:Stage[]=['hide','escape','lift_call','lift_wait','lift_enter','corridor_run','stairs_loop','stairs_clue','stairs_reverse','office_record','office_fuse','office_power','office_tape','office_leave','parking_gate','parking_key','parking_pump','parking_alarm','parking_run','resident_return'];
 export const opening:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={
-  drive:{duration:12,action:'collision',label:'사흘 전 · 새벽 03:17',text:'술을 마셨다. 대리운전은 잡히지 않았다.\n집까지 얼마 안 남았다는 생각으로 운전대를 잡았다.',cues:[{at:4.5,text:'조수석에서 휴대전화가 진동했다.\n화면을 확인하려고, 잠깐 고개를 돌렸다.'},{at:9.5,text:'다시 앞을 봤을 때, 헤드라이트 안에 사람이 있었다.\n발이 브레이크를 찾았다.'}]},
-  impact:{duration:8,action:'fled',label:'03:17 · 백로아파트 앞',text:'',cues:[{at:1.8,text:'…사람이었다.'},{at:4,text:'내려야 한다. 전화를 해야 한다.\n그런데 손이 운전대에서 떨어지지 않았다.'},{at:6.1,text:'조수석 쪽에서 무언가 문을 긁었다.\n나는 그쪽을 보지 않았다.'}]},
-  flee:{duration:7,action:'home',label:'03:17 · 현장을 떠났다',text:'발을 브레이크에서 뗐다.\n아무도 보지 않았을 거라고 생각했다.',cues:[{at:3.2,text:'차에서 내리지 않았다. 신고하지 않았다.\n백미러 속 횡단보도가 빗속으로 멀어졌다.'}]},
-  sleep:{duration:6,action:'wake',label:'그날 새벽 · 28층 2803호',text:'현관에서 신발도 제대로 벗지 못했다.\n젖은 소매를 붙잡은 채 침대에 쓰러졌다.',cues:[{at:3.1,text:'눈을 감아도 충돌하는 소리가 들렸다.\n얼마나 누워 있었는지 모른다.'}]},
+  drive:{duration:20,action:'collision',label:'사흘 전 · 새벽 03:17',text:'술을 마셨다.\n대리운전은 두 번 취소됐다.',cues:[
+    {at:4,text:'집까지 세 블록.\n그 정도는 괜찮다고 생각했다.'},
+    {at:8.5,text:'백로아파트. 매일 다니던 길이었다.'},
+    {at:12,text:''},
+    {at:15.9,text:'휴대전화가 진동했다.'},
+    {at:18.6,text:''},
+  ]},
+  impact:{duration:13,action:'fled',label:'03:17 · 백로아파트 앞 횡단보도',text:'',cues:[
+    {at:2.2,text:'…사람이었다.'},
+    {at:4.7,text:'차 밖에서 전화가 울렸다.\n내 전화는 아니었다.'},
+    {at:8,text:'내려야 했다. 신고해야 했다.'},
+    {at:10.8,text:'그런데 나는 문을 잠갔다.'},
+  ]},
+  flee:{duration:8,action:'home',label:'03:17 · 현장을 떠났다',text:'브레이크에서 발을 뗐다.',cues:[
+    {at:2.6,text:'백미러 속 횡단보도가 멀어졌다.'},
+    {at:5.4,text:'전화벨이 더는 들리지 않았다.'},
+  ]},
+  sleep:{duration:8,action:'wake',label:'그날 새벽 · 28층 2803호',text:'집에 돌아와 젖은 신발을 벗었다.',cues:[
+    {at:3,text:'신고하지 않았다.\n아무에게도 말하지 않았다.'},
+    {at:6,text:''},
+  ]},
 };
+// These beats also drive the camera, phone props and sound; they share simulation time.
+export const openingTiming={phoneBuzz:15.9,lookUp:17.6,brake:19.1,victimCall:4.4,lock:10.8} as const;
 export function hasFlashlight(s:Pick<Story,'stage'>){return !['drive','impact','flee','sleep','tv','wake_ring','light_switch','find_torch'].includes(s.stage);}
 export const tapeTimes=['03:17 · 진입로','03:26 · 지하 입차','03:31 · 승강기'];
 export function isMemory(stage:Stage){return opening[stage]!==undefined;}
@@ -101,7 +120,7 @@ export const journal:Partial<Record<Action,{title:string;text:string}>>={
   pump:{title:'B1 · 열린 퇴로',text:'물이 빠지자 출구 밑에 걸린 부러진 문턱이 드러났다. 이제 출구에서 잔해를 걷어낼 수 있을 것 같다. 나를 따라오는 발소리가 멎지 않는다. 입구 경보로 시선을 돌리자.'},
   belongings:{title:'1704호 · 젖지 않은 신발 한 짝',text:'현관에는 검은 신발 한 짝과 접힌 우산이 있다. 찻잔은 식었고, 자동응답기의 녹음 표시만 깜박인다.\n\n신발장 위의 관리비 봉투. 1704호 / 한서연. 매일 이 문으로 돌아오던 사람이었다.\n\n벽에는 쪽지가 붙어 있다. 「야간 당직 한서연 / 내선 17. 외벽 공사 중 1703호를 임시 관리실로 사용합니다. 퇴근 후 연결문을 잠가 주세요.」'},
   portrait:{title:'1704호 · 냉장고의 약속',text:'냉장고 문에 손으로 쓴 쪽지가 붙어 있다. 「다음에는 맑은 날에. 내일 오후 두 시.」\n\n누군가와 만나기로 한 약속. 사흘 전 그 사람에게는, 돌아와서 기다릴 내일이 있었다.'},
-  answerphone:{title:'1704호 · 마지막 음성메시지',text:'03:16. 「비가 너무 오네. 거의 다 왔어. 문 열어두지 말고 먼저 자. 내일 전화할게.」\n\n메시지는 끝났지만 테이프는 계속 돌아간다. 횡단보도 신호음. 급하게 밟는 브레이크. 그리고 차 문 손잡이를 당기는 소리.\n\n나는 충격 뒤에도 소리를 들었다. 돌아보지 않은 것이다.'},
+  answerphone:{title:'1704호 · 마지막 음성메시지',text:'03:16. 「비가 너무 오네. 거의 다 왔어. 문 열어두지 말고 먼저 자. 내일 전화할게.」\n\n메시지는 끝났지만 테이프는 계속 돌아간다. 횡단보도 신호음. 급하게 밟는 브레이크. 그리고 받지 못한 전화벨.\n\n나는 그 전화벨을 들었다. 멈추고도, 차에서 내리지 않은 것이다.'},
   road_bag:{title:'03:17 · 외면했던 것',text:'가방에는 1704호 열쇠가 남아 있다. 곁에 떨어진 휴대전화는 유리에 금이 갔지만 화면이 켜져 있다. 전송되지 않은 메시지. 「도착하면 연락할게.」\n\n나는 그 사람의 이름을 안다. 이제 모르는 사람인 척할 수 없다.'},
   road_phone:{title:'03:18 · 남겨진 신고',text:'「백로아파트 앞 횡단보도입니다. 제가 차로 사람을 치었습니다. 술을 마셨고, 도망쳤습니다. 이번에는 여기 있겠습니다.」\n\n전화 너머에서 주소를 다시 확인한다. 처음으로 시계가 03:18로 넘어간다.'},
   wake:{title:'사흘 전 · 내가 외면한 밤',text:'술을 마신 채 차를 몰았다. 백로아파트 앞 횡단보도에서 여성을 치었다. 새벽 03:17.\n\n나는 사람을 죽이고도 차에서 내리지 않았다. 신고하지 않았다. 그대로 도망쳐 2803호로 돌아와 잠들었다.\n\n사흘이 지났다. 매일 그 시각에 눈이 떠진다. 오늘은 전화벨에 잠이 깼다. 스위치를 눌러도 불이 들어오지 않는다.'},

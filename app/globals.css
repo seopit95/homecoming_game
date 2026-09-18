@@ -28,3 +28,5 @@
 @media(pointer:fine) and (max-width:760px){.subtitle{bottom:45px}.save-notice{bottom:18px}.touch-intro{display:none}}
 
 .stamina{position:absolute;bottom:76px;left:32px;display:grid;gap:7px;width:155px;color:#babfb0;font-size:11px;letter-spacing:.05em;pointer-events:none}.stamina progress{appearance:none;width:100%;height:3px;border:0;background:#a7b49a22}.stamina progress::-webkit-progress-bar{background:#a7b49a22}.stamina progress::-webkit-progress-value{background:#a7b49a;transition:width .12s linear}.stamina.exhausted{color:#c1957d}.stamina.exhausted progress::-webkit-progress-value{background:#b88870}@media(max-width:700px){.stamina{bottom:220px;left:22px;width:120px}}
+
+.memory-caption>span{display:block;animation:memory-caption-in .35s ease-out both}@keyframes memory-caption-in{from{opacity:0}to{opacity:1}}.reduce-motion .memory-caption>span{animation:none}@media(prefers-reduced-motion:reduce){.memory-caption>span{animation:none}}
