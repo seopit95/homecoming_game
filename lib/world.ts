@@ -3,9 +3,10 @@ import {apartment as home,apartmentScale as S,spaceFurniture} from './apartment-
 import type { Action, Area } from './story';
 import {buildBuilding,makeFigure} from './building.ts';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
+import {createEntryEvidence} from './entry-props.ts';
 import {dressApartment} from './japan.ts';
 
-export type Bounds={x:number;z:number};
+export type Bounds={x:number;z:number;minX?:number};
 export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number };
 const lightRay=new T.Ray(),lightBox=new T.Box3(),lightHit=new T.Vector3();
 export function clampLightOrigin(eye:T.Vector3,lens:T.Vector3,solids:Solid[]){
@@ -18,7 +19,7 @@ export function clampLightOrigin(eye:T.Vector3,lens:T.Vector3,solids:Solid[]){
   if(nearest>=distance)return false;
   lens.copy(eye).addScaledVector(lightRay.direction,Math.max(0,nearest-.06));return true;
 }
-export function canStandAt(x:number,z:number,solids:Solid[],r=.23,bounds:Bounds=home.bounds){return Math.abs(x)<bounds.x&&Math.abs(z)<bounds.z&&!solids.some(s=>Math.abs(x-s.x)<s.w/2+r&&Math.abs(z-s.z)<s.d/2+r);}
+export function canStandAt(x:number,z:number,solids:Solid[],r=.23,bounds:Bounds=home.bounds){return x>(bounds.minX??-bounds.x)&&x<bounds.x&&Math.abs(z)<bounds.z&&!solids.some(s=>Math.abs(x-s.x)<s.w/2+r&&Math.abs(z-s.z)<s.d/2+r);}
 export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:number;z:number},solids:Solid[]){
   const distance=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);
   for(let s=.1;s<distance-.15;s+=.1){const t=s/distance,x=from.x+(to.x-from.x)*t,y=from.y+(to.y-from.y)*t,z=from.z+(to.z-from.z)*t;
@@ -29,7 +30,7 @@ export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:
 export type Target = { id: Action; point: T.Vector3; label: string; mesh: T.Object3D };
 export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
-  const content=area==='apartment'?{...buildApartment(root),bounds:home.bounds,spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined}:{...buildBuilding(root,area),setTV:undefined};
+  const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined}:{...buildBuilding(root,area),setTV:undefined};
   return {...content,root};
 }
 export function disposeWorld(root:T.Object3D){
@@ -89,10 +90,7 @@ function buildApartment(scene:T.Group) {
   at(1.18,-5.3);
   box(1.18,.64,-5.3,.55,1.28,1.2,wood,true);
   at(0,-4.65);
-  const shoes=new T.Group();scene.add(shoes);shoes.visible=false;
-  for(const x of [-.22,.16]){const shoe=box(x,.11,-4.65,.2,.16,.52,mat('#1c2322',.26),false,shoes);shoe.rotation.y=.3;box(x,.2,-4.83,.19,.17,.16,dark,false,shoes);}
-  const wet=mat('#283e39',.06,{transparent:true,opacity:.7});
-  for(let i=0;i<7;i++){const p=new T.Mesh(new T.CircleGeometry(.13+rand()*.15,12),wet);p.rotation.x=-Math.PI/2;p.position.set((rand()-.5)*.6,.016,-4.5+i*.63);p.scale.y=.47;shoes.add(p);}
+  const shoes=createEntryEvidence();scene.add(shoes);shoes.visible=false;
   targets.push({id:'shoes',point:new T.Vector3(...home.shoes),label:'젖은 신발',mesh:shoes});
   at(0,6.25);
   const clock=sign('03:17',0,2.65,6.13,Math.PI,.75,.25);clock.material.map=print('03:17','#c07052','#151914',55);clock.material.emissive.set('#c07052');clock.material.emissiveMap=clock.material.map;clock.material.emissiveIntensity=.8;

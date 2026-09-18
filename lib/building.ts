@@ -2,18 +2,19 @@ import * as T from 'three';
 import type {Area,Action,Stage} from './story';
 import type {Bounds,Solid,Target} from './world';
 import {surface,boxUV,softBox} from './materials.ts';
+import {createLiftHand} from './lift-hand.ts';
 import {nightWindow} from './japan.ts';
 import {buildStoryRoom} from './chapters.ts';
 export {createGhost as makeFigure} from './ghost.ts';
 import {createGhost as makeFigure} from './ghost.ts';
 
-export const landing={halfWidth:1.3,halfLength:23,spawnZ:20.5,liftZ:-22.75,fallTriggerZ:8,fallZ:1} as const;
+export const landing={halfWidth:1.3,halfLength:23,spawnZ:20.5,homeZ:20.5,homeX:1.3,liftZ:-22.75,boardZ:-23.25,fallTriggerZ:8,fallZ:1} as const;
 export const buildingLayout={corridor:{x:3.5,z:20,spawnZ:18},lift:{x:1.1,z:1.45,spawnZ:.7},stairs:{x:2,z:6,flightX:1,run:4,spawnZ:3.8},office:{x:5.8,z:7.8,spawnZ:6.5},parking:{x:12,z:22,spawnZ:20,alarm:{x:-10.8,z:16},alarmApproach:{x:-10.8,z:16.5},car:{x:5,z:-18}}} as const;
 export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   if(area==='resident'||area==='aftermath')return buildStoryRoom(root,area);
   const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
   const size=area==='landing'?{x:landing.halfWidth,z:landing.halfLength}:buildingLayout[area];
-  const bx=size.x,bz=size.z,bounds:Bounds={x:bx-.13,z:bz-.13},ceiling=area==='parking'?2.7:2.8;
+  const bx=size.x,bz=size.z,bounds:Bounds=area==='landing'?{x:4.2,z:25.45,minX:-1.17}:{x:bx-.13,z:bz-.13},ceiling=area==='parking'?2.7:2.8;
   const mat=(color:string,extra:object={})=>new T.MeshStandardMaterial({color,roughness:.85,...extra});
   const plaster=surface('decayWall','#b5b6a6'),concrete=surface('garage','#a2a9a3'),floorMat=surface(area==='parking'?'garage':'oldTile','#b0b1a4',{roughness:.62}),metal=surface('steel','#878d8b',{metalness:.55,roughness:.48}),dark=mat('#141b1c'),rust=mat('#523b29'),wood=surface('wood','#807668'),paint=mat('#616d5d'),white=mat('#a7ab94'),red=mat('#802b20'),wallMat=area==='parking'?concrete:area==='lift'?metal:plaster;
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false){const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
@@ -33,35 +34,49 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   // Openings use separate piers and lintels. No wall is left behind the sliding leaves.
   function portal(z:number,half=.66){const w=bx-half;wall(-(bx+half)/2,z,w,.18);wall((bx+half)/2,z,w,.18);box(0,2.56,z,half*2,.48,.18,wallMat);}
   const spawn=new T.Vector3(0,1.65,('spawnZ' in size?size.spawnZ:landing.spawnZ));let heading=0,heightAt:((x:number,z:number)=>number)=()=>0;
-  let liftDoors:{left:T.Mesh;right:T.Mesh}|undefined,setDisplay:((text:string)=>void)|undefined,fallingFigure:T.Group|undefined;
+  let liftDoors:{left:T.Mesh;right:T.Mesh;blocks:Solid[]}|undefined,setDisplay:((text:string)=>void)|undefined,fallingFigure:T.Group|undefined;
   let updateStory:((stage:Stage,time:number,reduced:boolean)=>void)|undefined;
   const figure=makeFigure(root),shoes=new T.Group(),phoneGlow=new T.PointLight(),radioLight=new T.PointLight();
   if(area!=='stairs'){
     box(0,-.1,0,bx*2,.2,bz*2,floorMat);box(0,ceiling+.08,0,bx*2,.16,bz*2,concrete);
-    if(area!=='landing')wall(-bx,0,.18,bz*2);wall(bx,0,.18,bz*2);wall(0,bz,bx*2,.18);
+    if(area!=='landing'){wall(-bx,0,.18,bz*2);wall(bx,0,.18,bz*2);}else{
+      // The 2803 opening is cut out of the right-hand wall; the pursuer walks through it.
+      const lo=landing.homeZ-.75,hi=landing.homeZ+.75;
+      wall(bx,(-bz+lo)/2,.18,lo+bz);wall(bx,(hi+bz)/2,.18,bz-hi);
+      box(bx,2.65,landing.homeZ,.18,.3,1.5,plaster);
+      box(2.7,-.09,landing.homeZ,3,.18,2.9,floorMat);box(2.7,2.88,landing.homeZ,3,.16,2.9,plaster);
+      for(const z of [landing.homeZ-1.45,landing.homeZ+1.45])wall(2.75,z,3,.15);
+      wall(4.25,landing.homeZ,.15,2.9);
+      const leaf=box(1.3-Math.sin(1.42)*.725,1.22,landing.homeZ+.75-Math.cos(1.42)*.725,1.45,2.44,.13,paint);
+      leaf.rotation.y=1.42+Math.PI/2;leaf.name='2803-open-door';
+      const inset=new T.Mesh(new T.BoxGeometry(1.2,1.7,.045),mat('#394740'));inset.position.z=-.083;leaf.add(inset);
+      const handle=new T.Mesh(new T.BoxGeometry(.18,.055,.15),metal);handle.position.set(.495,-.2,-.17);leaf.add(handle);
+      for(const z of [landing.homeZ-.81,landing.homeZ+.81])box(1.24,1.25,z,.16,2.5,.1,metal);
+      label('2803',1.188,2.05,landing.homeZ+1,-Math.PI/2,.34,.14);
+      box(2.95,.65,landing.homeZ+1.12,1.3,1.3,.5,wood,true);light(2.2,2.3,landing.homeZ,'#6c8c8a',.8,3);
+    }wall(0,bz,bx*2,.18);
     if(area==='lift'||area==='landing')portal(-bz);else wall(0,-bz,bx*2,.18);
     for(let z=-bz+2;z<bz;z+=5){box(0,ceiling-.08,z,bx*2,.15,.25,concrete);pipe(bx-.21,ceiling-.18,z,4.9);}
   }
   if(area==='landing'||area==='lift'){
     const dz=area==='landing'?landing.liftZ:-1.35;
-    const left=box(-.315,1.14,dz,.62,2.28,.06,metal),right=box(.315,1.14,dz,.62,2.28,.06,metal);liftDoors={left,right};
+    const left=box(-.315,1.14,dz,.62,2.28,.06,metal),right=box(.315,1.14,dz,.62,2.28,.06,metal);left.name='lift-door-left';right.name='lift-door-right';const blocks:Solid[]=[{x:-.315,z:dz,w:.62,d:.06,y:1.14,h:2.28},{x:.315,z:dz,w:.62,d:.06,y:1.14,h:2.28}];solids.push(...blocks);liftDoors={left,right,blocks};
     for(const x of [-.7,.7])box(x,1.18,dz,.12,2.36,.16,dark);box(0,2.38,dz,1.52,.12,.16,metal);
     const display=label('28',0,2.54,dz+.12,0,.36,.15,'#cb6f3e','#111510',true);setDisplay=display.update;
     box(0,.012,dz,1.35,.023,.22,metal);
     for(const x of [-.3,-.1,.1,.3])box(x,.026,dz,.012,.006,.22,dark);
     if(area==='landing'){
-      target('enter','엘리베이터에 타기',left,0,1.25,dz+.25);
       const call=box(.95,1.25,dz+.07,.13,.28,.07,metal);label('▽',.95,1.25,dz+.12,0,.09,.12,'#d6985c');target('call','엘리베이터 호출',call,.95,1.25,dz+.2);
       label('28층',-.98,1.9,dz+.05,0,.35,.19);
       // A complete cab behind the threshold is visible while the doors open.
       box(0,-.09,dz-1.45,2.18,.18,2.7,floorMat);box(0,2.8,dz-1.45,2.2,.1,2.7,metal);
-      box(0,1.4,dz-2.8,2.2,2.8,.12,metal);for(const x of [-1.1,1.1])box(x,1.4,dz-1.45,.12,2.8,2.7,metal);
+      box(0,1.4,dz-2.8,2.2,2.8,.12,metal,true);for(const x of [-1.1,1.1])box(x,1.4,dz-1.45,.12,2.8,2.7,metal,true);
       box(0,1.02,dz-2.65,1.8,.05,.06,metal);for(const x of [-.7,.7])box(x,1.02,dz-2.71,.04,.04,.12,metal);light(0,2.5,dz-1.4,'#b4b6a0',4,4);
       box(-bx,.44,0,.13,.88,bz*2,concrete,true).name='landing-parapet';
       for(const y of [.93,1.13])box(-bx,y,0,.04,.04,bz*2,rust);
       for(let z=-bz+.1;z<bz;z+=.75)box(-bx,1.02,z,.025,.22,.025,rust);
       box(-bx+.12,.005,0,.15,.015,bz*2,dark);
-      for(let z=-20;z<=21;z+=5.5){unit(bx-.12,z,z>18?'2803':String(2804+Math.round((21-z)/5.5)));box(-bx,1.4,z,.17,2.8,.22,concrete,true);fixture(.25,z,z!==2);}
+      for(let z=-20;z<=21;z+=5.5){if(z<18)unit(bx-.12,z,String(2804+Math.round((18-z)/5.5)));box(-bx,1.4,z,.17,2.8,.22,concrete,true);fixture(.25,z,z!==2);}
       for(const z of [-14,2,13])puddle(-.85,z,.3,1.6);
       for(let y=-3;y>-83;y-=3){box(0,y-.1,0,bx*2,.2,bz*2,concrete);box(-bx,y+.44,0,.13,.88,bz*2,concrete);}
       for(const y of [3,6]){box(0,y+2.8,0,bx*2,.16,bz*2,concrete);box(-bx,y+.44,0,.13,.88,bz*2,concrete);}
@@ -69,6 +84,9 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       fallingFigure=makeFigure(root);fallingFigure.name='falling-apparition';fallingFigure.position.set(-2.2,9,landing.fallZ);fallingFigure.visible=false;const fl=new T.PointLight('#bfccd6',4,4);fl.position.set(-1,1,1);fallingFigure.add(fl);
       label('백로아파트 · 1993',0,2.5,bz-.11,Math.PI,1.45,.2);
     }else{
+      const shaft=box(0,1.35,-1.57,2.1,2.7,.025,mat('#030505'));shaft.name='lift-shaft-darkness';
+      updateStory=stage=>{shaft.visible=stage==='descent';};
+      const hand=createLiftHand();hand.position.set(0,1.52,dz+.035);root.add(hand);
       fixture(0,.1,true);for(const x of [-.98,.98])box(x,1,0,.035,.05,2.2,metal);
       const panel=box(.99,1.35,-.45,.035,.85,.24,metal);label('1',.966,1.3,-.45,-Math.PI/2,.15,.12,'#d7ad65');target('panel','1층 누르기',panel,.92,1.3,-.45);
       for(let i=0;i<6;i++)box(.966,1.45+i*.065,-.42,.025,.035,.04,white);

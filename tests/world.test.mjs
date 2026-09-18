@@ -94,7 +94,7 @@ test('opened home and elevator portals expose their adjoining spaces',()=>{
  const a={x:0,y:1.6,z:z+1},b={x:0,y:1.6,z:z-3};
  home.updateStory('light_switch',0,false);assert.equal(hasLineOfSight(a,b,home.solids),false);
  home.updateStory('hide',1,false);home.updateStory('hide',3,false);assert.ok(door.rotation.y>1.3);assert.equal(hasLineOfSight(a,b,home.solids),true);
- for(const area of ['lift','landing']){const w=buildWorld(new THREE.Scene(),area),dz=w.liftDoors.left.position.z;assert.equal(hasLineOfSight({x:0,y:1.6,z:dz+.7},{x:0,y:1.6,z:dz-2},w.solids),true,`${area} opening is not filled by the building enclosure`);}
+ for(const area of ['lift','landing']){const w=buildWorld(new THREE.Scene(),area),dz=w.liftDoors.left.position.z;w.liftDoors.blocks[0].x=-.955;w.liftDoors.blocks[1].x=.955;assert.equal(hasLineOfSight({x:0,y:1.6,z:dz+.7},{x:0,y:1.6,z:dz-2},w.solids),true,`${area} opening is not filled by the building enclosure`);}
 });
 
 test('the pursuer can enter the electrical room and reach every office patrol destination',async()=>{
@@ -107,4 +107,25 @@ test('the parking alarm has a clear approach for the distracted pursuer',async()
  const goal=buildingLayout.parking.alarmApproach;
  assert.ok(canStandAt(goal.x,goal.z,w.solids,.23,w.bounds),'the attraction point cannot be inside the new mounting wall');
  assert.ok(findPath(w.figure.position,goal,w.solids,w.bounds).length>0);
+});
+
+test('the home threshold, 2803 entrance and elevator cab have connected walkable openings',async()=>{
+  const {findPath}=await import('../lib/navigation.ts'),{landing}=await import('../lib/building.ts'),{apartment}=await import('../lib/apartment-layout.ts');
+  const home=buildWorld(new THREE.Scene());
+  assert.equal(canStandAt(0,apartment.doorZ,home.solids,.23,home.bounds),false);
+  home.updateStory('hide',1,false);home.updateStory('hide',3,false);
+  assert.ok(canStandAt(0,apartment.doorZ-.2,home.solids,.23,home.bounds));
+  const w=buildWorld(new THREE.Scene(),'landing');
+  const leaf=w.root.getObjectByName('2803-open-door'),original=home.root.getObjectByName('front-door').children[0];home.root.updateMatrixWorld(true);const center=original.getWorldPosition(new THREE.Vector3());
+  assert.ok(Math.abs(leaf.position.x-(landing.homeX+center.z-apartment.doorZ))<.001);assert.ok(Math.abs(leaf.position.z-(landing.homeZ-center.x))<.001);
+  assert.ok(findPath({x:3.7,z:landing.homeZ},{x:0,z:19},w.solids,w.bounds).length,'ghost walks out of 2803');
+  assert.equal(canStandAt(0,landing.liftZ,w.solids,.23,w.bounds),false,'closed leaves block walking');
+  w.liftDoors.blocks[0].x=-.955;w.liftDoors.blocks[1].x=.955;
+  assert.ok(findPath({x:0,z:landing.liftZ+1},{x:0,z:landing.boardZ-.5},w.solids,w.bounds).length,'open leaves admit a player fully into the cab');
+  assert.equal(canStandAt(1.1,landing.boardZ,w.solids,.23,w.bounds),false,'cab side walls remain solid');
+});
+
+test('entry shoes have human dimensions and rest on the tile, with no box-shaped footwear',()=>{
+  const w=buildWorld(new THREE.Scene()),shoes=[];w.root.traverse(o=>{if(o.name==='wet-leather-shoe')shoes.push(o);});assert.equal(shoes.length,4);
+  for(const shoe of shoes){const b=new THREE.Box3().setFromObject(shoe),s=b.getSize(new THREE.Vector3());assert.ok(s.z>.22&&s.z<.30);assert.ok(s.y>.06&&s.y<.09);assert.ok(Math.abs(b.min.y-.014)<.003,'sole meets tile');}
 });

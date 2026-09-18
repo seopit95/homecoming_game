@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {boxUV,surface,softBox,upholstery} from './materials.ts';
+import {createLeatherShoe} from './entry-props.ts';
 import {spaceFurniture} from './apartment-layout.ts';
 import type {Area} from './story';
 
@@ -23,7 +24,7 @@ export function dressApartment(root:T.Group,area:Area){
   if(area==='apartment'){
     const {at,finish}=spaceFurniture(root);at(0,-5.15);
     box(0,.008,-5.15,2.65,.012,1.9,surface('tile','#b9bdb4',{roughness:.47}));
-    for(const x of [-.82,-.58])box(x,.044,-4.55,.19,.075,.37,paper);
+    for(const x of [-.82,-.58]){const shoe=createLeatherShoe('#736854',false);shoe.position.set(x,.014,-4.55);shoe.rotation.y=.08;root.add(shoe);}
     at(-1.05,-5.8);cylinder(-1.05,.3,-5.8,.14,.6,steel);for(let i=0;i<3;i++)rod(new T.Vector3(-1.12+i*.07,.15,-5.8),new T.Vector3(-1.2+i*.11,1.15+i*.12,-5.82),.016,dark);
     at(0,-6.25);notice(['백로아파트','3동 2803호','야간에는 조용히','관리사무소'],1.02,1.85,-5.83,0,.23,.38);
     at(6.08,1.55);for(const z of [1.05,2.05])box(5.556,1.24,z,.018,2.02,.96,paper);

@@ -81,14 +81,25 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   for(let i=0;i<2400&&game.snapshot().story.stage==='wait';i++)tick(.025);assert.equal(game.snapshot().story.stage,'escape','ghost patrol must reach the other room');
   game.interact();assert.equal(game.snapshot().story.hidden,false);
   runHome(0,1.55);runHome(0,-4.7);
-  useHome([0,1.65,-4.7],[0,1.2,-5.86],'lift_call');
-  runTo(0,-21.2);use([.95,1.65,-21.2],[.95,1.25,-22.55],'lift_wait');
+  aim([0,1.65,home.door[2]+.7],[0,1.65,home.door[2]-1],false);
+  game.interact();assert.equal(game.snapshot().story.stage,'escape','E cannot teleport through the home door');
+  game.key('KeyW',true);for(let i=0;i<60&&game.snapshot().story.stage==='escape';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'lift_call','walking through the doorway exits the home');
+  const emerging=renderedScene.getObjectByName('resident-remains');assert.ok(emerging.position.x>1.3,'pursuer begins inside the home doorway');assert.equal(emerging.position.z,20.5);assert.ok(renderedScene.getObjectByName('2803-open-door'));
+  runTo(0,20.5);runTo(0,-21.2);assert.ok(emerging.position.x<1.3,'pursuer has walked out into the gallery');use([.95,1.65,-21.2],[.95,1.25,-22.55],'lift_wait');
   tick(8);assert.equal(game.snapshot().story.stage,'lift_enter');
-  use([0,1.65,-21.2],[0,1.25,-22.5],'lift_button');
+  aim([0,1.65,-21.2],[0,1.65,-25],false);game.interact();assert.equal(game.snapshot().story.stage,'lift_enter');
+  game.key('KeyW',true);for(let i=0;i<70&&game.snapshot().story.stage==='lift_enter';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'lift_boarding');
+  const pursuer=renderedScene.getObjectByName('resident-remains'),leaf=renderedScene.getObjectByName('lift-door-left');pursuer.position.set(0,0,-21.7);const at=pursuer.position.z;
+  tick(.3);assert.ok(pursuer.position.z<at-.2,'pursuit continues during door closure');assert.equal(game.snapshot().story.stage,'lift_boarding');
+  game.pause();const stoppedLeaf=leaf.position.x;tick(4);assert.equal(leaf.position.x,stoppedLeaf);game.pause(false);
+  game.key('KeyS',true);tick(.3);game.key('KeyS',false);assert.ok(renderedCamera.position.z<=-23.25,'boarding stays committed inside the cab');assert.ok(pursuer.position.z>=-22.27,'ghost cannot enter the boarded cab');
+  tick(3);assert.equal(game.snapshot().story.stage,'lift_button');
   use([0,1.65,-.45],[.92,1.3,-.45],'descent');
   tick(8);assert.equal(game.snapshot().liftFloor,26);
   const pausedAt=game.snapshot().elapsed;game.pause();tick(3);assert.equal(game.snapshot().elapsed,pausedAt);game.pause(false);
-  tick(8.1);assert.equal(game.snapshot().story.stage,'pry');assert.equal(game.snapshot().liftFloor,24);
+  tick(2.8);assert.equal(renderedScene.getObjectByName('lift-door-hand')?.visible,true,'the described fingers are rendered');
+  const hand=renderedScene.getObjectByName('lift-door-hand'),finger=hand.children[0];game.pause();const pose=finger.rotation.toArray();tick(4);assert.deepEqual(finger.rotation.toArray(),pose);game.pause(false);
+  tick(5.3);assert.equal(game.snapshot().story.stage,'pry');assert.equal(game.snapshot().liftFloor,24);
   aim([0,1.65,-.15],[0,1.3,-1.13]);game.interact();assert.equal(game.snapshot().story.stage,'pry','click alone must not pry the door');
   game.key('KeyE',true);tick(1);assert.ok(game.snapshot().holdProgress>.3&&game.snapshot().holdProgress<.4);
   game.pause();tick(4);assert.equal(game.snapshot().story.stage,'pry');assert.equal(game.snapshot().holdProgress,0);game.pause(false);
@@ -146,12 +157,12 @@ test('contact screams once, locks controls and falls before death; manual pause 
   voiceCalls.length=0;
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:0,clientY:0});event(doc,'pointerup',{});game.interact();tick(3);
   // The radio encounter opens the front door; leave and let pursuit catch up.
-  renderedCamera.position.set(0,1.65,home.door[2]+1.16);
+  renderedCamera.position.set(.51,1.65,home.door[2]+1.16);
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
   const desiredPitch=Math.atan2(-.45,1.16);
-  event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(desiredPitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();
+  event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(desiredPitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.key('KeyW',true);for(let i=0;i<60&&game.snapshot().story.stage==='hide';i++)tick(.025);game.key('KeyW',false);
   assert.equal(game.snapshot().story.stage,'lift_call');
-  for(let i=0;i<300&&game.snapshot().story.stage!=='dying';i++)tick(.025);
+  for(let i=0;i<1000&&game.snapshot().story.stage!=='dying';i++)tick(.025);
   assert.equal(game.snapshot().story.stage,'dying');assert.equal(game.snapshot().paused,false);assert.equal(voiceCalls.filter(l=>l==='scream').length,1);
   const root=renderedScene.getObjectByName('resident-remains'),initialY=renderedCamera.position.y;
   assert.ok(root.getObjectByName('ghost-attack-mouth').visible);const progress=game.snapshot().deathProgress;
@@ -198,7 +209,8 @@ test('the exterior fall plays once on the way to the elevator, without stopping 
   try{
     tick();game.start(true);tick();game.interact();tick(3);renderedCamera.position.set(0,1.65,home.door[2]+1.16);
     event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
-    event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(Math.atan2(-.45,1.16)-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();tick();
+    event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(Math.atan2(-.45,1.16)-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.key('KeyW',true);for(let i=0;i<60&&game.snapshot().story.stage==='hide';i++)tick(.025);tick(.56);game.key('KeyW',false);
+    event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:renderedCamera.rotation.x/.0021});event(doc,'pointerup',{});tick();
     const falling=renderedScene.getObjectByName('falling-apparition');assert.ok(falling,'a separate exterior apparition exists');assert.equal(falling.visible,false);
     game.key('KeyW',true);game.key('ShiftLeft',true);
     for(let i=0;i<600&&!falling.visible;i++)tick(.025);
