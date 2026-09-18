@@ -167,7 +167,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       return chassis;
     }
     for(const x of [-5.2,5.2])for(const z of [-10,-3,4,11])car(x,z,(Math.round(z)%3===0?'#8b8e87':x<0?'#354044':'#6c655d'));
-    const own=car(L.car.x,L.car.z,'#222c31',true);target('car_search','조수석 조사 · 배수 설비 열쇠',own,6.02,1.1,-17.8);
+    const own=car(L.car.x,L.car.z,'#222c31',true);target('car_search','조수석 조사 · 배수 설비 열쇠',own,6.02,1.1,-17.8);target('car_board','운전석 문 열고 탑승',own,3.98,1.1,-17.8);
     const cracks:number[]=[];for(let i=0;i<8;i++){const a=i*2.4;cracks.push(5.2,1.14,-17.15,5.2+Math.cos(a)*.5,1.14+Math.sin(a)*.17,-17.14);}root.add(new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(cracks,3)),new T.LineBasicMaterial({color:'#b8c5c2',transparent:true,opacity:.7})));
     box(-11.3,1.35,15.82,1.4,2.7,.24,concrete,true);box(L.alarm.x,1.25,15.96,.55,1.85,.12,metal);
     const alarm=box(L.alarm.x,1.4,L.alarm.z,.3,.43,.17,red);target('alarm','화재경보기 작동',alarm,L.alarm.x,1.4,L.alarm.z+.18);label('발신기',L.alarm.x,1.92,16.027,0,.45,.16,'#d6bca4','#61281e');light(L.alarm.x,2.4,L.alarm.z+.2,'#a5523b',2);

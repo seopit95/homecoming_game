@@ -32,3 +32,10 @@ test('a freed default key can be assigned to a different action without silently
 test('saving a stopped or descending elevator never rewinds to the apartment',()=>{
   assert.equal(prefs.progressStage('descent'),'lift_button');assert.equal(prefs.progressStage('pry'),'lift_button');assert.equal(prefs.progressStage('lift_exit'),'lift_exit');
 });
+
+test('legacy road saves migrate to the car finale and new finale saves resume before the reveal',()=>{
+ const store=new Map(),storage={getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v)};
+ storage.setItem(prefs.PROGRESS_KEY,JSON.stringify({version:2,stage:'road_exit',notes:['phone'],elapsed:120}));
+ assert.equal(prefs.readProgress(storage).stage,'car_escape');
+ prefs.writeProgress(storage,{stage:'car_crash',notes:['phone']},140);assert.equal(prefs.readProgress(storage).stage,'car_escape');
+});

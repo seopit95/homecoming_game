@@ -9,13 +9,13 @@ test('the resident investigation accepts evidence in either order and unlocks it
     assert.equal(transition(s,'resident_leave').stage,'office_record');
   }
 });
-test('escaping the parking lot leads to a playable reckoning before the ending',()=>{
-  let s={...initialStory(),stage:'parking_run'};
-  for(const [action,stage] of [['exit','road_exit'],['car_door','road_evidence'],['road_bag','road_call'],['road_phone','road_wait'],['stay','ended']]){
+test('boarding the car leads to the passenger reveal and fatal crash, with no walking exit shortcut',()=>{
+  let s={...initialStory(),stage:'parking_run'};assert.equal(transition(s,'exit'),s);assert.equal(transition(s,'fatal'),s);
+  for(const [action,stage] of [['car_board','car_escape'],['passenger','car_voice'],['wreck','car_crash'],['fatal','ended']]){
     if(s.stage!=='road_wait')assert.equal(transition(s,'stay').stage,s.stage);
     s=transition(s,action);assert.equal(s.stage,stage);
   }
-  assert.equal(s.ending,'escaped');
+  assert.equal(s.ending,'crashed');
 });
 test('leaving the wardrobe early creates a real escape attempt instead of forcing another hide stage',()=>{
   const s={...initialStory(),stage:'wait',hidden:true};
@@ -31,8 +31,8 @@ test('waking and finding a flashlight precede checking the breaker, and the radi
 test('leaving home continues instead of awarding the ending',()=>{const s=apartmentExit();assert.equal(s.stage,'lift_call');assert.equal(s.ending,null);});
 test('the complete route requires the lift, stairs, investigation and alarm',()=>{
   let s=apartmentExit();
-  for(const [action,stage] of [['call','lift_wait'],['arrived','lift_enter'],['enter','lift_boarding'],['sealed','lift_button'],['panel','descent'],['stopped','pry'],['pry','lift_exit'],['leave_lift','corridor_run'],['stairs','stairs_loop'],['down','stairs_clue'],['stair_note','stairs_reverse'],['up','resident_entry'],['belongings','resident_memory'],['answerphone','resident_memory'],['portrait','resident_return'],['resident_leave','office_record'],['record','office_fuse'],['fuse','office_power'],['circuit_b','office_power'],['circuit_a','office_power'],['circuit_c','office_tape'],['tape_next','office_tape'],['monitor','office_leave'],['service_exit','parking_gate'],['exit','parking_key'],['car_search','parking_pump'],['valve_a','parking_pump'],['valve_b','parking_pump'],['pump','parking_alarm'],['alarm','parking_run'],['exit','road_exit'],['car_door','road_evidence'],['road_bag','road_call'],['road_phone','road_wait'],['stay','ended']]){s=transition(s,action);assert.equal(s.stage,stage,action);}
-  assert.equal(s.ending,'escaped');assert.ok(s.notes.length>=4);assert.deepEqual(transition(s,'caught'),s);
+  for(const [action,stage] of [['call','lift_wait'],['arrived','lift_enter'],['enter','lift_boarding'],['sealed','lift_button'],['panel','descent'],['stopped','pry'],['pry','lift_exit'],['leave_lift','corridor_run'],['stairs','stairs_loop'],['down','stairs_clue'],['stair_note','stairs_reverse'],['up','resident_entry'],['belongings','resident_memory'],['answerphone','resident_memory'],['portrait','resident_return'],['resident_leave','office_record'],['record','office_fuse'],['fuse','office_power'],['circuit_b','office_power'],['circuit_a','office_power'],['circuit_c','office_tape'],['tape_next','office_tape'],['monitor','office_leave'],['service_exit','parking_gate'],['exit','parking_key'],['car_search','parking_pump'],['valve_a','parking_pump'],['valve_b','parking_pump'],['pump','parking_alarm'],['alarm','parking_run'],['car_board','car_escape'],['passenger','car_voice'],['wreck','car_crash'],['fatal','ended']]){s=transition(s,action);assert.equal(s.stage,stage,action);}
+  assert.equal(s.ending,'crashed');assert.ok(s.notes.length>=4);assert.deepEqual(transition(s,'caught'),s);
 });
 test('wardrobe protects the player but leaving early resumes the threat',()=>{
   let s=transition(transition(checkpoint(),'radio'),'heard');s=transition(s,'closet');assert.equal(s.hidden,true);assert.deepEqual(transition(s,'caught'),s);assert.deepEqual(transition(s,'door'),s);

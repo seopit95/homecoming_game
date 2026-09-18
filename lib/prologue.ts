@@ -2,11 +2,12 @@ import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {surface,boxUV,softBox,handSkinMaterial,upholstery,cutoutMaterial} from './materials.ts';
 import {createLeatherShoe} from './entry-props.ts';
-import {opening,openingTiming as beats,type Stage} from './story.ts';
+import {createGhost,animateGhostPassenger} from './ghost.ts';
+import {opening,openingTiming as beats,finale,finaleTiming as endingBeats,type Stage} from './story.ts';
 
 // All motion is sampled from simulation time: pause, skip and replay never leave a cutscene running.
-export function buildRoad(scene:T.Scene){
-  const root=new T.Group();root.name='accident-memory';scene.add(root);
+export function buildRoad(scene:T.Scene,escapeDrive=false){
+  const root=new T.Group();root.name=escapeDrive?'escape-drive':'accident-memory';scene.add(root);
   const asphalt=surface('concrete','#454b50',{roughness:.28,bumpScale:.009});
   const concrete=surface('concrete','#747b7c'),wall=surface('wall','#95988d');
   const rubber=new T.MeshStandardMaterial({color:'#14191d',roughness:.86});
@@ -193,7 +194,55 @@ export function buildRoad(scene:T.Scene){
   const driveDuration=opening.drive!.duration,impactDuration=opening.impact!.duration;
   const cruiseSpeed=8,braking=driveDuration-beats.brake,deceleration=1.8,impactSpeed=cruiseSpeed-braking*deceleration,stopZ=1.2-impactSpeed*.45;
   const looseShoe=createLeatherShoe();looseShoe.name='memory-lost-shoe';root.add(looseShoe);
+  const passenger=escapeDrive?createGhost(car):null;
+  const barrier=escapeDrive?new T.Group():null;
+  let shattered:T.LineSegments|undefined;
+  if(passenger){
+    passenger.name='finale-passenger';passenger.position.set(-.54,0,.24);passenger.rotation.y=Math.PI;
+    const revealLight=new T.PointLight('#a9bcc4',1.35,2.3,2);revealLight.position.set(-.27,1.5,-.6);car.add(revealLight);
+    const fracture:number[]=[];
+    for(let i=0;i<23;i++){const angle=i*2.399;let x=0,y=1.2;for(let j=1;j<=5;j++){const nx=Math.cos(angle+j*.035)*.89*j/5,ny=1.2+Math.sin(angle)*.49*j/5;fracture.push(x,y,-1.49-(y-1.215)*.53,nx,ny,-1.49-(ny-1.215)*.53);x=nx;y=ny;}}
+    shattered=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(fracture,3)),new T.LineBasicMaterial({color:'#d7e5e7',transparent:true,opacity:.88}));shattered.name='finale-shattered-windshield';car.add(shattered);shattered.visible=false;
+    // The short covered driveway gives the departure a physical exit from the garage.
+    for(const x of [-1.1,4.4])box(x,1.35,131,.22,2.7,26,concrete);
+    box(1.65,2.77,131,5.72,.18,26,concrete);
+    label('백로아파트  출구',2.7,.35,[1.65,2.48,118.1]);
+    for(const z of [122,128,134,140]){box(1.65,2.65,z,1,.05,.18,warm);const light=new T.PointLight('#8fada8',4,7);light.position.set(1.65,2.5,z);root.add(light);}
+    barrier!.name='finale-barrier';barrier!.position.set(1.65,0,-51.12);root.add(barrier!);
+    box(0,.65,0,4.4,1.3,.55,concrete,barrier!);
+    for(let i=0;i<11;i++)box(-2+i*.4,.82,.287,.2,.32,.02,i%2?rubber:warm,barrier!);
+    label('도로 통제',1.8,.26,[0,1.55,.1],barrier!);for(const x of [-.8,.8])rod([x,.5,0],[x,1.7,0],.025,steel,barrier!);
+  }
+  function finalPose(stage:Stage,t:number,camera:T.PerspectiveCamera,reduced:boolean){
+    const driving=stage==='car_escape',speaking=stage==='car_voice',crashing=stage==='car_crash';
+    const beforeCrash=finale.car_escape!.duration+finale.car_voice!.duration;
+    const clock=driving?t:speaking?finale.car_escape!.duration+t:beforeCrash+Math.min(t,endingBeats.impact);
+    const distance=clock<3.5?2*clock*clock:14*clock-24.5,z=145-distance;
+    const hit=crashing?Math.max(0,t-endingBeats.impact):0,crush=T.MathUtils.smoothstep(hit,0,.18);
+    car.position.set(1.65,0,z);car.rotation.set(0,0,0);
+    const speed=crashing&&t>=endingBeats.impact?0:Math.min(14,clock*4);
+    const jolt=!reduced&&hit>0?Math.exp(-hit*2.8)*Math.sin(hit*35):0;
+    car.rotation.z=jolt*.035;
+    passenger!.visible=!driving&&hit<.8;
+    animateGhostPassenger(passenger!,clock,crashing?T.MathUtils.smoothstep(t,0,.25):0,reduced);
+    camera.position.set(1.3,1.23-T.MathUtils.smoothstep(hit,.22,2.9)*.42,z+.06-T.MathUtils.smoothstep(hit,0,.15)*.14+jolt*.035);
+    car.updateMatrixWorld(true);
+    const face=passenger!.getObjectByName('ghost-head')!.localToWorld(new T.Vector3(0,.13,.16)).sub(camera.position);
+    const turn=driving?0:speaking?T.MathUtils.smoothstep(t,endingBeats.turn,endingBeats.reveal):1;
+    const collapse=T.MathUtils.smoothstep(hit,.04,.45);
+    camera.rotation.set(T.MathUtils.lerp(T.MathUtils.lerp(-.055,Math.atan2(face.y,Math.hypot(face.x,face.z)),turn),-.7,collapse)+jolt*.08,T.MathUtils.lerp(Math.atan2(-face.x,-face.z)*turn,-.12,collapse),reduced?0:T.MathUtils.smoothstep(hit,.3,2.7)*.42+jolt*.09,'YXZ');
+    wheel.rotation.z=crashing?-.9*T.MathUtils.smoothstep(t,.15,.55):Math.sin(clock*.6)*.025;
+    needles[0].rotation.z=2.3-speed/14*4.6;needles[1].rotation.z=2.3-(speed>0?.7+speed*.085:.1);
+    wipers.forEach(w=>{w.rotation.z=.79-(.5-.5*Math.cos(clock*3.69599))*1.65;});windshieldMat.uniforms.time.value=clock;
+    hood.rotation.x=.035+crush*.43;hood.position.y=.62+crush*.13;hood.position.z=-2.18+crush*.25;
+    shattered!.visible=crush>0;cracks.visible=true;(cracks.material as T.LineBasicMaterial).opacity=.2+crush*.7;
+    victim.visible=false;bag.visible=false;phone.visible=false;looseShoe.visible=false;message.visible=false;
+    rain.position.set(1.65,-(clock*4.6)%6,z);
+    streetLights.forEach((light,i)=>{const lampZ=-135+(Math.floor((z+135)/18)-2+i)*18;light.position.set(3.8,5.25,lampZ);light.target.position.set(1.7,0,lampZ);});
+    return speed;
+  }
   function pose(stage:Stage,time:number,camera:T.PerspectiveCamera,reduced:boolean){
+    if(escapeDrive)return finalPose(stage,Math.max(0,time),camera,reduced);
     const driving=stage==='drive',impact=stage==='impact',t=Math.max(0,time),hitTime=impact?t:stage==='flee'?impactDuration:0;
     const clock=driving?t:driveDuration+(impact?t:impactDuration+t);
     const brake=driving?Math.max(0,t-beats.brake):0;

@@ -3,6 +3,27 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import {makeFigure} from '../lib/building.ts';
 
+test('crawling lowers the body, plants hands and restores the walking rig without moving the navigation root',async()=>{
+  const {animateGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group());
+  const rootPose=figure.position.toArray();
+  for(const phase of [0,2,4])for(const blend of [.15,.4,.55,.7,.725,.9]){animateGhost(figure,3,1,.7,false,phase,blend);assert.ok(new T.Box3().setFromObject(figure,true).min.y>-.01,`lowering blend ${blend} stays above the floor`);}
+  for(const phase of [0,.8,2,3.5,5]){
+    animateGhost(figure,3,1,.7,false,phase,1);figure.updateMatrixWorld(true);
+    const head=figure.getObjectByName('ghost-head').getWorldPosition(new T.Vector3());
+    assert.ok(head.y<.95&&head.y>.3,'the crawling face stays near the floor');
+    const bounds=new T.Box3().setFromObject(figure,true);assert.ok(bounds.min.y>-.002,'dress and limbs must not pass through the floor');
+    const hands=[-1,1].map(side=>figure.getObjectByName(`ghost-hand-${side}`).getWorldPosition(new T.Vector3()));
+    assert.ok(Math.min(...hands.map(p=>p.y))<.11,'one palm remains close to the ground');
+    assert.deepEqual(figure.position.toArray(),rootPose);
+  }
+  animateGhost(figure,3,1,.7,false,2,1);const pose=figure.getObjectByName('ghost-head').getWorldPosition(new T.Vector3()).toArray();
+  animateGhost(figure,3,1,.7,false,2,1);assert.deepEqual(figure.getObjectByName('ghost-head').getWorldPosition(new T.Vector3()).toArray(),pose);
+  animateGhost(figure,3,.65,.7,false,4,1);const planted=figure.getObjectByName('ghost-hand--1').getWorldPosition(new T.Vector3());
+  figure.position.z+=.82*.5/(Math.PI*2);animateGhost(figure,3,.65,.7,false,4.5,1);const next=figure.getObjectByName('ghost-hand--1').getWorldPosition(new T.Vector3());
+  assert.ok(Math.abs(next.z-planted.z)<.008,'a grounded palm stays planted as the body crawls over it');
+  animateGhost(figure,3,1,.7,false,2,0);assert.ok(figure.getObjectByName('ghost-head').getWorldPosition(new T.Vector3()).y>1.5);
+});
+
 test('ghost animation preserves its navigation root and remains finite at every pose',async()=>{
   const {animateGhost}=await import('../lib/ghost.ts');
   const root=new T.Group(),figure=makeFigure(root);figure.position.set(3,0,-4);figure.rotation.y=.7;
@@ -65,4 +86,10 @@ test('blood droplets move with simulation time and reset deterministically when 
   const pose=()=>{figure.updateMatrixWorld(true);return blood.children.flatMap(o=>[...o.position.toArray(),...o.scale.toArray()]);};
   animateGhost(figure,1,1,.8,false);const initial=pose();animateGhost(figure,1.2,1,.8,false);assert.notDeepEqual(pose(),initial);
   const stopped=pose();animateGhost(figure,1.2,1,.8,false);assert.deepEqual(pose(),stopped);
+});
+
+test('the seated passenger stays above the cabin floor and resets to a full walking silhouette',async()=>{
+ const {animateGhostPassenger,animateGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group());
+ for(const scare of [0,.4,1]){animateGhostPassenger(figure,13,scare,false);assert.ok(new T.Box3().setFromObject(figure,true).min.y>=.22,'seated cloth, hair and feet clear the floorpan');}
+ animateGhost(figure,2,1,.5,false);assert.equal(figure.getObjectByName('ghost-long-hair').scale.y,1);
 });

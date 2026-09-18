@@ -21,10 +21,10 @@ export function normalizeSettings(value:unknown):Settings{
 }
 export function readSettings(storage:Pick<Storage,'getItem'>):Settings{try{return normalizeSettings(JSON.parse(storage.getItem(SETTINGS_KEY)||'null'));}catch{return normalizeSettings(null);}}
 export function writeSettings(storage:Pick<Storage,'setItem'>,settings:Settings){try{storage.setItem(SETTINGS_KEY,JSON.stringify(normalizeSettings(settings)));return true;}catch{return false;}}
-const saveStages:Stage[]=['light_switch','power','radio','lift_call','lift_button','lift_exit','stairs_loop','resident_entry','office_record','parking_gate','parking_alarm','road_exit'];
+const saveStages:Stage[]=['light_switch','power','radio','lift_call','lift_button','lift_exit','stairs_loop','resident_entry','office_record','parking_gate','parking_alarm','car_escape','road_exit'];
 export type Progress={version:2;stage:Stage;notes:string[];elapsed:number};
 export function progressStage(stage:Stage):Stage{if(['wake_ring','light_switch','find_torch'].includes(stage))return 'light_switch';if(['drive','impact','flee','sleep','tv','power','phone','shoes'].includes(stage))return 'power';return checkpoint({...initialStory(),stage}).stage;}
 export function readProgress(storage:Pick<Storage,'getItem'>):Progress|null{
-  try{const s=JSON.parse(storage.getItem(PROGRESS_KEY)||'null');if(!s||s.version!==2||!saveStages.includes(s.stage)||!Array.isArray(s.notes)||!Number.isFinite(s.elapsed)||s.elapsed<0)return null;return {version:2,stage:s.stage,notes:[...new Set<string>(s.notes.filter((n:unknown)=>typeof n==='string'&&n in journal))],elapsed:Math.min(s.elapsed,86400)};}catch{return null;}
+  try{const s=JSON.parse(storage.getItem(PROGRESS_KEY)||'null');if(!s||s.version!==2||!saveStages.includes(s.stage)||!Array.isArray(s.notes)||!Number.isFinite(s.elapsed)||s.elapsed<0)return null;return {version:2,stage:s.stage==='road_exit'?'car_escape':s.stage,notes:[...new Set<string>(s.notes.filter((n:unknown)=>typeof n==='string'&&n in journal))],elapsed:Math.min(s.elapsed,86400)};}catch{return null;}
 }
 export function writeProgress(storage:Pick<Storage,'setItem'>,story:Pick<Story,'stage'|'notes'>,elapsed:number){if(story.stage==='ended'||story.stage==='dying')return false;try{storage.setItem(PROGRESS_KEY,JSON.stringify({version:2,stage:progressStage(story.stage),notes:story.notes,elapsed}));return true;}catch{return false;}}

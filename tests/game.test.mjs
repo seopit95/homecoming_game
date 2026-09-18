@@ -1,7 +1,7 @@
 import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {opening} from '../lib/story.ts';
+import {opening,finale} from '../lib/story.ts';
 import {accidentCar} from '../lib/chapters.ts';
 import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/apartment-layout.ts';
 
@@ -98,7 +98,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   game.key('KeyW',true);for(let i=0;i<60&&game.snapshot().story.stage==='escape';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'lift_call','walking through the doorway exits the home');
   const emerging=renderedScene.getObjectByName('resident-remains');assert.ok(emerging.position.x>1.3,'pursuer begins inside the home doorway');assert.equal(emerging.position.z,20.5);assert.ok(renderedScene.getObjectByName('2803-open-door'));
   runTo(0,20.5);runTo(0,-21.2);assert.ok(emerging.position.x<1.3,'pursuer has walked out into the gallery');use([.95,1.65,-21.2],[.95,1.25,-22.55],'lift_wait');
-  tick(8);assert.equal(game.snapshot().story.stage,'lift_enter');
+  tick(5.5);assert.equal(game.snapshot().story.stage,'lift_enter');
   aim([0,1.65,-21.2],[0,1.65,-25],false);game.interact();assert.equal(game.snapshot().story.stage,'lift_enter');
   game.key('KeyW',true);for(let i=0;i<70&&game.snapshot().story.stage==='lift_enter';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'lift_boarding');
   const pursuer=renderedScene.getObjectByName('resident-remains'),leaf=renderedScene.getObjectByName('lift-door-left');pursuer.position.set(0,0,-21.7);const at=pursuer.position.z;
@@ -148,17 +148,19 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   use([-10.8,1.65,17.4],[-10.8,1.4,16.18],'parking_run');
   const lured=renderedScene.getObjectByName('resident-remains'),beforeLure=lured.position.clone();tick(1);assert.ok(lured.position.distanceTo(beforeLure)>.8,'the apparition actually follows the alarm around the mounting wall');
   runTo(-2.2,17.4);runTo(-2.2,-20);runTo(0,-20);
-  use([0,1.65,-20.3],[0,1.25,-21.68],'road_exit');
-  assert.doesNotMatch(game.snapshot().message,/배수|침수|조수석에서/,'the final exit must introduce the returned accident scene');
-  const seatedAgain=renderedCamera.position.clone();game.key('KeyW',true);tick(.5);game.key('KeyW',false);assert.deepEqual(renderedCamera.position.toArray(),seatedAgain.toArray());
-  const beforeTurn=renderedCamera.rotation.y;game.key('ArrowLeft',true);tick(.5);game.key('ArrowLeft',false);assert.ok(renderedCamera.rotation.y>beforeTurn+.5,'keyboard look works inside the stopped car');
-  use([accidentCar.driverX,1.13,9.2],[accidentCar.doorX,1,8.8],'road_evidence');
-  assert.equal(renderedCamera.position.y,1.65,'opening the door exits the car');
-  use([.8,1.65,-2.1],[.8,.3,-3.5],'road_call');
-  use([.15,1.65,-1.8],[.15,.12,-3.2],'road_wait');
-  assert.equal(game.snapshot().clock,'03:18');
-  game.pause();tick(20);assert.equal(game.snapshot().story.stage,'road_wait');game.pause(false);tick(15.1);
-  assert.equal(game.snapshot().story.ending,'escaped');assert.deepEqual(errors,[]);
+  aim([0,1.65,-20.3],[0,1.25,-21.68]);game.interact();assert.equal(game.snapshot().story.stage,'parking_run','the pedestrian door cannot trigger the new ending');
+  runTo(3,-20);runTo(3,-17.8);
+  use([3,1.65,-17.8],[3.98,1.1,-17.8],'car_escape');
+  assert.ok(renderedScene.getObjectByName('escape-drive'));
+  game.key('KeyW',true);game.interact();game.skipMemory();assert.equal(game.snapshot().story.stage,'car_escape');
+  const drivingFrom=renderedCamera.position.clone();tick(2);assert.ok(renderedCamera.position.distanceTo(drivingFrom)>2);
+  game.pause();const drivePose=renderedCamera.matrixWorld.toArray(),driveClock=game.snapshot().elapsed;tick(4);assert.equal(game.snapshot().elapsed,driveClock);assert.deepEqual(renderedCamera.matrixWorld.toArray(),drivePose);game.pause(false);
+  tick(finale.car_escape.duration-2);assert.equal(game.snapshot().story.stage,'car_voice');
+  tick(.3);assert.ok(soundCalls.includes('passenger-line'));assert.match(game.snapshot().memoryText,/혼자 가려고/);
+  game.pause();const voiceClock=game.snapshot().elapsed;tick(4);assert.equal(game.snapshot().elapsed,voiceClock);game.pause(false);
+  tick(finale.car_voice.duration);assert.equal(game.snapshot().story.stage,'car_crash');
+  tick(.8);assert.ok(soundCalls.includes('collision-impact'));assert.equal(game.snapshot().story.ending,null,'death follows the visible crash');
+  tick(finale.car_crash.duration);assert.equal(game.snapshot().story.stage,'ended');assert.equal(game.snapshot().story.ending,'crashed');assert.deepEqual(errors,[]);
   game.start();tick(.2);assert.equal(game.snapshot().story.stage,'drive');game.skipMemory();assert.ok(game.snapshot().elapsed<.3,'fresh restart resets elapsed time');
   tick(7.1);game.key('KeyW',true);tick(.5);game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(new THREE.Vector3(...home.wakeStand))>.5,'the player can walk after waking');game.dispose();
 });

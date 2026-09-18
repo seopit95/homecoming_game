@@ -1,4 +1,4 @@
-export type RecordedClip='player-evidence'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'radio-tuning-broadcast';
+export type RecordedClip='passenger-line'|'player-evidence'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'radio-tuning-broadcast';
 export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'memory';
 // Local voice clips and procedural effects share a bounded master volume.
 export class HorrorAudio {
@@ -47,13 +47,13 @@ export class HorrorAudio {
     const road=ctx.createBufferSource(),roadFilter=ctx.createBiquadFilter();road.buffer=noise;road.loop=true;roadFilter.type='lowpass';roadFilter.frequency.value=1200;
     this.tyres=ctx.createGain();this.tyres.gain.value=0;road.connect(roadFilter);roadFilter.connect(this.tyres);this.tyres.connect(this.driveBus);road.start();
     for(const hz of [43,57.4,86.3]){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=hz;g.gain.value=.015;o.connect(g);g.connect(this.musicBus!);o.start();}
-    for(const clip of ['player-evidence','male-surprise','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast'] as RecordedClip[])void fetch(`/audio/overhaul/${clip}.wav`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);}}).catch(()=>{});
+    for(const clip of ['passenger-line','player-evidence','male-surprise','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast'] as RecordedClip[])void fetch(`/audio/overhaul/${clip}.wav`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);}}).catch(()=>{});
     for(const line of ['where','here','found','come','cry','scream','memory'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
   recorded(clip:RecordedClip,level=1,pan=0){
     const ctx=this.context,buffer=this.clips[clip];if(!ctx||!buffer||ctx.state!=='running')return;
     const source=ctx.createBufferSource(),gain=ctx.createGain(),p=ctx.createStereoPanner();source.buffer=buffer;gain.gain.value=level*.9;p.pan.value=pan;
-    source.connect(gain);gain.connect(p);p.connect(clip==='player-evidence'||clip==='male-surprise'||clip==='female-collision-scream'?this.voiceBus!:this.effectsBus!);
+    source.connect(gain);gain.connect(p);p.connect(clip==='passenger-line'||clip==='player-evidence'||clip==='male-surprise'||clip==='female-collision-scream'?this.voiceBus!:this.effectsBus!);
     this.roadSounds.add(source);source.onended=()=>{this.roadSounds.delete(source);source.disconnect();gain.disconnect();p.disconnect();};source.start();
   }
   setDevice(device:'phone'|'radio',level:number,pan=0){

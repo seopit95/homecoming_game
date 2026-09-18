@@ -3,6 +3,19 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import {buildRoad} from '../lib/prologue.ts';
 import {opening} from '../lib/story.ts';
+
+test('the final drive reveals a seated passenger, collides at the barrier and freezes on pause',()=>{
+  const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160);
+  road.pose('car_escape',0,camera,false);const start=camera.position.clone();
+  const passenger=road.root.getObjectByName('finale-passenger');assert.ok(passenger);assert.equal(passenger.visible,false);
+  road.pose('car_escape',10,camera,false);const arrival=camera.position.clone();assert.ok(arrival.z<start.z-50);
+  road.pose('car_voice',0,camera,false);assert.ok(camera.position.distanceTo(arrival)<.01);assert.equal(passenger.visible,true);
+  road.pose('car_voice',4.9,camera,false);assert.ok(camera.rotation.y<-.9,'the driver turns right to the passenger');
+  const face=passenger.getObjectByName('ghost-head').localToWorld(new T.Vector3(0,.13,.16));camera.updateMatrixWorld();const screen=face.project(camera);assert.ok(Math.abs(screen.x)<.7&&Math.abs(screen.y)<.85,'the passenger face is actually in frame');
+  road.pose('car_crash',.55,camera,false);const car=road.root.getObjectByName('memory-car'),barrier=road.root.getObjectByName('finale-barrier');assert.ok(Math.abs(car.position.z-2.92-barrier.position.z)<.5,'the impact lands at the obstruction');
+  road.pose('car_crash',3,camera,false);assert.equal(road.root.getObjectByName('finale-shattered-windshield').visible,true);const stopped=camera.position.clone();road.pose('car_crash',3,camera,false);assert.deepEqual(camera.position.toArray(),stopped.toArray());
+  assert.equal(road.root.getObjectByName('memory-pedestrian').visible,false,'the ending is not another pedestrian collision');
+});
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 Object.defineProperty(globalThis,'document',{value:{createElement:()=>({width:0,height:0,getContext:()=>context})},configurable:true});
 
