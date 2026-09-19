@@ -4,7 +4,7 @@ import type {Bounds,Solid,Target} from './world';
 import {surface,boxUV,softBox} from './materials.ts';
 import {createLiftHand} from './lift-hand.ts';
 import {nightWindow} from './japan.ts';
-import {buildStoryRoom} from './chapters.ts';
+import {buildStoryRoom,buildResidentGallery} from './chapters.ts';
 export {createGhost as makeFigure} from './ghost.ts';
 import {createGhost as makeFigure} from './ghost.ts';
 
@@ -112,14 +112,30 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   if(area==='stairs'){
     heightAt=(x,z)=>z>=0?0:(x<0?1:-1)*Math.min(2.8,-z*2.8/4);
     box(0,-.15,3,4,.3,6,floorMat);box(-1,2.65,-5,2,.3,2,floorMat);box(1,-2.95,-5,2,.3,2,floorMat);
-    wall(-2,0,.18,12,1.4,9);wall(2,0,.18,12,1.4,9);wall(0,-6,4,.18,1.4,9);wall(0,6,4,.18,1.4,9);wall(0,-3,.12,6,1.4,9);
+    wall(-2,0,.18,12,1.4,9);wall(2,0,.18,12,1.4,9);wall(-1.81,-6,.38,.18,1.4,9);wall(.81,-6,2.38,.18,1.4,9);box(-1,-.15,-6,1.24,5.9,.18,wallMat);box(-1,5.52,-6,1.24,.76,.18,wallMat);wall(0,6,4,.18,1.4,9);wall(0,-3,.12,6,1.4,9);
     box(0,6,0,4,.2,12,concrete);
     for(let i=0;i<17;i++)for(const side of [-1,1]){const z=-(i+.5)*4/17,y=-side*(i+.5)*2.8/17;box(side,y-.082,z,1.82,.164,4/17,floorMat);box(side,y+.005,z-.09,1.72,.01,.025,metal);box(side*.16,y+.45,z,.025,.9,.025,rust);}
     // Continuous sloped handrails over the open newel side.
     for(const side of [-1,1]){const rail=box(side*.16,-side*1.4+.92,-2,.045,.045,Math.hypot(4,2.8),rust);rail.rotation.x=-side*Math.atan2(2.8,4);}
-    door('up','위층 ↑',-1,-5.85,2.8,.85);door('down','아래층 ↓',1,-5.85,-2.8,.85);
+    bounds.z=8.7;
+    const galleryRoot=new T.Group();galleryRoot.position.set(-1,2.8,-17.65);root.add(galleryRoot);
+    const gallery=buildResidentGallery(galleryRoot,false);lamps.push(...gallery.lamps);
+    solids.push(...gallery.solids.map(s=>({...s,x:s.x-1,y:(s.y??1.5)+2.8,z:s.z-17.65})));
+    const hinge=new T.Group();hinge.name='stairs-passage-door';hinge.position.set(-1.45,2.8,-5.85);root.add(hinge);
+    const leaf=box(-1,3.9,-5.85,.9,2.2,.09,paint);hinge.attach(leaf);
+    const handle=box(-.68,3.85,-5.77,.18,.045,.1,metal);hinge.attach(handle);
+    for(const x of [-1.51,-.49])box(x,3.94,-5.85,.09,2.28,.18,metal);box(-1,5.09,-5.85,1.11,.09,.18,metal);
+    label('연결 복도',-1,5.26,-5.75,0,.9,.18);target('up','방화문 열기',leaf,-1,4.05,-5.65);
+    const closed={x:-1,z:-5.85,w:1.02,d:.1,y:3.9,h:2.2};solids.push(closed);
+    door('down','아래층 ↓',1,-5.85,-2.8,.85);
     const note=label('시설 점검 메모',0,1.65,5.89,Math.PI,.8,.35,'#34392e','#b8ae8c');target('stair_note','계단 점검 메모 읽기',note.mesh,0,1.65,5.7);
-    label('23층',-1.89,2,3,Math.PI/2,.9,.55);label('↓ 아래층',1,1.2,.08,0,.65,.2);
+    const floorLabel=label('23층',-1.89,2,3,Math.PI/2,.9,.55);label('↓ 아래층',1,1.2,.08,0,.65,.2);
+    let opened=-1,shown='23층';updateStory=(stage,time)=>{
+      const text=stage==='stairs_reverse'||stage==='stairs_passage'?'17층':'23층';if(text!==shown){floorLabel.update(text);shown=text;}
+      if(stage==='stairs_passage'&&opened<0)opened=time;
+      if(opened>=0)hinge.rotation.y=-1.55*T.MathUtils.smoothstep(time-opened,0,.85);
+      if(Math.abs(hinge.rotation.y)>1.2){const i=solids.indexOf(closed);if(i>=0)solids.splice(i,1);}
+    };
     light(0,3.2,3,'#8f9c83',5);light(-1,5.3,-4.8,'#b0a17b',3);light(1,-.3,-4.8,'#769789',3);
   }
   if(area==='office'){

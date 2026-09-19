@@ -1,12 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+test('the stair door opens before walking into the gallery, and 1704 opens before its investigation',()=>{
+  let s={...initialStory(),stage:'stairs_reverse'};
+  s=transition(s,'up');assert.equal(s.stage,'stairs_passage');
+  s=transition(s,'stair_exit');assert.equal(s.stage,'resident_arrival');
+  assert.equal(transition(s,'belongings'),s,'clues inside cannot be collected before opening the door');
+  s=transition(s,'resident_open');assert.equal(s.stage,'resident_entry');
+});
 test('the resident investigation accepts evidence in either order and unlocks its return',()=>{
-  for(const order of [['belongings','answerphone','portrait'],['portrait','answerphone','belongings']]){
+  for(const order of [['belongings','answerphone','portrait'],['belongings','portrait','answerphone'],['answerphone','belongings','portrait'],['answerphone','portrait','belongings'],['portrait','belongings','answerphone'],['portrait','answerphone','belongings']]){
     let s={...initialStory(),stage:'resident_entry'};
     assert.equal(transition(s,'resident_leave').stage,'resident_entry');
     for(const action of order)s=transition(s,action);
     assert.equal(s.stage,'resident_return');assert.equal(s.notes.filter(n=>n==='belongings').length,1);
-    assert.equal(transition(s,'resident_leave').stage,'office_record');
+    s=transition(s,'resident_leave');assert.equal(s.stage,'resident_departure');assert.equal(transition(s,'office_entry').stage,'office_record');
   }
 });
 test('boarding the car leads to the passenger reveal and fatal crash, with no walking exit shortcut',()=>{
@@ -31,7 +39,7 @@ test('waking and finding a flashlight precede checking the breaker, and the radi
 test('leaving home continues instead of awarding the ending',()=>{const s=apartmentExit();assert.equal(s.stage,'lift_call');assert.equal(s.ending,null);});
 test('the complete route requires the lift, stairs, investigation and alarm',()=>{
   let s=apartmentExit();
-  for(const [action,stage] of [['call','lift_wait'],['arrived','lift_enter'],['enter','lift_boarding'],['sealed','lift_button'],['panel','descent'],['stopped','pry'],['pry','lift_exit'],['leave_lift','corridor_run'],['stairs','stairs_loop'],['down','stairs_clue'],['stair_note','stairs_reverse'],['up','resident_entry'],['belongings','resident_memory'],['answerphone','resident_memory'],['portrait','resident_return'],['resident_leave','office_record'],['record','office_fuse'],['fuse','office_power'],['circuit_b','office_power'],['circuit_a','office_power'],['circuit_c','office_tape'],['tape_next','office_tape'],['monitor','office_leave'],['service_exit','parking_gate'],['exit','parking_key'],['car_search','parking_pump'],['valve_a','parking_pump'],['valve_b','parking_pump'],['pump','parking_alarm'],['alarm','parking_run'],['car_board','car_escape'],['passenger','car_voice'],['wreck','car_crash'],['fatal','ended']]){s=transition(s,action);assert.equal(s.stage,stage,action);}
+  for(const [action,stage] of [['call','lift_wait'],['arrived','lift_enter'],['enter','lift_boarding'],['sealed','lift_button'],['panel','descent'],['stopped','pry'],['pry','lift_exit'],['leave_lift','corridor_run'],['stairs','stairs_loop'],['down','stairs_clue'],['stair_note','stairs_reverse'],['up','stairs_passage'],['stair_exit','resident_arrival'],['resident_open','resident_entry'],['belongings','resident_memory'],['answerphone','resident_memory'],['portrait','resident_return'],['resident_leave','resident_departure'],['office_entry','office_record'],['record','office_fuse'],['fuse','office_power'],['circuit_b','office_power'],['circuit_a','office_power'],['circuit_c','office_tape'],['tape_next','office_tape'],['monitor','office_leave'],['service_exit','parking_gate'],['exit','parking_key'],['car_search','parking_pump'],['valve_a','parking_pump'],['valve_b','parking_pump'],['pump','parking_alarm'],['alarm','parking_run'],['car_board','car_escape'],['passenger','car_voice'],['wreck','car_crash'],['fatal','ended']]){s=transition(s,action);assert.equal(s.stage,stage,action);}
   assert.equal(s.ending,'crashed');assert.ok(s.notes.length>=4);assert.deepEqual(transition(s,'caught'),s);
 });
 test('wardrobe protects the player but leaving early resumes the threat',()=>{

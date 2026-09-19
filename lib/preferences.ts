@@ -21,7 +21,7 @@ export function normalizeSettings(value:unknown):Settings{
 }
 export function readSettings(storage:Pick<Storage,'getItem'>):Settings{try{return normalizeSettings(JSON.parse(storage.getItem(SETTINGS_KEY)||'null'));}catch{return normalizeSettings(null);}}
 export function writeSettings(storage:Pick<Storage,'setItem'>,settings:Settings){try{storage.setItem(SETTINGS_KEY,JSON.stringify(normalizeSettings(settings)));return true;}catch{return false;}}
-const saveStages:Stage[]=['light_switch','power','radio','lift_call','lift_button','lift_exit','stairs_loop','resident_entry','office_record','parking_gate','parking_alarm','car_escape','road_exit'];
+const saveStages:Stage[]=['light_switch','power','radio','lift_call','lift_button','lift_exit','stairs_loop','resident_arrival','resident_entry','office_record','parking_gate','parking_alarm','car_escape','road_exit'];
 export type Progress={version:2;stage:Stage;notes:string[];elapsed:number};
 export function progressStage(stage:Stage):Stage{if(['wake_ring','light_switch','find_torch'].includes(stage))return 'light_switch';if(['drive','impact','flee','sleep','tv','power','phone','shoes'].includes(stage))return 'power';return checkpoint({...initialStory(),stage}).stage;}
 export function readProgress(storage:Pick<Storage,'getItem'>):Progress|null{

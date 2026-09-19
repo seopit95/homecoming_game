@@ -7,10 +7,10 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
-let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0;const deviceLevels={phone:0,radio:0};
+let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0;const deviceLevels={phone:0,radio:0};
 class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -85,10 +85,10 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   useHome([2.75,1.65,3.9],[2.75,1.1,5.15],'listen');
   tick(1);assert.equal(game.snapshot().story.stage,'listen','there is a silence after turning the radio off');
   game.pause();tick(5);assert.equal(game.snapshot().story.stage,'listen');game.pause(false);
-  tick(2);assert.equal(game.snapshot().story.stage,'hide');assert.match(game.snapshot().objective,/장롱/);
+  tick(2);assert.equal(game.snapshot().story.stage,'hide');assert.match(game.snapshot().objective,/장롱/);assert.ok(chaseLevel>.4,'the first direct pursuit raises the chase score');
   assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0,'the apartment stays dark throughout the encounter');
   runHome(2.75,2);runHome(4.65,1.55);
-  useHome([4.65,1.65,1.55],[5.43,1.25,1.55],'wait');
+  useHome([4.65,1.65,1.55],[5.43,1.25,1.55],'wait');assert.equal(chaseLevel,0,'hiding releases the chase score');
   for(let i=0;i<1600&&!/어디 있지/.test(game.snapshot().whisper);i++)tick(.025);assert.match(game.snapshot().whisper,/어디 있지/);game.pause();tick(4);assert.match(game.snapshot().whisper,/어디 있지/);game.pause(false);
   for(let i=0;i<2400&&game.snapshot().story.stage==='wait';i++)tick(.025);assert.equal(game.snapshot().story.stage,'escape','ghost patrol must reach the other room');
   game.interact();assert.equal(game.snapshot().story.hidden,false);
@@ -121,12 +121,17 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   use([0,1.65,-18.5],[0,1.25,-19.68],'stairs_loop');
   use([1,-1.15,-4.8],[1,-1.55,-5.65],'stairs_clue');
   use([0,1.65,4.5],[0,1.65,5.7],'stairs_reverse');
-  use([-1,4.45,-4.8],[-1,4.05,-5.65],'resident_entry');
-  tick(5);assert.equal(game.snapshot().threat,0,'the resident first visit leaves time to investigate');
-  use([1.6,1.65,3.65],[1.6,.3,4.8],'resident_memory');
-  use([-3.8,1.65,2.2],[-3.8,.94,3.3],'resident_memory');
-  use([3.8,1.65,2.8],[3.8,1.5,3.95],'resident_return');
-  tick(9.5);use([0,1.65,-4.4],[0,1.25,-5.65],'office_record');
+  use([-1,4.45,-4.8],[-1,4.05,-5.65],'stairs_passage');
+  assert.equal(renderedScene.getObjectByName('resident-1704'),undefined,'opening the stair door does not teleport into a home');
+  tick(1);aim(renderedCamera.position.toArray(),[-1,4.45,-7],false);game.key('KeyW',true);for(let i=0;i<100&&game.snapshot().story.stage==='stairs_passage';i++)tick(.025);game.key('KeyW',false);
+  assert.equal(game.snapshot().story.stage,'resident_arrival');assert.ok(renderedCamera.position.z>6,'arrive outside 1704');assert.ok(deviceLevels.phone>0);
+  runTo(0,7.25);use([0,1.65,7.25],[0,1.25,6.12],'resident_entry');tick(1);runTo(0,4.05);
+  assert.equal(game.snapshot().threat,0,'the resident first visit leaves time to investigate');assert.equal(chaseLevel,0);assert.match(game.snapshot().objective,/0\/3/);
+  runTo(1.6,4.05);use([1.6,1.65,4.05],[1.6,.15,4.8],'resident_memory');assert.match(game.snapshot().objective,/1\/3.*자동응답기/);
+  runTo(0,4.05);runTo(-1.65,4.05);runTo(-3.8,2.8);use([-3.8,1.65,2.8],[-3.8,.94,3.3],'resident_memory');assert.match(game.snapshot().objective,/2\/3.*냉장고/);assert.equal(deviceLevels.phone,0);
+  runTo(-1.6,3.15);runTo(0,3.15);runTo(3.8,3.15);use([3.8,1.65,3.15],[3.8,1.5,3.94],'resident_return');assert.match(game.snapshot().objective,/조사 완료/);
+  runTo(0,3.15);runTo(0,-4.65);use([0,1.65,-4.65],[0,1.25,-5.65],'resident_departure');tick(1);
+  aim(renderedCamera.position.toArray(),[0,1.65,-7],false);game.key('KeyW',true);for(let i=0;i<100&&game.snapshot().story.stage==='resident_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'office_record');
   renderedScene.getObjectByName('resident-remains').visible=true;
   renderedScene.getObjectByName('resident-remains').position.set(0,0,-5);aim([-2.5,1.65,-5],[-2.5,1.65,-7],false);
   game.key('ShiftLeft',true);tick(6.1);assert.ok(game.snapshot().threat<.2,'holding Shift behind a wall is silent');
@@ -362,8 +367,18 @@ test('the resident return searches even when the player remains silent out of si
   const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function use(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
-  try{tick();game.continueGame();tick();use([1.6,1.65,3.65],[1.6,.3,4.8]);use([-3.8,1.65,2.2],[-3.8,.94,3.3]);use([3.8,1.65,2.8],[3.8,1.5,3.95]);tick(13);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(3);assert.ok(ghost.position.distanceTo(before)>1,'silent players still face a searching pursuer');assert.equal(game.snapshot().story.stage,'resident_return');}
+  try{tick();game.continueGame();tick();use([1.6,1.65,3.65],[1.6,.3,4.8]);use([-3.8,1.65,2.2],[-3.8,.94,3.3]);use([3.8,1.65,2.8],[3.8,1.5,3.95]);tick(4.5);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(2);assert.ok(ghost.position.distanceTo(before)>1,'silent players still face a searching pursuer');assert.equal(game.snapshot().story.stage,'resident_return');}
   finally{game.dispose();win.localStorage=previous;}
+});
+
+test('continuing 1704 preserves the remaining clue or restores an already completed investigation',()=>{
+  const previous=win.localStorage;
+  for(const notes of [['belongings','answerphone'],['belongings','answerphone','portrait']]){
+    win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes,elapsed:200}):null,setItem(){},removeItem(){}};
+    const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+    try{tick();game.continueGame();tick();assert.deepEqual(game.snapshot().story.notes,notes);assert.match(game.snapshot().objective,notes.length===2?/2\/3.*냉장고/:/조사 완료/);assert.equal(game.snapshot().story.stage,notes.length===2?'resident_entry':'resident_return');}
+    finally{game.dispose();win.localStorage=previous;}
+  }
 });
 
 test('actual movement exhausts sprint, manual pause freezes recovery, and walls do not consume stamina',()=>{

@@ -30,7 +30,7 @@ export function createLeatherShoe(color='#242829',wet=true){
 }
 
 // Alpha is a wet film, with broken capillary edges; the underlying floor remains visible.
-function wetTexture(footprint:boolean,seed:number){
+export function wetTexture(footprint:boolean,seed:number){
   const n=128,data=new Uint8Array(n*n*4);
   for(let y=0;y<n;y++)for(let x=0;x<n;x++){
     const u=(x/(n-1)-.5)*2,v=(y/(n-1)-.5)*2;

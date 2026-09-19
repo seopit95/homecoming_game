@@ -3,6 +3,49 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {buildWorld,canStandAt,hasLineOfSight} from '../lib/world.ts';
 import {accidentCar} from '../lib/chapters.ts';
+
+test('1704 has a clear standing approach to its fridge clue and a shaped leather shoe',()=>{
+  const w=buildWorld(new THREE.Scene(),'resident');
+  assert.ok(canStandAt(3.8,3.15,w.solids,.23,w.bounds),'the fridge clue must not require standing inside the kitchen counter');
+  const note=w.targets.find(t=>t.id==='portrait');
+  assert.ok(hasLineOfSight({x:3.8,y:1.65,z:3.15},note.point,w.solids));
+  const shoe=w.root.getObjectByName('resident-leather-shoe');assert.ok(shoe);
+  const size=new THREE.Box3().setFromObject(shoe).getSize(new THREE.Vector3());
+  assert.ok(size.z>.2&&size.z<.4&&size.y<.15,'the shoe has human footwear dimensions');
+  assert.ok(Math.abs(new THREE.Box3().setFromObject(shoe).min.y)<.012,'the shoe rests on the floor');
+  const cup=new THREE.Box3().setFromObject(w.root.getObjectByName('resident-teacup'));
+  assert.ok(cup.min.y>=.45&&cup.min.y<.46,'the cup and saucer rest on the low table');
+  const phone=new THREE.Box3().setFromObject(w.root.getObjectByName('resident-answering-machine'));
+  assert.ok(Math.abs(phone.min.y-.7)<.005,'the answering machine rests on its cabinet');
+});
+
+test('the stair, 1704 front door and service connection expose walkable openings after the leaves clear',()=>{
+  const stairs=buildWorld(new THREE.Scene(),'stairs');assert.equal(canStandAt(-1,-5.85,stairs.solids,.23,stairs.bounds),false);
+  stairs.updateStory('stairs_passage',0,false);assert.equal(canStandAt(-1,-5.85,stairs.solids,.23,stairs.bounds),false);
+  stairs.updateStory('stairs_passage',1,false);assert.ok(canStandAt(-1,-6.2,stairs.solids,.23,stairs.bounds));
+  assert.ok(hasLineOfSight({x:-1,y:4.45,z:-5},{x:-1,y:4.45,z:-7.5},stairs.solids));
+  const room=buildWorld(new THREE.Scene(),'resident');room.updateStory('resident_arrival',0,false);
+  assert.equal(canStandAt(0,5.95,room.solids,.23,room.bounds),false);
+  room.updateStory('resident_entry',1,false);room.updateStory('resident_entry',2,false);
+  assert.ok(canStandAt(0,5.95,room.solids,.23,room.bounds));assert.ok(hasLineOfSight({x:0,y:1.65,z:7},{x:0,y:1.65,z:4},room.solids));
+  assert.equal(canStandAt(0,-5.95,room.solids,.23,room.bounds),false);
+  room.updateStory('resident_departure',3,false);room.updateStory('resident_departure',4,false);
+  assert.ok(canStandAt(0,-6.2,room.solids,.23,room.bounds));assert.ok(hasLineOfSight({x:0,y:1.65,z:-5},{x:0,y:1.65,z:-7.5},room.solids));
+});
+test('walking out of the stairs preserves the visible 1704 gallery geometry',()=>{
+  const stairs=buildWorld(new THREE.Scene(),'stairs'),room=buildWorld(new THREE.Scene(),'resident');
+  stairs.updateStory('stairs_passage',0);stairs.updateStory('stairs_passage',1);
+  stairs.root.updateMatrixWorld(true);room.root.updateMatrixWorld(true);
+  const offset=new THREE.Vector3(-1,2.8,-17.65),eye=new THREE.Vector3(0,1.65,11.43);
+  const visible=hit=>{for(let o=hit.object;o;o=o.parent)if(!o.visible)return false;return true;};
+  for(const direction of [[0,0,-1],[.2,0,-1],[-.2,0,-1],[.7,0,-1],[-.7,0,-1],[0,.2,-1],[0,-.3,-1]]){
+    const dir=new THREE.Vector3(...direction).normalize();
+    const before=new THREE.Raycaster(eye.clone().add(offset),dir).intersectObjects(stairs.root.children,true).find(visible);
+    const after=new THREE.Raycaster(eye,dir).intersectObjects(room.root.children,true).find(visible);
+    assert.ok(before&&after);
+    assert.ok(Math.abs(before.distance-after.distance)<.015,`visible surfaces must not pop at the stair threshold: ${direction}: ${before.distance} -> ${after.distance}`);
+  }
+});
 // Canvas texturing is irrelevant to this geometry test; no renderer is mocked.
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 Object.defineProperty(globalThis,'document',{value:{createElement:()=>({width:0,height:0,getContext:()=>context})},configurable:true});
