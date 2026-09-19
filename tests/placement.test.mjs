@@ -32,3 +32,14 @@ test('the pump control enclosure has a physical neck above the pump',()=>{
   const w=world('parking'),m=closest(w,-10.5,1.16,-17),b=new T.Box3().setFromObject(m),c=b.getCenter(new T.Vector3());
   assert.ok(gap(w,[c.x,b.min.y+.001,c.z],[0,-1,0],m)<.012,'the control enclosure cannot float');
 });
+
+test('the elevator call panel is mounted against the landing pier',()=>{
+ const w=world('landing'),panel=w.targets.find(t=>t.id==='call').mesh,b=new T.Box3().setFromObject(panel),c=b.getCenter(new T.Vector3());
+ assert.ok(gap(w,[c.x,c.y,b.min.z+.001],[0,0,-1],panel)<.012,'the rear of the plate must meet the wall');
+});
+test('sink corners are closed while the bowl remains recessed below the worktop',async()=>{
+ const {sinkCounter}=await import('../lib/props.ts'),counter=sinkCounter(3.55,.94,-.8,.75,.59);counter.updateMatrixWorld(true);
+ const ray=(x,z)=>new T.Raycaster(new T.Vector3(x,1,z),new T.Vector3(0,-1,0)).intersectObject(counter,true)[0];
+ assert.ok(ray(-.47,.25)?.point.y>-.01,'the outside bowl corner cannot expose the cabinet interior');
+ const floor=ray(-.8,.1);assert.ok(floor&&floor.point.y<-.1&&floor.point.y>-.22,'the visible inside is concave');
+});

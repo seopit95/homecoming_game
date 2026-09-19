@@ -12,6 +12,7 @@ import {accidentCar} from './chapters.ts';
 import {landing,buildingLayout as layout} from './building.ts';
 import {freshStamina,stepStamina,canSprint} from './stamina.ts';
 import {perceives} from './perception.ts';
+import {roomReflections} from './lighting.ts';
 import {createViewmodel} from './viewmodel.ts';
 import {defaultSettings,normalizeSettings,readSettings,readProgress,writeProgress,writeSettings,PROGRESS_KEY,keyLabel,type Settings} from './preferences.ts';
 export type {Settings} from './preferences.ts';
@@ -24,6 +25,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
   renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
   const scene=new T.Scene();scene.background=new T.Color('#080b10');scene.fog=new T.FogExp2('#14191d',.016);
+  const reflections=roomReflections(renderer,scene);
   const ambient=new T.HemisphereLight('#a8b4c4','#302925',.7);scene.add(ambient);
   const camera=new T.PerspectiveCamera(68,1,.06,85);camera.rotation.order='YXZ';const hands=createViewmodel();
   let road:ReturnType<typeof buildRoad>|null=null;
@@ -584,7 +586,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   return {start,pause,skipDeath(){if(story.stage==='dying'&&stageTime>1.2)advance('dead');},getSettings:()=>({...settings,bindings:{...settings.bindings}}),continueGame(){if(saved)start('continue');},skipMemory(){if(started&&!paused&&isMemory(story.stage)){advance('skip_memory');lock();}},interact,snapshot,configure,crouch,hold(active:boolean){if(!paused&&!evidenceReaction&&!isCinematic(story.stage)&&story.stage!=='dying'&&story.stage!=='ended')holding=active;},torch(){if(!hasFlashlight(story)||paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying'||story.stage==='tv'||story.stage==='wake_ring')return;torch=!torch;emit();},key(code:string,down:boolean){if(paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying')return;if(down)keys.add(code);else keys.delete(code);},dispose(){
     disposed=true;cancelAnimationFrame(frameId);observer.disconnect();audio.dispose();if(document.pointerLockElement===canvas)document.exitPointerLock();
     document.removeEventListener('keydown',keydown);document.removeEventListener('keyup',keyup);document.removeEventListener('pointermove',pointermove);document.removeEventListener('pointerup',pointerup);document.removeEventListener('pointerlockchange',lockchange);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('blur',blur);canvas.removeEventListener('pointerdown',pointerdown);
-    if(road)disposeWorld(road.root);disposeWorld(world.root);disposeWorld(hands.scene);flashlight.shadow.map?.dispose();renderer.dispose();
+    if(road)disposeWorld(road.root);disposeWorld(world.root);disposeWorld(hands.scene);flashlight.shadow.map?.dispose();reflections.dispose();renderer.dispose();
   }};
 }
 export type Game=ReturnType<typeof createGame>;

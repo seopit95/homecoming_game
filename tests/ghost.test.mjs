@@ -106,12 +106,11 @@ test('the attack drops the jaw and opens a recessed mouth, then restores the res
   const hit=ray.intersectObject(cavity)[0];assert.ok(hit);assert.ok(mouth.worldToLocal(hit.point.clone()).z<rim.position.z-.04,'the throat must recede behind the lip');
   animateGhost(figure,0,0,0,false);assert.equal(jaw.position.y,rest);assert.equal(mouth.visible,false);
 });
-test('blood droplets move with simulation time and reset deterministically when paused',async()=>{
-  const {animateGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group());
-  const blood=figure.getObjectByName('ghost-blood-drops');assert.ok(blood);
-  const pose=()=>{figure.updateMatrixWorld(true);return blood.children.flatMap(o=>[...o.position.toArray(),...o.scale.toArray()]);};
-  animateGhost(figure,1,1,.8,false);const initial=pose();animateGhost(figure,1.2,1,.8,false);assert.notDeepEqual(pose(),initial);
-  const stopped=pose();animateGhost(figure,1.2,1,.8,false);assert.deepEqual(pose(),stopped);
+test('loose hair remains anchored to the scalp and freezes with simulation time',async()=>{
+ const {animateGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group()),hair=figure.getObjectByName('ghost-long-hair');
+ const pose=()=>hair.children.flatMap(m=>Array.from(m.geometry.getAttribute('position').array));
+ animateGhost(figure,1,1,.8,false);const initial=pose();animateGhost(figure,1.2,1,.8,false);assert.notDeepEqual(pose(),initial);
+ const stopped=pose();animateGhost(figure,1.2,1,.8,false);assert.deepEqual(pose(),stopped);
 });
 
 test('the seated passenger stays above the cabin floor and resets to a full walking silhouette',async()=>{

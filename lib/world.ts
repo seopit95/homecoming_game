@@ -4,6 +4,7 @@ import type { Action, Area } from './story';
 import {buildBuilding,makeFigure} from './building.ts';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {createEntryEvidence} from './entry-props.ts';
+import {basin,bathtub,sinkCounter,cabinet,doorHardware,roundPipe} from './props.ts';
 import {dressApartment} from './japan.ts';
 
 export type Bounds={x:number;z:number;minX?:number};
@@ -46,8 +47,8 @@ function buildApartment(scene:T.Group) {
   const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const mat=(color:string, roughness=.86,extra:object={})=>new T.MeshStandardMaterial({color,roughness,...extra});
   const wallMat=surface('decayWall','#c6c4b6');
-  const floorMat=surface('wood','#cdc6b6',{roughness:.43}), wood=surface('wood','#b8ac98'), dark=mat('#111816'), trim=mat('#6d6051');
-  const fabric=upholstery('#676c62'), cream=mat('#bab8ac'), metal=mat('#66716d',.32,{metalness:.72});
+  const floorMat=surface('woodFloor','#cdc6b6',{roughness:.43}), wood=surface('wood','#b8ac98'), dark=mat('#111816'), trim=mat('#6d6051');
+  const fabric=upholstery('#676c62'), cream=surface('ceramic','#c4c3b8'), metal=mat('#66716d',.32,{metalness:.72});
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=scene){
     const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);
     if(solid)solids.push({x,z,w,d,y,h});return mesh;
@@ -132,9 +133,9 @@ function buildApartment(scene:T.Group) {
   }
   // Full kitchen, dining area and a separate study give the home a lived-in scale.
   at(-4.5,-1.7,0,-.45);
-  box(-4.5,.46,-1.7,3.5,.92,.9,wood,true);box(-4.5,.95,-1.7,3.55,.06,.94,cream);
-  box(-5.3,.986,-1.7,.72,.018,.58,metal);cyl(-5.3,1.08,-1.97,.027,.2,metal);
-  for(const x of [-4.1,-3.72])for(const z of [-1.52,-1.87])cyl(x,.99,z,.12,.015,dark);
+  const kitchen=cabinet(3.5,.92,.9,wood);kitchen.position.set(-4.5,0,-1.7);scene.add(kitchen);solids.push({x:-4.5,z:-1.7,w:3.5,d:.9,y:.46,h:.92});
+  const worktop=sinkCounter(3.55,.94,-.8,.75,.59);worktop.position.set(-4.5,.98,-1.7);scene.add(worktop);
+  for(const x of [-4.1,-3.72])for(const z of [-1.52,-1.87]){const ring=new T.Mesh(new T.TorusGeometry(.105,.012,8,24),metal);ring.rotation.x=Math.PI/2;ring.position.set(x,1.008,z);scene.add(ring);cyl(x,1.006,z,.061,.019,dark);for(const flip of [false,true])box(x,1.026,z,flip?.022:.265,.022,flip?.265:.022,dark);}
   at(-6.04,-.65);
   box(-6.04,1,-.65,.78,2,.83,cream,true);box(-5.64,1,-.65,.03,.05,.77,metal);
   at(-4.5,-1.7,0,-.45);
@@ -181,8 +182,10 @@ function buildApartment(scene:T.Group) {
   at(1.8,-4.75);
   const breaker=box(1.975,1.55,-4.75,.18,.87,.61,metal);for(let i=0;i<3;i++)box(2.08,1.42+i*.16,-4.75,.08,.1,.3,trim);sign('분전반',1.891,2.12,-4.75,Math.PI/2,.7,.2);targets.push({id:'breaker',point:new T.Vector3(...home.breaker),label:'차단기 확인',mesh:breaker});
   at(5.4,-5.35);
-  box(5.4,.42,-5.35,1.65,.84,1.4,cream,true);box(5.4,.85,-5.35,1.45,.05,1.2,mat('#526d68',.15));at(6.08,-1.5);
-  box(6.08,.52,-1.5,.65,1.04,1.1,cream,true);
+  const tub=bathtub();tub.position.set(5.4,.67,-6.025);scene.add(tub);box(5.4,.015,-6.025,1.66,.03,.90,cream);solids.push({x:5.4,z:-6.025,w:1.72,d:.94,y:.335,h:.67});
+  roundPipe(scene,[6.02,.8,-6.49],[6.02,2.12,-6.49],.015,metal);for(const y of [.9,1.85])roundPipe(scene,[6.02,y,-6.526],[6.02,y,-6.49],.012,metal);
+  roundPipe(scene,[6.02,2.12,-6.49],[6.02,2.15,-6.30],.015,metal);const shower=cyl(6.02,2.13,-6.30,.105,.025,metal);shower.rotation.x=.35;
+  at(6.08,-1.5);const wash=basin(.68,.88);wash.position.set(6.08,1.04,-1.5);wash.rotation.y=-Math.PI/2;scene.add(wash);cyl(6.08,.415,-1.5,.14,.83,cream);solids.push({x:6.08,z:-1.5,w:.65,d:1.1,y:.52,h:1.04});
   at(6.6,-1.5);
   box(6.46,1.9,-1.5,.02,1.25,1.1,mat('#283a38',.1,{metalness:.8}));
   for(const [x,z,ry] of [[-6.46,4.8,Math.PI/2],[6.46,3.2,-Math.PI/2]]){
@@ -198,6 +201,7 @@ function buildApartment(scene:T.Group) {
     const light=new T.PointLight('#ffd69a',5,7,2);light.userData.bulb=glow;light.position.set(x,2.56,z);scene.add(light);lamps.push(light);
   }
   finish();
+  const bathTile=surface('oldTile','#c9ccbf',{roughness:.43});box(5.3*S,.006,-3.375*S,2.6*S-.22,.008,5.75*S-.2,bathTile);box(5.3*S,.72,-6.25*S+.106,2.6*S-.19,1.44,.012,bathTile);box(6.6*S-.106,.72,-3.375*S,.012,1.44,5.75*S-.2,bathTile);
   const doorwayGlow=new T.SpotLight('#98b2bf',0,13,.56,.8,1.7);doorwayGlow.position.set(0,2.3,home.door[2]-.6);doorwayGlow.target.position.set(0,.1,home.door[2]+5);scene.add(doorwayGlow,doorwayGlow.target);
   dressApartment(scene,'apartment');const figure=makeFigure(scene);figure.position.set(...home.haunt);lamps.forEach((lamp,i)=>{lamp.name=`apartment-lamp-${i}`;});
   const doorSolid={x:0,z:door.position.z,w:1.45,d:.13,y:1.22,h:2.44};solids.push(doorSolid);

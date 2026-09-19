@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
+import {basin,sinkCounter,cabinet,roundPipe} from './props.ts';
 import {createGhost} from './ghost.ts';
 import {nightWindow} from './japan.ts';
 import {createLeatherShoe,wetTexture} from './entry-props.ts';
@@ -32,7 +33,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
   const wet=new T.MeshStandardMaterial({color:'#263637',roughness:.08,transparent:true,opacity:.4});
   if(resident){
     root.name='resident-1704';
-    box(0,-.12,0,9.4,.24,12,surface('wood','#9f927a',{roughness:.65}));box(0,2.85,0,9.4,.15,12,surface('wall','#72766d'));
+    box(0,-.12,0,9.4,.24,12,surface('woodFloor','#b8b3a5',{roughness:.65}));box(0,2.85,0,9.4,.15,12,surface('wall','#72766d'));
     for(const x of [-4.75,4.75])box(x,1.4,0,.2,2.8,12,wall,true);
     for(const z of [-5.95]){for(const x of [-2.7,2.7])box(x,1.4,z,4.1,2.8,.2,wall,true);box(0,2.6,z,1.3,.4,.2,wall);}
     // The stair door leads to a real gallery outside 1704, not to its living room.
@@ -81,8 +82,8 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     cup.add(new T.Mesh(new T.LatheGeometry(profile,28),ceramic));const cupHandle=new T.Mesh(new T.TorusGeometry(.03,.007,8,20),ceramic);cupHandle.position.set(.056,.053,0);cup.add(cupHandle);
     const tea=new T.Mesh(new T.CircleGeometry(.043,24),new T.MeshStandardMaterial({color:'#3b2920',roughness:.09}));tea.rotation.x=-Math.PI/2;tea.position.y=.071;cup.add(tea);
     const saucer=new T.Mesh(new T.CylinderGeometry(.078,.069,.009,28),ceramic);saucer.position.y=.0045;cup.add(saucer);
-    box(3.6,.5,1.65,1.6,1,1.8,wood,true);box(3.6,1.03,1.65,1.65,.08,1.85,paper);for(const z of [1.22,2.08]){box(2.79,.53,z,.025,.88,.8,wood);box(2.765,.76,z,.03,.12,.04,metal);}
-    box(3.6,1.078,1.16,.7,.022,.48,metal);box(3.6,1.091,1.16,.57,.006,.35,dark);rod(new T.Vector3(3.98,1.08,1.13),new T.Vector3(3.98,1.28,1.13),.014);rod(new T.Vector3(3.98,1.28,1.13),new T.Vector3(3.77,1.28,1.13),.014);for(const z of [1.85,2.27]){const ring=new T.Mesh(new T.TorusGeometry(.15,.02,8,20),dark);ring.position.set(3.6,1.1,z);ring.rotation.x=Math.PI/2;root.add(ring);}
+    const kitchen=cabinet(1.8,1,1.6,wood);kitchen.rotation.y=-Math.PI/2;kitchen.position.set(3.6,0,1.65);root.add(kitchen);solids.push({x:3.6,z:1.65,w:1.6,d:1.8,y:.5,h:1});const top=sinkCounter(1.65,1.85,0,.72,.51,-.49);top.position.set(3.6,1.07,1.65);root.add(top);
+    for(const z of [1.85,2.27]){const ring=new T.Mesh(new T.TorusGeometry(.15,.02,8,20),dark);ring.position.set(3.6,1.1,z);ring.rotation.x=Math.PI/2;root.add(ring);}
     box(3.8,1.02,4.4,.75,2.04,.85,paper,true);
     box(3.8,1.03,3.969,.69,1.94,.015,paper);box(4.07,1.35,3.935,.025,.33,.028,metal);
     const note=label('다음에는 맑은 날에.\n내일 오후 두 시',3.8,1.5,3.96,.48,.42,Math.PI);target('portrait','냉장고 쪽지 · 다음에는 맑은 날에',note,3.8,1.5,3.94);box(3.94,1.715,3.944,.07,.033,.016,dark);

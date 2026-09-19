@@ -39,11 +39,11 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     for(const side of [-1,1]){
       const height=5.5+((z+135)%36)*.19,x=side*8.3;
       box(x,height/2,z,5,height,14,wall);box(side*5.8,1.5,z, .09,3,14,concrete);
-      for(let level=0;level<3;level++)for(let slot=0;slot<3;slot++){
+      for(let level=0;1.5+level*2.45+.7<height;level++)for(let slot=0;slot<3;slot++){
         const yy=1.5+level*2.45,zz=z-4.5+slot*4;
         box(side*5.76,yy,zz,.06,1.24,1.5,(slot+level+z)%4===0?warm:darkGlass);
-        box(side*5.71,yy,zz,.045,1.3,.055,steel);box(side*5.72,yy-.69,zz,.2,.08,1.68,concrete);
-        if(level<2){box(side*5.51,yy-.23,zz+1.25,.4,.43,.62,concrete);for(let k=0;k<4;k++)box(side*5.29,yy-.38+k*.09,zz+1.25,.012,.025,.5,rubber);}
+        box(side*5.71,yy,zz,.045,1.3,.055,steel);for(const edge of [-.77,.77])box(side*5.73,yy,zz+edge,.06,1.33,.045,steel);box(side*5.72,yy-.69,zz,.2,.08,1.68,concrete);
+        if(level<2){for(const offset of [-.19,.19]){rod([side*5.76,yy-.46,zz+1.25+offset],[side*5.31,yy-.46,zz+1.25+offset],.016,steel);rod([side*5.76,yy-.64,zz+1.25+offset],[side*5.37,yy-.46,zz+1.25+offset],.012,steel);}box(side*5.51,yy-.23,zz+1.25,.4,.43,.62,concrete);for(let k=0;k<4;k++)box(side*5.29,yy-.38+k*.09,zz+1.25,.012,.025,.5,rubber);}
       }
       rod([side*5.52,.15,z+6.8],[side*5.52,height,z+6.8],.045,steel);
     }
@@ -157,8 +157,8 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     box(side*.895,.74,-.1,.05,.07,.75,rubber,car);
     box(side*.886,.69,-.25,.022,.045,.18,steel,car);
   }
-  box(-.54,.4,.32,.7,.19,.83,upholstery('#343a3b'),car);
-  const seatBack=box(-.54,.89,.76,.7,.83,.19,upholstery('#343a3b'),car);seatBack.rotation.x=.13;
+  box(-.54,.4,.32,.7,.19,.83,surface('leather','#9caaa9'),car);
+  const seatBack=box(-.54,.89,.76,.7,.83,.19,surface('leather','#9caaa9'),car);seatBack.rotation.x=.13;
   // A short dashboard mount supports the phone in the driver's brief glance.
   mesh(new T.CylinderGeometry(.042,.048,.018,20),rubber,[-.26,.784,-1.08],car);
   rod([-.26,.793,-1.08],[-.26,.89,-1.015],.014,rubber,car);

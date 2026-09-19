@@ -10,6 +10,7 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0;const deviceLevels={phone:0,radio:0};
 class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
+mock.module('../lib/lighting.ts',{namedExports:{roomReflections:()=>({dispose(){}})}});
 mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};

@@ -2,6 +2,8 @@ import * as T from 'three';
 import type {Area,Action,Stage} from './story';
 import type {Bounds,Solid,Target} from './world';
 import {surface,boxUV,softBox} from './materials.ts';
+import {roundPipe,doorHardware,createSedan} from './props.ts';
+import {wetTexture} from './entry-props.ts';
 import {createLiftHand} from './lift-hand.ts';
 import {nightWindow} from './japan.ts';
 import {buildStoryRoom,buildResidentGallery} from './chapters.ts';
@@ -16,7 +18,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   const size=area==='landing'?{x:landing.halfWidth,z:landing.halfLength}:buildingLayout[area];
   const bx=size.x,bz=size.z,bounds:Bounds=area==='landing'?{x:4.2,z:25.45,minX:-1.17}:{x:bx-.13,z:bz-.13},ceiling=area==='parking'?2.7:2.8;
   const mat=(color:string,extra:object={})=>new T.MeshStandardMaterial({color,roughness:.85,...extra});
-  const plaster=surface('decayWall','#b5b6a6'),concrete=surface('garage','#a2a9a3'),floorMat=surface(area==='parking'?'garage':'oldTile','#b0b1a4',{roughness:.62}),metal=surface('steel','#878d8b',{metalness:.55,roughness:.48}),dark=mat('#141b1c'),rust=mat('#523b29'),wood=surface('wood','#807668'),paint=mat('#616d5d'),white=mat('#a7ab94'),red=mat('#802b20'),wallMat=area==='parking'?concrete:area==='lift'?metal:plaster;
+  const plaster=surface('decayWall','#b5b6a6'),concrete=surface('garage','#a2a9a3'),floorMat=surface(area==='parking'?'garage':'oldTile','#b0b1a4',{roughness:.62}),metal=surface('steel','#878d8b',{metalness:.55,roughness:.48}),dark=mat('#141b1c'),rust=mat('#523b29'),wood=surface('wood','#807668'),paint=surface('decayWall','#a7b0a0',{roughness:.79}),white=mat('#a7ab94'),red=mat('#802b20'),wallMat=area==='parking'?concrete:area==='lift'?metal:plaster;
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false){const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
   function wall(x:number,z:number,w:number,d:number,y=ceiling/2,h=ceiling){const mesh=box(x,y,z,w,h,d,wallMat,true);box(x,y-h/2+.46,z,w+.012,.9,d+.012,area==='lift'?metal:paint);return mesh;}
   function label(text:string,x:number,y:number,z:number,ry=0,w=1.1,h=.26,color='#c9ceaf',background='#25372f',lit=false){
@@ -27,9 +29,9 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   function light(x:number,y:number,z:number,color='#a4b7a7',intensity=4,range=8){const l=new T.PointLight(color,intensity,range,2);l.position.set(x,y,z);l.userData.base=intensity;root.add(l);lamps.push(l);return l;}
   function fixture(x:number,z:number,on=true,y=ceiling-.08){box(x,y+.04,z,.14,.08,.9,metal);box(x,y,z,.22,.08,1.1,metal);box(x,y-.048,z,.09,.018,.92,mat('#bec5b0',{emissive:'#a0b09d',emissiveIntensity:on?.6:0}));if(on)light(x,y-.12,z);}
   function target(id:Action,text:string,mesh:T.Object3D,x:number,y:number,z:number){targets.push({id,label:text,mesh,point:new T.Vector3(x,y,z)});}
-  function door(id:Action,text:string,x:number,z:number,y=0,w=1.05){const mesh=box(x,y+1.1,z,w,2.2,.09,paint);box(x+w*.35,y+1.03,z+.07,.14,.045,.07,metal);box(x-w/2-.055,y+1.13,z,.09,2.26,.18,metal);box(x+w/2+.055,y+1.13,z,.09,2.26,.18,metal);label(text,x,y+2.4,z+.09,0,1.1,.2);target(id,text,mesh,x,y+1.25,z+.2);return mesh;}
-  function pipe(x:number,y:number,z:number,length:number,along:'x'|'z'='z',m:T.Material=rust){box(x,y,z,along==='x'?length:.065,.065,along==='z'?length:.065,m);for(let n=-length/2+.5;n<length/2;n+=2.5){const px=x+(along==='x'?n:0),pz=z+(along==='z'?n:0);box(px,y,pz,.12,.1,.12,metal);box(px,(ceiling+y)/2,pz,.018,ceiling-y,.018,metal);box(px,ceiling-.015,pz,.16,.03,.16,metal);}}
-  function puddle(x:number,z:number,sx:number,sz:number){const m=new T.Mesh(new T.CircleGeometry(1,28),mat('#5b6868',{roughness:.09,metalness:.3,transparent:true,opacity:.4}));m.rotation.x=-Math.PI/2;m.scale.set(sx,sz,1);m.position.set(x,.018,z);root.add(m);return m;}
+  function door(id:Action,text:string,x:number,z:number,y=0,w=1.05){const mesh=box(x,y+1.1,z,w,2.2,.09,paint);doorHardware(mesh,w);box(x-w/2-.055,y+1.13,z,.09,2.26,.18,metal);box(x+w/2+.055,y+1.13,z,.09,2.26,.18,metal);label(text,x,y+2.4,z+.09,0,1.1,.2);target(id,text,mesh,x,y+1.25,z+.2);return mesh;}
+  function pipe(x:number,y:number,z:number,length:number,along:'x'|'z'='z',m:T.Material=rust){roundPipe(root,[x-(along==='x'?length/2:0),y,z-(along==='z'?length/2:0)],[x+(along==='x'?length/2:0),y,z+(along==='z'?length/2:0)],.0325,m);for(let n=-length/2+.5;n<length/2;n+=2.5){const px=x+(along==='x'?n:0),pz=z+(along==='z'?n:0);box(px,y,pz,.12,.1,.12,metal);roundPipe(root,[px,y,pz],[px,ceiling,pz],.009,metal);box(px,ceiling-.015,pz,.16,.03,.16,metal);}}
+  function puddle(x:number,z:number,sx:number,sz:number){const m=new T.Mesh(new T.PlaneGeometry(2,2),mat('#7c8885',{map:wetTexture(false,Math.round((x+31)*17+z)),roughness:.07,metalness:.22,transparent:true,opacity:.42,depthWrite:false}));m.rotation.x=-Math.PI/2;m.scale.set(sx,sz,1);m.position.set(x,.018,z);root.add(m);return m;}
   function unit(x:number,z:number,no:string){box(x,1.1,z,.08,2.2,.95,paint);box(x-Math.sign(x)*.055,1.04,z+.3,.06,.045,.12,metal);label(no,x-Math.sign(x)*.06,2.05,z,-Math.sign(x)*Math.PI/2,.4,.14);box(x-Math.sign(x)*.12,.01,z,.36,.02,.75,dark);box(x-Math.sign(x)*.025,1.48,z+.65,.11,.21,.14,metal);for(const dz of [-.54,.54])box(x,1.12,z+dz,.1,2.24,.075,metal);box(x,2.24,z,.1,.08,1.15,metal);}
   // Openings use separate piers and lintels. No wall is left behind the sliding leaves.
   function portal(z:number,half=.66){const w=bx-half;wall(-(bx+half)/2,z,w,.18);wall((bx+half)/2,z,w,.18);box(0,2.56,z,half*2,.48,.18,wallMat);}
@@ -66,15 +68,15 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     box(0,.012,dz,1.35,.023,.22,metal);
     for(const x of [-.3,-.1,.1,.3])box(x,.026,dz,.012,.006,.22,dark);
     if(area==='landing'){
-      const call=box(.95,1.25,dz+.07,.13,.28,.07,metal);label('▽',.95,1.25,dz+.12,0,.09,.12,'#d6985c');target('call','엘리베이터 호출',call,.95,1.25,dz+.2);
+      const call=box(.95,1.25,-22.874,.13,.28,.07,metal);call.name='mounted-lift-call-panel';label('▽',.95,1.25,-22.834,0,.09,.12,'#d6985c');target('call','엘리베이터 호출',call,.95,1.25,dz+.2);
       label('28층',-.98,1.9,dz+.05,0,.35,.19);
       // A complete cab behind the threshold is visible while the doors open.
       box(0,-.09,dz-1.45,2.18,.18,2.7,floorMat);box(0,2.8,dz-1.45,2.2,.1,2.7,metal);
       box(0,1.4,dz-2.8,2.2,2.8,.12,metal,true);for(const x of [-1.1,1.1])box(x,1.4,dz-1.45,.12,2.8,2.7,metal,true);
       box(0,1.02,dz-2.65,1.8,.05,.06,metal);for(const x of [-.7,.7])box(x,1.02,dz-2.71,.04,.04,.12,metal);light(0,2.5,dz-1.4,'#b4b6a0',4,4);
       box(-bx,.44,0,.13,.88,bz*2,concrete,true).name='landing-parapet';
-      for(const y of [.93,1.13])box(-bx,y,0,.04,.04,bz*2,rust);
-      for(let z=-bz+.1;z<bz;z+=.75)box(-bx,1.02,z,.025,.22,.025,rust);
+      for(const y of [.93,1.13])roundPipe(root,[-bx,y,-bz],[-bx,y,bz],.021,rust);
+      for(let z=-bz+.1;z<bz;z+=.75)roundPipe(root,[-bx,.91,z],[-bx,1.15,z],.0125,rust);
       box(-bx+.12,.005,0,.15,.015,bz*2,dark);
       for(let z=-20;z<=21;z+=5.5){if(z<18)unit(bx-.12,z,String(2804+Math.round((18-z)/5.5)));box(-bx,1.4,z,.17,2.8,.22,concrete,true);fixture(.25,z,z!==2);}
       for(const z of [-14,2,13])puddle(-.85,z,.3,1.6);
@@ -87,9 +89,9 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       const shaft=box(0,1.35,-1.57,2.1,2.7,.025,mat('#030505'));shaft.name='lift-shaft-darkness';
       updateStory=stage=>{shaft.visible=stage==='descent';};
       const hand=createLiftHand();hand.position.set(0,1.52,dz+.035);root.add(hand);
-      fixture(0,.1,true);for(const x of [-.98,.98])box(x,1,0,.035,.05,2.2,metal);
+      fixture(0,.1,true);for(const x of [-.98,.98]){roundPipe(root,[x,1,-1.1],[x,1,1.1],.022,metal);for(const z of [-.8,.8])roundPipe(root,[x,1,z],[Math.sign(x)*1.04,1,z],.013,metal);}
       const panel=box(.99,1.35,-.45,.035,.85,.24,metal);label('1',.966,1.3,-.45,-Math.PI/2,.15,.12,'#d7ad65');target('panel','1층 누르기',panel,.92,1.3,-.45);
-      for(let i=0;i<6;i++)box(.966,1.45+i*.065,-.42,.025,.035,.04,white);
+      for(let i=0;i<6;i++){const button=new T.Mesh(new T.CylinderGeometry(.019,.019,.018,20),white);button.rotation.z=Math.PI/2;button.position.set(.962,1.45+i*.065,-.42);root.add(button);}
       target('pry','길게 눌러 문 벌리기',left,0,1.3,dz+.22);target('leave_lift','벌어진 문으로 나가기',right,0,1.3,dz+.25);
       label('정원 9명 · 600kg',0,2,bz-.11,Math.PI,.85,.17);label('승강기 검사 유효기간 경과',0,1.75,bz-.11,Math.PI,.95,.14,'#877954','#c2b790');
       // Connected 24F cross passage and its two turns, not a blank wall at the doorway.
@@ -101,7 +103,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   }
   if(area==='corridor'){
     door('stairs','비상계단',0,-bz+.12);label('24층 · 연결 복도',0,2.35,bz-.11,Math.PI,1.5,.22);
-    for(const z of [-8,8]){box(0,1.4,z,3.8,2.8,12,plaster,true);for(const x of [-1.94,1.94])label(z<0?'공동 배관실':'전기 설비실',x,1.9,z,x<0?-Math.PI/2:Math.PI/2,.85,.18);}
+    for(const z of [-8,8]){box(0,1.4,z,3.8,2.8,12,plaster,true);for(const x of [-1.94,1.94]){label(z<0?'공동 배관실':'전기 설비실',x,1.9,z,x<0?-Math.PI/2:Math.PI/2,.85,.18);box(x,1.02,z,.045,1.66,.79,metal);for(let i=0;i<7;i++)box(x+Math.sign(x)*.026,.54+i*.052,z,.012,.014,.55,dark);roundPipe(root,[x,2.36,z-5.8],[x,2.36,z+5.8],.017,metal);}}
     for(const x of [-bx+.12,bx-.12])for(let z=-16;z<18;z+=5.2)unit(x,z,String(2401+Math.round((z+16)/5.2)+(x>0?8:0)));
     for(const x of [-2.65,2.65])for(const z of [-16,-5,5,16])fixture(x,z,z!==5);
     for(const z of [-17,0,17]){box(0,2.4,z-.02,1.58,.27,.05,metal);for(const x of [-.55,.55])box(x,2.67,z-.02,.013,.27,.013,metal);label('← 비상계단 →',0,2.4,z+.012,0,1.5,.2);light(0,2.5,z,'#738877',3);}
@@ -114,9 +116,9 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     box(0,-.15,3,4,.3,6,floorMat);box(-1,2.65,-5,2,.3,2,floorMat);box(1,-2.95,-5,2,.3,2,floorMat);
     wall(-2,0,.18,12,1.4,9);wall(2,0,.18,12,1.4,9);wall(-1.81,-6,.38,.18,1.4,9);wall(.81,-6,2.38,.18,1.4,9);box(-1,-.15,-6,1.24,5.9,.18,wallMat);box(-1,5.52,-6,1.24,.76,.18,wallMat);wall(0,6,4,.18,1.4,9);wall(0,-3,.12,6,1.4,9);
     box(0,6,0,4,.2,12,concrete);
-    for(let i=0;i<17;i++)for(const side of [-1,1]){const z=-(i+.5)*4/17,y=-side*(i+.5)*2.8/17;box(side,y-.082,z,1.82,.164,4/17,floorMat);box(side,y+.005,z-.09,1.72,.01,.025,metal);box(side*.16,y+.45,z,.025,.9,.025,rust);}
+    for(let i=0;i<17;i++)for(const side of [-1,1]){const z=-(i+.5)*4/17,y=-side*(i+.5)*2.8/17;box(side,y-.082,z,1.82,.164,4/17,floorMat);box(side,y+.005,z-.09,1.72,.01,.025,metal);roundPipe(root,[side*.16,y,z],[side*.16,y+.9,z],.0125,rust);}
     // Continuous sloped handrails over the open newel side.
-    for(const side of [-1,1]){const rail=box(side*.16,-side*1.4+.92,-2,.045,.045,Math.hypot(4,2.8),rust);rail.rotation.x=-side*Math.atan2(2.8,4);}
+    for(const side of [-1,1]){roundPipe(root,[side*.16,.92,0],[side*.16,.92-side*2.8,-4],.023,rust);}
     bounds.z=8.7;
     const galleryRoot=new T.Group();galleryRoot.position.set(-1,2.8,-17.65);root.add(galleryRoot);
     const gallery=buildResidentGallery(galleryRoot,false);lamps.push(...gallery.lamps);
@@ -146,9 +148,13 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const x of [-4.12,-1.88])for(const z of [1.14,1.86])box(x,.35,z,.065,.7,.065,metal);
     box(-2.65,.43,1.11,1.76,.47,.045,wood);for(const y of [.17,.39,.61]){box(-3.85,y,1.938,.52,.2,.023,wood);box(-3.85,y,1.96,.16,.025,.035,metal);}
     box(-3.7,.809,1.58,.42,.018,.31,white);const log=label('야간 근무일지 · 03:26',-3.7,.819,1.58,0,.4,.28,'#292b27','#bcb79b');log.mesh.rotation.x=-Math.PI/2;target('record','야간 근무일지 읽기',desk,-3.7,.86,1.8);
-    const monitor=box(-2.65,1.15,1.45,.65,.51,.4,dark);box(-2.65,.813,1.45,.39,.026,.29,dark);box(-2.65,.8605,1.45,.16,.069,.14,dark);
+    const monitor=box(-2.65,1.15,1.45,.65,.51,.4,surface('leather','#7d8580',{roughness:.67}));
+    const casing=monitor.geometry.getAttribute('position');for(let i=0;i<casing.count;i++){const rear=T.MathUtils.smoothstep(-casing.getZ(i),0,.2);casing.setX(i,casing.getX(i)*(1-rear*.18));casing.setY(i,casing.getY(i)*(1-rear*.16));}monitor.geometry.computeVertexNormals();
+    for(const x of [-2.97,-2.33])box(x,1.15,1.672,.035,.48,.035,dark);for(const y of [.923,1.39])box(-2.65,y,1.67,.65,.045,.035,dark);for(let i=0;i<5;i++)box(-2.83+i*.065,.936,1.694,.04,.006,.005,metal);
+    for(const z of [1.31,1.37,1.43,1.49])for(const x of [-2.969,-2.331])box(x,1.24,z,.006,.115,.015,dark);
+    const monitorCable=new T.CatmullRomCurve3([new T.Vector3(-2.65,.95,1.27),new T.Vector3(-2.65,.82,1.04),new T.Vector3(-2.72,.45,1.01),new T.Vector3(-3,.08,1.01)]);root.add(new T.Mesh(new T.TubeGeometry(monitorCable,20,.006,6,false),dark));box(-2.65,.813,1.45,.39,.026,.29,dark);box(-2.65,.8605,1.45,.16,.069,.14,dark);
     const display=label('신호 없음',-2.65,1.17,1.655,0,.56,.38,'#8dba96','#0e1914',true);setDisplay=display.update;target('monitor','선택한 CCTV 기록 재생',monitor,-2.65,1.17,1.79);
-    const dial=box(-1.95,.8375,1.68,.2,.075,.18,metal);target('tape_next','CCTV 시간 선택',dial,-1.95,.9,1.8);const dialLabel=label('시간 선택',-1.95,.877,1.68,0,.18,.08,'#292b27','#bcb79b');dialLabel.mesh.rotation.x=-Math.PI/2;
+    const dial=box(-1.95,.8375,1.68,.2,.075,.18,metal);const selector=new T.Mesh(new T.CylinderGeometry(.048,.05,.025,24),dark);selector.position.set(-1.95,.8875,1.63);root.add(selector);box(-1.95,.901,1.608,.005,.002,.022,white);target('tape_next','CCTV 시간 선택',dial,-1.95,.9,1.8);const dialLabel=label('시간 선택',-1.95,.877,1.74,0,.18,.08,'#292b27','#bcb79b');dialLabel.mesh.rotation.x=-Math.PI/2;
     const exitKey=new T.Group();exitKey.name='office-exit-key';root.add(exitKey);
     const keyRing=new T.Mesh(new T.TorusGeometry(.035,.006,6,14),metal);keyRing.rotation.x=-Math.PI/2;keyRing.position.set(-2.13,.807,1.16);exitKey.add(keyRing);
     const keyStem=box(-2.13,.806,1.24,.023,.012,.1,metal);exitKey.attach(keyStem);const keyTooth=box(-2.105,.806,1.28,.07,.012,.025,metal);exitKey.attach(keyTooth);
@@ -171,13 +177,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     door('exit','보행자 출구',0,-bz+.12);label('백로아파트  B1',0,2.25,bz-.11,Math.PI,2,.4);light(0,2.4,-21,'#74af8b',4);
     for(const x of [-9,0,9])for(const z of [-12,0,12]){box(x,1.35,z,.55,2.7,.55,concrete,true);box(x,.66,z,.58,.85,.58,mat('#aa8f3f'));for(const y of [.35,.65,.95])box(x,y,z,.59,.11,.59,dark);label('B1',x,1.75,z+.294,0,.4,.18);box(x,2.42,z,.9,.22,.9,concrete);}
     function car(x:number,z:number,color:string,own=false){
-      const body=mat(color,{metalness:.5,roughness:.37}),glass=mat('#26363a',{metalness:.3,roughness:.16});
-      const chassis=box(x,.59,z,1.82,.67,4.35,body,true);if(own)chassis.name='hit-and-run-car';box(x,1.02,z-.18,1.63,.61,2.02,glass);box(x,1.35,z-.26,1.55,.065,1.46,body);
-      for(const dx of [-.815,.815]){box(x+dx,1.03,z-.18,.045,.6,.065,body);box(x+dx,1.02,z-.98,.045,.53,.065,body);box(x+dx,.79,z+.05,.055,.065,1.6,body);}
-      const hood=box(x,.92,z+1.36,1.72,.055,1.25,body);if(own){hood.rotation.z=-.075;hood.rotation.x=.1;}
-      box(x,.48,z+2.17,1.75,.13,.09,dark);box(x,.48,z-2.17,1.75,.13,.09,dark);
-      for(const dx of [-.66,.66]){box(x+dx,.74,z+2.18,.4,.16,.035,white);box(x+dx,.76,z-2.18,.35,.14,.035,red);}
-      for(const dx of [-.91,.91])for(const dz of [-1.35,1.35]){const tire=new T.Mesh(new T.CylinderGeometry(.31,.31,.18,16),dark);tire.rotation.z=Math.PI/2;tire.position.set(x+dx,.31,z+dz);root.add(tire);const hub=new T.Mesh(new T.CylinderGeometry(.18,.18,.19,12),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);root.add(hub);}
+      const chassis=createSedan(color,own);chassis.position.set(x,0,z);root.add(chassis);solids.push({x,z,w:1.82,d:4.35,y:.8,h:1.6});
       label(own?'28 가 0317':`${37+Math.round(x)} 나 ${4200+Math.round(z*13)}`,x,.54,z+2.225,0,.47,.11,'#2b3027','#a6ad9a');
       for(const dx of [-1.27,1.27])box(x+dx,.008,z,.055,.016,4.85,white);box(x,.008,z-2.45,2.59,.016,.055,white);for(const dx of [-.55,.55])box(x+dx,.07,z-1.7,.55,.14,.13,dark);
       return chassis;
@@ -188,11 +188,11 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     box(-11.3,1.35,15.82,1.4,2.7,.24,concrete,true);box(L.alarm.x,1.25,15.96,.55,1.85,.12,metal);
     const alarm=box(L.alarm.x,1.4,L.alarm.z,.3,.43,.17,red);target('alarm','화재경보기 작동',alarm,L.alarm.x,1.4,L.alarm.z+.18);label('발신기',L.alarm.x,1.92,16.027,0,.45,.16,'#d6bca4','#61281e');light(L.alarm.x,2.4,L.alarm.z+.2,'#a5523b',2);
     const push=new T.Mesh(new T.CylinderGeometry(.078,.078,.026,20),dark);push.rotation.x=Math.PI/2;push.position.set(L.alarm.x,1.38,16.094);root.add(push);label('누름',L.alarm.x,1.38,16.109,0,.105,.052,'#c8bdb1','#7d291f');for(let i=0;i<4;i++)box(L.alarm.x,1.52+i*.016,16.091,.18,.006,.008,dark);
-    for(const [x,z,id] of [[-10.8,1,'valve_a'],[10.8,-8,'valve_b']] as const){box(x,1.35,z,.085,2.7,.085,rust);box(x,1.2,z+.085,.055,.055,.17,metal);const wheel=new T.Mesh(new T.TorusGeometry(.19,.025,6,16),red);wheel.position.set(x,1.2,z+.14);root.add(wheel);box(x,1.2,z+.14,.36,.025,.025,red);target(id,id==='valve_a'?'서측 급수 밸브 잠그기':'동측 급수 밸브 잠그기',wheel,x,1.2,z+.2);box(x,1.85,z,.66,.21,.07,metal);label(id==='valve_a'?'서측 급수':'동측 급수',x,1.85,z+.041,0,.6,.16);for(const y of [.2,2.5]){box(x,y,z,.15,.1,.15,metal);box((x+Math.sign(x)*11.9)/2,y,z,11.9-Math.abs(x),.035,.035,metal);}}
+    for(const [x,z,id] of [[-10.8,1,'valve_a'],[10.8,-8,'valve_b']] as const){roundPipe(root,[x,0,z],[x,2.7,z],.0425,rust);box(x,1.2,z+.085,.055,.055,.17,metal);const wheel=new T.Mesh(new T.TorusGeometry(.19,.025,6,16),red);wheel.position.set(x,1.2,z+.14);root.add(wheel);box(x,1.2,z+.14,.36,.025,.025,red);target(id,id==='valve_a'?'서측 급수 밸브 잠그기':'동측 급수 밸브 잠그기',wheel,x,1.2,z+.2);box(x,1.85,z,.66,.21,.07,metal);label(id==='valve_a'?'서측 급수':'동측 급수',x,1.85,z+.041,0,.6,.16);for(const y of [.2,2.5]){box(x,y,z,.15,.1,.15,metal);box((x+Math.sign(x)*11.9)/2,y,z,11.9-Math.abs(x),.035,.035,metal);}}
     const pump=box(-10.5,.08,-17,.9,.16,1.1,metal,true);box(-10.5,.57,-17,.15,.78,.14,metal);box(-10.5,1.16,-17,.45,.4,.3,metal);target('pump','배수 펌프 가동',pump,-10.5,1.3,-16.65);label('배수 설비',-10.5,1.23,-16.843,0,.4,.11);
     const motor=new T.Mesh(new T.CylinderGeometry(.22,.22,.66,22),paint);motor.rotation.x=Math.PI/2;motor.position.set(-10.5,.38,-16.94);root.add(motor);
     for(let i=0;i<7;i++){const fin=new T.Mesh(new T.TorusGeometry(.22,.009,6,22),metal);fin.position.set(-10.5,.38,-17.2+i*.075);root.add(fin);}
-    box(-10.5,.38,-17.42,.22,.22,.3,paint);box(-10.5,.26,-17.52,.14,.52,.14,rust);box(-10.93,.38,-17.42,.86,.11,.11,rust);box(-11.31,1.35,-17.42,.11,2.7,.11,rust);
+    box(-10.5,.38,-17.42,.22,.22,.3,paint);roundPipe(root,[-10.5,0,-17.52],[-10.5,.52,-17.52],.07,rust);roundPipe(root,[-10.5,.38,-17.42],[-11.31,.38,-17.42],.055,rust);roundPipe(root,[-11.31,0,-17.42],[-11.31,2.7,-17.42],.055,rust);
     box(-10.5,1.08,-16.839,.26,.11,.018,dark);for(const [x,m] of [[-10.57,red],[-10.43,paint]] as const)box(x,1.08,-16.824,.045,.045,.017,m);
     const plate=box(-10.5,.085,-16.442,.83,.11,.013,paint);label('양측 급수 차단 후 가동',plate.position.x,.085,-16.433,0,.8,.095);
     box(0,.025,-21.69,1.05,.05,.24,metal);const jam=box(.07,.06,-21.45,.79,.09,.16,wood);jam.rotation.y=.12;

@@ -58,16 +58,7 @@ export function dressApartment(root:T.Group,area:Area){
     at(-3.15,2.4);contact(-3.15,2.4,1.48,2.05,.04);
     const mugHandle=new T.Mesh(new T.TorusGeometry(.062,.018,10,20),ceramic);mugHandle.position.set(-3.45,.66,2.98);root.add(mugHandle);
     at(-4.5,-1.7,0,-.45);
-    for(const x of [-5.6,-4.5,-3.4]){
-      box(x,.43,-1.235,1.06,.82,.026,surface('wood','#b5ab96'));box(x,.73,-1.207,.45,.012,.018,dark);
-      rod(new T.Vector3(x-.15,.67,-1.18),new T.Vector3(x+.15,.67,-1.18),.012);
-      for(const dx of [-.15,.15])rod(new T.Vector3(x+dx,.67,-1.225),new T.Vector3(x+dx,.67,-1.18),.012);
-      box(x,.08,-1.2,1.06,.09,.065,dark);
-    }
     for(const x of [-5.5,-4.5,-3.5]){box(x,2.1,-1.777,.84,.73,.027,wood);rod(new T.Vector3(x+.29,1.98,-1.75),new T.Vector3(x+.29,2.19,-1.75),.01);for(const y of [2,2.17])rod(new T.Vector3(x+.29,y,-1.79),new T.Vector3(x+.29,y,-1.75),.01);}
-    const faucet=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([new T.Vector3(-5.3,.99,-1.97),new T.Vector3(-5.3,1.31,-1.97),new T.Vector3(-5.3,1.38,-1.72),new T.Vector3(-5.3,1.2,-1.66)]),22,.018,10,false),steel);root.add(faucet);
-    for(const x of [-5.67,-4.93])box(x,.996,-1.7,.025,.025,.61,steel);for(const z of [-2.01,-1.39])box(-5.3,.996,z,.76,.025,.026,steel);
-    cylinder(-5.3,.999,-1.7,.047,.005,dark);
     box(-5.74,.993,-1.62,.5,.025,.37,steel);
     for(let i=0;i<4;i++){const dish=new T.Mesh(new T.CylinderGeometry(.13,.13,.014,28),ceramic);dish.position.set(-5.85+i*.075,1.12,-1.62);dish.rotation.set(Math.PI/2,.15,0);root.add(dish);}
     const kettle=new T.Mesh(new T.SphereGeometry(.14,20,14),steel);kettle.scale.y=.85;kettle.position.set(-3.8,1.09,-1.7);root.add(kettle);cylinder(-3.8,1.22,-1.7,.06,.025,dark);
