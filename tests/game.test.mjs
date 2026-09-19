@@ -74,13 +74,13 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   const evidencePosition=renderedCamera.position.toArray();
   game.key('KeyW',true);tick(.8);game.key('KeyW',false);
   assert.deepEqual(renderedCamera.position.toArray(),evidencePosition,'the short inspection stays at the discovered evidence');
-  assert.match(game.snapshot().message,/뭐야, 이게/);assert.equal(soundCalls.filter(c=>c==='player-evidence').length,1);
+  assert.match(game.snapshot().message,/뭐야, 이게/);assert.equal(soundCalls.filter(c=>c==='player-evidence').length,0,'the discovery reaction is subtitle-only');
   game.interact();assert.match(game.snapshot().message,/뭐야, 이게/,'repeated interaction must not replace the reaction');
   game.pause();const reactionTime=game.snapshot().elapsed;tick(6);assert.equal(game.snapshot().elapsed,reactionTime);assert.equal(deviceLevels.radio,0);game.pause(false);
   tick(2.5);assert.match(game.snapshot().message,/도로에 두고 왔는데/);
   const shoePitch=renderedCamera.rotation.x;tick(1.5);assert.ok(renderedCamera.rotation.x<shoePitch-.03,'the gaze follows the water closer to the player');
   tick(1.5);assert.ok(deviceLevels.radio>0,'the radio leads into the next objective after the reaction');
-  useHome([0,1.65,-3.5],[0,.2,-4.65],'radio');assert.equal(soundCalls.filter(c=>c==='player-evidence').length,1,'discovery speech is not repeated');
+  useHome([0,1.65,-3.5],[0,.2,-4.65],'radio');assert.equal(soundCalls.filter(c=>c==='player-evidence').length,0,'revisiting the evidence remains silent');
   runHome(0,2);runHome(2.75,2);runHome(2.75,3.9);
   useHome([2.75,1.65,3.9],[2.75,1.1,5.15],'listen');
   tick(1);assert.equal(game.snapshot().story.stage,'listen','there is a silence after turning the radio off');
@@ -240,6 +240,57 @@ test('the exterior fall plays once on the way to the elevator, without stopping 
     renderedCamera.position.set(0,1.65,10);tick(.05);renderedCamera.position.z=7;tick(1);assert.equal(falling.visible,false,'crossing the trigger again cannot replay the fall');
     assert.equal(soundCalls.filter(s=>s==='fall').length,fallsBefore+1,'the falling sound plays exactly once');
   }finally{game.dispose();}
+});
+
+test('the first ghost starts behind a real wall and walks continuously into view after the radio stops',async()=>{
+  const {buildWorld,hasLineOfSight,canStandAt,disposeWorld}=await import('../lib/world.ts');
+  const walls=buildWorld(new THREE.Scene());
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  try{
+    tick();game.start(true);tick();renderedCamera.position.set(...home.radioStart);
+    const pitch=Math.atan2(home.radio[1]-renderedCamera.position.y,1.25);
+    event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
+    event(doc,'pointermove',{clientX:-(-Math.PI-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
+    game.interact();assert.equal(game.snapshot().story.stage,'listen');
+    const ghost=renderedScene.getObjectByName('resident-remains'),head=ghost.getObjectByName('ghost-head');
+    assert.equal(ghost.visible,true,'the ghost already occupies the hidden room instead of appearing at the reveal cue');
+    const visible=()=>hasLineOfSight(renderedCamera.position,head.getWorldPosition(new THREE.Vector3()),walls.solids);
+    assert.equal(visible(),false,'the utility-room wall physically hides the initial figure');
+    tick(1);const waiting=ghost.position.clone();game.pause();tick(4);assert.deepEqual(ghost.position.toArray(),waiting.toArray());game.pause(false);
+    let appeared=false,moved=0;
+    for(let i=0;i<1000&&!appeared;i++){
+      const before=ghost.position.clone();tick(.025);const step=ghost.position.distanceTo(before);moved+=step;
+      assert.ok(step<.05,'a cue or stage transition must not teleport the ghost');
+      assert.ok(canStandAt(ghost.position.x,ghost.position.z,walls.solids,.18,walls.bounds),'the approach respects the room walls');
+      assert.ok(head.getWorldPosition(new THREE.Vector3()).y>1.5,'the initial encounter retains its walking pose');
+      appeared=visible();
+    }
+    assert.ok(appeared&&moved>2,'the figure actually emerges from the corner into the player’s sightline');
+    assert.equal(game.snapshot().story.stage,'hide');
+  }finally{game.dispose();disposeWorld(walls.root);}
+});
+
+test('all pursuit areas after the first apartment render the ghost crawling, including resumed games',()=>{
+  const previous=win.localStorage;
+  for(const stage of ['lift_call','lift_exit','stairs_loop','resident_entry','office_record','parking_gate']){
+    win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage,notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
+    const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+    const game=createGame(canvas,()=>{},e=>assert.fail(e));
+    try{
+      tick();game.continueGame();tick(.6);
+      if(stage==='lift_exit'){
+        renderedCamera.position.set(0,1.65,-.15);
+        event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
+        event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(Math.atan2(-.35,.95)-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
+        game.interact();assert.equal(game.snapshot().story.stage,'corridor_run');tick();
+      }
+      const ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;game.pause();tick();
+      const head=ghost.worldToLocal(ghost.getObjectByName('ghost-head').getWorldPosition(new THREE.Vector3()));
+      assert.ok(head.y<.95&&head.y>.3,`${stage}: the head must remain close to the floor`);
+      for(const side of [-1,1]){const hand=ghost.worldToLocal(ghost.getObjectByName(`ghost-hand-${side}`).getWorldPosition(new THREE.Vector3()));assert.ok(hand.y<.22,`${stage}: hands support the crawling body`);}
+    }finally{game.dispose();win.localStorage=previous;}
+  }
 });
 
 async function wardrobeFixture(){

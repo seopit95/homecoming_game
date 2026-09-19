@@ -4,3 +4,5 @@
 
 Duration: 2.158 seconds.
 SHA-256: `cd58c42182d678dfe21d2a9f4a36e6b657b123d0a988b99598f3c23ea02e3cca`.
+
+Retired from gameplay on 2026-09-19 at the user’s request. The shoe-discovery reaction now displays subtitles only; this clip is no longer preloaded or played.

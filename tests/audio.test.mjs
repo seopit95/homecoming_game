@@ -18,9 +18,9 @@ test('the apparition crossfades a connected music layer through volume and pause
     audio.setDevice('phone',.2,.4);assert.equal(audio.deviceLoops.get('phone'),ring,'position changes keep the same ringing loop');assert.equal(ring.pan.pan.value,.4);
     audio.pause();assert.equal(ctx.state,'suspended');audio.resume();audio.setDevice('phone',0);assert.equal(audio.deviceLoops.size,0);assert.deepEqual(ring.source.stopArgs,[]);
     audio.setDevice('radio',.5);audio.recorded('male-surprise');const gasp=[...audio.roadSounds][0];audio.setDrive(null);assert.deepEqual(gasp.stopArgs,[],'skip also cancels recorded opening voices');
-    audio.clips['player-evidence']={duration:2.16};audio.recorded('player-evidence');const reaction=[...audio.roadSounds][0];
-    assert.equal(reaction.connections[0].connections[0].connections[0],audio.voiceBus,'the protagonist line follows dialogue volume');
-    audio.pause();assert.equal(ctx.state,'suspended');audio.resume();audio.setDrive(null);assert.deepEqual(reaction.stopArgs,[],'restart stops the discovery line');
+    audio.clips['passenger-line']={duration:2.16};audio.recorded('passenger-line');const reaction=[...audio.roadSounds][0];
+    assert.equal(reaction.connections[0].connections[0].connections[0],audio.voiceBus,'the passenger line follows dialogue volume');
+    audio.pause();assert.equal(ctx.state,'suspended');audio.resume();audio.setDrive(null);assert.deepEqual(reaction.stopArgs,[],'restart stops the passenger line');
     audio.setHaunt(0);assert.equal(audio.haunt.gain.targets.at(-1)[0],0);audio.dispose();assert.equal(ctx.state,'closed');assert.equal(audio.haunt,null);assert.equal(audio.deviceLoops.size,0);
   }finally{audio.dispose();globalThis.fetch=previousFetch;globalThis.AudioContext=previousContext;}
 });

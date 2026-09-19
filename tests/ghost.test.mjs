@@ -3,6 +3,32 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import {makeFigure} from '../lib/building.ts';
 
+test('a crawling ghost follows both stair-flight slopes without changing its navigation root',async()=>{
+  const {animateGhost,groundGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group());
+  const floor=(x,z)=>z>=0?0:(x<0?1:-1)*Math.min(2.8,-z*.7);
+  for(const side of [-1,1])for(const z of [-5,-4.1,-3,-1,-.1,.8])for(const yaw of [0,Math.PI]){
+    figure.position.set(side,floor(side,z),z);figure.rotation.set(0,yaw,0);const origin=figure.position.toArray();
+    animateGhost(figure,3,1,.7,false,2,1);groundGhost(figure,floor);
+    const palm=figure.getObjectByName('ghost-hand-1').getWorldPosition(new T.Vector3());
+    assert.ok(palm.y-floor(palm.x,palm.z)>.02,'the grounded palm clears the step surface');
+    assert.ok(palm.y-floor(palm.x,palm.z)<.4,'the wrist can reach across to the next higher tread');
+    figure.updateMatrixWorld(true);const point=new T.Vector3();
+    figure.traverse(mesh=>{if(!mesh.isMesh)return;const vertices=mesh.geometry.getAttribute('position');for(let i=0;i<vertices.count;i++){
+      point.fromBufferAttribute(vertices,i).applyMatrix4(mesh.matrixWorld);
+      const tread=point.z>=0||point.z<=-4?floor(point.x,point.z):(point.x<0?1:-1)*(Math.floor(-point.z*17/4)+.5)*2.8/17;
+      assert.ok(point.y-tread>-.01,'dress, fingers and toes clear the actual stepped surface');
+    }});
+    assert.deepEqual(figure.position.toArray(),origin);assert.equal(figure.rotation.y,yaw);
+    const frozen=figure.getObjectByName('ghost-head').getWorldPosition(new T.Vector3()).toArray();
+    animateGhost(figure,3,1,.7,false,2,1);groundGhost(figure,floor);assert.deepEqual(figure.getObjectByName('ghost-head').getWorldPosition(new T.Vector3()).toArray(),frozen);
+  }
+  for(const side of [-1,1])for(const z of [-4.8,-2,-.1])for(let yaw=0;yaw<Math.PI*2;yaw+=Math.PI/8){
+    figure.position.set(side,floor(side,z),z);figure.rotation.set(0,yaw,0);
+    animateGhost(figure,3,1,.7,false,2,1);groundGhost(figure,floor);
+    assert.ok(figure.getObjectByName('ghost-body').position.y<.65,'turning must not lift the body onto the flight across the divider');
+  }
+});
+
 test('crawling lowers the body, plants hands and restores the walking rig without moving the navigation root',async()=>{
   const {animateGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group());
   const rootPose=figure.position.toArray();
