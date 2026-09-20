@@ -3,6 +3,32 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import {makeFigure} from '../lib/building.ts';
 
+test('the female figure keeps human arm proportions rather than forearms reaching the knees',()=>{
+  const figure=makeFigure(new T.Group());
+  for(const side of [-1,1]){
+    const wrist=figure.getObjectByName(`ghost-hand-${side}`).parent;
+    const elbow=wrist.parent;
+    const length=wrist.position.length()+elbow.position.length();
+    assert.ok(length>.55&&length<.76,`shoulder-to-wrist length ${length} fits the 1.8 metre figure`);
+    assert.ok(wrist.position.length()/elbow.position.length()<1.2,'forearm and upper arm have comparable lengths');
+  }
+});
+
+test('each planted hand bears weight through the full crawl pull without skating or lifting',async()=>{
+  const {animateGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group());
+  for(const side of [0,1]){
+    let planted;
+    for(let u=.37;u<.99;u+=.025){
+      const phase=(u-side*.5)*Math.PI*2;figure.position.z=.82*phase/(Math.PI*2);
+      animateGhost(figure,1,.8,.8,false,phase,1);
+      const hand=figure.getObjectByName(`ghost-hand-${side===0?-1:1}`).getWorldPosition(new T.Vector3());
+      planted??=hand.clone();
+      assert.ok(Math.abs(hand.y-planted.y)<.003,'the supporting hand cannot float when its reach is exhausted');
+      assert.ok(Math.abs(hand.z-planted.z)<.003,'the body advances over the planted hand');
+    }
+  }
+});
+
 test('a crawling ghost follows both stair-flight slopes without changing its navigation root',async()=>{
   const {animateGhost,groundGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group());
   const floor=(x,z)=>z>=0?0:(x<0?1:-1)*Math.min(2.8,-z*.7);
@@ -103,7 +129,7 @@ test('the attack drops the jaw and opens a recessed mouth, then restores the res
   const cavity=mouth.children[0],rim=mouth.children[1];cavity.geometry.computeBoundingBox();rim.geometry.computeBoundingBox();
   figure.updateMatrixWorld(true);
   const ray=new T.Raycaster(mouth.localToWorld(new T.Vector3(0,-.105,1)),new T.Vector3(0,0,-1).applyQuaternion(mouth.getWorldQuaternion(new T.Quaternion())));
-  const hit=ray.intersectObject(cavity)[0];assert.ok(hit);assert.ok(mouth.worldToLocal(hit.point.clone()).z<rim.position.z-.04,'the throat must recede behind the lip');
+  const hit=ray.intersectObject(cavity)[0];assert.ok(hit);assert.ok(mouth.worldToLocal(hit.point.clone()).z<rim.geometry.boundingBox.max.z-.04,'the throat must recede behind the lip');
   animateGhost(figure,0,0,0,false);assert.equal(jaw.position.y,rest);assert.equal(mouth.visible,false);
 });
 test('loose hair remains anchored to the scalp and freezes with simulation time',async()=>{
