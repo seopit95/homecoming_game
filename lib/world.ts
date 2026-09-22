@@ -4,7 +4,7 @@ import type { Action, Area } from './story';
 import {buildBuilding,makeFigure} from './building.ts';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {createEntryEvidence} from './entry-props.ts';
-import {basin,bathtub,sinkCounter,cabinet,doorHardware,roundPipe} from './props.ts';
+import {basin,bathtub,sinkCounter,cabinet,roundPipe} from './props.ts';
 import {dressApartment} from './japan.ts';
 import {batchStaticGeometry} from './static-geometry.ts';
 
@@ -34,7 +34,8 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
   const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined}:{...buildBuilding(root,area),setTV:undefined};
   batchStaticGeometry(root,content.targets.map(t=>t.mesh));
-  return {...content,root};
+  const updateStory:((stage:import('./story').Stage,time:number,reduced:boolean,story?:import('./story').Story)=>void)|undefined=content.updateStory;
+  return {...content,root,updateStory};
 }
 export function disposeWorld(root:T.Object3D){
   const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();
@@ -45,8 +46,6 @@ export function disposeWorld(root:T.Object3D){
 function buildApartment(scene:T.Group) {
   const solids: Solid[] = [], targets: Target[] = [];
   const {at,finish}=spaceFurniture(scene,solids);
-  let seed = 47;
-  const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const mat=(color:string, roughness=.86,extra:object={})=>new T.MeshStandardMaterial({color,roughness,...extra});
   const wallMat=surface('decayWall','#c6c4b6');
   const floorMat=surface('woodFloor','#cdc6b6',{roughness:.43}), wood=surface('wood','#b8ac98'), dark=mat('#111816'), trim=mat('#6d6051');

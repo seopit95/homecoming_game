@@ -14,9 +14,9 @@ export function clearPath(a:Point,b:Point,solids:Solid[],bounds:Bounds,r=.18){
     return true;
   });
 }
-export function findPath(start:Point,goal:Point,solids:Solid[],bounds:Bounds):Point[]{
-  const free=(p:Point)=>canStandAt(p.x,p.z,solids,.18,bounds);
-  const clear=(a:Point,b:Point)=>clearPath(a,b,solids,bounds);
+export function findPath(start:Point,goal:Point,solids:Solid[],bounds:Bounds,r=.18):Point[]{
+  const free=(p:Point)=>canStandAt(p.x,p.z,solids,r,bounds);
+  const clear=(a:Point,b:Point)=>clearPath(a,b,solids,bounds,r);
   if(!free(start)||!free(goal))return [];
   if(clear(start,goal))return [goal];
   const sx=Math.round(start.x*2),sz=Math.round(start.z*2),key=(x:number,z:number)=>`${x},${z}`;

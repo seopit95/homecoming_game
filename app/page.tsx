@@ -3,7 +3,7 @@ import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import {ArrowRight,Headphones,Pause,Play,RotateCcw,SlidersHorizontal,Volume2,Expand,Flashlight} from '../lib/icons';
 import type {Game,GameView,Settings} from '../lib/game';
 import {registerGameTools} from '../lib/webmcp';
-import {journal,endings,isMemory,isCinematic,type Action} from '../lib/story';
+import {journalEntry,endings,isMemory,isCinematic,type Action} from '../lib/story';
 import {defaultSettings,bindingLabels,keyLabel,allowedKey,type Binding} from '../lib/preferences';
 const initialSettings:Settings=defaultSettings;
 export default function Home(){
@@ -37,7 +37,7 @@ export default function Home(){
         if(!allowedKey(e.code)||Object.entries(settings.bindings).some(([k,v])=>k!==key&&v===e.code)){setBindingError('이미 사용 중이거나 예약된 키입니다. 다른 키를 입력하세요.');return;}
         change('bindings',{...settings.bindings,[key]:e.code});setBinding(null);setBindingError('');
       }}><span>{bindingLabels[key]}</span><kbd>{binding===key?'입력…':keyLabel(settings.bindings[key])}</kbd></button>)}</div>
-      {bindingError&&<p role="status" className="binding-error">{bindingError}</p>}
+      {bindingError&&<output className="binding-error">{bindingError}</output>}
     </details>
     <p className="settings-local">설정과 구간 진행은 이 브라우저에 저장됩니다.</p>
   </div>;
@@ -51,7 +51,7 @@ export default function Home(){
         <div className="story-intro"><p>비 오는 새벽 3시 17분.<br/>백로아파트, 28층 2803호.<br/>사흘 전, 나는 사람을 죽이고 달아났다.</p><p>집에 돌아와 잠들면 잊을 줄 알았다.<br/>그날 밤, 혼자 돌아온 게 아니었다.</p></div>
         {view?.canContinue&&<><button className="start-button continue-button" disabled={!ready} onClick={()=>game.current?.continueGame()}><span>이어서 귀가하기</span><Play size={19}/></button><p className="save-location">{view.savedLocation} · 이 기기에 남은 기록</p></>}
         <button className="start-button" disabled={!ready} onClick={()=>game.current?.start()}><span>{ready?(view?.canContinue?'처음부터 시작':'그날 밤으로'):'집 안을 불러오는 중'}</span><ArrowRight size={21}/></button>
-        <div className="start-meta"><span><Headphones size={15}/>헤드폰 권장</span><span>일곱 장의 귀가 기록 · 혼자 플레이</span></div>
+        <div className="start-meta"><span><Headphones size={15}/>헤드폰 권장</span><span>열한 장의 귀가 기록 · 혼자 플레이</span></div>
         <button className="settings-toggle" aria-expanded={showSettings} onClick={()=>setShowSettings(!showSettings)}><SlidersHorizontal size={15}/>밝기 · 소리 · 시점 설정</button>{showSettings&&settingsPanel}
       </div>
       <div className="title-caption"><span lang="ja">귀 가 기 록</span><p>28층에서 시작된 밤.<br/>1층은 아직 멀다.</p></div>
@@ -74,7 +74,7 @@ export default function Home(){
       <output className="memory-caption" aria-live="polite"><span key={`${view?.story.stage}:${view?.memoryText}`}>{view?.memoryText}</span></output>
     </section>}
     {began&&view?.story.stage==='wake_ring'&&<div className="time-jump" aria-hidden="true" style={{opacity:view.memoryFade}}><p>사흘 뒤<span>28층 2803호 · 03:17</span></p></div>}
-    {began&&paused&&!ended&&<section className="modal-backdrop" aria-label="일시정지 메뉴"><div className="pause-card"><p className="overline">일시정지</p><h2>일시정지</h2><p className="muted">건물 안의 시간도 멈춰 있습니다.</p><div className="pause-tabs"><button aria-pressed={!showNotes} onClick={()=>setShowNotes(false)}>설정</button><button aria-pressed={showNotes} onClick={()=>setShowNotes(true)}>수집한 기록 · {view?.story.notes.length||0}</button></div>{showNotes?<div className="journal">{view?.story.notes.length?view.story.notes.map(id=>{const note=journal[id as Action];return note?<article key={id}><h3>{note.title}</h3><p>{note.text}</p></article>:null;}):<p className="muted">아직 발견한 기록이 없습니다. 집 안에서 단서를 찾아보세요.</p>}</div>:settingsPanel}<button className="start-button" onClick={()=>game.current?.pause(false)}><span>계속하기</span><Play size={18}/></button><button className="quiet-button" onClick={()=>game.current?.start()}><RotateCcw size={15}/>처음부터 다시</button></div></section>}
+    {began&&paused&&!ended&&<section className="modal-backdrop" aria-label="일시정지 메뉴"><div className="pause-card"><p className="overline">일시정지</p><h2>일시정지</h2><p className="muted">건물 안의 시간도 멈춰 있습니다.</p><div className="pause-tabs"><button aria-pressed={!showNotes} onClick={()=>setShowNotes(false)}>설정</button><button aria-pressed={showNotes} onClick={()=>setShowNotes(true)}>수집한 기록 · {view?.story.notes.length||0}</button></div>{showNotes?<div className="journal">{view?.story.notes.length?view.story.notes.map(id=>{const note=journalEntry(id as Action,view.story);return note?<article key={id}><h3>{note.title}</h3><p>{note.text}</p></article>:null;}):<p className="muted">아직 발견한 기록이 없습니다. 집 안에서 단서를 찾아보세요.</p>}</div>:settingsPanel}<button className="start-button" onClick={()=>game.current?.pause(false)}><span>계속하기</span><Play size={18}/></button><button className="quiet-button" onClick={()=>game.current?.start()}><RotateCcw size={15}/>처음부터 다시</button></div></section>}
     {dying&&<div className="death-vignette" aria-hidden="true"><div style={{opacity:Math.max(0,((view?.deathProgress||0)-.65)/.35)}}/></div>}
     {dying&&(view?.deathProgress||0)>.4&&!paused&&<button className="skip-death" onClick={()=>game.current?.skipDeath()}>재시도 화면으로</button>}
     {ended&&<section className="ending-screen"><div><p className="overline">귀가 기록 / {view?.story.ending==='crashed'?'배드 엔딩 · 동승자':'미완'}</p><h2>{view?.story.ending==='crashed'?'끝내, 혼자가 아니었다.':'발소리가 멎었다.'}</h2><p className="ending-copy">{view?.story.ending==='crashed'?endings.crashed:endings.caught}</p><p className="end-time">{minutes}분 {seconds}초의 기록</p><button className="start-button" onClick={()=>game.current?.start(view?.story.ending==='caught')}><span>{view?.story.ending==='caught'?view.checkpointLabel:'다시 귀가하기'}</span><RotateCcw size={18}/></button><p className="ending-note">{view?.story.ending==='caught'?'발소리와 시선을 살피세요. 해당 구간부터 다시 시작하며, 읽은 기록은 남습니다.':'〈귀가〉를 플레이해 주셔서 감사합니다.'}</p></div></section>}

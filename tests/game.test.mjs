@@ -45,7 +45,7 @@ test('a close divider stays within the held flashlight shadow frustum',()=>{
   assert.ok(frustum.containsPoint(occluder),'the nearby wall must cast a shadow into the next room');game.dispose();
 });
 
-test('real interaction loop reaches the ending, requires a held pry, and freezes on pause',()=>{
+test('real interaction loop reaches the ending, requires a held pry, and freezes on pause',async()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const media=win.matchMedia;win.matchMedia=query=>({matches:query.includes('pointer:coarse')});
   const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));win.matchMedia=media;tick();game.start();game.skipMemory();tick();
@@ -67,7 +67,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
     if(check)assert.ok(game.snapshot().prompt,`target prompt at ${pos}`);
   }
   function use(pos,target,stage){aim(pos,target);game.interact();assert.equal(game.snapshot().story.stage,stage);tick();}
-  function runTo(x,z){const pos=renderedCamera.position.toArray();aim(pos,[x,pos[1],z],false);game.key('KeyW',true);game.key('ShiftLeft',true);let i=0;while(Math.hypot(renderedCamera.position.x-x,renderedCamera.position.z-z)>.09&&i++<4000&&!['dying','ended'].includes(game.snapshot().story.stage))tick(.025);game.key('KeyW',false);game.key('ShiftLeft',false);assert.ok(!['dying','ended'].includes(game.snapshot().story.stage),`survive route to ${x},${z}`);assert.ok(Math.hypot(renderedCamera.position.x-x,renderedCamera.position.z-z)<.15,`walkable route to ${x},${z}, actual ${renderedCamera.position.toArray()}`);}
+  function runTo(x,z){const pos=renderedCamera.position.toArray();aim(pos,[x,pos[1],z],false);game.key('KeyW',true);game.key('ShiftLeft',true);let i=0;while(Math.hypot(renderedCamera.position.x-x,renderedCamera.position.z-z)>.09&&i++<12000&&!['dying','ended'].includes(game.snapshot().story.stage)){if(i%8===0)aim(renderedCamera.position.toArray(),[x,renderedCamera.position.y,z],false);tick(.0125);}game.key('KeyW',false);game.key('ShiftLeft',false);assert.ok(!['dying','ended'].includes(game.snapshot().story.stage),`survive route to ${x},${z}`);assert.ok(Math.hypot(renderedCamera.position.x-x,renderedCamera.position.z-z)<.15,`walkable route to ${x},${z}, actual ${renderedCamera.position.toArray()}`);}
 
 
   const runHome=(x,z)=>runTo(x*S,z*S),useHome=(pos,target,stage)=>use(H(...pos),H(...target),stage);
@@ -156,13 +156,33 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   use([3.8,1.65,-3.45],[5.34,1.45,-3.45],'office_tape');
   use([-1.95,1.65,2.6],[-1.95,.9,1.8],'office_tape');
   use([-2.65,1.65,2.6],[-2.65,1.17,1.79],'office_leave');
-  use([0,1.65,-6.3],[0,1.25,-7.48],'parking_gate');
+  use([0,1.65,-6.3],[0,1.25,-7.48],'office_departure');
+  function cross(stage,next,z,x=0){tick(1);aim(renderedCamera.position.toArray(),[x,renderedCamera.position.y,z],false);game.key('KeyW',true);for(let i=0;i<600&&game.snapshot().story.stage===stage;i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,next);}
+  cross('office_departure','service_ride',-10);tick(11.3);assert.equal(game.snapshot().story.stage,'service_open');cross('service_open','annex_arrival',-4);
+  const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{findPath}=await import('../lib/navigation.ts'),{expansionLayout}=await import('../lib/expansion-world.ts');
+  const expansionStart=game.snapshot().elapsed;
+  for(const [area,actions,nextStage] of [
+   ['annex',[['annex_map','annex_fuse'],['annex_fuse','annex_restore'],['annex_restore','annex_search'],['annex_badge','annex_search'],['annex_notice','annex_search'],['annex_call','annex_unlock'],['annex_line_home','annex_exit_ready'],['annex_exit','annex_departure']],'court_arrival'],
+   ['courtyard',[['court_gate','court_search'],['court_log','court_search'],['court_evidence','court_search'],['court_phone','court_code'],...Array.from('2617').flatMap((n,i)=>Array.from({length:Number(n)},()=>[`court_digit_${i}`,'court_code'])),['court_confirm','court_unlocked'],['court_exit','court_departure']],'archive_arrival'],
+   ['archive',[['archive_ledger','archive_search'],['archive_road','archive_search'],['archive_call','archive_search'],['archive_gate','archive_edit'],['archive_sequence_road','archive_edit'],['archive_sequence_call','archive_edit'],['archive_sequence_gate','archive_reveal'],['archive_play','archive_playback'],['archive_exit','archive_departure']],'plant_arrival'],
+   ['plant',[['plant_diagram','plant_isolate'],['plant_valve_west','plant_isolate'],['plant_valve_east','plant_power'],['plant_circuit_pump','plant_power'],['plant_circuit_air','plant_power'],['plant_start','plant_drain'],['plant_exit','plant_departure']],'parking_gate'],
+  ]){
+   const reference=buildWorld(new THREE.Scene(),area);
+   try{
+    for(const [id,want] of actions){
+     const t=reference.targets.find(t=>t.id===id),at=t.mesh.userData.approach;
+     const path=findPath(renderedCamera.position,at,reference.solids,reference.bounds,.26);assert.ok(path.length,`route to ${id}`);for(const p of path)runTo(p.x,p.z);
+     if(id==='plant_exit'&&game.snapshot().story.stage==='plant_drain'){game.key('KeyW',true);tick(.05);game.key('KeyW',false);tick(12);}
+     aim(renderedCamera.position.toArray(),t.point.toArray());game.interact();assert.equal(game.snapshot().story.stage,want,id);tick();
+     if(id==='archive_play'){const before=game.snapshot().elapsed;game.pause();tick(5);assert.equal(game.snapshot().elapsed,before);game.pause(false);tick(32.1);assert.equal(game.snapshot().story.stage,'archive_escape');}
+    }
+    cross(area==='courtyard'?'court_departure':`${area}_departure`,nextStage,area==='courtyard'?-50.4:-expansionLayout[area].z-6,area==='courtyard'?14:0);
+   }finally{disposeWorld(reference.root);}
+  }
+  console.log('Expanded chapters known-route simulation seconds',Math.round(game.snapshot().elapsed-expansionStart));
   runTo(2,20);runTo(2,-20.3);
   use([0,1.65,-20.3],[0,1.25,-21.68],'parking_key');
-  use([7.1,1.65,-17.8],[6.02,1.1,-17.8],'parking_pump');
-  use([9.8,1.65,-7.2],[10.8,1.2,-7.8],'parking_pump');
-  use([-9.8,1.65,1.8],[-10.8,1.2,1.2],'parking_pump');
-  use([-10.5,1.65,-15.4],[-10.5,1.3,-16.65],'parking_alarm');
+  use([7.1,1.65,-17.8],[6.02,1.1,-17.8],'parking_alarm');
   use([-10.8,1.65,17.4],[-10.8,1.4,16.18],'parking_run');
   const lured=renderedScene.getObjectByName('resident-remains'),beforeLure=lured.position.clone();tick(1);assert.ok(lured.position.distanceTo(beforeLure)>.8,'the apparition actually follows the alarm around the mounting wall');
   runTo(-2.2,17.4);runTo(-2.2,-20);runTo(0,-20);
@@ -400,5 +420,18 @@ test('actual movement exhausts sprint, manual pause freezes recovery, and walls 
  try{tick();game.continueGame();tick();game.key('KeyW',true);game.key('ShiftLeft',true);tick(6.7);assert.equal(game.snapshot().stamina,0);assert.equal(game.snapshot().exhausted,true);const before=renderedCamera.position.z;tick(.5);assert.ok(Math.abs(before-renderedCamera.position.z-1)<.06,'depleted player walks at 2 m/s');
  game.pause();const frozen=game.snapshot().stamina;tick(9);assert.equal(game.snapshot().stamina,frozen);game.pause(false);game.key('KeyW',true);tick(4.5);game.key('KeyW',false);assert.ok(game.snapshot().stamina>.25);assert.equal(game.snapshot().exhausted,false);
  game.start(true);tick();renderedCamera.position.set(0,1.65,-22.86);game.key('KeyW',true);game.key('ShiftLeft',true);tick(2);assert.equal(game.snapshot().stamina,1,'pushing against the area boundary is not running');
+ }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('resuming a previously played archive record allows replay and shows the timed revelation without opening the journal',()=>{
+ const previous=win.localStorage,notes=['archive_ledger','archive_road','archive_call','archive_gate','archive_play'];
+ win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'archive_reveal',notes,circuit:['archive_sequence_road','archive_sequence_call','archive_sequence_gate'],elapsed:900}):null,setItem(){},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{
+  tick();game.continueGame();tick();renderedCamera.position.set(9,1.65,-18.9);const pitch=Math.atan2(1.17-1.65,.92);
+  event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:0,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();assert.equal(game.snapshot().story.stage,'archive_playback');
+  tick(12.2);assert.match(game.snapshot().message,/소리를 듣고도 문을 잠갔다/);
+  game.pause();const at=game.snapshot().elapsed;tick(10);assert.equal(game.snapshot().elapsed,at);game.pause(false);
+  tick(15);assert.match(game.snapshot().message,/네 뒤에 있어/);assert.equal(game.snapshot().story.stage,'archive_playback');tick(5);assert.equal(game.snapshot().story.stage,'archive_escape');
  }finally{game.dispose();win.localStorage=previous;}
 });

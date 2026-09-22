@@ -1,5 +1,7 @@
 import * as T from 'three';
-import type {Area,Action,Stage} from './story';
+import {buildCourtyard} from './courtyard.ts';
+import {buildExpansion} from './expansion-world.ts';
+import type {Area,Action,Stage,Story} from './story';
 import type {Bounds,Solid,Target} from './world';
 import {surface,boxUV,softBox} from './materials.ts';
 import {roundPipe,doorHardware,createSedan} from './props.ts';
@@ -13,6 +15,8 @@ import {createGhost as makeFigure} from './ghost.ts';
 export const landing={halfWidth:1.3,halfLength:23,spawnZ:20.5,homeZ:20.5,homeX:1.3,liftZ:-22.75,boardZ:-23.25,fallTriggerZ:8,fallZ:1} as const;
 export const buildingLayout={corridor:{x:3.5,z:20,spawnZ:18},lift:{x:1.1,z:1.45,spawnZ:.7},stairs:{x:2,z:6,flightX:1,run:4,spawnZ:3.8},office:{x:5.8,z:7.8,spawnZ:6.5},parking:{x:12,z:22,spawnZ:20,alarm:{x:-10.8,z:16},alarmApproach:{x:-10.8,z:16.5},car:{x:5,z:-18}}} as const;
 export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
+  if(area==='courtyard')return buildCourtyard(root);
+  if(area==='annex'||area==='archive'||area==='plant')return buildExpansion(root,area);
   if(area==='resident'||area==='aftermath')return buildStoryRoom(root,area);
   const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
   const size=area==='landing'?{x:landing.halfWidth,z:landing.halfLength}:buildingLayout[area];
@@ -24,7 +28,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   function label(text:string,x:number,y:number,z:number,ry=0,w=1.1,h=.26,color='#c9ceaf',background='#25372f',lit=false){
     const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;
     const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map:texture}):new T.MeshStandardMaterial({map:texture,roughness:.9}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);
-    const update=(text:string)=>{ctx.fillStyle=background;ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle=color;ctx.font=`${Math.min(c.height*.56,700/Math.max(1,[...text].length))}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,c.width/2,c.height/2);texture.needsUpdate=true;};update(text);return {mesh,update};
+    const update=(text:string)=>{ctx.fillStyle=background;ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle=color;ctx.font=`${Math.min(c.height*.56,700/Math.max(1,text.length))}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,c.width/2,c.height/2);texture.needsUpdate=true;};update(text);return {mesh,update};
   }
   function light(x:number,y:number,z:number,color='#a4b7a7',intensity=4,range=8){const l=new T.PointLight(color,intensity,range,2);l.position.set(x,y,z);l.userData.base=intensity;root.add(l);lamps.push(l);return l;}
   function fixture(x:number,z:number,on=true,y=ceiling-.08){box(x,y+.04,z,.14,.08,.9,metal);box(x,y,z,.22,.08,1.1,metal);box(x,y-.048,z,.09,.018,.92,mat('#bec5b0',{emissive:'#a0b09d',emissiveIntensity:on?.6:0}));if(on)light(x,y-.12,z);}
@@ -35,9 +39,9 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   function unit(x:number,z:number,no:string){box(x,1.1,z,.08,2.2,.95,paint);box(x-Math.sign(x)*.055,1.04,z+.3,.06,.045,.12,metal);label(no,x-Math.sign(x)*.06,2.05,z,-Math.sign(x)*Math.PI/2,.4,.14);box(x-Math.sign(x)*.12,.01,z,.36,.02,.75,dark);box(x-Math.sign(x)*.025,1.48,z+.65,.11,.21,.14,metal);for(const dz of [-.54,.54])box(x,1.12,z+dz,.1,2.24,.075,metal);box(x,2.24,z,.1,.08,1.15,metal);}
   // Openings use separate piers and lintels. No wall is left behind the sliding leaves.
   function portal(z:number,half=.66){const w=bx-half;wall(-(bx+half)/2,z,w,.18);wall((bx+half)/2,z,w,.18);box(0,2.56,z,half*2,.48,.18,wallMat);}
-  const spawn=new T.Vector3(0,1.65,('spawnZ' in size?size.spawnZ:landing.spawnZ));let heading=0,heightAt:((x:number,z:number)=>number)=()=>0;
+  const spawn=new T.Vector3(0,1.65,('spawnZ' in size?size.spawnZ:landing.spawnZ));const heading=0;let heightAt:((x:number,z:number)=>number)=()=>0;
   let liftDoors:{left:T.Mesh;right:T.Mesh;blocks:Solid[]}|undefined,setDisplay:((text:string)=>void)|undefined,fallingFigure:T.Group|undefined;
-  let updateStory:((stage:Stage,time:number,reduced:boolean)=>void)|undefined;
+  let updateStory:((stage:Stage,time:number,reduced:boolean,story?:Story)=>void)|undefined;
   const figure=makeFigure(root),shoes=new T.Group(),phoneGlow=new T.PointLight(),radioLight=new T.PointLight();
   if(area!=='stairs'){
     box(0,-.1,0,bx*2,.2,bz*2,floorMat);box(0,ceiling+.08,0,bx*2,.16,bz*2,concrete);
@@ -57,7 +61,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       label('2803',1.188,2.05,landing.homeZ+1,-Math.PI/2,.34,.14);
       box(2.95,.65,landing.homeZ+1.12,1.3,1.3,.5,wood,true);light(2.2,2.3,landing.homeZ,'#6c8c8a',.8,3);
     }wall(0,bz,bx*2,.18);
-    if(area==='lift'||area==='landing')portal(-bz);else wall(0,-bz,bx*2,.18);
+    if(area==='lift'||area==='landing'||area==='office')portal(-bz);else wall(0,-bz,bx*2,.18);
     for(let z=-bz+2;z<bz;z+=5){box(0,ceiling-.08,z,bx*2,.15,.25,concrete);pipe(bx-.21,ceiling-.18,z,4.9);}
   }
   if(area==='landing'||area==='lift'){
@@ -87,7 +91,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       label('백로아파트 · 1993',0,2.5,bz-.11,Math.PI,1.45,.2);
     }else{
       const shaft=box(0,1.35,-1.57,2.1,2.7,.025,mat('#030505'));shaft.name='lift-shaft-darkness';
-      updateStory=stage=>{shaft.visible=stage==='descent';};
+      updateStory=stage=>{shaft.visible=stage==='descent'||stage==='service_ride';if(stage==='service_open')bounds.z=3.8;};
       const hand=createLiftHand();hand.position.set(0,1.52,dz+.035);root.add(hand);
       fixture(0,.1,true);for(const x of [-.98,.98]){roundPipe(root,[x,1,-1.1],[x,1,1.1],.022,metal);for(const z of [-.8,.8])roundPipe(root,[x,1,z],[Math.sign(x)*1.04,1,z],.013,metal);}
       const panel=box(.99,1.35,-.45,.035,.85,.24,metal);label('1',.966,1.3,-.45,-Math.PI/2,.15,.12,'#d7ad65');target('panel','1층 누르기',panel,.92,1.3,-.45);
@@ -169,8 +173,12 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     box(3.8,.75,3.8,2.1,.1,1.25,wood,true);for(const x of [2.9,4.7])for(const z of [3.3,4.3])box(x,.35,z,.07,.7,.07,metal);box(3.8,.48,3.3,1.9,.4,.05,wood);
     for(let z=2.7;z<6;z+=.7){box(5.4,1.15,z,.45,2.3,.55,metal,true);for(const y of [.35,.9,1.45,2]){box(5.166,y,z,.02,.5,.5,metal);box(5.146,y,z,.035,.035,.18,dark);}}
     fixture(0,4);fixture(0,-4,false);light(-3,2.5,1,'#b49f7d',4);light(-3,2.5,-4,'#8b9b85',3);light(3.5,2.5,-4,'#839c96',3);
-    door('service_exit','지하 연결계단',0,-bz+.12);label('17층 · 구 관리사무소',0,2.3,bz-.1,Math.PI,1.65,.2);puddle(2.6,5,.45,1);
-    updateStory=(stage)=>{fuse.visible=['office_record','office_fuse'].includes(stage);exitKey.visible=stage!=='office_leave';};
+    const serviceHinge=new T.Group();serviceHinge.name='office-service-door';serviceHinge.position.set(-.6,0,-bz+.12);root.add(serviceHinge);
+    const serviceLeaf=box(0,1.1,-bz+.12,1.18,2.2,.09,metal);serviceHinge.attach(serviceLeaf);doorHardware(serviceLeaf,1.18);target('service_exit','관리용 승강기 열기',serviceLeaf,0,1.25,-bz+.32);
+    const serviceBlock={x:0,z:-bz+.12,w:1.2,d:.12,y:1.1,h:2.2};solids.push(serviceBlock);let serviceAt=-1;bounds.z=bz+2.8;
+    box(0,-.09,-bz-1.35,2.2,.18,2.7,floorMat);box(0,2.8,-bz-1.35,2.2,.12,2.7,metal);for(const x of [-1.1,1.1])box(x,1.4,-bz-1.35,.12,2.8,2.7,metal,true);box(0,1.4,-bz-2.7,2.2,2.8,.12,metal,true);light(0,2.5,-bz-1.3,'#98ad9b',3,4);label('관리용 승강기 · 1F',0,2.5,-bz+.21,0,1.8,.2);
+    label('17층 · 구 관리사무소',0,2.3,bz-.1,Math.PI,1.65,.2);puddle(2.6,5,.45,1);
+    updateStory=(stage,time)=>{fuse.visible=['office_record','office_fuse'].includes(stage);exitKey.visible=!['office_leave','office_departure'].includes(stage);if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0){serviceHinge.rotation.y=-1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85);if(Math.abs(serviceHinge.rotation.y)>1.2){const i=solids.indexOf(serviceBlock);if(i>=0)solids.splice(i,1);}}};
   }
   if(area==='parking'){
     const L=buildingLayout.parking;
@@ -196,7 +204,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     box(-10.5,1.08,-16.839,.26,.11,.018,dark);for(const [x,m] of [[-10.57,red],[-10.43,paint]] as const)box(x,1.08,-16.824,.045,.045,.017,m);
     const plate=box(-10.5,.085,-16.442,.83,.11,.013,paint);label('양측 급수 차단 후 가동',plate.position.x,.085,-16.433,0,.8,.095);
     box(0,.025,-21.69,1.05,.05,.24,metal);const jam=box(.07,.06,-21.45,.79,.09,.16,wood);jam.rotation.y=.12;
-    const flood=puddle(0,-19,2.3,2.6);updateStory=(stage)=>{const drained=['parking_alarm','parking_run'].includes(stage);flood.scale.y=drained?.35:2.6;};
+    const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,_time,_reduced,story)=>{const drained=story?.notes.includes('plant_drained')||['parking_alarm','parking_run'].includes(stage);flood.scale.y=drained?.35:2.6;const target=targets.find(t=>t.id==='car_search');if(target)target.label=story?.notes.includes('plant_drained')?'조수석 가방 · 차 열쇠':'조수석 조사 · 배수 설비 열쇠';};
     for(const x of [-2.2,2.2])for(const z of [-18,-6,6,18])fixture(x,z,z!==6);for(const x of [-8,8])pipe(x,2.47,0,43);for(const z of [-12,0,12])pipe(0,2.35,z,23,'x');
     for(let z=-18;z<20;z+=4){box(0,.014,z,.07,.025,1.5,white);}for(const z of [-12,6])label('출구 ↑',-11.89,1.9,z,Math.PI/2,1.2,.3);
     figure.position.set(-7.8,0,-18);figure.visible=true;
