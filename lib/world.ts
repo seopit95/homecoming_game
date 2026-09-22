@@ -6,6 +6,7 @@ import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {createEntryEvidence} from './entry-props.ts';
 import {basin,bathtub,sinkCounter,cabinet,doorHardware,roundPipe} from './props.ts';
 import {dressApartment} from './japan.ts';
+import {batchStaticGeometry} from './static-geometry.ts';
 
 export type Bounds={x:number;z:number;minX?:number};
 export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number };
@@ -32,6 +33,7 @@ export type Target = { id: Action; point: T.Vector3; label: string; mesh: T.Obje
 export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
   const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined}:{...buildBuilding(root,area),setTV:undefined};
+  batchStaticGeometry(root,content.targets.map(t=>t.mesh));
   return {...content,root};
 }
 export function disposeWorld(root:T.Object3D){
@@ -207,10 +209,11 @@ function buildApartment(scene:T.Group) {
   const doorSolid={x:0,z:door.position.z,w:1.45,d:.13,y:1.22,h:2.44};solids.push(doorSolid);
   let openedAt=-1;
   function updateStory(stage:import('./story').Stage,time:number,reduced:boolean){
-    const open=['hide','wait','escape','dying','ended'].includes(stage);
-    if(open&&openedAt<0){openedAt=time;const i=solids.indexOf(doorSolid);if(i>=0)solids.splice(i,1);}
+    const open=!!door.userData.openRequested;
+    if(open&&openedAt<0)openedAt=time;
     door.rotation.y=open?1.42*T.MathUtils.smoothstep(time-openedAt,0,reduced?.2:1.1):0;
-    doorwayGlow.intensity=open?7:0;
+    if(open&&door.rotation.y>1.15){const i=solids.indexOf(doorSolid);if(i>=0)solids.splice(i,1);}
+    doorwayGlow.intensity=door.rotation.y/1.42*7;
     torchPickup.visible=['drive','impact','flee','sleep','tv','wake_ring','light_switch','find_torch'].includes(stage);
   }
   return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,setTV,updateStory};

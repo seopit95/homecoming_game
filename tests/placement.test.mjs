@@ -16,8 +16,11 @@ for(const [area,x,z,y,dx,dz] of [['apartment',-5.3*S,-5.6*S,.68,.88,.26],['resid
   const w=world(area);
   for(const sideX of [-1,1])for(const sideZ of [-1,1]){
     const px=x+sideX*dx,pz=z+sideZ*dz;
-    const supports=w.root.children.filter(o=>o.isMesh).map(o=>new T.Box3().setFromObject(o));
-    assert.ok(supports.some(b=>b.min.x<=px&&b.max.x>=px&&b.min.z<=pz&&b.max.z>=pz&&b.min.y<=.01&&b.max.y>=y-.01&&b.max.y<y+.05),`a continuous desk support meets floor and top at ${px},${pz}`);
+    // Physical cross-sections remain valid after static geometry is batched.
+    for(let height=.015;height<y-.01;height+=.025){
+      const hit=new T.Raycaster(new T.Vector3(px-.08,height,pz),new T.Vector3(1,0,0),0,.16).intersectObject(w.root,true)[0];
+      assert.ok(hit&&Math.abs(hit.point.x-px)<.055,`desk support must be continuous at ${px},${height},${pz}`);
+    }
   }
 });
 test('the CCTV monitor rests on a stand connected to the desk',()=>{

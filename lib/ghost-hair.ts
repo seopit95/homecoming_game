@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {surface} from './materials.ts';
-const rows=20,cols=2,locks=120;
+import {faceDepth} from './ghost-face.ts';
+const rows=14,cols=2,locks=96;
 export function createHair(head:T.Group){
   const data=new Uint8Array(128*256*4);
   for(let y=0;y<256;y++)for(let x=0;x<128;x++){
@@ -9,12 +10,13 @@ export function createHair(head:T.Group){
     data[i]=data[i+1]=data[i+2]=Math.round(Math.min(1,a)*255);data[i+3]=255;
   }
   const alpha=new T.DataTexture(data,128,256);alpha.needsUpdate=true;alpha.minFilter=T.LinearFilter;alpha.magFilter=T.LinearFilter;
-  const material=surface('hair','#c4c7c9',{roughness:.62,metalness:0,alphaMap:alpha,alphaTest:.28,side:T.DoubleSide});
+  const material=surface('hair','#c4c7c9',{roughness:.46,metalness:0,alphaMap:alpha,alphaTest:.14,side:T.DoubleSide});
   const hair=new T.Group();hair.name='ghost-scalp-hair';head.add(hair);
   const capGeometry=new T.SphereGeometry(1,48,32),p=capGeometry.getAttribute('position');
   for(let i=0;i<p.count;i++){
-    const a=Math.atan2(p.getZ(i),p.getX(i)),t=Math.acos(p.getY(i))/Math.PI,ruffle=1+Math.sin(a*57+t*17)*.009+Math.sin(a*23-t*3)*.008,front=T.MathUtils.smoothstep(Math.sin(a),-.15,.65),max=2.64-front*1.64;
+    const a=Math.atan2(p.getZ(i),p.getX(i)),t=Math.acos(p.getY(i))/Math.PI,ruffle=1+Math.sin(a*57+t*17)*.009+Math.sin(a*23-t*3)*.008,front=T.MathUtils.smoothstep(Math.sin(a),-.15,.65),max=2.64-front*(1.47+Math.sin(a*23)*.035+Math.sin(a*13)*.028);
     p.setXYZ(i,Math.cos(a)*Math.sin(t*max)*.183*ruffle,Math.cos(t*max)*.238+.125,Math.sin(a)*Math.sin(t*max)*.169*ruffle-.009);
+    if(p.getZ(i)>0&&p.getY(i)<=.35&&Math.abs(p.getX(i))<.178)p.setZ(i,Math.max(p.getZ(i),faceDepth(p.getX(i),p.getY(i))+.008));
   }
   capGeometry.computeVertexNormals();const cap=new T.Mesh(capGeometry,surface('hair','#a9acad',{roughness:.74,bumpScale:.0012}));cap.castShadow=true;hair.add(cap);
   const tails=new T.Group();tails.name='ghost-long-hair';head.add(tails);
@@ -23,7 +25,7 @@ export function createHair(head:T.Group){
     const angle=i/locks*Math.PI*2,front=Math.sin(angle)>.55,bang=front&&Math.cos(angle)<-.25;
     // Leave one eye exposed; the opposite side is screened by irregular wet clumps.
     if(front&&!bang&&Math.cos(angle)<.7)continue;
-    const k=specs.length;specs.push({angle,bang,length:bang?.20+(i%5)*.055:.57+(i%7)*.038,width:bang?.010:.013+(i%4)*.003,phase:i*1.97});
+    const k=specs.length;specs.push({angle,bang,length:bang?.20+(i%5)*.055:.57+(i%7)*.038,width:bang?.015:.018+(i%4)*.004,phase:i*1.97});
     for(let j=0;j<=rows;j++)for(let col=0;col<=cols;col++){
       positions.push(0,0,0);uvs.push(col/cols,j/rows);
       if(j<rows&&col<cols){const n=k*(rows+1)*(cols+1)+j*(cols+1)+col;indices.push(n,n+cols+1,n+1,n+1,n+cols+1,n+cols+2);}
@@ -33,7 +35,7 @@ export function createHair(head:T.Group){
   const mesh=new T.Mesh(g,material);mesh.userData.locks=specs;mesh.castShadow=true;mesh.receiveShadow=true;tails.add(mesh);return {hair,tails};
 }
 export function settleHair(tails:T.Group,figure:T.Group,time:number,floor:number,heightAt?:(x:number,z:number)=>number){
-  figure.updateMatrixWorld(true);
+  tails.updateWorldMatrix(true,false);
   const world=tails.matrixWorld,inverse=world.clone().invert(),point=new T.Vector3(),center=new T.Vector3(),left=new T.Vector3(),sweepPoint=new T.Vector3();
   const mesh=tails.children[0] as T.Mesh,p=mesh.geometry.getAttribute('position');
   mesh.userData.locks.forEach(({angle:a,length,width,phase,bang}:{angle:number;length:number;width:number;phase:number;bang:boolean},lock:number)=>{
@@ -58,11 +60,11 @@ export function settleHair(tails:T.Group,figure:T.Group,time:number,floor:number
       if(point.y>-.10&&point.y<.33&&point.z>0){
         const r=Math.sqrt(Math.max(0,1-((point.y-.12)/.235)**2));
         const front=.182*r,side=.194*r;
-        if(Math.abs(point.x)<side){const skinZ=front*Math.sqrt(Math.max(0,1-(point.x/side)**2));point.z=Math.max(point.z,skinZ+.007);}
+        if(Math.abs(point.x)<side){const skinZ=Math.max(faceDepth(point.x,point.y),front*Math.sqrt(Math.max(0,1-(point.x/side)**2)));point.z=Math.max(point.z,skinZ+.01);}
       }
       p.setXYZ(lock*(rows+1)*(cols+1)+j*(cols+1)+col,point.x,point.y,point.z);
       }
     }
   });
-  p.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingSphere();
+  p.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.geometry.boundingSphere??=new T.Sphere(new T.Vector3(0,-.6,0),2.3);
 }

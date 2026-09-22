@@ -14,13 +14,14 @@ export class HorrorAudio {
   cleanupTimer:ReturnType<typeof setTimeout>|undefined;
   haunt:GainNode|null=null;
   chase:GainNode|null=null;chasePulse:OscillatorNode|null=null;chaseFilter:BiquadFilterNode|null=null;chaseLevel=-1;
+  chaseScore:AudioBufferSourceNode|null=null;
   weather:GainNode|null=null;
   driveBus:GainNode|null=null;driveTone:OscillatorNode|null=null;tyres:GainNode|null=null;
   driveSpeed=-2;
   roadSounds=new Set<AudioBufferSourceNode>();
   hauntLevel=-1;
   clips:Partial<Record<RecordedClip,AudioBuffer>>={};
-  deviceLoops=new Map<string,{source:AudioBufferSourceNode;gain:GainNode;pan:StereoPannerNode}>();
+  deviceLoops=new Map<string,{source:AudioBufferSourceNode;gain:GainNode;pan:StereoPannerNode;level:number}>();
   deviceWanted={phone:0,radio:0};
   volume = .42;
   start() {
@@ -41,11 +42,18 @@ export class HorrorAudio {
     // Original chase score: a quickening bass pulse beneath dissonant, bowed-like harmonics.
     this.chase=ctx.createGain();this.chase.gain.value=0;this.chase.connect(this.musicBus!);
     this.chaseFilter=ctx.createBiquadFilter();this.chaseFilter.type='lowpass';this.chaseFilter.frequency.value=900;this.chaseFilter.connect(this.chase);
-    const gate=ctx.createGain(),depth=ctx.createGain();gate.gain.value=.55;depth.gain.value=.5;gate.connect(this.chaseFilter);
+    const gate=ctx.createGain(),depth=ctx.createGain(),fallback=ctx.createGain();gate.gain.value=.55;depth.gain.value=.5;gate.connect(fallback);fallback.connect(this.chaseFilter);
     this.chasePulse=ctx.createOscillator();this.chasePulse.type='triangle';this.chasePulse.frequency.value=2.2;this.chasePulse.connect(depth);depth.connect(gate.gain);this.chasePulse.start();
     for(const [hz,level] of [[55,.12],[82.4,.06],[110.9,.065],[164.8,.035],[233.1,.018]]){
       const tone=ctx.createOscillator(),gain=ctx.createGain();tone.type=hz>150?'sawtooth':'triangle';tone.frequency.value=hz;gain.gain.value=level;tone.connect(gain);gain.connect(gate);tone.start();
     }
+    // Baked original score: wide bowed/brass clusters, low-string ostinato and drums.
+    // Decoding happens once; pursuit only moves the existing gain/filter controls.
+    void fetch('/audio/chase-score.wav').then(r=>{if(!r.ok)throw new Error('Score unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{
+      if(this.context!==ctx)return;
+      const source=ctx.createBufferSource(),gain=ctx.createGain();source.buffer=buffer;source.loop=true;gain.gain.value=0;
+      source.connect(gain);gain.connect(this.chaseFilter!);gain.gain.setTargetAtTime(.95,ctx.currentTime,.7);fallback.gain.setTargetAtTime(.17,ctx.currentTime,.7);source.start();this.chaseScore=source;
+    }).catch(()=>{});
     // Distant rain and ventilation stay quiet underneath positional sounds.
     for(const [hz,level] of [[650,.07],[2300,.018]]){const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();src.buffer=noise;src.loop=true;filter.type='lowpass';filter.frequency.value=hz;gain.gain.value=level;src.connect(filter);filter.connect(gain);gain.connect(this.weather);src.start();}
     const tvSource=ctx.createBufferSource(),tvFilter=ctx.createBiquadFilter();this.tv=ctx.createGain();this.tv.gain.value=0;tvSource.buffer=noise;tvSource.loop=true;tvFilter.type='bandpass';tvFilter.frequency.value=950;tvFilter.Q.value=1.1;tvSource.connect(tvFilter);tvFilter.connect(this.tv);this.tv.connect(this.effectsBus!);tvSource.start();
@@ -69,10 +77,10 @@ export class HorrorAudio {
     this.deviceWanted[device]=level;
     const ctx=this.context,old=this.deviceLoops.get(device);if(!ctx)return;
     if(level<=0){if(old){old.source.stop();old.source.disconnect();old.gain.disconnect();old.pan.disconnect();this.deviceLoops.delete(device);}return;}
-    if(old){old.gain.gain.setTargetAtTime(level*.55,ctx.currentTime,.15);old.pan.pan.value=pan;return;}
+    if(old){if(Math.abs(old.level-level)>.015){old.level=level;old.gain.gain.setTargetAtTime(level*.55,ctx.currentTime,.15);}old.pan.pan.value=pan;return;}
     const buffer=this.clips[device==='phone'?'phone-ring':'radio-tuning-broadcast'];if(!buffer)return;
     const source=ctx.createBufferSource(),gain=ctx.createGain(),p=ctx.createStereoPanner();source.buffer=buffer;source.loop=true;gain.gain.value=level*.55;p.pan.value=pan;
-    source.connect(gain);gain.connect(p);p.connect(this.effectsBus!);source.start();this.deviceLoops.set(device,{source,gain,pan:p});
+    source.connect(gain);gain.connect(p);p.connect(this.effectsBus!);source.start();this.deviceLoops.set(device,{source,gain,pan:p,level});
   }
   setHaunt(value:number){
     const level=Math.max(0,Math.min(1,value));if(!this.context||!this.haunt||!this.weather||Math.abs(level-this.hauntLevel)<.02)return;
@@ -114,9 +122,18 @@ export class HorrorAudio {
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.voiceBus!);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }
-  sound(kind:'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren'|'wiper'|'vibrate'|'brake'|'crash'|'glass',pan=0,level=1){
+  sound(kind:'wet-drop'|'door-creak'|'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren'|'wiper'|'vibrate'|'brake'|'crash'|'glass',pan=0,level=1){
     const ctx=this.context;if(!ctx||!this.master||ctx.state!=='running')return;
     const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.effectsBus!);
+    if(kind==='wet-drop'||kind==='door-creak'){
+      const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),body=ctx.createOscillator(),bodyGain=ctx.createGain(),wet=kind==='wet-drop',duration=wet?.65:1.05;
+      source.buffer=this.noise;filter.type=wet?'lowpass':'bandpass';filter.frequency.setValueAtTime(wet?1800:420,t);filter.frequency.exponentialRampToValueAtTime(wet?350:105,t+duration);filter.Q.value=wet?.8:9;
+      source.connect(filter);filter.connect(g);body.type=wet?'sine':'triangle';body.frequency.setValueAtTime(wet?125:175,t);body.frequency.exponentialRampToValueAtTime(wet?48:60,t+duration);bodyGain.gain.value=wet?.48:.07;body.connect(bodyGain);bodyGain.connect(g);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(level*(wet?.9:.24),t+.012);g.gain.exponentialRampToValueAtTime(wet?.075:.12,t+(wet?.09:.4));
+      if(wet){g.gain.linearRampToValueAtTime(.19*level,t+.14);g.gain.exponentialRampToValueAtTime(.025,t+.26);}
+      g.gain.exponentialRampToValueAtTime(.0001,t+duration);source.start(t);body.start(t);source.stop(t+duration+.02);body.stop(t+duration+.02);
+      source.onended=()=>{source.disconnect();filter.disconnect();body.disconnect();bodyGain.disconnect();g.disconnect();p.disconnect();};return;
+    }
     if(kind==='wiper'||kind==='vibrate'||kind==='brake'||kind==='crash'||kind==='glass'){
       const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter();source.buffer=this.noise;source.connect(filter);filter.connect(g);
       this.roadSounds.add(source);p.disconnect();p.connect(this.driveBus??this.effectsBus!);
@@ -142,5 +159,5 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.setDevice('phone',0);this.setDevice('radio',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.setDevice('phone',0);this.setDevice('radio',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }

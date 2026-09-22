@@ -8,7 +8,8 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
 let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0;const deviceLevels={phone:0,radio:0};
-class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){}}
+let pendingCompiles=null,rendererDisposals=0;
+class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{roomReflections:()=>({dispose(){}})}});
 mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
@@ -21,6 +22,15 @@ Object.assign(globalThis,{ResizeObserver:class{observe(){}disconnect(){}},reques
 const {createGame}=await import('../lib/game.ts');
 const event=(target,type,properties)=>{const e=new Event(type);Object.assign(e,properties);target.dispatchEvent(e);};
 function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.min(.025,left)*1000;nextFrame(clock);}}
+
+test('leaving while shaders compile stops frames and defers GPU disposal until both scenes finish',async()=>{
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  pendingCompiles=[];const game=createGame(canvas,()=>{},()=>{}),jobs=pendingCompiles;pendingCompiles=null;
+  const before=rendererDisposals;assert.equal(jobs.length,2);game.dispose();game.dispose();
+  assert.equal(nextFrame,undefined);assert.equal(rendererDisposals,before);
+  jobs[0]();await Promise.resolve();assert.equal(rendererDisposals,before,'hands compilation still owns its materials');
+  jobs[1]();await game.ready;await Promise.resolve();assert.equal(rendererDisposals,before+1);
+});
 
 test('a close divider stays within the held flashlight shadow frustum',()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
@@ -69,6 +79,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0,'the broken breaker must not restore apartment lighting');
   runHome(2.9,-1.4);runHome(0,-1.4);runHome(-2.1,0);runHome(-2.1,2.4);
   useHome([-2.1,1.65,2.4],[-3.15,.58,2.4],'shoes');
+  assert.ok(soundCalls.includes('wet-drop'),'the entrance evidence is introduced with its actual impact sound');
   runHome(-2.1,0);runHome(0,0);runHome(0,-3.5);
   useHome([0,1.65,-3.5],[0,.2,-4.65],'radio');
   assert.equal(deviceLevels.radio,0,'the radio waits until the discovery reaction has finished');
@@ -87,6 +98,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   tick(1);assert.equal(game.snapshot().story.stage,'listen','there is a silence after turning the radio off');
   game.pause();tick(5);assert.equal(game.snapshot().story.stage,'listen');game.pause(false);
   tick(2);assert.equal(game.snapshot().story.stage,'hide');assert.match(game.snapshot().objective,/장롱/);assert.ok(chaseLevel>.4,'the first direct pursuit raises the chase score');
+  assert.equal(renderedScene.getObjectByName('front-door').rotation.y,0,'the reveal comes from inside; the front door stays closed');
   assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0,'the apartment stays dark throughout the encounter');
   runHome(2.75,2);runHome(4.65,1.55);
   useHome([4.65,1.65,1.55],[5.43,1.25,1.55],'wait');assert.equal(chaseLevel,0,'hiding releases the chase score');

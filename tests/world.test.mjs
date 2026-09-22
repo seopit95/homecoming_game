@@ -136,7 +136,7 @@ test('opened home and elevator portals expose their adjoining spaces',()=>{
  const home=buildWorld(new THREE.Scene()),door=home.root.getObjectByName('front-door'),z=door.position.z;
  const a={x:0,y:1.6,z:z+1},b={x:0,y:1.6,z:z-3};
  home.updateStory('light_switch',0,false);assert.equal(hasLineOfSight(a,b,home.solids),false);
- home.updateStory('hide',1,false);home.updateStory('hide',3,false);assert.ok(door.rotation.y>1.3);assert.equal(hasLineOfSight(a,b,home.solids),true);
+ home.updateStory('hide',1,false);assert.equal(home.root.getObjectByName('front-door').rotation.y,0);home.root.getObjectByName('front-door').userData.openRequested=true;home.updateStory('hide',2,false);home.updateStory('hide',3.2,false);assert.ok(door.rotation.y>1.3);assert.equal(hasLineOfSight(a,b,home.solids),true);
  for(const area of ['lift','landing']){const w=buildWorld(new THREE.Scene(),area),dz=w.liftDoors.left.position.z;w.liftDoors.blocks[0].x=-.955;w.liftDoors.blocks[1].x=.955;assert.equal(hasLineOfSight({x:0,y:1.6,z:dz+.7},{x:0,y:1.6,z:dz-2},w.solids),true,`${area} opening is not filled by the building enclosure`);}
 });
 
@@ -156,7 +156,7 @@ test('the home threshold, 2803 entrance and elevator cab have connected walkable
   const {findPath}=await import('../lib/navigation.ts'),{landing}=await import('../lib/building.ts'),{apartment}=await import('../lib/apartment-layout.ts');
   const home=buildWorld(new THREE.Scene());
   assert.equal(canStandAt(0,apartment.doorZ,home.solids,.23,home.bounds),false);
-  home.updateStory('hide',1,false);home.updateStory('hide',3,false);
+  home.updateStory('hide',1,false);assert.equal(home.root.getObjectByName('front-door').rotation.y,0);home.root.getObjectByName('front-door').userData.openRequested=true;home.updateStory('hide',2,false);home.updateStory('hide',3.2,false);
   assert.ok(canStandAt(0,apartment.doorZ-.2,home.solids,.23,home.bounds));
   const w=buildWorld(new THREE.Scene(),'landing');
   const leaf=w.root.getObjectByName('2803-open-door'),original=home.root.getObjectByName('front-door').children[0];home.root.updateMatrixWorld(true);const center=original.getWorldPosition(new THREE.Vector3());

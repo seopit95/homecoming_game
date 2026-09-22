@@ -4,13 +4,13 @@ import {skinArm,poseSkinArm} from './ghost-limbs.ts';
 import {createHair,settleHair} from './ghost-hair.ts';
 import {createFace,poseFace,type FaceRig} from './ghost-face.ts';
 import {createDress,poseDress} from './ghost-dress.ts';
+import {extremity} from './ghost-anatomy.ts';
 
-type Rig={neck:T.Mesh;face:FaceRig;sleeves:T.Mesh[];skinArms:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
+type Rig={drips:T.InstancedMesh;neck:T.Mesh;face:FaceRig;sleeves:T.Mesh[];skinArms:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
 const rigs=new WeakMap<T.Group,Rig>();
 export function createGhost(parent:T.Object3D){
   const figure=new T.Group();figure.name='resident-remains';figure.rotation.order='YXZ';parent.add(figure);figure.visible=false;
-  const skin=surface('skin','#d5d5ce',{roughness:.73}),cloth=surface('cloth','#c1c3b9',{side:T.DoubleSide,roughness:.91,bumpScale:.0003,vertexColors:true});
-  const lipMat=new T.MeshStandardMaterial({color:'#645b58',roughness:.76});
+  const skin=surface('skin','#bfc7c3',{roughness:.62}),cloth=surface('cloth','#aeb5b0',{side:T.DoubleSide,roughness:.82,bumpScale:.00035,vertexColors:true});
   function mesh(g:T.BufferGeometry,m:T.Material,p:T.Object3D,x=0,y=0,z=0){const o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o;}
   function ellipsoid(p:T.Object3D,x:number,y:number,z:number,rx:number,ry:number,rz:number,m:T.Material){const o=mesh(new T.SphereGeometry(1,18,14),m,p,x,y,z);o.scale.set(rx,ry,rz);return o;}
   function segment(p:T.Object3D,length:number,radius:number,m:T.Material){
@@ -25,36 +25,30 @@ export function createGhost(parent:T.Object3D){
   const {hair,tails}=createHair(head);
   const arms:T.Group[]=[],forearms:T.Group[]=[],palms:T.Group[]=[],legs:T.Group[]=[],knees:T.Group[]=[],ankles:T.Group[]=[];
   for(const side of [-1,1]){
-    const arm=new T.Group();arm.position.set(side*.18,side<0?.308:.292,0);torso.add(arm);arms.push(arm);
+    const arm=new T.Group();arm.position.set(side*.18,side<0?.308:.245,side<0?0:-.015);torso.add(arm);arms.push(arm);
     const forearm=new T.Group();forearm.position.y=-.315;arm.add(forearm);forearms.push(forearm);
     const palm=new T.Group();palm.position.y=-.325;forearm.add(palm);palms.push(palm);
-    const hand=mesh(new T.SphereGeometry(1,24,20),skin,palm,0,-.035,.013),hp=hand.geometry.getAttribute('position');
-    for(let v=0;v<hp.count;v++){const x=hp.getX(v),y=hp.getY(v),z=hp.getZ(v);hp.setXYZ(v,Math.sign(x)*Math.abs(x)**.72*.038*(1-T.MathUtils.smoothstep(y,-.1,.9)*.3),Math.sign(y)*Math.abs(y)**.78*.046,Math.sign(z)*Math.abs(z)**1.1*.020);}hand.geometry.computeVertexNormals();hand.name=`ghost-hand-${side}`;hand.rotation.z=side*.09;
-    for(let i=0;i<4;i++){
-      const finger=new T.Group();finger.position.set((i-1.5)*.019,-.063,.017);finger.rotation.z=(i-1.5)*.14;finger.rotation.x=.18+i*.05;palm.add(finger);
-      const length=[.075,.087,.082,.065][i];const digit=segment(finger,length,.0095,skin),dp=digit.geometry.getAttribute('position');for(let v=0;v<dp.count;v++)dp.setZ(v,dp.getZ(v)+.013*(dp.getY(v)/length)**2);digit.geometry.computeVertexNormals();
-      ellipsoid(finger,0,-length+.006,.019,.005,.011,.0017,lipMat);
-    }
-    const thumb=new T.Group();thumb.position.set(side*.029,-.006,.012);thumb.rotation.set(.4,0,side*.62);palm.add(thumb);segment(thumb,.063,.009,skin);
+    palm.add(extremity('hand',side,skin));
     const leg=new T.Group();leg.name=`ghost-hip-${side}`;leg.position.set(side*.105,.87,.015);figure.add(leg);legs.push(leg);
     const knee=new T.Group();knee.name=`ghost-knee-${side}`;knee.position.y=-.42;leg.add(knee);knees.push(knee);ellipsoid(knee,0,-.014,0,.029,.048,.027,skin);segment(knee,.42,.035,skin);
-    const ankle=new T.Group();ankle.name=`ghost-ankle-${side}`;ankle.position.y=-.42;knee.add(ankle);ankles.push(ankle);ellipsoid(ankle,0,-.04,.07,.05,.043,.112,skin);
-    for(let i=0;i<5;i++)ellipsoid(ankle,(i-2)*.017,-.048,.166-Math.abs(i-1)*.005,.0105,.021,.028,skin);
+    const ankle=new T.Group();ankle.name=`ghost-ankle-${side}`;ankle.position.y=-.42;knee.add(ankle);ankles.push(ankle);ankle.add(extremity('foot',side,skin));
   }
   const body=new T.Group();body.name='ghost-body';body.add(...figure.children);figure.add(body);
   const skinArms=arms.map(()=>skinArm(body,skin)),sleeves=arms.map(()=>skinArm(body,cloth,true));
-  rigs.set(figure,{neck,face,sleeves,skinArms,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
+  sleeves[1].userData.torn=true;
+  const drips=new T.InstancedMesh(new T.SphereGeometry(.003,6,5),new T.MeshPhysicalMaterial({color:'#39090c',roughness:.25,clearcoat:.7}),6);drips.name='ghost-blood-drips';drips.frustumCulled=false;body.add(drips);
+  rigs.set(figure,{drips,neck,face,sleeves,skinArms,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
 }
 function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0){
   const rig=rigs.get(figure);if(!rig)return;
   rig.body.position.set(0,0,0);rig.body.quaternion.identity();
-  rig.face.jaw.rotation.set(0,0,0);rig.head.position.set(-.025,.46,.028);
+  rig.face.jaw.rotation.set(0,0,0);rig.head.position.set(-.025,.46,.028);rig.arms[1].position.y=.245;
   const step=Math.sin(phase),drag=Math.sin(phase/2),jerk=reducedMotion?0:Math.pow(Math.max(0,Math.sin(time*1.7)),22);
   rig.torso.rotation.set(.035+drag*.018*moving,Math.sin(time*.8)*.035,-.035+Math.max(0,step)*.025*moving);
   rig.torso.position.set(.035,1.16+Math.abs(step)*.014*moving,.02);
-  rig.head.rotation.set(.16+Math.sin(time*.9)*.025,-.08+Math.sin(time*.73)*.045+jerk*.19,-.43-jerk*.12+proximity*.06);
-  rig.arms[0].rotation.set(.1+step*.14*moving,-.1,.08);rig.arms[1].rotation.set(-.13-step*.1*moving,.15,-.16);
-  rig.forearms[0].rotation.set(-.17,.1,.08);rig.forearms[1].rotation.set(-.36+jerk*.13,.2,-.22);
+  rig.head.rotation.set(.24+Math.sin(time*.9)*.025,-.12+Math.sin(time*.73)*.045+jerk*.19,-.59-jerk*.12+proximity*.06);
+  rig.arms[0].rotation.set(.1+step*.14*moving,-.1,.08);rig.arms[1].rotation.set(-.2-step*.055*moving,.24,-.2);
+  rig.forearms[0].rotation.set(-.17,.1,.08);rig.forearms[1].rotation.set(-.56+jerk*.13,.35,-.28);
   for(let i=0;i<2;i++){
     rig.legs[i].position.set((i===0?-1:1)*.105,.87,.015);rig.palms[i].rotation.set(0,0,0);
     const a=T.MathUtils.euclideanModulo(phase+i*Math.PI,Math.PI*2),swing=a<Math.PI,lift=swing?Math.sin(a):0;
@@ -72,11 +66,23 @@ function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,red
   }
   return rig;
 }
-export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0){
+export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,heightAt?:(x:number,z:number)=>number){
   const rig=poseGhost(figure,time,moving,proximity,reducedMotion,phase,crawl);if(!rig)return;
   poseFace(rig.face,0);rig.mouth.visible=false;
   poseDress(rig.gown,rig.hem,rig.torso,time,crawl);
-  settleHair(rig.tails,figure,time,crawlFloor(rig));poseArms(rig);
+  if(heightAt)groundGhost(figure,heightAt,false);
+  settleHair(rig.tails,figure,time,crawlFloor(rig),heightAt);poseArms(rig);bloodDrops(rig,time);
+}
+
+function bloodDrops(rig:Rig,time:number,floor=.022){
+  rig.palms[1].updateWorldMatrix(true,false);rig.body.updateWorldMatrix(true,false);
+  const source=rig.body.worldToLocal(rig.palms[1].getWorldPosition(new T.Vector3())),matrix=new T.Matrix4(),scale=new T.Vector3(),point=new T.Vector3(),rotation=new T.Quaternion();
+  for(let i=0;i<6;i++){
+    const age=(time*.8+i/6)%1,fall=age*age*2.4;
+    point.set(source.x+.014*Math.sin(i*7),Math.max(floor,source.y-fall),source.z+.011*Math.cos(i*3));
+    const air=point.y>floor+.003,size=air?.0035:.01*(1-age);scale.set(size/.003,(air?.0075:.0007)/.003,size/.003);matrix.compose(point,rotation,scale);rig.drips.setMatrixAt(i,matrix);
+  }
+  rig.drips.instanceMatrix.needsUpdate=true;rig.drips.computeBoundingBox();rig.drips.computeBoundingSphere();
 }
 
 function poseArms(rig:Rig){
@@ -87,7 +93,7 @@ function poseArms(rig:Rig){
 function crawlFloor(rig:Rig){return rig.torso.position.y<.8?.018:0;}
 
 // Fit the visual body to the stairs while the navigation root stays on its path.
-export function groundGhost(figure:T.Group,heightAt:(x:number,z:number)=>number){
+export function groundGhost(figure:T.Group,heightAt:(x:number,z:number)=>number,finish=true){
   const rig=rigs.get(figure);if(!rig)return;
   const p=figure.position,yaw=figure.rotation.y,c=Math.cos(yaw),s=Math.sin(yaw);
   // A solid divider separates the flights: a turning limb must not sample the opposite floor.
@@ -113,7 +119,7 @@ export function groundGhost(figure:T.Group,heightAt:(x:number,z:number)=>number)
     reach(upper,lower,upper.parent!.worldToLocal(target),arm?.315:.42,arm?.325:.42,i===0?-1:1);
     tip.quaternion.copy(lower.getWorldQuaternion(new T.Quaternion()).invert().multiply(orientation));
   }
-  settleHair(rig.tails,figure,0,0,heightAt);poseArms(rig);
+  if(finish){settleHair(rig.tails,figure,0,0,heightAt);poseArms(rig);}
 }
 
 function reach(upper:T.Group,lower:T.Group,target:T.Vector3,l1:number,l2:number,side:number){
@@ -130,6 +136,7 @@ function crawlPose(rig:Rig,phase:number,moving:number,blend:number){
   rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving, .445+Math.cos(phase*2)*.014*moving,-.1+Math.sin(phase*2-.9)*.022*moving),blend);
   rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17,Math.sin(phase)*.025*moving,Math.sin(phase)*.055*moving)),blend);
   rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+Math.sin(phase-.9)*.035*moving,.065,-.28+Math.sin(phase-1)*.035*moving)),blend);
+  rig.arms[1].position.y=T.MathUtils.lerp(.245,.292,blend);
   const inverse=rig.torso.quaternion.clone().invert();
   for(let i=0;i<2;i++){
     const side=i===0?-1:1,a=T.MathUtils.euclideanModulo(phase+i*Math.PI,Math.PI*2),u=a/(Math.PI*2),swing=u<.36,lift=(swing?Math.sin(u/.36*Math.PI):0)*moving;
@@ -152,7 +159,7 @@ export function animateGhostPassenger(figure:T.Group,time:number,scare:number,re
   rig.head.rotation.set(.05,-.7,-.26+(reducedMotion?0:Math.sin(time*21)*.025*scare));
   rig.head.position.z+=scare*.055;poseFace(rig.face,scare);rig.tails.scale.y=.68;
   poseDress(rig.gown,rig.hem,rig.torso,time,0,true);
-  settleHair(rig.tails,figure,time,.25);poseArms(rig);
+  settleHair(rig.tails,figure,time,.25);poseArms(rig);bloodDrops(rig,time,.255);
 
 }
 
@@ -167,5 +174,5 @@ export function animateGhostAttack(figure:T.Group,time:number,reducedMotion:bool
   rig.head.position.z+=.055*opening;poseFace(rig.face,gape);rig.mouth.visible=true;
   rig.hair.rotation.set(0,0,0);rig.tails.rotation.set(0,0,0);
   for(let i=0;i<2;i++){const side=i===0?-1:1;rig.arms[i].rotation.set(-2.05+Math.sin(time*18+i)*convulsion*2,side*.3,side*.35);rig.forearms[i].rotation.set(-.8+Math.sin(time*21+i)*convulsion,0,side*.2);}
-  poseDress(rig.gown,rig.hem,rig.torso,time,0);settleHair(rig.tails,figure,time,0);poseArms(rig);
+  poseDress(rig.gown,rig.hem,rig.torso,time,0);settleHair(rig.tails,figure,time,0);poseArms(rig);bloodDrops(rig,time);
 }

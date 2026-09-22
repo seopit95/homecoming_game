@@ -1,8 +1,22 @@
 import {canStandAt,type Solid,type Bounds} from './world.ts';
 export type Point={x:number;z:number};
+// Slab intersection against expanded obstacles preserves the pursuer's clearance.
+// Sampling only a centre ray would let a smoothed route clip a door jamb.
+export function clearPath(a:Point,b:Point,solids:Solid[],bounds:Bounds,r=.18){
+  if(!canStandAt(a.x,a.z,solids,r,bounds)||!canStandAt(b.x,b.z,solids,r,bounds))return false;
+  const dx=b.x-a.x,dz=b.z-a.z;
+  return !solids.some(s=>{
+    let lo=0,hi=1;
+    for(const [origin,d,min,max] of [[a.x,dx,s.x-s.w/2-r,s.x+s.w/2+r],[a.z,dz,s.z-s.d/2-r,s.z+s.d/2+r]]){
+      if(Math.abs(d)<1e-9){if(origin<=min||origin>=max)return false;}
+      else{const t1=(min-origin)/d,t2=(max-origin)/d;lo=Math.max(lo,Math.min(t1,t2));hi=Math.min(hi,Math.max(t1,t2));if(lo>=hi)return false;}
+    }
+    return true;
+  });
+}
 export function findPath(start:Point,goal:Point,solids:Solid[],bounds:Bounds):Point[]{
   const free=(p:Point)=>canStandAt(p.x,p.z,solids,.18,bounds);
-  const clear=(a:Point,b:Point)=>{const n=Math.max(1,Math.ceil(Math.hypot(a.x-b.x,a.z-b.z)/.12));for(let i=0;i<=n;i++)if(!free({x:a.x+(b.x-a.x)*i/n,z:a.z+(b.z-a.z)*i/n}))return false;return true;};
+  const clear=(a:Point,b:Point)=>clearPath(a,b,solids,bounds);
   if(!free(start)||!free(goal))return [];
   if(clear(start,goal))return [goal];
   const sx=Math.round(start.x*2),sz=Math.round(start.z*2),key=(x:number,z:number)=>`${x},${z}`;
@@ -18,7 +32,10 @@ export function findPath(start:Point,goal:Point,solids:Solid[],bounds:Bounds):Po
     const {x,z,g}=pop();if(g!==cost.get(key(x,z)))continue;const p={x:x/2,z:z/2};
     if(Math.hypot(p.x-goal.x,p.z-goal.z)<.8&&clear(p,goal)){
       const path:Point[]=[goal];let at:string|null=key(x,z);
-      while(at!==null){const [ax,az]=at.split(',').map(Number);path.push({x:ax/2,z:az/2});at=parents.get(at)??null;}return path.reverse();
+      while(at!==null){const [ax,az]=at.split(',').map(Number);path.push({x:ax/2,z:az/2});at=parents.get(at)??null;}
+      path.reverse();const smooth:Point[]=[];let from=start,index=0;
+      while(index<path.length){let far=path.length-1;while(far>index&&!clear(from,path[far]))far--;smooth.push(path[far]);from=path[far];index=far+1;}
+      return smooth;
     }
     for(const [dx,dz] of [[0,1],[0,-1],[1,0],[-1,0]]){
       const nx=x+dx,nz=z+dz,k=key(nx,nz),nextCost=g+1;if(nextCost>=(cost.get(k)??Infinity)||!clear(p,{x:nx/2,z:nz/2}))continue;parents.set(k,key(x,z));cost.set(k,nextCost);push({x:nx,z:nz,g:nextCost,f:nextCost+heuristic(nx,nz)});

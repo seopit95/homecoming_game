@@ -12,3 +12,9 @@ test('the pursuer detours around a wall instead of crossing it',()=>{
 test('a sealed wall cannot be crossed by pathfinding',()=>{
   assert.deepEqual(findPath({x:-3,z:0},{x:3,z:0},[{x:0,z:0,w:.5,d:10}],{x:5,z:5}),[]);
 });
+test('a detour contains only useful visible corners, never a rounded start behind the pursuer',()=>{
+  const wall=[{x:0,z:0,w:.5,d:5}],bounds={x:5,z:5},start={x:-3.17,z:.19};
+  const path=findPath(start,{x:3,z:0},wall,bounds);
+  assert.ok(path.length<=4,`a single wall needs at most three corners, got ${path.length}`);
+  assert.ok(Math.hypot(path[0].x-start.x,path[0].z-start.z)>1,'no tiny snapped-start step');
+});

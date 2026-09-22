@@ -8,7 +8,7 @@ export function prepareVisuals(){
   if(!loading)loading=(async()=>{
     const loader=new T.TextureLoader();
     const results=await Promise.allSettled((['surfaces','remains','face','hand','hand-view','cockpit'] as const).map(async key=>{
-      const texture=await loader.loadAsync(`/textures/${key==='face'?'ghost-face-v3':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v3':key==='hand'?'hand-skin':key}.png`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
+      const texture=await loader.loadAsync(`/textures/${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     }));
     if(results.some(r=>r.status==='rejected')){for(const r of results)if(r.status==='fulfilled')r.value.texture.dispose();loading=undefined;throw new Error('Visual asset loading failed');}
     for(const r of results)if(r.status==='fulfilled')sources[r.value.key]=r.value.texture;
@@ -25,7 +25,7 @@ export function surface(kind:Surface,color='#ffffff',options:T.MeshStandardMater
   const bumpScale=kind==='skin'?.0007:kind==='hair'?.00045:kind==='cloth'||kind==='fabric'?.0008:kind==='wall'||kind==='decayWall'?.0015:kind==='steel'?.0006:.0025;
   const material=new T.MeshStandardMaterial({color:map?color:fallback[kind],roughness,map:map??null,bumpMap:map??null,bumpScale,...options});material.name=`surface-${kind}`;
   if(map){
-    const [x,y]=tiles[kind],grid=character?2:3,repeat=kind==='fabric'?'8.0':kind==='cloth'?'3.0':kind==='leather'?'4.0':kind==='skin'?'1.5':'1.0';
+    const [x,y]=tiles[kind],grid=character?2:3,repeat=kind==='fabric'?'8.0':kind==='cloth'?'1.0':kind==='leather'?'4.0':kind==='skin'?'1.0':'1.0';
     const uv=`vec2(${(x/grid+.003).toFixed(5)},${(y/grid+.003).toFixed(5)}) + (1.0 - abs(mod(uv * ${repeat}, 2.0) - 1.0)) * ${(1/grid-.006).toFixed(5)}`;
     material.onBeforeCompile=shader=>{
       shader.fragmentShader=`vec2 atlasUv(vec2 uv){return ${uv};}\n`+shader.fragmentShader;
@@ -46,9 +46,9 @@ export function handSkinMaterial(){
 }
 export function faceMaterial(){
   const map=sources.face?.clone();if(map)map.needsUpdate=true;
-  const material=new T.MeshStandardMaterial({color:'#d7dedc',map:map??null,roughness:.79,side:T.DoubleSide});
-  material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.rgb=pow(diffuseColor.rgb,vec3(.78))*vec3(.94,1.0,1.04);');};
-  material.customProgramCacheKey=()=> 'resident-face-grade-v3';return material;
+  const material=new T.MeshPhysicalMaterial({color:'#bcc3bf',map:map??null,roughness:.64,clearcoat:.12,clearcoatRoughness:.4,side:T.DoubleSide});
+  material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.rgb=diffuseColor.rgb*vec3(.96,1.0,1.015);');};
+  material.customProgramCacheKey=()=> 'accident-victim-face-v4';return material;
 }
 export function boxUV(geometry:T.BufferGeometry,x=0,y=0,z=0,scale=1.8){
   const p=geometry.getAttribute('position'),n=geometry.getAttribute('normal'),uv=geometry.getAttribute('uv');
