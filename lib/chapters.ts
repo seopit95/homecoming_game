@@ -1,3 +1,4 @@
+import {connectionPassage} from './passage.ts';
 import * as T from 'three';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {basin,sinkCounter,cabinet,roundPipe} from './props.ts';
@@ -38,10 +39,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     for(const z of [-5.95]){for(const x of [-2.7,2.7])box(x,1.4,z,4.1,2.8,.2,wall,true);box(0,2.6,z,1.3,.4,.2,wall);}
     // The stair door leads to a real gallery outside 1704, not to its living room.
     const gallery=buildResidentGallery(root);solids.push(...gallery.solids);lamps.push(...gallery.lamps);
-    const plaster=surface('decayWall','#9da598'),galleryFloor=surface('oldTile','#9a9e91',{roughness:.65});
-    box(0,-.1,-7.15,1.5,.2,2.5,galleryFloor);box(0,2.87,-7.15,1.5,.14,2.5,plaster);
-    for(const x of [-.75,.75])box(x,1.4,-7.15,.14,2.8,2.5,plaster,true);box(0,1.4,-8.45,1.5,2.8,.14,plaster,true);
-    label('1703 · 임시 관리실',0,1.9,-8.36,1.15,.28);light(0,2.3,-7.25,'#83998d',2,4);
+    connectionPassage(root,solids,lamps,0,-5.95);
     function roomDoor(name:string,z:number){
       const hinge=new T.Group();hinge.name=name;hinge.position.set(-.59,0,z);root.add(hinge);
       box(.59,1.15,0,1.16,2.3,.09,metal,false,hinge);box(1.03,1.05,.085,.17,.04,.12,dark,false,hinge);
@@ -147,7 +145,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
       if(carSolid){const i=solids.indexOf(carSolid);if(stage!=='road_exit'&&i<0)solids.push(carSolid);else if(stage==='road_exit'&&i>=0)solids.splice(i,1);}
       root.children.forEach(o=>{if(o.name==='rescue-light'&&o instanceof T.PointLight)o.intensity=stage==='road_wait'?(reducedMotion?3:Math.max(0,Math.sin(time*3+o.position.x))*14):0;});}
   }
-  return {bounds,solids,targets,lamps,figure,shoes,phoneGlow,radioLight,spawn,heading,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,updateStory};
+  return {bounds,solids,targets,lamps,figure,shoes,phoneGlow,radioLight,spawn,heading,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,updateStory,reset(){frontAt=-1;rearAt=-1;}};
 }
 
 // Both sides of the stair threshold render this exact gallery before the world changes.

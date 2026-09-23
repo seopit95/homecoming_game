@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {createPedestrian} from './pedestrian.ts';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {surface,boxUV,softBox,handSkinMaterial,upholstery,cutoutMaterial} from './materials.ts';
 import {createLeatherShoe} from './entry-props.ts';
@@ -118,7 +119,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const mirrorCamera=new T.PerspectiveCamera(32,384/112,.1,75);
   const mirrorFace=mesh(new T.PlaneGeometry(.387,.115),new T.MeshBasicMaterial({map:mirrorTarget.texture,color:'#a5b4c1'}),[-.24,1.51,-1.403],car);
   const mirrorUv=mirrorFace.geometry.getAttribute('uv');for(let i=0;i<mirrorUv.count;i++)mirrorUv.setX(i,1-mirrorUv.getX(i));
-  root.addEventListener('removed',()=>mirrorTarget.dispose());
+
   function renderMirror(renderer:T.WebGLRenderer){
     const previous=renderer.getRenderTarget(),shadows=renderer.shadowMap.autoUpdate;
     car.visible=false;renderer.shadowMap.autoUpdate=false;
@@ -153,9 +154,9 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   // The glance must never reveal road markings through a missing floor or door.
   box(0,.18,.05,1.94,.1,2.65,dash,car);
   for(const side of [-1,1]){
-    box(side*.96,.6,-.04,.12,.8,2.3,dash,car);
-    box(side*.895,.74,-.1,.05,.07,.75,rubber,car);
-    box(side*.886,.69,-.25,.022,.045,.18,steel,car);
+    box(side*.96,.32,-.04,.12,.3,2.3,dash,car);
+    box(side*.895,.44,-.1,.05,.07,.75,rubber,car);
+    box(side*.886,.39,-.25,.022,.045,.18,steel,car);
   }
   box(-.54,.4,.32,.7,.19,.83,surface('leather','#9caaa9'),car);
   const seatBack=box(-.54,.89,.76,.7,.83,.19,surface('leather','#9caaa9'),car);seatBack.rotation.x=.13;
@@ -164,33 +165,12 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   rod([-.26,.793,-1.08],[-.26,.89,-1.015],.014,rubber,car);
   const distraction=box(-.26,.92,-1,.09,.016,.18,rubber,car);distraction.rotation.x=.85;
   const message=label('새 메시지',.078,.15,[0,.02,0],distraction,'#1d343b','#a8c6c2');message.rotation.x=-Math.PI/2;
-  // The victim is still a living person here: natural proportions, a coat, shoes and a shoulder bag.
-  const victim=new T.Group();victim.name='memory-pedestrian';root.add(victim);
-  const coat=upholstery('#6c7674'),pants=new T.MeshStandardMaterial({color:'#30383d',roughness:.93});
-  const torso=new T.Group();torso.position.y=.94;victim.add(torso);
-  sphere([0,.24,0],[.195,.29,.115],coat,torso);
-  const skirt=mesh(new T.CylinderGeometry(.155,.245,.57,28,6,true),coat,[0,-.02,0],torso);skirt.scale.z=.66;
-  for(const x of [-.025,.025])box(x,.21,.119,.022,.36,.01,paint,torso);
-  rod([0,.51,0],[0,.58,0],.053,skin,torso);
-  const head=new T.Group();head.position.set(0,.66,0);torso.add(head);
-  sphere([0,0,0],[.105,.144,.099],skin,head);
-  sphere([0,.035,-.039],[.114,.147,.094],rubber,head);sphere([0,-.104,-.072],[.101,.19,.051],rubber,head);
-  sphere([0,-.021,.095],[.018,.028,.024],skin,head);
-  for(const side of [-1,1]){sphere([side*.038,.018,.087],[.016,.006,.009],rubber,head);sphere([side*.096,-.006,0],[.022,.036,.02],skin,head);}
-  for(let i=0;i<18;i++){const a=i*Math.PI*2/18,x=Math.cos(a)*.108,z=Math.sin(a)*.089-.015;if(z>.045)continue;tube([[x*.8,.12,z],[x*1.08,-.03,z-.013],[x*.88,-.24,z-.023],[x*1.06,-.34-(i%3)*.04,z+.017]],.009,rubber,head);}
-  for(const side of [-1,1]){const lapel=box(side*.07,.37,.103,.082,.17,.022,coat,torso);lapel.rotation.z=side*.35;}
-  for(let i=0;i<4;i++)sphere([0,.28-i*.09,.124],[.009,.009,.004],rubber,torso);
-  const limbs:T.Group[]=[];
-  for(const side of [-1,1]){
-    const leg=new T.Group();leg.position.set(side*.092,.82,0);victim.add(leg);limbs.push(leg);
-    rod([0,0,0],[0,-.38,.015],.072,pants,leg,.055);rod([0,-.38,.015],[0,-.73,0],.055,pants,leg,.036);
-    const foot=sphere([0,-.754,.048],[.067,.049,.135],rubber,leg);foot.name=side===1?'memory-shoe':'memory-other-shoe';
-    const arm=new T.Group();arm.position.set(side*.198,.37,0);torso.add(arm);limbs.push(arm);
-    rod([0,0,0],[side*.025,-.3,.015],.07,coat,arm,.048);rod([side*.025,-.3,.015],[side*.012,-.53,.062],.049,coat,arm,.032);
-    sphere([side*.014,-.558,.066],[.033,.065,.028],skin,arm);
-  }
-  const bag=new T.Group();root.add(bag);box(0,0,0,.26,.24,.095,pants,bag);tube([[-.1,.1,0],[-.08,.25,0],[.1,.1,0]],.012,rubber,bag);
-  const phone=box(0,.045,0,.068,.012,.138,rubber);const phoneScreen=label('수신 중',.06,.1,[0,.052,0],phone);phoneScreen.rotation.x=-Math.PI/2;phoneScreen.position.set(0,.009,0);
+  const pedestrian=createPedestrian(root),victim=pedestrian.root;
+  const pants=new T.MeshStandardMaterial({color:'#30383d',roughness:.93});
+  const bag=new T.Group();root.add(bag);const bagLeather=surface('leather','#342d29',{roughness:.68});
+  mesh(softBox(.26,.24,.095,.025),bagLeather,[0,0,0],bag);mesh(softBox(.235,.13,.012,.014),bagLeather,[0,.046,.049],bag);box(0,.005,.06,.034,.018,.008,steel,bag);
+  for(const z of [-.035,.035])tube([[-.09,.1,z],[-.07,.22,z],[.07,.22,z],[.09,.1,z]],.008,bagLeather,bag);
+  const phone=box(0,.045,0,.068,.012,.138,rubber);const phoneScreen=label('',.06,.1,[0,.052,0],phone);phoneScreen.rotation.x=-Math.PI/2;phoneScreen.position.set(0,.009,0);
   const driveDuration=opening.drive!.duration,impactDuration=opening.impact!.duration;
   const cruiseSpeed=8,braking=driveDuration-beats.brake,deceleration=1.8,impactSpeed=cruiseSpeed-braking*deceleration,stopZ=1.2-impactSpeed*.45;
   const looseShoe=createLeatherShoe();looseShoe.name='memory-lost-shoe';root.add(looseShoe);
@@ -267,15 +247,20 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     hood.rotation.x=-.035+(driving?0:.07*T.MathUtils.smoothstep(hitTime,0,.25));cracks.visible=!driving;
     victim.visible=true;
     if(driving){victim.position.set(-4.7+T.MathUtils.clamp(t-(driveDuration-5),0,5)*1.37,0,-1.85);victim.rotation.set(0,Math.PI/2,0);}
-    else{const flight=T.MathUtils.smoothstep(hitTime,0,1.1);victim.position.set(2.15+flight*1.18,Math.sin(flight*Math.PI)*.68+flight*.28,-1.85-flight*3.9);victim.rotation.set(-flight*Math.PI/2,Math.PI/2-flight*.8,flight*.015,'YXZ');}
-    torso.rotation.z=driving?Math.sin(clock*5)*.016:0;head.rotation.y=driving?T.MathUtils.smoothstep(t,driveDuration-1.3,driveDuration-.2)*.75:0;
-    limbs.forEach((limb,i)=>{limb.rotation.x=driving?Math.sin(clock*5+(i<2?0:Math.PI))*(i%2?.16:.3):Math.sin(Math.min(hitTime,1.2)*3+i)*.15;});
+    else{
+      const wrap=T.MathUtils.smoothstep(hitTime,0,.44),slide=T.MathUtils.smoothstep(hitTime,.45,1.55);
+      // The bumper folds the knees; the torso rolls across the bonnet edge and
+      // slides down beside the stopped car. There is no airborne rigid-body arc.
+      victim.position.set(2.15+.14*wrap+1.05*slide,-.12*wrap-.6*slide,-1.85-1.4*wrap-.55*slide);
+      victim.rotation.set(0,Math.PI/2-.18*slide,0);
+    }
+    pedestrian.pose(driving?clock:driveDuration,driving?null:hitTime);
+    if(!driving&&hitTime>.9){const contact=new T.Box3().setFromObject(victim,true);victim.position.y+=Math.max(0,.012-contact.min.y);}
     if(driving){bag.position.set(victim.position.x+.04,.69,-1.59);bag.rotation.set(0,0,0);phone.visible=false;}
     else{const scatter=T.MathUtils.smoothstep(hitTime,.15,1.15);bag.position.set(2.19+scatter*.6,.69*(1-scatter)+scatter*.11,-1.59-scatter*2);bag.rotation.set(scatter*1.3,scatter*.7,scatter*.2);phone.visible=hitTime>.35;phone.position.set(3.1,.009,-3.9);phone.rotation.y=.8;}
     const detached=!driving&&hitTime>.25;victim.getObjectByName('memory-shoe')!.visible=!detached;looseShoe.visible=detached;
     const shoeFall=T.MathUtils.smoothstep(hitTime,.25,1.1);looseShoe.position.set(2.08+shoeFall*.55,Math.sin(shoeFall*Math.PI)*.28+.026,-2.25-shoeFall*1.65);looseShoe.rotation.set(0,shoeFall*1.6,0);
-    const ringing=!driving&&hitTime>=beats.victimCall;
-    (phoneScreen.material as T.MeshBasicMaterial).color.setScalar(ringing?.6+Math.sin(clock*5)*.25:.18);
+    (phoneScreen.material as T.MeshBasicMaterial).color.setScalar(.025);
     rain.position.set(x,-(clock*4.6)%6,z);
     return speed;
   }
@@ -291,5 +276,5 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     const merged=new T.Mesh(geometry,batch[0].material);merged.castShadow=batch[0].castShadow;merged.receiveShadow=batch[0].receiveShadow;root.add(merged);
     batch.forEach(m=>{m.geometry.dispose();root.remove(m);});
   }
-  return {root,pose,renderMirror};
+  return {root,pose,renderMirror,dispose(){mirrorTarget.dispose();}};
 }

@@ -103,7 +103,7 @@ test('the collectible fuse is visible outside its opaque cabinet',()=>{
 });
 test('the large apartment floor offers two connected routes around its service cores',async()=>{
   const {findPath}=await import('../lib/navigation.ts'),w=buildWorld(new THREE.Scene(),'corridor');
-  assert.ok(w.bounds.x<3.6&&w.bounds.z>=19);
+  assert.ok(w.bounds.x<=4.3&&w.bounds.z>=19);assert.equal(canStandAt(3.7,0,w.solids,.23,w.bounds),false,'the main corridor keeps its original wall line; only the turning vestibule extends the bounds');
   for(const x of [-2.6,2.6]){const path=findPath(w.spawn,{x,z:-17},w.solids,w.bounds);assert.ok(path.length>0);assert.ok(path.some(p=>Math.abs(p.x)>2));}
   assert.ok(findPath({x:-2.6,z:0},{x:2.6,z:0},w.solids,w.bounds).length>0,'the middle passage connects the wings');
 });

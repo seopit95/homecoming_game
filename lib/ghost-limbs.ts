@@ -7,13 +7,13 @@ export function poseSkinArm(mesh:T.Mesh,upper:T.Group,lower:T.Group,palm:T.Group
  mesh.parent!.updateWorldMatrix(true,false);upper.updateWorldMatrix(true,false);lower.updateWorldMatrix(true,false);palm.updateWorldMatrix(true,false);
  const inverse=mesh.parent!.matrixWorld.clone().invert(),a=upper.getWorldPosition(new T.Vector3()).applyMatrix4(inverse),b=lower.getWorldPosition(new T.Vector3()).applyMatrix4(inverse),c=palm.getWorldPosition(new T.Vector3()).applyMatrix4(inverse);
  const curve=new T.CatmullRomCurve3([a,a.clone().lerp(b,.4),b,b.clone().lerp(c,.35),c]),p=mesh.geometry.getAttribute('position');
- const sleeve=mesh.userData.sleeve,radii=sleeve?[.083,.067,.052,.051,.038]:[.064,.056,.032,.041,.022],point=new T.Vector3(),normal=new T.Vector3(),binormal=new T.Vector3(),center=new T.Vector3(),tangent=new T.Vector3(),axis=new T.Vector3();
+ const sleeve=mesh.userData.sleeve,radii: number[]=mesh.userData.radii??(sleeve?[.083,.067,.052,.051,.038]:[.064,.056,.032,.041,.022]),point=new T.Vector3(),normal=new T.Vector3(),binormal=new T.Vector3(),center=new T.Vector3(),tangent=new T.Vector3(),axis=new T.Vector3();
  for(let row=0;row<=20;row++){
-  const t=row/20*(sleeve?(mesh.userData.torn?.53:.89):1),segment=Math.min(3,Math.floor(t*4)),u=T.MathUtils.smoothstep(t*4-segment,0,1),radius=T.MathUtils.lerp(radii[segment],radii[segment+1],u)*(sleeve?Math.sin(T.MathUtils.clamp(t/.14,0,1)*Math.PI/2):1);
+  const t=row/20*(sleeve?(mesh.userData.torn?.33:.55):1),segment=Math.min(3,Math.floor(t*4)),u=T.MathUtils.smoothstep(t*4-segment,0,1),radius=T.MathUtils.lerp(radii[segment],radii[segment+1],u)*(sleeve?Math.sin(T.MathUtils.clamp(t/.14,0,1)*Math.PI/2):1);
   curve.getPoint(t,center);curve.getTangent(t,tangent).normalize();
   if(sleeve)center.addScaledVector(tangent,-.067*Math.cos(T.MathUtils.clamp(t/.14,0,1)*Math.PI/2));
   normal.crossVectors(tangent,Math.abs(tangent.z)>.92?axis.set(0,1,0):axis.set(0,0,1)).normalize();binormal.crossVectors(tangent,normal).normalize();
   for(let col=0;col<=16;col++){const angle=col/16*Math.PI*2,fold=sleeve?1+Math.sin(angle*7+t*19)*.045+Math.sin(t*56+angle*2)*.025:1;point.copy(center).addScaledVector(normal,Math.cos(angle)*radius*fold).addScaledVector(binormal,Math.sin(angle)*radius*.84*fold);p.setXYZ(row*17+col,point.x,point.y,point.z);}
  }
- p.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.geometry.boundingSphere??=new T.Sphere(new T.Vector3(0,.9,0),1.4);
+ p.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.geometry.boundingSphere??=new T.Sphere(new T.Vector3(0,.9,0),2);
 }

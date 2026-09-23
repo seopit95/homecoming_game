@@ -7,12 +7,12 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
-let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0;const deviceLevels={phone:0,radio:0};
+let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0,breathLevel=0;const deviceLevels={phone:0,radio:0};
 let pendingCompiles=null,rendererDisposals=0;
 class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{roomReflections:()=>({dispose(){}})}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -48,7 +48,7 @@ test('a close divider stays within the held flashlight shadow frustum',()=>{
 test('real interaction loop reaches the ending, requires a held pry, and freezes on pause',async()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const media=win.matchMedia;win.matchMedia=query=>({matches:query.includes('pointer:coarse')});
-  const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));win.matchMedia=media;tick();game.start();game.skipMemory();tick();
+  const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));await game.ready;win.matchMedia=media;tick();game.start();game.skipMemory();tick();
   event(win,'blur',{});event(doc,'pointerlockchange',{});assert.equal(game.snapshot().paused,false,'losing focus or pointer lock must not open a pause menu');
   doc.hidden=true;event(doc,'visibilitychange',{});const backgroundAt=game.snapshot().elapsed;tick(5);assert.equal(game.snapshot().paused,false);assert.equal(game.snapshot().elapsed,backgroundAt);doc.hidden=false;event(doc,'visibilitychange',{});
   assert.equal(game.snapshot().story.stage,'wake_ring');assert.equal(game.snapshot().hasFlashlight,false);
@@ -122,18 +122,18 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   use([0,1.65,-.45],[.92,1.3,-.45],'descent');
   tick(8);assert.equal(game.snapshot().liftFloor,26);
   const pausedAt=game.snapshot().elapsed;game.pause();tick(3);assert.equal(game.snapshot().elapsed,pausedAt);game.pause(false);
-  tick(2.8);assert.equal(renderedScene.getObjectByName('lift-door-hand')?.visible,true,'the described fingers are rendered');
-  const hand=renderedScene.getObjectByName('lift-door-hand'),finger=hand.children[0];game.pause();const pose=finger.rotation.toArray();tick(4);assert.deepEqual(finger.rotation.toArray(),pose);game.pause(false);
+  tick(2.8);assert.equal(renderedScene.getObjectByName('lift-door-hand'),undefined);
   tick(5.3);assert.equal(game.snapshot().story.stage,'pry');assert.equal(game.snapshot().liftFloor,24);
   aim([0,1.65,-.15],[0,1.3,-1.13]);game.interact();assert.equal(game.snapshot().story.stage,'pry','click alone must not pry the door');
   game.key('KeyE',true);tick(1);assert.ok(game.snapshot().holdProgress>.3&&game.snapshot().holdProgress<.4);
   game.pause();tick(4);assert.equal(game.snapshot().story.stage,'pry');assert.equal(game.snapshot().holdProgress,0);game.pause(false);
   game.hold(true);tick(3.1);game.hold(false);assert.equal(game.snapshot().story.stage,'lift_exit');tick(1);
-  use([0,1.65,-.15],[0,1.3,-1.1],'corridor_run');
+  aim([0,1.65,-.15],[0,1.65,-3],false);game.interact();assert.equal(game.snapshot().story.stage,'lift_exit','E does not exit the lift');game.crouch();game.key('KeyW',true);for(let i=0;i<100&&game.snapshot().story.stage==='lift_exit';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'corridor_run');assert.equal(game.snapshot().crouched,true);assert.ok(Math.abs(renderedCamera.position.y-1)<.03);game.crouch();tick();
+  assert.ok(renderedScene.getObjectByName('lift-ceiling-hatch'));assert.ok(renderedScene.getObjectByName('resident-remains').position.y>2,'pursuer starts above the cab');
   runTo(-2.6,16);runTo(-2.6,-16);runTo(0,-18.5);
-  use([0,1.65,-18.5],[0,1.25,-19.68],'stairs_loop');
+  use([0,1.65,-18.5],[0,1.25,-19.68],'corridor_departure');tick(1);runTo(0,-22);aim(renderedCamera.position.toArray(),[3,1.65,-22],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='corridor_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'stairs_loop');runTo(0,10);runTo(0,5.5);
   use([1,-1.15,-4.8],[1,-1.55,-5.65],'stairs_clue');
-  use([0,1.65,4.5],[0,1.65,5.7],'stairs_reverse');
+  use([1.25,1.65,4.5],[1.25,1.65,5.7],'stairs_reverse');
   use([-1,4.45,-4.8],[-1,4.05,-5.65],'stairs_passage');
   assert.equal(renderedScene.getObjectByName('resident-1704'),undefined,'opening the stair door does not teleport into a home');
   tick(1);aim(renderedCamera.position.toArray(),[-1,4.45,-7],false);game.key('KeyW',true);for(let i=0;i<100&&game.snapshot().story.stage==='stairs_passage';i++)tick(.025);game.key('KeyW',false);
@@ -144,7 +144,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   runTo(0,4.05);runTo(-1.65,4.05);runTo(-3.8,2.8);use([-3.8,1.65,2.8],[-3.8,.94,3.3],'resident_memory');assert.match(game.snapshot().objective,/2\/3.*냉장고/);assert.equal(deviceLevels.phone,0);
   runTo(-1.6,3.15);runTo(0,3.15);runTo(3.8,3.15);use([3.8,1.65,3.15],[3.8,1.5,3.94],'resident_return');assert.match(game.snapshot().objective,/조사 완료/);
   runTo(0,3.15);runTo(0,-4.65);use([0,1.65,-4.65],[0,1.25,-5.65],'resident_departure');tick(1);
-  aim(renderedCamera.position.toArray(),[0,1.65,-7],false);game.key('KeyW',true);for(let i=0;i<100&&game.snapshot().story.stage==='resident_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'office_record');
+  runTo(0,-7.95);aim(renderedCamera.position.toArray(),[3,1.65,-7.95],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='resident_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'office_record');runTo(0,11.8);runTo(0,6.5);
   renderedScene.getObjectByName('resident-remains').visible=true;
   renderedScene.getObjectByName('resident-remains').position.set(0,0,-5);aim([-2.5,1.65,-5],[-2.5,1.65,-7],false);
   game.key('ShiftLeft',true);tick(6.1);assert.ok(game.snapshot().threat<.2,'holding Shift behind a wall is silent');
@@ -171,12 +171,23 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
    try{
     for(const [id,want] of actions){
      const t=reference.targets.find(t=>t.id===id),at=t.mesh.userData.approach;
-     const path=findPath(renderedCamera.position,at,reference.solids,reference.bounds,.26);assert.ok(path.length,`route to ${id}`);for(const p of path)runTo(p.x,p.z);
+     const path=findPath(renderedCamera.position,at,reference.solids,reference.bounds,.26);assert.ok(path.length,`route to ${id} from ${renderedCamera.position.toArray()} to ${JSON.stringify(at)}`);for(const p of path)runTo(p.x,p.z);
      if(id==='plant_exit'&&game.snapshot().story.stage==='plant_drain'){game.key('KeyW',true);tick(.05);game.key('KeyW',false);tick(12);}
      aim(renderedCamera.position.toArray(),t.point.toArray());game.interact();assert.equal(game.snapshot().story.stage,want,id);tick();
+     if(id==='annex_exit'){assert.ok(voiceCalls.includes('no'),'opening 1F exit triggers the refusal shout');}
      if(id==='archive_play'){const before=game.snapshot().elapsed;game.pause();tick(5);assert.equal(game.snapshot().elapsed,before);game.pause(false);tick(32.1);assert.equal(game.snapshot().story.stage,'archive_escape');}
     }
-    cross(area==='courtyard'?'court_departure':`${area}_departure`,nextStage,area==='courtyard'?-50.4:-expansionLayout[area].z-6,area==='courtyard'?14:0);
+    tick(1);
+    const px=area==='courtyard'?14:0,pz=area==='courtyard'?-53:-expansionLayout[area].z-2;
+    runTo(px,pz);aim(renderedCamera.position.toArray(),[px+3,renderedCamera.position.y,pz],false);game.key('KeyW',true);
+    for(let i=0;i<250&&game.snapshot().story.stage!==nextStage;i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,nextStage,'cross the shared corner');
+    const nextZ=area==='annex'?48:area==='courtyard'?32:area==='archive'?36:22;
+    if(area==='annex'){
+     runTo(-2.55,nextZ+4);tick(1.4);assert.equal(game.snapshot().story.stage,'court_arrival');
+     const door=renderedScene.children.flatMap(o=>o.children).find(o=>o.name==='continuous-connection'&&o.position.z===54)?.getObjectByName('connection-fire-door');
+     assert.ok(door&&Math.abs(door.rotation.y)>1.4,'the self-closing door stays open when the player steps back');
+    }
+    runTo(0,nextZ+4);runTo(0,nextZ-1);
    }finally{disposeWorld(reference.root);}
   }
   console.log('Expanded chapters known-route simulation seconds',Math.round(game.snapshot().elapsed-expansionStart));
@@ -235,13 +246,13 @@ test('the remembered drive, fatal collision, escape and sleep lead to a ringing 
   game.pause();const pos=renderedCamera.position.toArray(),at=game.snapshot().elapsed;tick(10);assert.deepEqual(renderedCamera.position.toArray(),pos);assert.equal(game.snapshot().elapsed,at);game.skipMemory();assert.equal(game.snapshot().story.stage,'drive');game.pause(false);
   doc.hidden=true;event(doc,'visibilitychange',{});tick(10);assert.equal(game.snapshot().elapsed,at);assert.equal(game.snapshot().paused,false);doc.hidden=false;event(doc,'visibilitychange',{});
   tick(opening.drive.duration);assert.equal(game.snapshot().story.stage,'impact');assert.ok(soundCalls.includes('male-surprise'));assert.ok(soundCalls.includes('female-collision-scream'));assert.ok(soundCalls.includes('collision-impact'));assert.equal(road.getObjectByName('memory-cracked-glass').visible,true);
-  tick(5);assert.ok(deviceLevels.phone>.3,'the victim phone rings while the driver stays stopped');assert.match(game.snapshot().memoryText,/전화/);
+  tick(5);assert.equal(deviceLevels.phone,0,'the outside phone is not audible through a closed car');assert.match(game.snapshot().memoryText,/와이퍼/);
   game.pause();const phoneLevel=deviceLevels.phone;tick(4);assert.equal(deviceLevels.phone,phoneLevel);game.pause(false);
   tick(opening.impact.duration-5);assert.equal(game.snapshot().story.stage,'flee');assert.ok(game.snapshot().memoryText.length>0);
   tick(4.6);assert.equal(deviceLevels.phone,0,'leaving the victim fades the ringing out');tick(opening.flee.duration-4.6);assert.equal(game.snapshot().story.stage,'sleep');assert.equal(renderedScene.getObjectByName('accident-memory'),undefined);assert.equal(renderedCamera.position.y,.98);
   tick(6);assert.ok(game.snapshot().memoryFade>.95);tick(opening.sleep.duration-6);assert.equal(game.snapshot().story.stage,'wake_ring');assert.ok(game.snapshot().story.notes.includes('wake'));assert.match(game.snapshot().memoryLabel,/사흘 뒤/);assert.equal(renderedScene.getObjectByName('apartment-tv-light').intensity,0);
   tick(5);assert.equal(game.snapshot().story.stage,'light_switch');assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0);
-  game.start();tick();const previous=renderedScene.getObjectByName('accident-memory');game.start();tick();assert.notEqual(renderedScene.getObjectByName('accident-memory'),previous);assert.equal(previous.parent,null,'restart disposes the old memory');
+  game.start();tick();const previous=renderedScene.getObjectByName('accident-memory');game.start();tick();assert.ok(renderedScene.getObjectByName('accident-memory')===previous,'restart reuses the prepared road');
   game.skipMemory();tick();assert.equal(game.snapshot().story.stage,'wake_ring');assert.equal(renderedScene.getObjectByName('accident-memory'),undefined);assert.ok(game.snapshot().story.notes.includes('wake'));game.dispose();
 });
 test('desktop memory leaves the cursor available for skip, including after pause and restart',()=>{
@@ -254,30 +265,6 @@ test('desktop memory leaves the cursor available for skip, including after pause
     game.pause();game.pause(false);assert.equal(locks,0);game.skipMemory();tick();assert.equal(locks,1);assert.equal(doc.pointerLockElement,canvas);
     game.start();tick();assert.equal(game.snapshot().story.stage,'drive');assert.equal(doc.pointerLockElement,null);assert.equal(locks,1);
   }finally{game.dispose();win.matchMedia=previousMedia;doc.pointerLockElement=null;}
-});
-
-test('the exterior fall plays once on the way to the elevator, without stopping pursuit or player control',()=>{
-  const fallsBefore=soundCalls.filter(s=>s==='fall').length;
-  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  const game=createGame(canvas,()=>{},e=>assert.fail(e));
-  try{
-    tick();game.start(true);tick();game.interact();tick(3);renderedCamera.position.set(0,1.65,home.door[2]+1.16);
-    event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
-    event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(Math.atan2(-.45,1.16)-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.key('KeyW',true);for(let i=0;i<60&&game.snapshot().story.stage==='hide';i++)tick(.025);tick(.56);game.key('KeyW',false);
-    event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:renderedCamera.rotation.x/.0021});event(doc,'pointerup',{});tick();
-    const falling=renderedScene.getObjectByName('falling-apparition');assert.ok(falling,'a separate exterior apparition exists');assert.equal(falling.visible,false);
-    game.key('KeyW',true);game.key('ShiftLeft',true);
-    for(let i=0;i<600&&!falling.visible;i++)tick(.025);
-    assert.equal(falling.visible,true);assert.equal(game.snapshot().story.stage,'lift_call');assert.equal(game.snapshot().paused,false);assert.equal(soundCalls.filter(s=>s==='fall').length,fallsBefore+1);
-    tick(.35);const ghost=renderedScene.getObjectByName('resident-remains'),ghostBefore=ghost.position.clone(),playerBefore=renderedCamera.position.clone(),high=falling.position.y;
-    tick(.3);assert.ok(falling.position.y<high-.4,'the body accelerates downwards');assert.ok(renderedCamera.position.distanceTo(playerBefore)>.8,'movement remains available');assert.ok(ghost.position.distanceTo(ghostBefore)>.3,'the pursuer continues walking');
-    tick(.4);const frustum=new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(renderedCamera.projectionMatrix,renderedCamera.matrixWorldInverse));
-    assert.ok(frustum.intersectsBox(new THREE.Box3().setFromObject(falling)),'a player running toward the lift can see the falling body ahead');
-    game.pause();const frozen=falling.position.toArray();tick(5);assert.deepEqual(falling.position.toArray(),frozen);game.pause(false);
-    tick(4);assert.equal(falling.visible,false);assert.equal(game.snapshot().story.stage,'lift_call');
-    renderedCamera.position.set(0,1.65,10);tick(.05);renderedCamera.position.z=7;tick(1);assert.equal(falling.visible,false,'crossing the trigger again cannot replay the fall');
-    assert.equal(soundCalls.filter(s=>s==='fall').length,fallsBefore+1,'the falling sound plays exactly once');
-  }finally{game.dispose();}
 });
 
 test('the first ghost starts behind a real wall and walks continuously into view after the radio stops',async()=>{
@@ -321,7 +308,7 @@ test('all pursuit areas after the first apartment render the ghost crawling, inc
         renderedCamera.position.set(0,1.65,-.15);
         event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
         event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(Math.atan2(-.35,.95)-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
-        game.interact();assert.equal(game.snapshot().story.stage,'corridor_run');tick();
+        game.key('KeyW',true);for(let i=0;i<100&&game.snapshot().story.stage==='lift_exit';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'corridor_run');renderedCamera.position.set(-2.6,1.65,16);tick(4.3);
       }
       const ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;game.pause();tick();
       const head=ghost.worldToLocal(ghost.getObjectByName('ghost-head').getWorldPosition(new THREE.Vector3()));
@@ -417,9 +404,9 @@ test('continuing 1704 preserves the remaining clue or restores an already comple
 test('actual movement exhausts sprint, manual pause freezes recovery, and walls do not consume stamina',()=>{
  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'lift_call',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- try{tick();game.continueGame();tick();game.key('KeyW',true);game.key('ShiftLeft',true);tick(6.7);assert.equal(game.snapshot().stamina,0);assert.equal(game.snapshot().exhausted,true);const before=renderedCamera.position.z;tick(.5);assert.ok(Math.abs(before-renderedCamera.position.z-1)<.06,'depleted player walks at 2 m/s');
- game.pause();const frozen=game.snapshot().stamina;tick(9);assert.equal(game.snapshot().stamina,frozen);game.pause(false);game.key('KeyW',true);tick(4.5);game.key('KeyW',false);assert.ok(game.snapshot().stamina>.25);assert.equal(game.snapshot().exhausted,false);
- game.start(true);tick();renderedCamera.position.set(0,1.65,-22.86);game.key('KeyW',true);game.key('ShiftLeft',true);tick(2);assert.equal(game.snapshot().stamina,1,'pushing against the area boundary is not running');
+ try{tick();game.continueGame();tick();game.key('KeyW',true);game.key('ShiftLeft',true);tick(6.7);assert.equal(game.snapshot().stamina,0);assert.equal(game.snapshot().exhausted,true);assert.ok(breathLevel>.9,'exhaustion starts the panting loop');const before=renderedCamera.position.z;tick(.5);assert.ok(Math.abs(before-renderedCamera.position.z-1)<.06,'depleted player walks at 2 m/s');assert.ok(breathLevel>.5,'panting continues while walking');
+ game.pause();const frozen=game.snapshot().stamina;tick(9);assert.equal(game.snapshot().stamina,frozen);game.pause(false);game.key('KeyW',true);tick(4.5);game.key('KeyW',false);assert.ok(game.snapshot().stamina>.25);assert.equal(game.snapshot().exhausted,false);assert.ok(breathLevel>0,'breathing fades through recovery');
+ game.start(true);tick();assert.equal(breathLevel,0);renderedCamera.position.set(0,1.65,-22.86);game.key('KeyW',true);game.key('ShiftLeft',true);tick(2);assert.equal(game.snapshot().stamina,1,'pushing against the area boundary is not running');
  }finally{game.dispose();win.localStorage=previous;}
 });
 
@@ -434,4 +421,13 @@ test('resuming a previously played archive record allows replay and shows the ti
   game.pause();const at=game.snapshot().elapsed;tick(10);assert.equal(game.snapshot().elapsed,at);game.pause(false);
   tick(15);assert.match(game.snapshot().message,/네 뒤에 있어/);assert.equal(game.snapshot().story.stage,'archive_playback');tick(5);assert.equal(game.snapshot().story.stage,'archive_escape');
  }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('prepared areas retain geometry through a restart and reset apartment door state',async()=>{
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+ const game=createGame(canvas,()=>{},()=>{});await game.ready;tick();
+ const original=renderedScene.getObjectByName('front-door');original.userData.openRequested=true;original.rotation.y=1.42;
+ game.start();game.skipMemory();tick(7);
+ const again=renderedScene.getObjectByName('front-door');assert.ok(again===original,'restart must reuse the GPU-prepared world');assert.equal(again.rotation.y,0,'cached doors restart closed');
+ game.dispose();
 });

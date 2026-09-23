@@ -35,7 +35,16 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined}:{...buildBuilding(root,area),setTV:undefined};
   batchStaticGeometry(root,content.targets.map(t=>t.mesh));
   const updateStory:((stage:import('./story').Stage,time:number,reduced:boolean,story?:import('./story').Story)=>void)|undefined=content.updateStory;
-  return {...content,root,updateStory};
+  const lightColors=content.lamps.map(light=>({light,color:light.color.clone()}));
+  const originalSolids=content.solids.map(s=>({solid:s,value:{...s}})),bounds={...content.bounds};
+  const poses:{object:T.Object3D;position:T.Vector3;quaternion:T.Quaternion;scale:T.Vector3;visible:boolean}[]=[];
+  root.traverse(object=>poses.push({object,position:object.position.clone(),quaternion:object.quaternion.clone(),scale:object.scale.clone(),visible:object.visible}));
+  function reset(){
+    content.reset?.();Object.assign(content.bounds,bounds);for(const {light,color} of lightColors)light.color.copy(color);
+    content.solids.splice(0,content.solids.length,...originalSolids.map(({solid,value})=>Object.assign(solid,value)));
+    for(const p of poses){p.object.position.copy(p.position);p.object.quaternion.copy(p.quaternion);p.object.scale.copy(p.scale);p.object.visible=p.visible;delete p.object.userData.openRequested;}
+  }
+  return {...content,root,updateStory,reset};
 }
 export function disposeWorld(root:T.Object3D){
   const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();
@@ -169,12 +178,13 @@ function buildApartment(scene:T.Group) {
   const lightSwitch=box(1.915,1.35,4.2,.06,.15,.1,cream);box(1.953,1.35,4.2,.025,.09,.065,metal);
   box(1.967,1.39,4.2,.009,.012,.025,new T.MeshBasicMaterial({color:'#778667'}));
   targets.push({id:'switch',point:new T.Vector3(...home.switch),label:'전등 스위치 켜기',mesh:lightSwitch});
-  at(3.65,2.65);
-  box(3.65,.43,2.65,1.1,.86,.5,wood,true);for(const y of [.2,.47,.72])box(3.65,y,2.38,.96,.2,.025,trim);
+  at(3.75,5.43);
+  const bedside=box(3.75,.34,5.43,.55,.68,.62,wood,true);bedside.name='bedside-nightstand';
+  for(const y of [.2,.48]){box(3.75,y,5.108,.48,.23,.023,trim);box(3.75,y,5.088,.12,.018,.024,metal);}
   const torchPickup=new T.Group();torchPickup.name='flashlight-pickup';scene.add(torchPickup);
-  const torchBody=cyl(3.65,.91,2.65,.035,.24,dark,torchPickup);torchBody.rotation.x=Math.PI/2;
-  const torchHead=cyl(3.65,.91,2.52,.05,.065,metal,torchPickup);torchHead.rotation.x=Math.PI/2;
-  const torchCap=cyl(3.65,.91,2.76,.05,.025,dark,torchPickup);torchCap.rotation.x=Math.PI/2;
+  const torchBody=cyl(3.75,.735,5.43,.035,.24,dark,torchPickup);torchBody.rotation.x=Math.PI/2;
+  const torchHead=cyl(3.75,.735,5.30,.05,.065,metal,torchPickup);torchHead.rotation.x=Math.PI/2;
+  const torchCap=cyl(3.75,.735,5.54,.05,.025,dark,torchPickup);torchCap.rotation.x=Math.PI/2;
   targets.push({id:'flashlight',point:new T.Vector3(...home.flashlight),label:'손전등 집어 들기',mesh:torchPickup});
   at(6.08,1.55);
   const closet=box(6.08,1.2,1.55,.95,2.4,2.1,wood,true);box(5.59,1.22,1.55,.045,2.26,2,mat('#544333'));targets.push({id:'closet',point:new T.Vector3(...home.closet),label:'장롱에 숨기',mesh:closet});
@@ -215,5 +225,5 @@ function buildApartment(scene:T.Group) {
     doorwayGlow.intensity=door.rotation.y/1.42*7;
     torchPickup.visible=['drive','impact','flee','sleep','tv','wake_ring','light_switch','find_torch'].includes(stage);
   }
-  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,setTV,updateStory};
+  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,setTV,updateStory,reset(){openedAt=-1;}};
 }

@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import {makeFigure} from '../lib/building.ts';
 
-test('the female figure keeps human arm proportions rather than forearms reaching the knees',()=>{
+test('the elongated arms retain connected shoulders, elbows and wrists',()=>{
   const figure=makeFigure(new T.Group());
   for(const side of [-1,1]){
     const wrist=figure.getObjectByName(`ghost-hand-${side}`).parent;
     const elbow=wrist.parent;
     const length=wrist.position.length()+elbow.position.length();
-    assert.ok(length>.55&&length<.76,`shoulder-to-wrist length ${length} fits the 1.8 metre figure`);
+    assert.ok(length>.9&&length<1.05,`elongated shoulder-to-wrist length is ${length}`);
     assert.ok(wrist.position.length()/elbow.position.length()<1.2,'forearm and upper arm have comparable lengths');
   }
 });

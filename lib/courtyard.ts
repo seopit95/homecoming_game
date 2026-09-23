@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {connectionPassage} from './passage.ts';
 import {surface,boxUV,softBox} from './materials.ts';
 import {roundPipe,createSedan} from './props.ts';
 import {wetTexture} from './entry-props.ts';
@@ -17,7 +18,7 @@ export function buildCourtyard(root:T.Group){
  function target(id:Action,label:string,mesh:T.Object3D,p:[number,number,number],at:[number,number]){mesh.userData.approach={x:at[0],z:at[1]};targets.push({id,label,mesh,point:new T.Vector3(...p)});}
  function light(x:number,z:number,power=9){const l=new T.PointLight('#b0baa1',power,17,2);l.position.set(x,3.3,z);l.userData.base=power;lamps.push(l);root.add(l);roundPipe(root,[x,0,z],[x,3.5,z],.05,steel);box(x,3.5,z,.55,.09,.32,steel);return l;}
  box(0,-.13,2,64,.26,92,concrete);for(const [x,w] of [[-9.75,44.5],[23.75,16.5]])box(x,-.13,-46,w,.26,4,concrete);for(const x of [-32,32])box(x,2.7,0,.22,5.4,96,wall,true);
- box(0,2.7,48,64,5.4,.22,wall,true);for(const [x,w] of [[-18,28],[8.25,8.5],[23.75,16.5]])box(x,2.7,-48,w,5.4,.22,wall,true);
+ for(const x of [-16.36,16.36])box(x,2.7,48,31.28,5.4,.22,wall,true);box(0,3.98,48,1.44,2.84,.22,wall);connectionPassage(root,solids,lamps,-3,54);for(const [x,w] of [[-18,28],[8.25,8.5],[23.75,16.5]])box(x,2.7,-48,w,5.4,.22,wall,true);
  // Closed perimeter, visible towers, and sheeted construction enclose a believable service yard.
  const windowGlass=new T.MeshStandardMaterial({color:'#182a30',metalness:.35,roughness:.25}),windowLit=new T.MeshStandardMaterial({color:'#9c9a75',emissive:'#746d43',emissiveIntensity:.22,roughness:.5});
  for(const side of [-1,1]){
@@ -33,7 +34,7 @@ export function buildCourtyard(root:T.Group){
   for(let z=-44;z<=44;z+=11)roundPipe(root,[side*31.7,0,z],[side*31.7,35,z],.055,steel);
  }
  // A closed connecting door remains visible behind the arriving player.
- box(0,1.22,47.86,1.55,2.44,.12,steel);box(.56,1.12,47.76,.035,.16,.06,dark);sign('공동시설',0,2.68,47.735,1.3,.26,Math.PI);
+ for(const x of [-.77,.77])box(x,1.22,47.86,.08,2.44,.18,steel);sign('공동시설',0,2.68,47.735,1.3,.26,Math.PI);
  // A fenced construction pit forces distinct east and west routes, with crossovers at both ends.
  box(0,.27,0,36,.54,46,dark,true);
  for(const x of [-18,18]){box(x,.74,0,.12,1.48,46,steel);for(let z=-22;z<=22;z+=2.5)roundPipe(root,[x,.2,z],[x,1.6,z],.025,rust);}
@@ -87,7 +88,7 @@ export function buildCourtyard(root:T.Group){
  const block={x:doorX,z:doorZ,w:1.4,d:.12,y:1.17,h:2.34};solids.push(block);target('court_exit','기록보관실 계단 문 열기',leaf,[doorX,1.2,doorZ+.13],[doorX,doorZ+1.2]);
  sign('B1 기록보관실',doorX,2.54,doorZ+.1,1.6,.28);
  for(let i=0;i<21;i++)box(doorX,-i*.14-.09,doorZ-.2-i*.34,2.8,.18,.35,concrete);
- box(doorX,-1.5,-51.5,3,5,.15,wall,true);for(const side of [-1,1])roundPipe(root,[doorX+side*1.22,.9,doorZ],[doorX+side*1.22,-1.9,-50.8],.023,steel);
+ connectionPassage(root,solids,lamps,doorX,-51,-2.8);for(const side of [-1,1])roundPipe(root,[doorX+side*1.22,.9,doorZ],[doorX+side*1.22,-1.9,-50.8],.023,steel);
  const stairLight=new T.PointLight('#869e90',3,10);stairLight.position.set(doorX,1.7,doorZ-.8);stairLight.userData.base=3;lamps.push(stairLight);root.add(stairLight);
  const figure=createGhost(root);figure.position.set(0,0,45);figure.visible=false;figure.rotation.y=Math.PI;
  let opened=-1,lastCode='';
@@ -96,5 +97,5 @@ export function buildCourtyard(root:T.Group){
   swing.rotation.x=reduced?0:Math.sin(time*.7)*.055;
   const code=story?.code??'0000';if(code!==lastCode){lastCode=code;dials.forEach((dial,i)=>{const m=dial.material as T.MeshStandardMaterial,c=m.map!.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#aab099';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#223a31';ctx.font='620px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(code[i],c.width/2,c.height/2);m.map!.needsUpdate=true;});}
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:31.8,z:51.3},spawn:new T.Vector3(0,1.65,44.5),heading:0,heightAt:(x:number,z:number)=>Math.abs(x-doorX)<1.4&&z<doorZ? -Math.min(2.8,Math.max(0,(-z+doorZ-.2)/.34)*.14):0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,updateStory};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:31.8,z:58},spawn:new T.Vector3(0,1.65,44.5),heading:0,heightAt:(x:number,z:number)=>z<=-51&&x>doorX-1.2&&x<doorX+4.3?-2.8:Math.abs(x-doorX)<1.4&&z<doorZ? -Math.min(2.8,Math.max(0,(-z+doorZ-.2)/.34)*.14):0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,updateStory,reset(){opened=-1;lastCode='';}};
 }

@@ -50,7 +50,7 @@ export default function Home(){
       <div className="title-content"><p className="overline"><i/>돌아온 것은, 누구인가.</p><h1>귀가<span>귀가 ─ 백로아파트</span></h1>
         <div className="story-intro"><p>비 오는 새벽 3시 17분.<br/>백로아파트, 28층 2803호.<br/>사흘 전, 나는 사람을 죽이고 달아났다.</p><p>집에 돌아와 잠들면 잊을 줄 알았다.<br/>그날 밤, 혼자 돌아온 게 아니었다.</p></div>
         {view?.canContinue&&<><button className="start-button continue-button" disabled={!ready} onClick={()=>game.current?.continueGame()}><span>이어서 귀가하기</span><Play size={19}/></button><p className="save-location">{view.savedLocation} · 이 기기에 남은 기록</p></>}
-        <button className="start-button" disabled={!ready} onClick={()=>game.current?.start()}><span>{ready?(view?.canContinue?'처음부터 시작':'그날 밤으로'):'집 안을 불러오는 중'}</span><ArrowRight size={21}/></button>
+        <button className="start-button" disabled={!ready} onClick={()=>game.current?.start()}><span>{ready?(view?.canContinue?'처음부터 시작':'그날 밤으로'):'공간을 준비하는 중'}</span><ArrowRight size={21}/></button>
         <div className="start-meta"><span><Headphones size={15}/>헤드폰 권장</span><span>열한 장의 귀가 기록 · 혼자 플레이</span></div>
         <button className="settings-toggle" aria-expanded={showSettings} onClick={()=>setShowSettings(!showSettings)}><SlidersHorizontal size={15}/>밝기 · 소리 · 시점 설정</button>{showSettings&&settingsPanel}
       </div>

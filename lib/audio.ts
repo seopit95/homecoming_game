@@ -1,5 +1,5 @@
-export type RecordedClip='passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'radio-tuning-broadcast';
-export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'memory';
+export type RecordedClip='player-breath'|'passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'radio-tuning-broadcast';
+export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'memory'|'no';
 // Local voice clips and procedural effects share a bounded master volume.
 export class HorrorAudio {
   context: AudioContext | null = null;
@@ -23,6 +23,7 @@ export class HorrorAudio {
   clips:Partial<Record<RecordedClip,AudioBuffer>>={};
   deviceLoops=new Map<string,{source:AudioBufferSourceNode;gain:GainNode;pan:StereoPannerNode;level:number}>();
   deviceWanted={phone:0,radio:0};
+  exertion:GainNode|null=null;exertionSource:AudioBufferSourceNode|null=null;exertionWanted=0;exertionLevel=-1;
   volume = .42;
   start() {
     if(this.context){void this.context.resume();return;}
@@ -64,14 +65,24 @@ export class HorrorAudio {
     const road=ctx.createBufferSource(),roadFilter=ctx.createBiquadFilter();road.buffer=noise;road.loop=true;roadFilter.type='lowpass';roadFilter.frequency.value=1200;
     this.tyres=ctx.createGain();this.tyres.gain.value=0;road.connect(roadFilter);roadFilter.connect(this.tyres);this.tyres.connect(this.driveBus);road.start();
     for(const hz of [43,57.4,86.3]){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=hz;g.gain.value=.015;o.connect(g);g.connect(this.musicBus!);o.start();}
-    for(const clip of ['passenger-line','male-surprise','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast'] as RecordedClip[])void fetch(`/audio/overhaul/${clip}.wav`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);}}).catch(()=>{});
-    for(const line of ['where','here','found','come','cry','scream','memory'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
+    for(const clip of ['player-breath','passenger-line','male-surprise','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast'] as RecordedClip[])void fetch(`/audio/overhaul/${clip}.wav`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setExertion(this.exertionWanted);this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);}}).catch(()=>{});
+    for(const line of ['where','here','found','come','cry','scream','memory','no'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
   recorded(clip:RecordedClip,level=1,pan=0){
     const ctx=this.context,buffer=this.clips[clip];if(!ctx||!buffer||ctx.state!=='running')return;
     const source=ctx.createBufferSource(),gain=ctx.createGain(),p=ctx.createStereoPanner();source.buffer=buffer;gain.gain.value=level*.9;p.pan.value=pan;
     source.connect(gain);gain.connect(p);p.connect(clip==='passenger-line'||clip==='male-surprise'||clip==='female-collision-scream'?this.voiceBus!:this.effectsBus!);
     this.roadSounds.add(source);source.onended=()=>{this.roadSounds.delete(source);source.disconnect();gain.disconnect();p.disconnect();};source.start();
+  }
+  setExertion(level:number){
+    this.exertionWanted=Math.max(0,Math.min(1,level));
+    const ctx=this.context,buffer=this.clips['player-breath'];if(!ctx||!buffer)return;
+    if(!this.exertion){
+      this.exertion=ctx.createGain();this.exertion.gain.value=0;this.exertion.connect(this.effectsBus!);
+      const source=this.exertionSource=ctx.createBufferSource();source.buffer=buffer;source.loop=true;source.connect(this.exertion);source.start();
+    }
+    if(Math.abs(this.exertionLevel-this.exertionWanted)<.015)return;
+    this.exertionLevel=this.exertionWanted;this.exertion.gain.setTargetAtTime(this.exertionWanted*.8,ctx.currentTime,.25);
   }
   setDevice(device:'phone'|'radio',level:number,pan=0){
     this.deviceWanted[device]=level;
@@ -118,7 +129,7 @@ export class HorrorAudio {
     const ctx=this.context,buffer=this.voices[line];if(!ctx||!this.master||ctx.state!=='running')return;
     if(!buffer){this.sound('breath',pan,level);return;}
     this.stopVoices();const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),panner=ctx.createStereoPanner(),delay=ctx.createDelay(.5),echo=ctx.createGain();
-    source.buffer=buffer;source.playbackRate.value=line==='scream'||line==='memory'?1:line==='cry'?.94:.86;filter.type='lowpass';filter.frequency.value=occluded?650:line==='scream'?5200:line==='memory'?2800:2400;gain.gain.value=.64*level;panner.pan.value=Math.max(-1,Math.min(1,pan));delay.delayTime.value=.23;echo.gain.value=.22;
+    source.buffer=buffer;source.playbackRate.value=line==='scream'||line==='memory'||line==='no'?1:line==='cry'?.94:.86;filter.type='lowpass';filter.frequency.value=occluded?650:line==='scream'||line==='no'?5200:line==='memory'?2800:2400;gain.gain.value=.64*level;panner.pan.value=Math.max(-1,Math.min(1,pan));delay.delayTime.value=.23;echo.gain.value=.22;
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.voiceBus!);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }
@@ -159,5 +170,5 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.setDevice('phone',0);this.setDevice('radio',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.exertionSource?.stop();this.exertionSource=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.setDevice('phone',0);this.setDevice('radio',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }

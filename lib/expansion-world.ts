@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {connectionPassage} from './passage.ts';
 import {courtyardLayout} from './courtyard.ts';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {createGhost} from './ghost.ts';
@@ -61,7 +62,8 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  function puddle(x:number,z:number,w:number,d:number,opacity=.28){const mesh=new T.Mesh(new T.PlaneGeometry(w,d),new T.MeshPhysicalMaterial({map:wetTexture(false,Math.round(x*7+z*13)),color:'#233630',roughness:.06,transparent:true,opacity,depthWrite:false}));mesh.rotation.x=-Math.PI/2;mesh.position.set(x,.009,z);root.add(mesh);return mesh;}
  // Broad footprint, human-scale 4 m spine and outer loop aisles around real rooms.
  box(0,-.12,0,bx*2,.24,bz*2,floor);box(0,2.91,0,bx*2,.22,bz*2,wall);
- for(const x of [-bx,bx])wallAt(x,0,.18,bz*2);wallAt(0,bz,bx*2,.18);
+ for(const x of [-bx,bx])wallAt(x,0,.18,bz*2);for(const side of [-1,1])wallAt(side*(bx+.72)/2,bz,bx-.72,.18);box(0,2.6,bz,1.44,.4,.18,wall);
+ if(area!=='annex')connectionPassage(root,solids,lamps,-3,bz+6);
  for(const side of [-1,1]){
   const segments=[[-bz,-27],[-24,-7],[-4,14],[17,25],[28,bz]];
   for(const [a,b] of segments)wallAt(side*2,(a+b)/2,.15,b-a);
@@ -71,7 +73,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   for(let z=-bz+4;z<bz-2;z+=6)roundPipe(root,[side*(bx-.25),2.5,z],[side*(bx-.25),2.5,z+5.9],.036,rust);
  }
  for(const z of [-28,-14,2,18,30])fixture(0,z,2.8);
- box(0,1.2,bz-.12,1.65,2.4,.13,metal);box(.65,1.1,bz-.205,.04,.16,.05,dark);label(area==='annex'?'관리용 승강기 · 1F':area==='archive'?'중정 계단':'기록보관실',0,2.59,bz-.206,1.8,.24,Math.PI,true);
+ for(const x of [-.77,.77])box(x,1.2,bz-.12,.08,2.4,.18,metal);label(area==='annex'?'관리용 승강기 · 1F':area==='archive'?'중정 계단':'기록보관실',0,2.59,bz-.206,1.8,.24,Math.PI,true);
  for(const side of [-1,1])for(const [i,z] of [[0,15.5],[1,-5.5]] as const)label(L.rooms[(side<0?0:2)+i],side*2.1,2.38,z,1.6,.28,side<0?-Math.PI/2:Math.PI/2);
  for(const z of [26,-23]){label(`← ${L.rooms[0]}   ${L.rooms[2]} →`,0,2.49,z,3.1,.25,0,true);label(`↓ ${L.exit}`,0,2.2,z,2.5,.24,0,true);box(0,2.36,z-.035,3.2,.57,.05,metal);for(const x of [-1.2,1.2])roundPipe(root,[x,2.64,z],[x,2.8,z],.009,metal);}
  // Exit leaf, real opening, and an enclosed onward passage.
@@ -83,16 +85,17 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  const doorBlock={x:0,z:doorZ,w:1.4,d:.12,y:1.17,h:2.34};solids.push(doorBlock);
  target(`${area}_exit` as Action,L.exit,leaf,[0,1.2,doorZ+.12],[0,doorZ+1.2]);
  label(L.exit,0,2.55,doorZ+.1,1.6,.25,0,true);
- for(let i=0;i<20;i++){const z=-bz-.2-i*.32,y=0;box(0,y-.1,z,2.8,.2,.33,floor);if(i%3===0)for(const side of [-1,1])roundPipe(root,[side*1.25,y,z],[side*1.25,y+.9,z],.017,metal);}
- for(const side of [-1,1]){box(side*1.45,-.1,-bz-3.4,.18,6,7,wall,true);roundPipe(root,[side*1.25,.9,-bz],[side*1.25,.9,-bz-5.2],.023,metal);}
- box(0,-1.2,-bz-7,3,5,.18,wall,true);box(0,2.88,-bz-3.4,3,.16,7,wall);
- const onward=new T.PointLight('#839f91',2.4,7);onward.position.set(0,1.5,-bz-2);onward.userData.base=2.4;lamps.push(onward);root.add(onward);
+ connectionPassage(root,solids,lamps,0,-bz);
  const heightAt=(_x:number,_z:number)=>0;
  let display:T.Mesh|undefined;
  const faceText=(text:string)=>{if(!display)return;const map=(display.material as T.MeshStandardMaterial).map! as T.CanvasTexture;const c=map.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#101d18';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#b7cdae';ctx.font=`${Math.min(c.height*.26,650/Math.max(1,...text.split('\n').map(l=>l.length)))}px sans-serif`;ctx.textAlign='center';text.split('\n').forEach((l,i)=>ctx.fillText(l,c.width/2,c.height*(.34+i*.3)));map.needsUpdate=true;};
  const X=bx-6;
  let water:T.Mesh|undefined;
  if(area==='annex'){
+  box(0,-.1,bz+1.35,2.2,.2,2.7,floor);box(0,2.83,bz+1.35,2.2,.12,2.7,metal);
+  for(const x of [-1.1,1.1])box(x,1.4,bz+1.35,.12,2.8,2.7,metal,true);box(0,1.4,bz+2.7,2.2,2.8,.12,metal,true);
+  for(const x of [-.7,.7])box(x,1.18,bz,.12,2.36,.16,dark);box(0,.012,bz,1.35,.023,.22,metal);
+
   const map=label('정문 셔터 침수 · 통행 불가\n세탁실 ←  통신실 →\n정문: 북쪽 방화문 → 중정',1.91,1.52,29,2,.9,-Math.PI/2);target('annex_map','공동시설 안내도',map,[1.89,1.52,29],[.8,29]);
   // Mail slots, laundry machines, employee lockers and the abandoned switchboard.
   box(-X-.275,.195,23,4.65,.39,.4,metal);box(-X-.275,.95,22.81,4.65,1.9,.08,metal);
@@ -179,5 +182,5 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
    area==='annex'?['annex_exit_ready','annex_departure'].includes(stage)?'2803 연결됨\n북쪽 방화문 잠금 해제':'마지막 호출 수신처\n1704 / 2803 / 관리실':drained?'수위 LOW\n주차장 통행 가능':drainAt>=0?'배수 가동 중\n젖은 통로에 접근 금지':'수위 HIGH\n급수 차단 후 전원 연결';
   if(text!==lastDisplay){lastDisplay=text;faceText(text);}
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,updateStory};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,updateStory,reset(){opened=-1;drainAt=-1;replayAt=-1;lastDisplay='';}};
 }
