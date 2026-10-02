@@ -1,4 +1,5 @@
-import {connectionPassage} from './passage.ts';
+import {connectionPassage,setDoorAngle} from './passage.ts';
+import type {Occupant} from './collision.ts';
 import * as T from 'three';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {basin,sinkCounter,cabinet,roundPipe} from './props.ts';
@@ -132,14 +133,13 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     rain=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(points,3)),new T.LineBasicMaterial({color:'#a6bcc6',transparent:true,opacity:.28}));root.add(rain);
     for(const x of [-5.5,5.5]){const l=light(x,1,-23,x<0?'#bf443f':'#617fc6',0,16);l.name='rescue-light';}
   }
-  function updateStory(stage:Stage,time:number,reducedMotion=false){
+  function updateStory(stage:Stage,time:number,reducedMotion=false,_story?:import('./story.ts').Story,occupants:Occupant[]=[]){
     if(resident){
       const frontOpen=stage!=='resident_arrival',rearOpen=stage==='resident_departure';
       if(frontOpen&&frontAt<0)frontAt=time;
       if(rearOpen&&rearAt<0)rearAt=time;
-      if(frontAt>=0)frontDoor!.rotation.y=-1.54*T.MathUtils.smoothstep(time-frontAt,0,.85);
-      if(rearAt>=0)rearDoor!.rotation.y=-1.54*T.MathUtils.smoothstep(time-rearAt,0,.85);
-      for(const [hinge,block] of [[frontDoor,frontBlock],[rearDoor,rearBlock]] as const)if(Math.abs(hinge!.rotation.y)>1.2){const i=solids.indexOf(block!);if(i>=0)solids.splice(i,1);}
+      if(frontAt>=0)setDoorAngle(frontDoor!,frontBlock!,1.54*T.MathUtils.smoothstep(time-frontAt,0,.85),.59,0,occupants);
+      if(rearAt>=0)setDoorAngle(rearDoor!,rearBlock!,1.54*T.MathUtils.smoothstep(time-rearAt,0,.85),.59,0,occupants);
       root.children.forEach(o=>{if(o.name==='return-footprint')o.visible=stage==='resident_return'||stage==='resident_departure';});const led=root.getObjectByName('answering-machine-led') as T.PointLight;led.intensity=.16+(Math.sin(time*2)>0?.1:0);}
     else{if(door)door.rotation.y=stage==='road_exit'?0:1.25;if(rain)rain.position.y=-(time*2)%4;
       if(carSolid){const i=solids.indexOf(carSolid);if(stage!=='road_exit'&&i<0)solids.push(carSolid);else if(stage==='road_exit'&&i>=0)solids.splice(i,1);}

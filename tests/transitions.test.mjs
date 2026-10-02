@@ -28,9 +28,9 @@ test('the concealed chapter connections have matching architecture and walkable 
 test('cached worlds restore door colliders, animation clocks and alarm lamp colors',()=>{
  const w=buildWorld(new T.Scene(),'annex'),p=buildWorld(new T.Scene(),'parking');
  try{
-  const count=w.solids.length;w.updateStory('annex_departure',20,false);w.updateStory('annex_departure',22,false);assert.ok(w.solids.length<count);
+  const count=w.solids.length;w.updateStory('annex_departure',20,false);w.updateStory('annex_departure',22,false);assert.ok(canStandAt(0,-34,w.solids,.23,w.bounds),'the doorway clears while the leaf remains solid');
   w.reset();assert.equal(w.solids.length,count);assert.equal(Math.abs(w.root.getObjectByName('expansion-exit-door').rotation.y),0);
-  w.updateStory('annex_departure',2,false);assert.equal(Math.abs(w.root.getObjectByName('expansion-exit-door').rotation.y),0,'retry starts a fresh opening clock');w.updateStory('annex_departure',3,false);assert.ok(w.solids.length<count);
+  w.updateStory('annex_departure',2,false);assert.equal(Math.abs(w.root.getObjectByName('expansion-exit-door').rotation.y),0,'retry starts a fresh opening clock');w.updateStory('annex_departure',3,false);assert.ok(canStandAt(0,-34,w.solids,.23,w.bounds),'the doorway clears while the leaf remains solid');
   const color=p.lamps[0].color.clone();p.lamps[0].color.set('#e64a29');p.reset();assert.ok(p.lamps[0].color.equals(color));
  }finally{disposeWorld(w.root);disposeWorld(p.root);}
 });

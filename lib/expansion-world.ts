@@ -1,5 +1,6 @@
 import * as T from 'three';
-import {connectionPassage} from './passage.ts';
+import {connectionPassage,setDoorAngle} from './passage.ts';
+import type {Occupant} from './collision.ts';
 import {courtyardLayout} from './courtyard.ts';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {createGhost} from './ghost.ts';
@@ -166,9 +167,9 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  for(const z of [-27,-3,21]){box(-1.45,.009,z,.3,.012,1.1,metal);for(let dz=-.45;dz<.5;dz+=.07)box(-1.45,.017,z+dz,.25,.008,.016,dark);}
  const figure=createGhost(root);figure.position.set(0,0,bz-2);figure.rotation.y=Math.PI;figure.visible=false;
  let opened=-1,drainAt=-1,replayAt=-1,lastDisplay='';
- function updateStory(stage:Stage,time:number,reduced=false,story?:Story){
+ function updateStory(stage:Stage,time:number,reduced=false,story?:Story,occupants:Occupant[]=[]){
   const leaving=stage===`${area}_departure`;if(leaving&&opened<0)opened=time;
-  if(opened>=0){hinge.rotation.y=-1.5*T.MathUtils.smoothstep(time-opened,0,reduced?.2:.9);if(Math.abs(hinge.rotation.y)>1.2){const i=solids.indexOf(doorBlock);if(i>=0)solids.splice(i,1);}}
+  if(opened>=0)setDoorAngle(hinge,doorBlock,1.5*T.MathUtils.smoothstep(time-opened,0,reduced?.2:.9),.7,0,occupants);
   const notes=story?.notes??[];
   for(const id of ['plant_valve_west','plant_valve_east']){const wheel=root.getObjectByName(id);if(wheel&&notes.includes(id))wheel.rotation.z=-Math.PI*.6;}
   for(const id of ['plant_circuit_pump','plant_circuit_air','plant_circuit_lights']){const lever=root.getObjectByName(id);if(lever)lever.rotation.x=story?.circuit.includes(id as Action)?-.5:.5;}
@@ -178,7 +179,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   if(stage==='archive_playback'&&replayAt<0)replayAt=time;
   const replayTime=time-replayAt;
   const replayText=archiveReplay.findLast(cue=>replayTime>=cue.at)?.screen??archiveReplay[0].screen;
-  const text=area==='archive'?(stage==='archive_playback'?replayText:(stage==='archive_edit'?`원본 연결 ${story?.circuit.length??0}/3\n각 기록의 시각을 대조하세요`:stage==='archive_reveal'?'기록 연결 완료\n재생 버튼을 누르세요':['archive_escape','archive_departure'].includes(stage)?'03:20 / 2803 수신 거절\n「잘못 거셨어요.」':'원본 기록 3개를 회수하세요')):
+  const text=area==='archive'?(stage==='archive_playback'?replayText:(stage==='archive_edit'?`원본 연결 ${story?.circuit.length??0}/3\n각 기록의 시각을 대조하세요`:stage==='archive_reveal'?'기록 연결 완료\n재생 버튼을 누르세요':['archive_escape','archive_departure'].includes(stage)?'03:20 / 2803 통화 원본\n「잘못 거셨어요.」':'원본 기록 3개를 회수하세요')):
    area==='annex'?['annex_exit_ready','annex_departure'].includes(stage)?'2803 연결됨\n북쪽 방화문 잠금 해제':'마지막 호출 수신처\n1704 / 2803 / 관리실':drained?'수위 LOW\n주차장 통행 가능':drainAt>=0?'배수 가동 중\n젖은 통로에 접근 금지':'수위 HIGH\n급수 차단 후 전원 연결';
   if(text!==lastDisplay){lastDisplay=text;faceText(text);}
  }

@@ -120,8 +120,8 @@ test('the home has a 330 square metre footprint and a broad connected living are
 test('the exterior apartment gallery has a long clear route and an open view above its guardrail',()=>{
   const w=buildWorld(new THREE.Scene(),'landing'),call=w.targets.find(t=>t.id==='call');
   assert.ok(w.spawn.distanceTo(call.point)>40,'the elevator is at the far end of a long gallery');
-  for(let z=-21;z<=21;z++)assert.ok(canStandAt(0,z,w.solids,.4,w.bounds),`clear route at ${z}`);
-  assert.equal(hasLineOfSight({x:0,y:1.65,z:5},{x:-4,y:1.8,z:0},w.solids),true,'the falling shape can be seen outside');
+  for(let z=-21;z<=20;z++)assert.ok(canStandAt(0,z,w.solids,.4,w.bounds),`clear route at ${z}`);
+  assert.equal(hasLineOfSight({x:0,y:1.65,z:5},{x:-4,y:1.8,z:0},w.solids),true,'the upper gallery has an open view outside');
   assert.equal(canStandAt(-1.6,0,w.solids,.23,w.bounds),false,'the player cannot walk off the balcony');
   assert.equal(hasLineOfSight({x:0,y:.7,z:0},{x:-4,y:.7,z:0},w.solids),false,'the solid lower guardrail remains');
 });

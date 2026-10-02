@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialStory,transition,checkpoint,areaFor,objectiveFor} from '../lib/story.ts';
 import {readProgress,writeProgress,PROGRESS_KEY} from '../lib/preferences.ts';
+import {expansionTargetActive} from '../lib/expansion-story.ts';
 const state=stage=>({...initialStory(),stage});
 const act=(s,...actions)=>actions.reduce(transition,s);
 
@@ -40,16 +41,39 @@ test('a mid-puzzle save and retry retain evidence and circuit input with a usefu
  const retried=checkpoint({...s,stage:'dying',resume:'archive_edit',ending:'caught'});assert.equal(retried.stage,'archive_edit');assert.deepEqual(retried.circuit,s.circuit);assert.ok(objectiveFor(retried));
 });
 
-test('courtyard safe requires all clues, a correct code, and keeps partial input on save and retry',()=>{
+test('courtyard safe accepts the two useful clues and preserves partial input on save and retry',()=>{
  let s=act(state('court_arrival'),'court_gate','court_log','court_phone');
- assert.equal(s.stage,'court_search');assert.equal(transition(s,'court_confirm'),s);
- s=act(s,'court_evidence');assert.equal(s.stage,'court_code');assert.equal(transition(s,'court_confirm'),s);
+ assert.equal(s.stage,'court_code');assert.equal(transition(s,'court_confirm'),s);
+ assert.equal(s.notes.includes('court_evidence'),false);
  s=act(s,'court_digit_0','court_digit_0');assert.equal(s.code,'2000');
  const storage={value:null,getItem(){return this.value;},setItem(_,v){this.value=v;}};
  writeProgress(storage,s,1300);assert.equal(readProgress(storage).code,'2000');
  assert.equal(checkpoint({...s,stage:'dying',resume:'court_code'}).code,'2000');
  for(const [i,n] of [[1,6],[2,1],[3,7]])for(let k=0;k<n;k++)s=transition(s,`court_digit_${i}`);
  s=act(s,'court_confirm','court_exit','archive_enter');assert.equal(s.stage,'archive_arrival');
+});
+
+test('a known safe code works after reading its instructions and optional evidence remains collectible',()=>{
+ let s=act(state('court_arrival'),'court_gate');
+ assert.equal(expansionTargetActive(s,'court_digit_0'),true);
+ assert.equal(expansionTargetActive(s,'court_confirm'),true);
+ assert.equal(transition(s,'court_confirm'),s,'an incorrect code still keeps the safe shut');
+ for(const [i,n] of [[0,2],[1,6],[2,1],[3,7]])for(let k=0;k<n;k++)s=transition(s,`court_digit_${i}`);
+ s=transition(s,'court_confirm');assert.equal(s.stage,'court_unlocked');
+ assert.equal(s.notes.includes('court_log'),false);assert.equal(s.notes.includes('court_phone'),false);
+ s=transition(s,'court_evidence');assert.equal(s.stage,'court_unlocked');assert.ok(s.notes.includes('court_evidence'));
+ assert.equal(transition(s,'court_evidence'),s,'rereading an optional record cannot reset progress');
+ s=act(s,'court_exit','archive_enter');assert.equal(s.stage,'archive_arrival');
+});
+
+test('an old search checkpoint with both code clues can unlock after load and retry',()=>{
+ const original={...state('court_search'),notes:['court_gate','court_log','court_phone'],code:'2617'};
+ const storage={value:null,getItem(){return this.value;},setItem(_,v){this.value=v;}};
+ writeProgress(storage,original,1300);const saved=readProgress(storage);
+ for(const s of [{...state(saved.stage),notes:saved.notes,code:saved.code},checkpoint(transition(transition(original,'caught'),'dead'))]){
+  assert.equal(expansionTargetActive(s,'court_confirm'),true);
+  assert.equal(transition(s,'court_confirm').stage,'court_unlocked');
+ }
 });
 
 test('interrupted archive playback resumes before the replay and may play the collected record again',()=>{

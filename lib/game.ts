@@ -2,11 +2,11 @@ import * as T from 'three';
 import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration} from './expansion-story.ts';
 import {expansionLayout} from './expansion-world.ts';
 import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,clampLightOrigin,type Target} from './world.ts';
-import {animateGhost,animateGhostAttack,animateGhostEmergence} from './ghost.ts';
+import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength} from './ghost.ts';
 export {prepareVisuals} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
 import {initialStory,checkpoint,transition,objectiveFor,residentEvidence,areaFor,chapters,chaseStages,opening,openingTiming as beats,finale,finaleTiming as endingBeats,isMemory,isFinale,isCinematic,hasFlashlight,tapeTimes,type Story,type Action,type Area} from './story.ts';
-import {findPath,clearPath,type Point} from './navigation.ts';
+import {findPath,findPursuitPath,pursuerRadius,clearPath,type Point} from './navigation.ts';
 import {setConnectionDoor} from './passage.ts';
 import {apartment as home,apartmentScale as S} from './apartment-layout.ts';
 import {buildRoad} from './prologue.ts';
@@ -51,7 +51,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   let entranceDelay=0,arrivalPursuit=false;let arrivalDoor:T.Object3D|undefined,arrivalDoorRelease=-1;let lureUsed=false;let noiseRadius=0,saveUntil=0,noiseUntil=0;let saveNotice='';
   let storage:Storage|undefined;try{storage=window.localStorage;}catch{}
   let saved=storage?readProgress(storage):null;
-  const deathOrigin=new T.Vector3(),deathDirection=new T.Vector3(),deathFace=new T.Vector3();let deathFloor=0,deathEye=1.65;
+  const deathOrigin=new T.Vector3(),deathGhostOrigin=new T.Vector3(),deathWanted=new T.Vector3(),deathDirection=new T.Vector3(),deathFace=new T.Vector3();let deathFloor=0,deathEye=1.65;
   const hiddenPosition=new T.Vector3(),direction=new T.Vector3(),delta=new T.Vector3();
   let settings:Settings=storage?readSettings(storage):normalizeSettings(defaultSettings);renderer.toneMappingExposure=settings.brightness;camera.fov=settings.fov;camera.updateProjectionMatrix();
   const keys=new Set<string>();const lastGhostPosition=new T.Vector3();let ghostMotion=0;const systemReduced=window.matchMedia('(prefers-reduced-motion:reduce)').matches;let reducedMotion=systemReduced||settings.reducedMotion;
@@ -70,9 +70,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function snapshot():GameView{
     const chapter=story.stage.startsWith('service_')?{...chapters.lift,number:'05',title:'관리용 승강기'}:chapters[area];
     const retryLabels:Partial<Record<typeof story.stage,string>>={annex_arrival:'1층 공동시설부터 다시',archive_arrival:'지하 기록보관실부터 다시',plant_arrival:'기계실 입구부터 다시',service_ride:'관리용 승강기부터 다시',lift_call:'28층 외부 복도부터 다시',lift_exit:'24층 엘리베이터부터 다시',lift_button:'엘리베이터 안에서 다시',stairs_loop:'23층 비상계단부터 다시',resident_entry:'1704호 입구부터 다시',car_escape:'차량 탈출부터 다시',office_record:'17층 관리실부터 다시',parking_gate:'지하 주차장 입구부터 다시',parking_alarm:'주차장 경보기부터 다시'};
-    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='car_crash'?T.MathUtils.smoothstep(stageTime,2.5,5):story.stage==='car_escape'?1-T.MathUtils.smoothstep(stageTime,0,.7):story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,2.8,5.7):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:(opening[story.stage]??finale[story.stage])?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:(opening[story.stage]??finale[story.stage])?.cues?.findLast(cue=>stageTime>=cue.at)?.text??(opening[story.stage]??finale[story.stage])?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,notes:[...story.notes]},prompt:evidenceReaction?'':story.hidden?'장롱에서 나오기':hover?(area==='resident'&&story.notes.includes(hover.id)?'확인 완료 · ':'')+hover.label:'',message,objective:evidenceReaction?'':settings.hints?objectiveFor(story):'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holding:holding||keys.has('KeyE'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||(isExpansion(story.resume)?chapters[areaFor({...story,stage:story.resume})].floor+' · 조사 이어하기':'28층 라디오 장면부터 다시')};
+    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='car_crash'?T.MathUtils.smoothstep(stageTime,2.5,5):story.stage==='car_escape'?1-T.MathUtils.smoothstep(stageTime,0,.7):story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,2.8,5.7):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:(opening[story.stage]??finale[story.stage])?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:(opening[story.stage]??finale[story.stage])?.cues?.findLast(cue=>stageTime>=cue.at)?.text??(opening[story.stage]??finale[story.stage])?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,notes:[...story.notes]},prompt:evidenceReaction?'':story.hidden?'장롱에서 나오기':hover?(area==='resident'&&story.notes.includes(hover.id)?'확인 완료 · ':'')+hover.label:'',message:controlText(message),objective:evidenceReaction?'':settings.hints?controlText(objectiveFor(story)):'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holding:holding||keys.has('KeyE'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||(isExpansion(story.resume)?chapters[areaFor({...story,stage:story.resume})].floor+' · 조사 이어하기':'28층 라디오 장면부터 다시')};
   }
   const emit=()=>onChange(snapshot());
+  function controlText(text:string){return text.replace(/\b(?:E|Shift)\b/g,key=>keyLabel(settings.bindings[key==='E'?'interact':'run']));}
   function say(text:string,seconds=7){message=text;messageUntil=elapsed+seconds;emit();}
   function ghostVoice(line:GhostLine,force=false){
     if(!force&&elapsed-lastVoice<12)return;
@@ -120,6 +121,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='dying'){
       keys.clear();holding=false;dragging=false;hover=undefined;message='';whisper='';threat=1;deathOrigin.copy(camera.position);deathFloor=world.heightAt(camera.position.x,camera.position.z);deathEye=camera.position.y-deathFloor;
       deathDirection.copy(world.figure.position).sub(camera.position);deathDirection.y=0;if(deathDirection.lengthSq()<.001)deathDirection.set(-Math.sin(yaw),0,-Math.cos(yaw));deathDirection.normalize();
+      deathGhostOrigin.copy(world.figure.position);
       world.figure.visible=true;audio.stopVoices();audio.voice('scream',0,1);audio.sound('slam',0,.8);emit();return true;
     }
     const nextArea=areaFor(story);if(nextArea!==area){const wasCrouched=crouched;loadArea(nextArea);crouched=wasCrouched;}
@@ -166,7 +168,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     plant_exit:'주차장 연결문이 열렸다. 이제 내 차로 갈 수 있다.',
     switch:'딸깍. 아무 반응이 없다.\n침대 옆 협탁 위에 손전등을 둔 기억이 난다.',
     flashlight:'손전등을 찾았다.\n다용도실 차단기를 확인하자. 전화벨은 계속 울린다.',
-    car_search:'CCTV에서 그녀가 내려놓은 열쇠다. 꼬리표에 「배수 설비」라고 적혀 있다.\n양쪽 급수 밸브를 잠근 뒤 서측 펌프로 가야 한다.',
+    car_search:'조수석 가방에서 배수 설비 열쇠를 찾았다.\n꼬리표에 적힌 대로 양쪽 급수 밸브를 잠근 뒤 서측 펌프로 가야 한다.',
     valve_a:'서측 급수관을 잠갔다. 금속 마찰음이 주차장에 울렸다.',
     valve_b:'동측 급수관을 잠갔다. 금속 마찰음이 주차장에 울렸다.',
     pump:'차량 출구의 물이 빠졌다. 차로 빠져나갈 수 있다.\n경보로 시선을 돌린 뒤, 내 차의 운전석으로 달려가자.',
@@ -192,10 +194,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     car_door:'문을 열었다. 차가운 비가 손등을 때린다.\n그날 나는 이 문을 열지 않았다.',
     road_bag:'1704호 열쇠. 가방 곁의 전화기는 화면에 금이 갔지만 아직 켜져 있다.\n「도착하면 연락할게.」',
     road_phone:'「제가 사람을 치었습니다. 술을 마셨고, 도망쳤습니다.」\n「이번에는 여기 있겠습니다.」',
-    record:'03:26. 운전자는 내린 뒤 조수석 쪽에서 난 소리에 멈춰 섰다.\n9초 동안 서 있다가 고개를 돌리고 엘리베이터로 갔다.\n서고의 퓨즈를 찾은 뒤 B 접지 → A 입력 → C 감시 순서로 연결한다.\nCCTV는 사고 시각이 아닌, 내 차가 입차한 03:26 기록을 찾아야 한다.',
+    record:'03:26. 내 차가 멈춘 직후, 열람 영상에서 아홉 초가 빠져 있다.\n서고의 퓨즈를 찾은 뒤 B 접지 → A 입력 → C 감시 순서로 연결한다.\nCCTV에서 내 차가 입차한 03:26 기록을 확인하자.',
     fuse:'예비 퓨즈를 챙겼다.\n오른쪽 배전반의 세 스위치를 근무일지 순서대로 올려야 한다.',
     security_power:'CCTV가 켜졌다. 사흘 전 주차장 기록이다.\n찌그러진 내 차가 들어오고 있다.',
-    monitor:'내가 떠난 뒤, 빈 조수석에서 그 여자가 내렸다.\n배수 설비 열쇠를 좌석에 남긴 채 카메라를 올려다본다.\n그날부터 집 안에 있었다. 모니터 옆 비상 열쇠를 챙겼다.',
+    monitor:'내 차가 멈추고 영상이 아홉 초를 건너뛴다.\n조수석 유리에 흰 소매 같은 것이 비친다. 「귀가자 2명 / 2803호」.\nCCTV 옆 관리용 승강기 열쇠를 챙겼다. 우선 1층으로 내려가자.',
     service_exit:'관리용 승강기 문이 열렸다. 비상 전원으로 1층까지 내려갈 수 있다.\n승강기 안으로 들어가자.',
     exit:'보행자 출구는 바깥에서 봉쇄됐다. 내 차로 나가야 한다.\n차량 출구도 침수됐다. 조수석의 배수 설비 열쇠를 찾아 물부터 빼자.',
     alarm:'경보가 울린다. 그것이 고개를 돌렸다.\n내 차의 운전석으로 달려가자. 문을 열고 타면 된다!',
@@ -337,13 +339,13 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const p=world.figure.position;
     const changed=Math.hypot(target.x-pathGoal.x,target.z-pathGoal.z)>.45;
     if(repathAt===0||(elapsed>=repathAt&&(changed||!enemyPath.length))){
-      enemyPath=findPath(p,target,world.solids,world.bounds);pathGoal.x=target.x;pathGoal.z=target.z;repathAt=elapsed+.55;
+      enemyPath=findPursuitPath(p,target,world.solids,world.bounds);pathGoal.x=target.x;pathGoal.z=target.z;repathAt=elapsed+.55;
     }
     while(enemyPath.length&&Math.hypot(p.x-enemyPath[0].x,p.z-enemyPath[0].z)<.12)enemyPath.shift();
-    if(enemyPath.length>1&&clearPath(p,enemyPath[1],world.solids,world.bounds))enemyPath.shift();
+    if(enemyPath.length>1&&clearPath(p,enemyPath[1],world.solids,world.bounds,pursuerRadius))enemyPath.shift();
     const next=enemyPath[0];if(!next)return;
-    const dx=next.x-p.x,dz=next.z-p.z,distance=Math.hypot(dx,dz),step=Math.min(speed*.85*dt,distance);
-    if(free(p.x+dx/distance*step,p.z,.18))p.x+=dx/distance*step;if(free(p.x,p.z+dz/distance*step,.18))p.z+=dz/distance*step;
+    const dx=next.x-p.x,dz=next.z-p.z,distance=Math.hypot(dx,dz),stride=ghostStrideLength(world.figure,world.solids,crawling()),step=Math.min(Math.min(speed*.85,stride*3)*dt,distance);
+    if(free(p.x+dx/distance*step,p.z,pursuerRadius))p.x+=dx/distance*step;if(free(p.x,p.z+dz/distance*step,pursuerRadius))p.z+=dz/distance*step;
     p.y=world.heightAt(p.x,p.z);
     const turn=T.MathUtils.euclideanModulo(Math.atan2(dx,dz)-world.figure.rotation.y+Math.PI,Math.PI*2)-Math.PI;
     world.figure.rotation.y+=T.MathUtils.clamp(turn,-dt*2.4,dt*2.4);
@@ -427,7 +429,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(contact())return;
     if(world.figure.visible&&story.stage!=='dying'){
       const p=world.figure.position,distance=Math.hypot(p.x-camera.position.x,p.z-camera.position.z),travel=Math.hypot(p.x-lastGhostPosition.x,p.z-lastGhostPosition.z);
-      const before=Math.floor(walkPhase/Math.PI);walkPhase+=Math.min(travel,.3)*Math.PI*2/(crawling()?.82:1.56);ghostMotion=T.MathUtils.clamp(travel/Math.max(dt,.001)/2.5,0,1);lastGhostPosition.copy(p);
+      const before=Math.floor(walkPhase/Math.PI);walkPhase+=Math.min(travel,.3)*Math.PI*2/ghostStrideLength(world.figure,world.solids,crawling());ghostMotion=T.MathUtils.clamp(travel/Math.max(dt,.001)/2.5,0,1);lastGhostPosition.copy(p);
       const pan=T.MathUtils.clamp(((p.x-camera.position.x)*Math.cos(yaw)-(p.z-camera.position.z)*Math.sin(yaw))/Math.max(1,distance),-1,1),level=Math.min(1,4/Math.max(1,distance));
       if(Math.floor(walkPhase/Math.PI)!==before){audio.footstep(crawling()?'wet':'wood',pan,level*.85);if(before%2===0)audio.sound('drag',pan,level*.6);}
       if(distance<8&&elapsed-lastBreath>4.1){audio.sound('breath',pan,level);lastBreath=elapsed;}
@@ -525,12 +527,19 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='parking_run'&&stageTime<25&&elapsed-lastSound>1.4){audio.sound('alarm',-.6);lastSound=elapsed;}
     if(story.stage==='shoes'&&stageTime>1.4&&scriptBeat===0){scriptBeat=1;audio.sound('drip',-.6,.9);}
   }
+  function placeInsideRoom(out:T.Vector3,from:T.Vector3,to:T.Vector3,radius:number){
+    let lo=0,hi=1;out.copy(to);
+    if(clearPath(from,to,world.solids,world.bounds,radius))return;
+    for(let i=0;i<12;i++){const t=(lo+hi)/2;out.copy(from).lerp(to,t);if(clearPath(from,out,world.solids,world.bounds,radius))lo=t;else hi=t;}
+    out.copy(from).lerp(to,lo);
+  }
   function deathPose(){
     const t=Math.min(stageTime,3.2),fall=T.MathUtils.smoothstep(t,1.05,2.55),lunge=T.MathUtils.smoothstep(t,0,.32);
-    world.figure.position.copy(deathOrigin).addScaledVector(deathDirection,T.MathUtils.lerp(1.03,.85,lunge));world.figure.position.y=deathFloor;
+    deathWanted.copy(deathOrigin).addScaledVector(deathDirection,T.MathUtils.lerp(1.03,.85,lunge));
+    placeInsideRoom(world.figure.position,deathGhostOrigin,deathWanted,pursuerRadius);world.figure.position.y=world.heightAt(world.figure.position.x,world.figure.position.z);
     world.figure.rotation.set(0,Math.atan2(-deathDirection.x,-deathDirection.z),0,'YXZ');
     animateGhostAttack(world.figure,t,reducedMotion,deathEye);
-    camera.position.copy(deathOrigin).addScaledVector(deathDirection,-fall*.2);camera.position.y=T.MathUtils.lerp(deathOrigin.y,deathFloor+.27,fall);
+    deathWanted.copy(deathOrigin).addScaledVector(deathDirection,-fall*.2);placeInsideRoom(camera.position,deathOrigin,deathWanted,.23);camera.position.y=T.MathUtils.lerp(deathOrigin.y,deathFloor+.27,fall);
     world.figure.updateMatrixWorld(true);world.figure.getObjectByName('ghost-head')!.localToWorld(deathFace.set(0,-.055,.18));
     const dx=deathFace.x-camera.position.x,dy=deathFace.y-camera.position.y,dz=deathFace.z-camera.position.z;
     yaw=Math.atan2(-dx,-dz);pitch=Math.atan2(dy,Math.hypot(dx,dz));
@@ -544,7 +553,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='sleep'){camera.position.set(...home.sleep);pitch=.85+T.MathUtils.smoothstep(stageTime,0,5)*.15;yaw=0;}
     if(area==='apartment')(scene.fog as T.FogExp2).density=.016;
     if(area==='stairs')ambient.intensity=T.MathUtils.lerp(.5,.16,T.MathUtils.smoothstep(-camera.position.z,4.8,6.2));
-    if(world.figure.visible&&story.stage!=='dying'&&story.stage!=='ended')animateGhost(world.figure,time,ghostMotion,threat,reducedMotion,walkPhase,crawling()?(area==='landing'?T.MathUtils.smoothstep(areaTime-entranceDelay,0,.5):1):0,area==='stairs'||area==='courtyard'?world.heightAt:undefined);
+    if(world.figure.visible&&story.stage!=='dying'&&story.stage!=='ended')animateGhost(world.figure,time,ghostMotion,threat,reducedMotion,walkPhase,crawling()?(area==='landing'?T.MathUtils.smoothstep(areaTime-entranceDelay,0,.5):1):0,area==='stairs'||area==='courtyard'?world.heightAt:undefined,world.solids);
     if(area==='corridor'&&areaTime<4.2&&world.figure.visible)animateGhostEmergence(world.figure,areaTime,reducedMotion);
     if(evidenceReaction&&!reducedMotion){
       // Remain at the evidence: follow the leather toe, then the first wet print.
@@ -572,11 +581,13 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       const door=world.root.getObjectByName('front-door')!;
       if(!door.userData.openRequested){door.userData.openRequested=true;audio.sound('click',0,.9);audio.sound('door-creak',0,.85);say('잠금쇠를 풀고 문을 밀었다. 복도로 나가야 한다!',3);}
     }
-    world.updateStory?.(story.stage,time,reducedMotion,story);
+    const doorOccupants=[{x:camera.position.x,z:camera.position.z,r:.23}];
+    if(world.figure.visible)doorOccupants.push({x:world.figure.position.x,z:world.figure.position.z,r:pursuerRadius});
+    world.updateStory?.(story.stage,time,reducedMotion,story,doorOccupants);
     if(arrivalDoor){
       const landing=arrivalDoor.parent!.position,playerInDoorway=camera.position.x-landing.x<1.85&&camera.position.z>landing.z-3.5;
       const desired=arrivalDoorRelease>=0||playerInDoorway?1:0;
-      if(!paused&&!document.hidden)setConnectionDoor(arrivalDoor,T.MathUtils.damp(-arrivalDoor.rotation.y/(Math.PI/2),desired,4,dt));
+      if(!paused&&!document.hidden)setConnectionDoor(arrivalDoor,T.MathUtils.damp(-arrivalDoor.rotation.y/(Math.PI/2),desired,4,dt),doorOccupants);
     }
     if(world.liftDoors){
       const desired=['lift_enter','lift_exit','service_open'].includes(story.stage)?1:story.stage==='pry'?holdProgress*.28:0;

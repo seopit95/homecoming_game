@@ -1,5 +1,6 @@
 import * as T from 'three';
-import {connectionPassage} from './passage.ts';
+import {connectionPassage,setDoorAngle} from './passage.ts';
+import type {Occupant} from './collision.ts';
 import {buildCourtyard} from './courtyard.ts';
 import {buildExpansion} from './expansion-world.ts';
 import type {Area,Action,Stage,Story} from './story';
@@ -42,7 +43,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   const spawn=new T.Vector3(0,1.65,('spawnZ' in size?size.spawnZ:landing.spawnZ));const heading=0;let heightAt:((x:number,z:number)=>number)=()=>0;
   let liftDoors:{left:T.Mesh;right:T.Mesh;blocks:Solid[]}|undefined,setDisplay:((text:string)=>void)|undefined,fallingFigure:T.Group|undefined;
   let reset=()=>{};
-  let updateStory:((stage:Stage,time:number,reduced:boolean,story?:Story)=>void)|undefined;
+  let updateStory:((stage:Stage,time:number,reduced:boolean,story?:Story,occupants?:Occupant[])=>void)|undefined;
   const figure=makeFigure(root),shoes=new T.Group(),phoneGlow=new T.PointLight(),radioLight=new T.PointLight();
   if(area!=='stairs'){
     box(0,-.1,0,bx*2,.2,bz*2,floorMat);box(0,ceiling+.08,0,bx*2,.16,bz*2,concrete);
@@ -56,6 +57,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       wall(4.25,landing.homeZ,.15,2.9);
       const leaf=box(1.3-Math.sin(1.42)*.725,1.22,landing.homeZ+.75-Math.cos(1.42)*.725,1.45,2.44,.13,paint);
       leaf.rotation.y=1.42+Math.PI/2;leaf.name='2803-open-door';
+      solids.push({x:leaf.position.x,z:leaf.position.z,w:1.45,d:.13,y:1.22,h:2.44,yaw:leaf.rotation.y});
       const inset=new T.Mesh(new T.BoxGeometry(1.2,1.7,.045),mat('#394740'));inset.position.z=-.083;leaf.add(inset);
       const handle=new T.Mesh(new T.BoxGeometry(.18,.055,.15),metal);handle.position.set(.495,-.2,-.17);leaf.add(handle);
       for(const z of [landing.homeZ-.81,landing.homeZ+.81])box(1.24,1.25,z,.16,2.5,.1,metal);
@@ -120,7 +122,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const stairHinge=new T.Group();stairHinge.name='corridor-stair-door';stairHinge.position.set(-.525,0,-bz+.12);root.add(stairHinge);stairHinge.attach(stairLeaf);
     const stairBlock={x:0,z:-bz+.12,w:1.05,d:.12,y:1.1,h:2.2};solids.push(stairBlock);bounds.z=26.2;bounds.x=4.3;
     connectionPassage(root,solids,lamps,0,-bz);
-    let stairAt=-1;reset=()=>{stairAt=-1;};updateStory=(stage,time)=>{if(stage==='corridor_departure'&&stairAt<0)stairAt=time;if(stairAt>=0){stairHinge.rotation.y=-1.5*T.MathUtils.smoothstep(time-stairAt,0,.75);if(Math.abs(stairHinge.rotation.y)>1.2){const i=solids.indexOf(stairBlock);if(i>=0)solids.splice(i,1);}}};
+    let stairAt=-1;reset=()=>{stairAt=-1;};updateStory=(stage,time,_reduced,_story,occupants)=>{if(stage==='corridor_departure'&&stairAt<0)stairAt=time;if(stairAt>=0)setDoorAngle(stairHinge,stairBlock,1.5*T.MathUtils.smoothstep(time-stairAt,0,.75),.525,0,occupants);};
     label('24층 · 연결 복도',0,2.35,bz-.11,Math.PI,1.5,.22);
     for(const z of [-8,8]){box(0,1.4,z,3.8,2.8,12,plaster,true);for(const x of [-1.94,1.94]){label(z<0?'공동 배관실':'전기 설비실',x,1.9,z,x<0?-Math.PI/2:Math.PI/2,.85,.18);box(x,1.02,z,.045,1.66,.79,metal);for(let i=0;i<7;i++)box(x+Math.sign(x)*.026,.54+i*.052,z,.012,.014,.55,dark);roundPipe(root,[x,2.36,z-5.8],[x,2.36,z+5.8],.017,metal);}}
     for(const x of [-bx+.12,bx-.12])for(let z=-16;z<18;z+=5.2)unit(x,z,String(2401+Math.round((z+16)/5.2)+(x>0?8:0)));
@@ -160,11 +162,10 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     door('down','아래층 ↓',1,-5.85,-2.8,.85);
     const note=label('시설 점검 메모',1.25,1.65,5.89,Math.PI,.8,.35,'#34392e','#b8ae8c');target('stair_note','계단 점검 메모 읽기',note.mesh,1.25,1.65,5.7);
     const floorLabel=label('23층',-1.89,2,3,Math.PI/2,.9,.55);label('↓ 아래층',1,1.2,.08,0,.65,.2);
-    let opened=-1,shown='23층';reset=()=>{opened=-1;shown='';};updateStory=(stage,time)=>{
+    let opened=-1,shown='23층';reset=()=>{opened=-1;shown='';};updateStory=(stage,time,_reduced,_story,occupants)=>{
       const text=stage==='stairs_reverse'||stage==='stairs_passage'?'17층':'23층';if(text!==shown){floorLabel.update(text);shown=text;}
       if(stage==='stairs_passage'&&opened<0)opened=time;
-      if(opened>=0)hinge.rotation.y=-1.55*T.MathUtils.smoothstep(time-opened,0,.85);
-      if(Math.abs(hinge.rotation.y)>1.2){const i=solids.indexOf(closed);if(i>=0)solids.splice(i,1);}
+      if(opened>=0)setDoorAngle(hinge,closed,1.55*T.MathUtils.smoothstep(time-opened,0,.85),.45,0,occupants);
     };
     light(0,3.2,3,'#8f9c83',5);light(-1,5.3,-4.8,'#b0a17b',3);light(1,-.3,-4.8,'#769789',3);
   }
@@ -203,7 +204,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const serviceBlock={x:0,z:-bz+.12,w:1.2,d:.12,y:1.1,h:2.2};solids.push(serviceBlock);let serviceAt=-1;reset=()=>{serviceAt=-1;};bounds.z=bz+6.2;
     box(0,-.09,-bz-1.35,2.2,.18,2.7,floorMat);box(0,2.8,-bz-1.35,2.2,.12,2.7,metal);for(const x of [-1.1,1.1])box(x,1.4,-bz-1.35,.12,2.8,2.7,metal,true);box(0,1.4,-bz-2.7,2.2,2.8,.12,metal,true);light(0,2.5,-bz-1.3,'#98ad9b',3,4);label('관리용 승강기 · 1F',0,2.5,-bz+.21,0,1.8,.2);
     label('17층 · 구 관리사무소',0,2.3,bz-.1,Math.PI,1.65,.2);puddle(2.6,5,.45,1);
-    updateStory=(stage,time)=>{fuse.visible=['office_record','office_fuse'].includes(stage);exitKey.visible=!['office_leave','office_departure'].includes(stage);if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0){serviceHinge.rotation.y=-1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85);if(Math.abs(serviceHinge.rotation.y)>1.2){const i=solids.indexOf(serviceBlock);if(i>=0)solids.splice(i,1);}}};
+    updateStory=(stage,time,_reduced,_story,occupants)=>{fuse.visible=['office_record','office_fuse'].includes(stage);exitKey.visible=!['office_leave','office_departure'].includes(stage);if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0)setDoorAngle(serviceHinge,serviceBlock,1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85),.6,0,occupants);};
   }
   if(area==='parking'){
     bounds.z=bz+6.8;connectionPassage(root,solids,lamps,-3,bz+6);

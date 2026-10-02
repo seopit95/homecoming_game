@@ -1,3 +1,4 @@
+import {archiveReplay} from '../lib/expansion-story.ts';
 import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
@@ -236,6 +237,45 @@ test('contact screams once, locks controls and falls before death; manual pause 
   game.start(true);tick();assert.equal(game.snapshot().story.stage,'lift_call');assert.equal(game.snapshot().deathProgress,0);assert.equal(renderedCamera.position.y,1.65);game.dispose();
 });
 
+test('mandatory pry instructions follow rebound controls',()=>{
+  const previousStorage=win.localStorage;
+  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'lift_button',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  try{
+    tick();game.configure({bindings:{...game.getSettings().bindings,forward:'KeyE',interact:'KeyQ',run:'ControlLeft'}});game.continueGame();tick();
+    renderedCamera.position.set(0,1.65,.6);
+    const yaw=Math.atan2(-.92,1.05),pitch=Math.atan2(-.35,Math.hypot(.92,1.05));
+    event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
+    game.interact();assert.equal(game.snapshot().story.stage,'descent');tick(16.1);
+    assert.equal(game.snapshot().story.stage,'pry');assert.match(game.snapshot().objective,/Q를 길게/);assert.match(game.snapshot().message,/Q를 길게/);
+  }finally{game.dispose();win.localStorage=previousStorage;}
+});
+
+test('capture beside corridor walls keeps the ghost and falling camera inside the available space',async()=>{
+  const {buildWorld,canStandAt}=await import('../lib/world.ts');
+  const previousStorage=win.localStorage;
+  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'lift_exit',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
+  const w=buildWorld(new THREE.Scene(),'corridor');
+  for(const [playerX,ghostX] of [[2.3,2.95],[-3,-2.39]]){
+    const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+    const game=createGame(canvas,()=>{},e=>assert.fail(e));
+    try{
+      tick();game.continueGame();tick(.6);renderedCamera.position.set(0,1.65,-1.9);tick();renderedCamera.position.set(-2.6,1.65,16);tick(4.3);
+      const ghost=renderedScene.getObjectByName('resident-remains');
+      renderedCamera.position.set(playerX,1.65,8);ghost.position.set(ghostX,0,8);ghost.visible=true;
+      assert.ok(canStandAt(ghostX,8,w.solids,.43,w.bounds),'capture begins in a valid ghost position');
+      tick(.025);assert.equal(game.snapshot().story.stage,'dying');
+      for(let i=0;i<30;i++){
+        assert.ok(canStandAt(ghost.position.x,ghost.position.z,w.solids,.43,w.bounds),`ghost clears the wall at attack ${i}`);
+        assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,w.solids,.23,w.bounds),`falling camera clears the wall at attack ${i}`);
+        tick(.1);
+      }
+    }finally{game.dispose();}
+  }
+  win.localStorage=previousStorage;
+});
+
 test('the remembered drive, fatal collision, escape and sleep lead to a ringing phone three nights later',()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();game.start();tick(.1);
@@ -417,7 +457,7 @@ test('resuming a previously played archive record allows replay and shows the ti
  try{
   tick();game.continueGame();tick();renderedCamera.position.set(9,1.65,-18.9);const pitch=Math.atan2(1.17-1.65,.92);
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:0,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();assert.equal(game.snapshot().story.stage,'archive_playback');
-  tick(12.2);assert.match(game.snapshot().message,/소리를 듣고도 문을 잠갔다/);
+  tick(12.2);assert.equal(game.snapshot().message,archiveReplay[2].text);
   game.pause();const at=game.snapshot().elapsed;tick(10);assert.equal(game.snapshot().elapsed,at);game.pause(false);
   tick(15);assert.match(game.snapshot().message,/네 뒤에 있어/);assert.equal(game.snapshot().story.stage,'archive_playback');tick(5);assert.equal(game.snapshot().story.stage,'archive_escape');
  }finally{game.dispose();win.localStorage=previous;}

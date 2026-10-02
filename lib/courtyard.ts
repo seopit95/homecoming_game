@@ -1,5 +1,6 @@
 import * as T from 'three';
-import {connectionPassage} from './passage.ts';
+import {connectionPassage,setDoorAngle} from './passage.ts';
+import type {Occupant} from './collision.ts';
 import {surface,boxUV,softBox} from './materials.ts';
 import {roundPipe,createSedan} from './props.ts';
 import {wetTexture} from './entry-props.ts';
@@ -92,8 +93,8 @@ export function buildCourtyard(root:T.Group){
  const stairLight=new T.PointLight('#869e90',3,10);stairLight.position.set(doorX,1.7,doorZ-.8);stairLight.userData.base=3;lamps.push(stairLight);root.add(stairLight);
  const figure=createGhost(root);figure.position.set(0,0,45);figure.visible=false;figure.rotation.y=Math.PI;
  let opened=-1,lastCode='';
- function updateStory(stage:Stage,time:number,reduced=false,story?:Story){
-  if(stage==='court_departure'&&opened<0)opened=time;if(opened>=0){hinge.rotation.y=-1.5*T.MathUtils.smoothstep(time-opened,0,.9);if(Math.abs(hinge.rotation.y)>1.2){const i=solids.indexOf(block);if(i>=0)solids.splice(i,1);}}
+ function updateStory(stage:Stage,time:number,reduced=false,story?:Story,occupants:Occupant[]=[]){
+  if(stage==='court_departure'&&opened<0)opened=time;if(opened>=0)setDoorAngle(hinge,block,1.5*T.MathUtils.smoothstep(time-opened,0,.9),.7,0,occupants);
   swing.rotation.x=reduced?0:Math.sin(time*.7)*.055;
   const code=story?.code??'0000';if(code!==lastCode){lastCode=code;dials.forEach((dial,i)=>{const m=dial.material as T.MeshStandardMaterial,c=m.map!.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#aab099';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#223a31';ctx.font='620px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(code[i],c.width/2,c.height/2);m.map!.needsUpdate=true;});}
  }

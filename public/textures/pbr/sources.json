@@ -1,0 +1,46 @@
+{
+  "license": "CC0-1.0",
+  "license_url": "https://polyhaven.com/license",
+  "assets": [
+    "https://polyhaven.com/a/painted_plaster_wall",
+    "https://polyhaven.com/a/concrete_floor_02"
+  ],
+  "maps": [
+    {
+      "file": "plaster-color.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/painted_plaster_wall/painted_plaster_wall_diff_1k.jpg",
+      "md5": "15ba8c1f63a5ab412b1eabe31728540a",
+      "bytes": 686726
+    },
+    {
+      "file": "plaster-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/painted_plaster_wall/painted_plaster_wall_nor_gl_1k.jpg",
+      "md5": "43fff290583dbdfc9bfa088a2750e840",
+      "bytes": 900461
+    },
+    {
+      "file": "plaster-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/painted_plaster_wall/painted_plaster_wall_arm_1k.jpg",
+      "md5": "a4c1ff7470669daec9e274d915471246",
+      "bytes": 511105
+    },
+    {
+      "file": "concrete-color.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_02/concrete_floor_02_diff_1k.jpg",
+      "md5": "1cfee53d2f82fa59726ab7ae6a2e8c09",
+      "bytes": 776097
+    },
+    {
+      "file": "concrete-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_02/concrete_floor_02_nor_gl_1k.jpg",
+      "md5": "c2065fd81f571f4e39163ea5661128fb",
+      "bytes": 192757
+    },
+    {
+      "file": "concrete-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_02/concrete_floor_02_arm_1k.jpg",
+      "md5": "5995ee8efda4e7966a277b3d9049eb2b",
+      "bytes": 146483
+    }
+  ]
+}

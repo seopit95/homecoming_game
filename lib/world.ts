@@ -7,25 +7,29 @@ import {createEntryEvidence} from './entry-props.ts';
 import {basin,bathtub,sinkCounter,cabinet,roundPipe} from './props.ts';
 import {dressApartment} from './japan.ts';
 import {batchStaticGeometry} from './static-geometry.ts';
+import {solidContainsPoint,type Occupant} from './collision.ts';
+import {setDoorAngle} from './passage.ts';
 
 export type Bounds={x:number;z:number;minX?:number};
-export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number };
-const lightRay=new T.Ray(),lightBox=new T.Box3(),lightHit=new T.Vector3();
+export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number; yaw?:number };
+const lightRay=new T.Ray(),lightBox=new T.Box3(),lightHit=new T.Vector3(),lightDirection=new T.Vector3();
 export function clampLightOrigin(eye:T.Vector3,lens:T.Vector3,solids:Solid[]){
   const distance=eye.distanceTo(lens);if(distance<.001)return false;
-  lightRay.set(eye,lightHit.copy(lens).sub(eye).normalize());let nearest=distance;
-  for(const s of solids){const y=s.y??1.5,h=s.h??3;lightBox.min.set(s.x-s.w/2,y-h/2,s.z-s.d/2);lightBox.max.set(s.x+s.w/2,y+h/2,s.z+s.d/2);
-    if(lightBox.containsPoint(eye))continue;
-    if(lightRay.intersectBox(lightBox,lightHit))nearest=Math.min(nearest,eye.distanceTo(lightHit));
+  lightDirection.copy(lens).sub(eye).normalize();let nearest=distance;
+  for(const s of solids){const y=s.y??1.5,h=s.h??3,c=Math.cos(s.yaw??0),n=Math.sin(s.yaw??0),dx=eye.x-s.x,dz=eye.z-s.z;
+    lightBox.min.set(-s.w/2,y-h/2,-s.d/2);lightBox.max.set(s.w/2,y+h/2,s.d/2);
+    lightRay.origin.set(dx*c-dz*n,eye.y,dx*n+dz*c);lightRay.direction.set(lightDirection.x*c-lightDirection.z*n,lightDirection.y,lightDirection.x*n+lightDirection.z*c);
+    if(lightBox.containsPoint(lightRay.origin))continue;
+    if(lightRay.intersectBox(lightBox,lightHit))nearest=Math.min(nearest,lightRay.origin.distanceTo(lightHit));
   }
   if(nearest>=distance)return false;
-  lens.copy(eye).addScaledVector(lightRay.direction,Math.max(0,nearest-.06));return true;
+  lens.copy(eye).addScaledVector(lightDirection,Math.max(0,nearest-.06));return true;
 }
-export function canStandAt(x:number,z:number,solids:Solid[],r=.23,bounds:Bounds=home.bounds){return x>(bounds.minX??-bounds.x)&&x<bounds.x&&Math.abs(z)<bounds.z&&!solids.some(s=>Math.abs(x-s.x)<s.w/2+r&&Math.abs(z-s.z)<s.d/2+r);}
+export function canStandAt(x:number,z:number,solids:Solid[],r=.23,bounds:Bounds=home.bounds){return x>(bounds.minX??-bounds.x)&&x<bounds.x&&Math.abs(z)<bounds.z&&!solids.some(s=>solidContainsPoint(s,x,z,r));}
 export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:number;z:number},solids:Solid[]){
   const distance=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);
   for(let s=.1;s<distance-.15;s+=.1){const t=s/distance,x=from.x+(to.x-from.x)*t,y=from.y+(to.y-from.y)*t,z=from.z+(to.z-from.z)*t;
-    if(solids.some(b=>Math.abs(x-b.x)<b.w/2&&Math.abs(z-b.z)<b.d/2&&y>(b.y??1.5)-(b.h??3)/2&&y<(b.y??1.5)+(b.h??3)/2))return false;
+    if(solids.some(b=>solidContainsPoint(b,x,z)&&y>(b.y??1.5)-(b.h??3)/2&&y<(b.y??1.5)+(b.h??3)/2))return false;
   }
   return true;
 }
@@ -34,14 +38,14 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
   const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined}:{...buildBuilding(root,area),setTV:undefined};
   batchStaticGeometry(root,content.targets.map(t=>t.mesh));
-  const updateStory:((stage:import('./story').Stage,time:number,reduced:boolean,story?:import('./story').Story)=>void)|undefined=content.updateStory;
+  const updateStory:((stage:import('./story').Stage,time:number,reduced:boolean,story?:import('./story').Story,occupants?:Occupant[])=>void)|undefined=content.updateStory;
   const lightColors=content.lamps.map(light=>({light,color:light.color.clone()}));
   const originalSolids=content.solids.map(s=>({solid:s,value:{...s}})),bounds={...content.bounds};
   const poses:{object:T.Object3D;position:T.Vector3;quaternion:T.Quaternion;scale:T.Vector3;visible:boolean}[]=[];
   root.traverse(object=>poses.push({object,position:object.position.clone(),quaternion:object.quaternion.clone(),scale:object.scale.clone(),visible:object.visible}));
   function reset(){
     content.reset?.();Object.assign(content.bounds,bounds);for(const {light,color} of lightColors)light.color.copy(color);
-    content.solids.splice(0,content.solids.length,...originalSolids.map(({solid,value})=>Object.assign(solid,value)));
+    content.solids.splice(0,content.solids.length,...originalSolids.map(({solid,value})=>{delete solid.yaw;return Object.assign(solid,value);}));
     for(const p of poses){p.object.position.copy(p.position);p.object.quaternion.copy(p.quaternion);p.object.scale.copy(p.scale);p.object.visible=p.visible;delete p.object.userData.openRequested;}
   }
   return {...content,root,updateStory,reset};
@@ -217,11 +221,10 @@ function buildApartment(scene:T.Group) {
   dressApartment(scene,'apartment');const figure=makeFigure(scene);figure.position.set(...home.haunt);lamps.forEach((lamp,i)=>{lamp.name=`apartment-lamp-${i}`;});
   const doorSolid={x:0,z:door.position.z,w:1.45,d:.13,y:1.22,h:2.44};solids.push(doorSolid);
   let openedAt=-1;
-  function updateStory(stage:import('./story').Stage,time:number,reduced:boolean){
+  function updateStory(stage:import('./story').Stage,time:number,reduced:boolean,_story?:import('./story').Story,occupants:Occupant[]=[]){
     const open=!!door.userData.openRequested;
     if(open&&openedAt<0)openedAt=time;
-    door.rotation.y=open?1.42*T.MathUtils.smoothstep(time-openedAt,0,reduced?.2:1.1):0;
-    if(open&&door.rotation.y>1.15){const i=solids.indexOf(doorSolid);if(i>=0)solids.splice(i,1);}
+    setDoorAngle(door,doorSolid,open?1.42*T.MathUtils.smoothstep(time-openedAt,0,reduced?.2:1.1):0,.725,0,occupants);
     doorwayGlow.intensity=door.rotation.y/1.42*7;
     torchPickup.visible=['drive','impact','flee','sleep','tv','wake_ring','light_switch','find_torch'].includes(stage);
   }

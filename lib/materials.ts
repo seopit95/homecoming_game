@@ -3,15 +3,21 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 
 // Decode each source once; floor changes own disposable texture clones.
 const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'cockpit',T.Texture>>={};
+const physicalSources:Partial<Record<`${'plaster'|'concrete'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
     const loader=new T.TextureLoader();
-    const results=await Promise.allSettled((['surfaces','remains','face','hand','hand-view','cockpit'] as const).map(async key=>{
+    const jobs=(['surfaces','remains','face','hand','hand-view','cockpit'] as const).map(async key=>{
       const texture=await loader.loadAsync(`/textures/${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
-    }));
-    if(results.some(r=>r.status==='rejected')){for(const r of results)if(r.status==='fulfilled')r.value.texture.dispose();loading=undefined;throw new Error('Visual asset loading failed');}
+    });
+    const physicalJobs=(['plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm'] as const).map(async key=>{
+      const texture=await loader.loadAsync(`/textures/pbr/${key}.jpg`);texture.colorSpace=key.endsWith('color')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.setScalar(.9);return {key,texture};
+    });
+    const [results,physical]=await Promise.all([Promise.allSettled(jobs),Promise.allSettled(physicalJobs)]);
+    if([...results,...physical].some(r=>r.status==='rejected')){for(const r of [...results,...physical])if(r.status==='fulfilled')r.value.texture.dispose();loading=undefined;throw new Error('Visual asset loading failed');}
     for(const r of results)if(r.status==='fulfilled')sources[r.value.key]=r.value.texture;
+    for(const r of physical)if(r.status==='fulfilled')physicalSources[r.value.key]=r.value.texture;
   })();
   return loading;
 }
@@ -19,6 +25,12 @@ export type Surface='wall'|'tile'|'concrete'|'wood'|'woodFloor'|'skin'|'cloth'|'
 const tiles:Record<Surface,[number,number]>={wall:[0,2],wood:[1,2],woodFloor:[1,2],concrete:[2,2],tile:[0,1],oldTile:[0,1],steel:[1,1],ceramic:[2,1],fabric:[0,0],leather:[1,0],decayWall:[2,0],garage:[2,2],skin:[0,1],hair:[1,1],cloth:[0,0],wound:[1,0]};
 const fallback:Record<Surface,string>={wall:'#a7a59a',tile:'#898c86',concrete:'#62696b',wood:'#635348',woodFloor:'#635348',skin:'#a5a49d',cloth:'#b9b8ac',hair:'#101215',wound:'#49483f',decayWall:'#8d9283',oldTile:'#979784',garage:'#626665',steel:'#706e64',ceramic:'#c4c3b8',fabric:'#797975',leather:'#3c4243'};
 export function surface(kind:Surface,color='#ffffff',options:T.MeshStandardMaterialParameters={}){
+  const physical=kind==='wall'||kind==='decayWall'?'plaster':kind==='garage'||kind==='concrete'?'concrete':null;
+  if(physical&&physicalSources[`${physical}-color`]){
+    const copy=(channel:'color'|'normal'|'arm')=>{const map=physicalSources[`${physical}-${channel}`]!.clone();map.needsUpdate=true;return map;};
+    const arm=copy('arm'),material=new T.MeshStandardMaterial({color,map:copy('color'),normalMap:copy('normal'),normalScale:new T.Vector2(.65,.65),roughness:.95,roughnessMap:arm,aoMap:arm,aoMapIntensity:.55,...options});
+    material.name=`surface-${kind}`;return material;
+  }
   const character=['skin','cloth','hair','wound'].includes(kind),source=sources[character?'remains':'surfaces'];
   const map=source?.clone();if(map){map.needsUpdate=true;map.wrapS=map.wrapT=T.RepeatWrapping;}
   const roughness=kind==='skin'?.72:kind==='hair'?.48:kind==='ceramic'?.24:kind==='steel'?.48:['tile','oldTile'].includes(kind)?.58:kind==='leather'?.55:.86;

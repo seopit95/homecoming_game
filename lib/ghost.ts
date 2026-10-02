@@ -5,8 +5,12 @@ import {createHair,settleHair} from './ghost-hair.ts';
 import {createFace,poseFace,type FaceRig} from './ghost-face.ts';
 import {createDress,poseDress} from './ghost-dress.ts';
 import {extremity} from './ghost-anatomy.ts';
+import type {Solid} from './world.ts';
 
-type Rig={drips:T.InstancedMesh;neck:T.Mesh;face:FaceRig;sleeves:T.Mesh[];skinArms:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
+type Clearance={side:number;front:number;back:number};
+const openClearance:Clearance={side:0,front:0,back:0};
+const armTuck=(t:Clearance)=>T.MathUtils.smoothstep(Math.max(t.side,t.front),0,.65);
+type Rig={tuck:Clearance;drips:T.InstancedMesh;neck:T.Mesh;face:FaceRig;sleeves:T.Mesh[];skinArms:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
 const rigs=new WeakMap<T.Group,Rig>();
 export function createGhost(parent:T.Object3D){
   const figure=new T.Group();figure.name='resident-remains';figure.rotation.order='YXZ';parent.add(figure);figure.visible=false;
@@ -37,10 +41,11 @@ export function createGhost(parent:T.Object3D){
   const skinArms=arms.map(()=>skinArm(body,skin)),sleeves=arms.map(()=>skinArm(body,cloth,true));
   sleeves[1].userData.torn=true;
   const drips=new T.InstancedMesh(new T.SphereGeometry(.003,6,5),new T.MeshPhysicalMaterial({color:'#39090c',roughness:.25,clearcoat:.7}),6);drips.name='ghost-blood-drips';drips.frustumCulled=false;body.add(drips);
-  rigs.set(figure,{drips,neck,face,sleeves,skinArms,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
+  rigs.set(figure,{tuck:openClearance,drips,neck,face,sleeves,skinArms,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
 }
-function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0){
+function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,tuck:Clearance=openClearance){
   const rig=rigs.get(figure);if(!rig)return;
+  rig.tuck=tuck;
   rig.body.position.set(0,0,0);rig.body.quaternion.identity();
   rig.face.jaw.rotation.set(0,0,0);rig.head.position.set(-.025,.46,.028);rig.arms[1].position.y=.245;
   const step=Math.sin(phase),drag=Math.sin(phase/2),jerk=reducedMotion?0:Math.pow(Math.max(0,Math.sin(time*1.7)),22);
@@ -52,7 +57,7 @@ function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,red
   for(let i=0;i<2;i++){
     rig.legs[i].position.set((i===0?-1:1)*.105,.87,.015);rig.palms[i].rotation.set(0,0,0);
     const a=T.MathUtils.euclideanModulo(phase+i*Math.PI,Math.PI*2),swing=a<Math.PI,lift=swing?Math.sin(a):0;
-    const stride=.39,z=(swing?-Math.cos(a)*stride:stride-(a-Math.PI)/Math.PI*stride*2)*moving,y=-.80+lift*(i===0?.075:.035)*moving;
+    const stride=.39*(1-Math.max(tuck.front,tuck.back)*.65),z=(swing?-Math.cos(a)*stride:stride-(a-Math.PI)/Math.PI*stride*2)*moving,y=-.80+lift*(i===0?.075:.035)*moving;
     const distance=Math.min(.839,Math.hypot(y,z)),bend=Math.acos(distance/.84),hip=Math.atan2(-z,-y)-bend;
     rig.legs[i].rotation.set(hip,0,i===0?.035:-.035);rig.knees[i].rotation.set(bend*2,0,0);
     rig.ankles[i].rotation.set(-hip-bend*2+(swing?Math.sin(a)*(i===0?.17:.08):0)*moving,0,0);
@@ -60,18 +65,61 @@ function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,red
   rig.hair.rotation.set(0,0,0);
   rig.tails.scale.set(1,1,1);rig.tails.rotation.set(0,0,0);
   if(crawl>0){
-    crawlPose(rig,phase,moving,T.MathUtils.clamp(crawl,0,1));
+    crawlPose(rig,phase,moving,T.MathUtils.clamp(crawl,0,1),tuck);
     const twitch=reducedMotion?0:Math.pow(Math.max(0,Math.sin(time*1.43)),20)*.085;
     rig.head.rotation.y+=twitch*crawl;rig.head.rotation.z-=twitch*.6*crawl;
+  }else if(Math.max(tuck.side,tuck.front)>0){
+    const fold=Math.max(tuck.side,tuck.front);
+    const inverse=rig.torso.quaternion.clone().invert();
+    for(let i=0;i<2;i++){
+      const side=i===0?-1:1,hand=new T.Vector3(0,-.49,0).applyQuaternion(rig.forearms[i].quaternion).add(rig.forearms[i].position).applyQuaternion(rig.arms[i].quaternion).add(rig.arms[i].position).applyQuaternion(rig.torso.quaternion).add(rig.torso.position);
+      hand.lerp(new T.Vector3(side*.21,.54,.015),fold).sub(rig.torso.position).applyQuaternion(inverse);
+      reach(rig.arms[i],rig.forearms[i],hand,.46,.49,side,new T.Vector3(side*.1,0,-1).applyQuaternion(inverse));
+      const wrist=rig.torso.quaternion.clone().multiply(rig.arms[i].quaternion).multiply(rig.forearms[i].quaternion);
+      rig.palms[i].quaternion.slerp(wrist.invert(),fold);
+    }
   }
   return rig;
 }
-export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,heightAt?:(x:number,z:number)=>number){
-  const rig=poseGhost(figure,time,moving,proximity,reducedMotion,phase,crawl);if(!rig)return;
+export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,heightAt?:(x:number,z:number)=>number,solids:Solid[]=[]){
+  const tuck=crawlClearance(figure,solids);
+  const rig=poseGhost(figure,time,moving,proximity,reducedMotion,phase,crawl,tuck);if(!rig)return;
   poseFace(rig.face,0);rig.mouth.visible=false;
-  poseDress(rig.gown,rig.hem,rig.torso,time,crawl);
+  poseDress(rig.gown,rig.hem,rig.torso,time,crawl,false,tuck.back);
   if(heightAt)groundGhost(figure,heightAt,false);
   settleHair(rig.tails,figure,time,crawlFloor(rig),heightAt);poseArms(rig);bloodDrops(rig,time);
+}
+
+// Match the planted-hand stroke to distance travelled. Tight frontal clearance
+// needs shorter, slower steps; a parallel wall only changes the elbow bend.
+export function ghostStrideLength(figure:T.Group,solids:Solid[],crawl:boolean){
+  const tuck=crawlClearance(figure,solids);
+  return crawl?.82*(1-tuck.front*.86):1.56*(1-Math.max(tuck.front,tuck.back)*.65);
+}
+
+// Reserve room for the full reaching pose, then gather the limbs toward the
+// body before a wall can enter their sweep. Ray tests use door-local axes.
+function crawlClearance(figure:T.Group,solids:Solid[]){
+  const p=figure.position,yaw=figure.rotation.y,c=Math.cos(yaw),s=Math.sin(yaw),tuck:Clearance={side:0,front:0,back:0};
+  for(const b of solids){
+    if((b.y??1.5)+(b.h??3)/2<p.y+.02||(b.y??1.5)-(b.h??3)/2>p.y+1.3)continue;
+    if(Math.hypot(b.x-p.x,b.z-p.z)>Math.hypot(b.w,b.d)/2+1.6)continue;
+    const bc=Math.cos(b.yaw??0),bs=Math.sin(b.yaw??0),ox=bc*(p.x-b.x)-bs*(p.z-b.z),oz=bs*(p.x-b.x)+bc*(p.z-b.z);
+    for(let angle=0;angle<Math.PI*2;angle+=Math.PI/16){
+      const ux=Math.cos(angle),uz=Math.sin(angle),length=Math.min(.78/Math.max(.0001,Math.abs(ux)),(uz<0?1.3:1.25)/Math.max(.0001,Math.abs(uz))),x=ux*length,z=uz*length;
+      const wx=c*x+s*z,wz=-s*x+c*z,dx=bc*wx-bs*wz,dz=bs*wx+bc*wz;let lo=0,hi=1,entryAxis=0;
+      for(const [axis,[origin,d,half]] of [[ox,dx,b.w/2+.035],[oz,dz,b.d/2+.035]].entries()){
+        if(Math.abs(d)<1e-8){if(Math.abs(origin)>=half){hi=-1;break;}}
+        else{const near=(-half-origin)/d,far=(half-origin)/d,entry=Math.min(near,far);if(entry>lo){lo=entry;entryAxis=axis;}hi=Math.min(hi,Math.max(near,far));}
+      }
+      if(lo<hi&&lo<1&&hi>0){
+        const amount=T.MathUtils.clamp((length-lo*length)/(length-.43),0,1),nx=entryAxis===0?bc:bs,nz=entryAxis===0?-bs:bc;
+        if(Math.abs(nx*c-nz*s)>.35)tuck.side=Math.max(tuck.side,amount);
+        if(Math.abs(nx*s+nz*c)>.35){const end=uz<0?'back':'front';tuck[end]=Math.max(tuck[end],amount);}
+      }
+    }
+  }
+  return tuck;
 }
 
 function bloodDrops(rig:Rig,time:number,floor=.022){
@@ -112,42 +160,46 @@ export function groundGhost(figure:T.Group,heightAt:(x:number,z:number)=>number,
   figure.updateMatrixWorld(true);
   for(let i=0;i<2;i++)for(const arm of [true,false]){
     const upper=arm?rig.arms[i]:rig.legs[i],lower=arm?rig.forearms[i]:rig.knees[i],tip=arm?rig.palms[i]:rig.ankles[i];
-    const target=tip.getWorldPosition(new T.Vector3()),orientation=new T.Quaternion().setFromEuler(new T.Euler(arm?-Math.PI/2:0,yaw,arm?(i===0?-1:1)*.16:0,'YXZ'));
+    const target=tip.getWorldPosition(new T.Vector3()),orientation=new T.Quaternion().setFromEuler(new T.Euler(arm?-Math.PI/2:0,yaw+(arm?(i===0?1:-1)*1.1*armTuck(rig.tuck):0),arm?(i===0?-1:1)*.16:0,'YXZ'));
     const lift=rig.body.worldToLocal(target.clone()).y;
-    const support=Math.max(...[-.07,0,.24].map(z=>floorAt(target.z+c*z)));
-    target.y=support+lift+.085;
-    reach(upper,lower,upper.parent!.worldToLocal(target),arm?.46:.42,arm?.49:.42,i===0?-1:1);
+    const bearing=yaw+(arm?(i===0?1:-1)*1.1*armTuck(rig.tuck):0);
+    const support=Math.max(...[-.1,.1].flatMap(x=>[-.07,arm?.38:.24].map(z=>floorAt(target.z+Math.cos(bearing)*z-Math.sin(bearing)*x))));
+    target.y=support+lift+.055;
+    const side=i===0?-1:1,pole=arm?new T.Vector3(side*.55,.18,-.55).lerp(new T.Vector3(0,0,-1).applyQuaternion(rig.torso.quaternion.clone().invert()),armTuck(rig.tuck)):new T.Vector3(side*.18,-1,.3).lerp(new T.Vector3(0,0,1),rig.tuck.back);
+    reach(upper,lower,upper.parent!.worldToLocal(target),arm?.46:.42,arm?.49:.42,side,pole);
     tip.quaternion.copy(lower.getWorldQuaternion(new T.Quaternion()).invert().multiply(orientation));
   }
   if(finish){settleHair(rig.tails,figure,0,0,heightAt);poseArms(rig);}
 }
 
-function reach(upper:T.Group,lower:T.Group,target:T.Vector3,l1:number,l2:number,side:number){
+function reach(upper:T.Group,lower:T.Group,target:T.Vector3,l1:number,l2:number,side:number,poleOverride?:T.Vector3){
   const v=target.clone().sub(upper.position),d=T.MathUtils.clamp(v.length(),.05,l1+l2-.001),unit=v.normalize();
-  const pole=l1===.42?new T.Vector3(side*.18,-1,.3):new T.Vector3(side*.55,.18,-.55),along=(l1*l1+d*d-l2*l2)/(2*d),out=pole.clone().addScaledVector(unit,-unit.dot(pole)).normalize();
+  const pole=poleOverride??(l1===.42?new T.Vector3(side*.18,-1,.3):new T.Vector3(side*.55,.18,-.55)),along=(l1*l1+d*d-l2*l2)/(2*d),out=pole.clone().addScaledVector(unit,-unit.dot(pole)).normalize();
   const elbow=unit.clone().multiplyScalar(along).addScaledVector(out,Math.sqrt(Math.max(0,l1*l1-along*along)));
   const q=new T.Quaternion().setFromUnitVectors(new T.Vector3(0,-1,0),elbow.clone().normalize());upper.quaternion.copy(q);
   const fore=target.clone().sub(upper.position).sub(elbow).applyQuaternion(q.clone().invert()).normalize();
   lower.quaternion.setFromUnitVectors(new T.Vector3(0,-1,0),fore);
 }
 
-function crawlPose(rig:Rig,phase:number,moving:number,blend:number){
+function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearance=openClearance){
+  const front=tuck.front,back=tuck.back,arms=armTuck(tuck);
   const walkingHands=rig.arms.map((arm,i)=>new T.Vector3(0,-.49,0).applyQuaternion(rig.forearms[i].quaternion).add(rig.forearms[i].position).applyQuaternion(arm.quaternion).add(arm.position).applyQuaternion(rig.torso.quaternion).add(rig.torso.position));
-  rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving, .445+Math.cos(phase*2)*.014*moving,-.1+Math.sin(phase*2-.9)*.022*moving),blend);
-  rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17,Math.sin(phase)*.025*moving,Math.sin(phase)*.055*moving)),blend);
+  rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving, .445+Math.cos(phase*2)*.014*moving,-.1-front*.06+Math.sin(phase*2-.9)*.022*moving*(1-front)),blend);
+  rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17-front*.37,Math.sin(phase)*.025*moving,Math.sin(phase)*.055*moving)),blend);
   rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+Math.sin(phase-.9)*.035*moving,.065,-.28+Math.sin(phase-1)*.035*moving)),blend);
   rig.arms[1].position.y=T.MathUtils.lerp(.245,.292,blend);
   const inverse=rig.torso.quaternion.clone().invert();
   for(let i=0;i<2;i++){
     const side=i===0?-1:1,a=T.MathUtils.euclideanModulo(phase+i*Math.PI,Math.PI*2),u=a/(Math.PI*2),swing=u<.36,lift=(swing?Math.sin(u/.36*Math.PI):0)*moving;
     const handStride=swing?T.MathUtils.lerp(-.2624,.2624,T.MathUtils.smoothstep(u/.36,0,1)):.2624-.82*(u-.36);
-    const hand=walkingHands[i].lerp(new T.Vector3(side*(.34+lift*.025),.075+lift*.1,.59+handStride*(moving>.01?1:0)),blend).sub(rig.torso.position).applyQuaternion(inverse);
-    reach(rig.arms[i],rig.forearms[i],hand,.46,.49,side);
+    const hand=walkingHands[i].lerp(new T.Vector3(side*(.34-arms*.15+lift*.025*(1-arms)),.075+lift*.1,.59-front*.44+handStride*(moving>.01?1:0)*(1-front*.86)),blend).sub(rig.torso.position).applyQuaternion(inverse);
+    const elbowPole=new T.Vector3(side*.55,.18,-.55).lerp(new T.Vector3(0,0,-1).applyQuaternion(inverse),arms);
+    reach(rig.arms[i],rig.forearms[i],hand,.46,.49,side,elbowPole);
     const armWorld=rig.torso.quaternion.clone().multiply(rig.arms[i].quaternion).multiply(rig.forearms[i].quaternion);
-    rig.palms[i].quaternion.copy(armWorld.invert().multiply(new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2,0,side*.16))));
+    rig.palms[i].quaternion.copy(armWorld.invert().multiply(new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2,-side*1.1*arms,side*.16,'YXZ'))));
     const walkFoot=new T.Vector3(0,-.42,0).applyQuaternion(rig.knees[i].quaternion).add(rig.knees[i].position).applyQuaternion(rig.legs[i].quaternion).add(rig.legs[i].position);
-    rig.legs[i].position.lerp(new T.Vector3(side*.125,.48,-.45),blend);
-    reach(rig.legs[i],rig.knees[i],walkFoot.lerp(new T.Vector3(side*.19,.095+Math.max(0,-Math.sin(a))*.015*moving,-1.04+Math.sin(a-.7)*.04*moving),blend),.42,.42,side);
+    rig.legs[i].position.lerp(new T.Vector3(side*.125,.48+back*.2,-.45+back*.25),blend);
+    reach(rig.legs[i],rig.knees[i],walkFoot.lerp(new T.Vector3(side*(.19-back*.07),.095+Math.max(0,-Math.sin(a))*.015*moving,-1.04+back*.82+Math.sin(a-.7)*.04*moving*(1-back)),blend),.42,.42,side,new T.Vector3(side*.18,-1,.3).lerp(new T.Vector3(0,0,1),back));
     rig.ankles[i].quaternion.copy(rig.legs[i].quaternion).multiply(rig.knees[i].quaternion).invert();
   }
 }

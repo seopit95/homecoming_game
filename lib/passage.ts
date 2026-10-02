@@ -1,6 +1,21 @@
 import * as T from 'three';
 import {surface,boxUV} from './materials.ts';
 import type {Solid} from './world.ts';
+import {solidContainsPoint,type Occupant} from './collision.ts';
+
+const doorCenter=new T.Vector3(),doorRotation=new T.Quaternion();
+export function setDoorAngle(hinge:T.Object3D,block:Solid,angle:number,centerX:number,centerZ=0,occupants:Occupant[]=[]){
+ const start=hinge.rotation.y,steps=Math.max(1,Math.ceil(Math.abs(angle-start)/.025));
+ for(let i=1;i<=steps;i++){
+  const previous=hinge.rotation.y,x=block.x,z=block.z,yaw=block.yaw;
+  hinge.rotation.y=T.MathUtils.lerp(start,angle,i/steps);hinge.updateWorldMatrix(true,false);
+  doorCenter.set(centerX,0,centerZ).applyMatrix4(hinge.matrixWorld);hinge.getWorldQuaternion(doorRotation);
+  block.x=doorCenter.x;block.z=doorCenter.z;block.yaw=2*Math.atan2(doorRotation.y,doorRotation.w);
+  if(occupants.some(actor=>solidContainsPoint(block,actor.x,actor.z,actor.r))){
+   hinge.rotation.y=previous;block.x=x;block.z=z;block.yaw=yaw;break;
+  }
+ }
+}
 
 // Two right-angle turns hide distant rooms, while both chapter scenes contain
 // precisely the same landing, lights and walls at the crossing plane (local x=1.5).
@@ -18,13 +33,10 @@ export function connectionPassage(root:T.Group,solids:Solid[],lamps:T.PointLight
  for(let px=0;px<3.3;px+=.45)box(px,.008,-2,.23,.012,.035,new T.MeshStandardMaterial({color:'#b1b795',roughness:.8}));
  // A hydraulic fire door is shared by the outgoing and incoming copies.
  const leaf=box(.85,1.15,-3,.08,2.3,1.92,steel);leaf.name='connection-fire-door';leaf.geometry.translate(0,0,.96);leaf.rotation.y=-Math.PI/2;
- const block={x:x-.11,y:y+1.15,z:z-3,w:1.92,h:2.3,d:.08};solids.push(block);leaf.userData.block=block;
+ const block={x:x-.11,y:y+1.15,z:z-3,w:.08,h:2.3,d:1.92,yaw:-Math.PI/2};solids.push(block);leaf.userData.block=block;
  return group;
 }
 
-export function setConnectionDoor(door:T.Object3D,openness:number){
- const angle=-Math.PI/2*T.MathUtils.clamp(openness,0,1);door.rotation.y=angle;
- const p=door.parent!.position,b=door.userData.block as Solid;
- b.x=p.x+door.position.x+Math.sin(angle)*.96;b.z=p.z+door.position.z+Math.cos(angle)*.96;
- b.w=Math.abs(Math.sin(angle))*1.92+Math.abs(Math.cos(angle))*.08;b.d=Math.abs(Math.cos(angle))*1.92+Math.abs(Math.sin(angle))*.08;
+export function setConnectionDoor(door:T.Object3D,openness:number,occupants:Occupant[]=[]){
+ setDoorAngle(door,door.userData.block,-Math.PI/2*T.MathUtils.clamp(openness,0,1),0,.96,occupants);
 }
