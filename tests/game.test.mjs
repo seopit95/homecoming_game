@@ -13,7 +13,7 @@ let pendingCompiles=null,rendererDisposals=0;
 class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{roomReflections:()=>({dispose(){}})}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setVolume(){}mix(){}recording(){}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setVolume(){}mix(){}recording(){voiceCalls.push('memory');}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -429,6 +429,26 @@ test('the resident return searches even when the player remains silent out of si
   function use(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
   try{tick();game.continueGame();tick();use([1.6,1.65,3.65],[1.6,.3,4.8]);use([-3.8,1.65,2.2],[-3.8,.94,3.3]);use([3.8,1.65,2.8],[3.8,1.5,3.95]);tick(4.5);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(2);assert.ok(ghost.position.distanceTo(before)>1,'silent players still face a searching pursuer');assert.equal(game.snapshot().story.stage,'resident_return');}
   finally{game.dispose();win.localStorage=previous;}
+});
+
+for(const replay of [false,true])test(`resident recording ${replay?'replays after collection':'finishes before routine ghost chatter'}`,async()=>{
+  const previous=win.localStorage;
+  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['belongings','portrait'],elapsed:100}):null,setItem(){},removeItem(){}};
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  function aim(target){const p=renderedCamera.position,dx=target[0]-p.x,dy=target[1]-p.y,dz=target[2]-p.z,yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
+  try{
+    await game.ready;tick();game.continueGame();tick(2);voiceCalls.length=0;
+    renderedCamera.position.set(-2.4,1.65,4.6);aim([-3.8,.94,3.3]);assert.match(game.snapshot().prompt,/녹음/);
+    game.interact();assert.equal(game.snapshot().story.stage,'resident_return');assert.deepEqual(voiceCalls,['memory']);
+    if(replay){tick(.05);game.interact();assert.deepEqual(voiceCalls,['memory','memory'],'collecting the clue must not disable its playback');}
+    const startedAt=game.snapshot().elapsed,voices=voiceCalls.length,ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();
+    aim([0,1.65,4.2]);game.key('KeyW',true);tick(Math.hypot(2.4,.4)/2);game.key('KeyW',false);
+    aim([0,1.65,5.5]);game.key('KeyW',true);tick(.65);game.key('KeyW',false);aim([0,1.65,10]);
+    tick(5.37-(game.snapshot().elapsed-startedAt));
+    assert.equal(voiceCalls.length,voices,'the 5.362-second memory must finish before routine chatter replaces it');
+    assert.ok(ghost.position.distanceTo(before)>.5,'listening does not freeze the pursuer');assert.equal(game.snapshot().story.stage,'resident_return');
+  }finally{game.dispose();win.localStorage=previous;}
 });
 
 test('continuing 1704 preserves the remaining clue or restores an already completed investigation',()=>{

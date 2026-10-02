@@ -75,6 +75,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const emit=()=>onChange(snapshot());
   function controlText(text:string){return text.replace(/\b(?:E|Shift)\b/g,key=>keyLabel(settings.bindings[key==='E'?'interact':'run']));}
   function say(text:string,seconds=7){message=text;messageUntil=elapsed+seconds;emit();}
+  function playRecording(){audio.setDevice('phone',0);audio.recording();lastVoice=elapsed;}
   function ghostVoice(line:GhostLine,force=false){
     if(!force&&elapsed-lastVoice<12)return;
     const dx=world.figure.position.x-camera.position.x,dz=world.figure.position.z-camera.position.z,distance=Math.hypot(dx,dz),pan=T.MathUtils.clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,distance),-1,1);
@@ -226,7 +227,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(action==='monitor'&&story.stage==='office_tape'){audio.sound('alarm',0,.25);noiseRadius=22;noiseUntil=elapsed+3;}
       if(action==='pump'&&story.stage==='parking_pump'){say(story.notes.includes('valve_a')?'동측 급수관이 아직 열려 있다. 물부터 차단해야 한다.':story.notes.includes('valve_b')?'서측 급수관이 아직 열려 있다. 물부터 차단해야 한다.':'압력계가 흔들린다. 양쪽 급수 밸브를 먼저 잠가야 한다.',5);return;}
       if(action==='phone'&&!story.notes.includes('phone')){say(hasFlashlight(story)?'전화벨이 끊이지 않는다. 먼저 다용도실 차단기를 확인하자.':'어둡다. 침실의 스위치를 확인하고 손전등부터 찾아야 한다.',5);return;}
-      if(story.notes.includes(action)&&['belongings','portrait','answerphone'].includes(action)){say(dialogue[action]!,6);return;}
+      if(story.notes.includes(action)&&['belongings','portrait','answerphone'].includes(action)){if(action==='answerphone')playRecording();say(dialogue[action]!,6);return;}
       say(responses[action]||'이미 확인했다. 다음 단서를 찾아야 한다.',4);return;
     }
     if(isExpansion(story.stage)){
@@ -276,7 +277,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(action==='pump'){audio.sound('motor');noiseRadius=22;noiseUntil=elapsed+3;}
     if(action==='security_power'){audio.sound('slam',.8);world.figure.visible=true;lastSeen={x:camera.position.x,z:camera.position.z};tracking=true;ghostVoice('cry',true);}
     if(action==='monitor'){world.setDisplay?.('귀가자 2명 / 2803');ghostVoice('found',true);}
-    if(action==='answerphone'){audio.setDevice('phone',0);audio.recording();}
+    if(action==='answerphone')playRecording();
     if(residentEvidence.includes(action as typeof residentEvidence[number])){say(dialogue[action]+'\n\n'+objectiveFor(story),12);if(story.stage==='resident_return'){audio.sound('knock',.5,.5);world.figure.visible=true;}}
     if(action==='road_phone'){audio.sound('phone');}
     if(action==='alarm'){audio.sound('alarm',-.8);chapterUntil=0;}
@@ -697,7 +698,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const oldTarget=renderer.getRenderTarget(),viewport=new T.Vector4();renderer.getViewport?.(viewport);
     const oldVisibility=canvas.style?.visibility;if(canvas.style)canvas.style.visibility='hidden';
     const savedCamera=camera.position.clone(),oldRotation=camera.quaternion.clone();
-    async function warm(root:T.Group,spawn:T.Vector3){
+    async function warm(root:T.Group,spawn:T.Vector3,extraPass?:()=>void){
       scene.add(root);camera.position.copy(spawn);camera.rotation.set(0,0,0);camera.updateMatrixWorld();
       const flags:{o:T.Object3D;visible:boolean;frustum:boolean}[]=[];
       root.traverse(o=>{flags.push({o,visible:o.visible,frustum:o.frustumCulled});if(!(o instanceof T.Light))o.visible=true;o.frustumCulled=false;});
@@ -705,13 +706,15 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
         // The default framebuffer uses different tone-mapping/color shaders than a render target.
         renderer.setRenderTarget(null);renderer.setViewport?.(0,0,128,128);
         await renderer.compileAsync?.(scene,camera);
-        if(!disposed)renderer.render(scene,camera);
+        if(!disposed){renderer.render(scene,camera);extraPass?.();}
       }finally{for(const f of flags){f.o.visible=f.visible;f.o.frustumCulled=f.frustum;}root.removeFromParent();}
       await new Promise<void>(resolve=>setTimeout(resolve,0));
     }
     try{
       for(const next of Object.keys(chapters) as Area[]){if(disposed)break;const w=preparedWorld(next);await warm(w.root,w.spawn);if(next==='lift'){w.updateStory?.('service_open',0,false);await warm(w.root,w.spawn);w.reset();}}
-      for(const ending of [false,true]){if(disposed)break;const r=preparedRoad(ending);await warm(r.root,new T.Vector3(1.8,1.4,4));}
+      // The mirror uses a linear render target and hides the car's lights. Its
+      // material programs differ from the main camera, even for the same mesh.
+      for(const ending of [false,true]){if(disposed)break;const r=preparedRoad(ending);await warm(r.root,new T.Vector3(1.8,1.4,4),()=>r.renderMirror(renderer));}
     }finally{renderer.setRenderTarget(oldTarget);renderer.setViewport?.(viewport);if(!disposed)resize();camera.position.copy(savedCamera);camera.quaternion.copy(oldRotation);scene.add(world.root);preparing=false;if(canvas.style)canvas.style.visibility=oldVisibility??'';}
   });
   frameId=requestAnimationFrame(frame);emit();
