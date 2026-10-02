@@ -2,7 +2,7 @@ import * as T from 'three';
 import {connectionPassage,setDoorAngle} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import {surface,boxUV,softBox} from './materials.ts';
-import {roundPipe,createSedan} from './props.ts';
+import {roundPipe,createSedan,sedanSolids} from './props.ts';
 import {wetTexture} from './entry-props.ts';
 import {createGhost} from './ghost.ts';
 import type {Solid,Target} from './world.ts';
@@ -77,7 +77,7 @@ export function buildCourtyard(root:T.Group){
  box(-25,.42,-27,2.1,.12,.8,wood,true);for(const x of [-25.9,-24.1])for(const z of [-27.28,-26.72])box(x,.18,z,.07,.36,.07,steel);
  const notebook=sign('야간 점검\n정문 횡단보도 · 비상벨',-25,.487,-27,.5,.35);notebook.rotation.x=-Math.PI/2;target('court_evidence','전조등 조각과 당직 수첩',notebook,[-25,.5,-26.9],[-25,-25.8]);
  for(let i=0;i<7;i++){const shard=new T.Mesh(new T.TetrahedronGeometry(.045+i*.003),steel);shard.position.set(-25.6+i*.16,.535,-27.1+Math.sin(i)*.1);root.add(shard);}
- const car=createSedan('#58655c');car.position.set(-25,0,-15);root.add(car);solids.push({x:-25,z:-15,w:1.82,d:4.35,y:.8,h:1.6});
+ const car=createSedan('#58655c');car.position.set(-25,0,-15);root.add(car);solids.push(...sedanSolids(-25,-15));
  for(const [x,z] of [[-22,38],[26,5],[-26,-40],[8,-40]]){const film=new T.Mesh(new T.PlaneGeometry(5,7),new T.MeshPhysicalMaterial({map:wetTexture(false,Math.round(x+z)),color:'#1a302b',transparent:true,opacity:.35,roughness:.07,depthWrite:false}));film.rotation.x=-Math.PI/2;film.position.set(x,.011,z);root.add(film);}
  // Main gate stays closed; the separate basement doorway becomes the actual exit.
  box(0,1.8,-47.8,8,3.6,.16,steel,true);for(let y=.2;y<3.6;y+=.16)box(0,y,-47.7,7.9,.025,.03,dark);

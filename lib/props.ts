@@ -41,36 +41,7 @@ export function doorHardware(leaf:T.Object3D,width:number,centerY=0,front=1){
  roundPipe(leaf,[x,y,z],[x,y,z+front*.07],.011,metal);roundPipe(leaf,[x,y,z+front*.07],[x-.12,y,z+front*.07],.012,metal);
  box(leaf,[0,centerY+.92,front*.06],[.22,.07,.05],metal);roundPipe(leaf,[0,centerY+.955,front*.08],[-.18,centerY+1.035,front*.055],.008,dark);
 }
-export function createSedan(color:string,damaged=false){
- const root=new T.Group();root.name=damaged?'hit-and-run-car':'parked-sedan';
- const paint=new T.MeshPhysicalMaterial({color,metalness:.55,roughness:.31,clearcoat:.5,clearcoatRoughness:.22});
- const rubber=surface('leather','#515658',{roughness:.94}),glass=new T.MeshPhysicalMaterial({color:'#18252a',roughness:.15,metalness:.25,clearcoat:1}),steel=surface('steel','#a6adaa',{metalness:.7,roughness:.3});
- const shape=new T.Shape();shape.moveTo(-2.13,.36);shape.lineTo(-2.15,.7);shape.lineTo(-1.75,.86);shape.lineTo(.99,.89);shape.lineTo(2.09,.72);shape.lineTo(2.15,.43);shape.lineTo(1.73,.34);
- shape.absarc(1.35,.34,.38,0,Math.PI,false);shape.lineTo(-.97,.34);shape.absarc(-1.35,.34,.38,0,Math.PI,false);shape.closePath();
- const chassis=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:1.76,bevelEnabled:true,bevelSize:.018,bevelThickness:.018,bevelSegments:2,steps:1,curveSegments:12}),paint);chassis.rotation.y=Math.PI/2;chassis.position.x=-.88;chassis.castShadow=true;chassis.receiveShadow=true;root.add(chassis);
- // Four sloped panes join the low roof to the belt line.
- function pane(points:number[][],m:T.Material){const g=new T.BufferGeometry().setFromPoints(points.map(p=>new T.Vector3(...p as [number,number,number])));g.setIndex([0,1,2,0,2,3]);g.computeVertexNormals();const mesh=new T.Mesh(g,m);root.add(mesh);return mesh;}
- const windowMat=glass.clone();windowMat.side=T.DoubleSide;
- pane([[-.82,.88,.98],[.82,.88,.98],[.68,1.38,.38],[-.68,1.38,.38]],windowMat);
- pane([[.82,.88,-1.25],[-.82,.88,-1.25],[-.68,1.38,-.75],[.68,1.38,-.75]],windowMat);
- box(root,[0,1.389,-.18],[1.42,.047,1.18],paint);
- for(const side of [-1,1]){
-  pane([[side*.82,.88,-1.25],[side*.82,.88,.98],[side*.68,1.38,.38],[side*.68,1.38,-.75]],windowMat);
-  for(const [a,b] of [[[side*.82,.88,.98],[side*.68,1.38,.38]],[[side*.82,.88,-1.25],[side*.68,1.38,-.75]],[[side*.82,.88,-.17],[side*.68,1.38,-.17]]])roundPipe(root,a,b,.025,paint);
-  roundPipe(root,[side*.895,.85,-1.72],[side*.895,.85,1.72],.012,steel);
-  for(const z of [-.35,.67]){roundPipe(root,[side*.902,.7,z-.055],[side*.902,.7,z+.055],.012,steel);roundPipe(root,[side*.901,.42,z-.26],[side*.901,.83,z-.26],.003,rubber);}
-  roundPipe(root,[side*.81,.91,.68],[side*1.02,.96,.65],.018,paint);box(root,[side*1.015,.99,.65],[.16,.085,.16],paint);
-  for(const z of [-1.35,1.35]){
-   const tire=new T.Mesh(new T.TorusGeometry(.238,.074,12,32),rubber);tire.rotation.y=Math.PI/2;tire.position.set(side*.858,.314,z);tire.castShadow=true;root.add(tire);
-   const hub=new T.Mesh(new T.CylinderGeometry(.178,.178,.12,28),steel);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);root.add(hub);
-   for(let i=0;i<5;i++){const a=i*Math.PI*2/5;roundPipe(root,[side*.925,.314+Math.cos(a)*.05,z+Math.sin(a)*.05],[side*.925,.314+Math.cos(a)*.147,z+Math.sin(a)*.147],.016,rubber);}
-  }
- }
- for(const z of [-2.13,2.13]){box(root,[0,.46,z],[1.69,.12,.073],rubber);for(const side of [-1,1])box(root,[side*.63,.7,z+Math.sign(z)*.055],[.41,.14,.043],new T.MeshStandardMaterial({color:z>0?'#c1c8ba':'#732f26',roughness:.22}));}
- for(let i=0;i<6;i++)box(root,[-.3+i*.12,.65,2.16],[.027,.1,.014],rubber);
- if(damaged){const dent=box(root,[.24,.823,1.47],[.62,.012,.52],paint);dent.rotation.set(-.09,0,.07);}
- return root;
-}
+export {createSedan,sedanSolids} from './sedan.ts';
 
 export function bathtub(){
  const root=new T.Group();root.name='built-in-bathtub';

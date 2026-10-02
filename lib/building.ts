@@ -6,7 +6,7 @@ import {buildExpansion} from './expansion-world.ts';
 import type {Area,Action,Stage,Story} from './story';
 import type {Bounds,Solid,Target} from './world';
 import {surface,boxUV,softBox} from './materials.ts';
-import {roundPipe,doorHardware,createSedan} from './props.ts';
+import {roundPipe,doorHardware,createSedan,sedanSolids} from './props.ts';
 import {wetTexture} from './entry-props.ts';
 import {nightWindow} from './japan.ts';
 import {buildStoryRoom,buildResidentGallery} from './chapters.ts';
@@ -212,14 +212,13 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     door('exit','보행자 출구',0,-bz+.12);label('백로아파트  B1',0,2.25,bz-.11,Math.PI,2,.4);light(0,2.4,-21,'#74af8b',4);
     for(const x of [-9,0,9])for(const z of [-12,0,12]){box(x,1.35,z,.55,2.7,.55,concrete,true);box(x,.66,z,.58,.85,.58,mat('#aa8f3f'));for(const y of [.35,.65,.95])box(x,y,z,.59,.11,.59,dark);label('B1',x,1.75,z+.294,0,.4,.18);box(x,2.42,z,.9,.22,.9,concrete);}
     function car(x:number,z:number,color:string,own=false){
-      const chassis=createSedan(color,own);chassis.position.set(x,0,z);root.add(chassis);solids.push({x,z,w:1.82,d:4.35,y:.8,h:1.6});
-      label(own?'28 가 0317':`${37+Math.round(x)} 나 ${4200+Math.round(z*13)}`,x,.54,z+2.225,0,.47,.11,'#2b3027','#a6ad9a');
+      const chassis=createSedan(color,own);chassis.position.set(x,0,z);root.add(chassis);solids.push(...sedanSolids(x,z));
+      for(const end of [-1,1])label(own?'28 가 0317':`${37+Math.round(x)} 나 ${4200+Math.round(z*13)}`,x,.548,z+end*2.263,end>0?0:Math.PI,.47,.11,'#2b3027','#a6ad9a');
       for(const dx of [-1.27,1.27])box(x+dx,.008,z,.055,.016,4.85,white);box(x,.008,z-2.45,2.59,.016,.055,white);for(const dx of [-.55,.55])box(x+dx,.07,z-1.7,.55,.14,.13,dark);
       return chassis;
     }
     for(const x of [-5.2,5.2])for(const z of [-10,-3,4,11])car(x,z,(Math.round(z)%3===0?'#8b8e87':x<0?'#354044':'#6c655d'));
     const own=car(L.car.x,L.car.z,'#222c31',true);target('car_search','조수석 조사 · 배수 설비 열쇠',own,6.02,1.1,-17.8);target('car_board','운전석 문 열고 탑승',own,3.98,1.1,-17.8);
-    const cracks:number[]=[];for(let i=0;i<8;i++){const a=i*2.4;cracks.push(5.2,1.14,-17.15,5.2+Math.cos(a)*.5,1.14+Math.sin(a)*.17,-17.14);}root.add(new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(cracks,3)),new T.LineBasicMaterial({color:'#b8c5c2',transparent:true,opacity:.7})));
     box(-11.3,1.35,15.82,1.4,2.7,.24,concrete,true);box(L.alarm.x,1.25,15.96,.55,1.85,.12,metal);
     const alarm=box(L.alarm.x,1.4,L.alarm.z,.3,.43,.17,red);target('alarm','화재경보기 작동',alarm,L.alarm.x,1.4,L.alarm.z+.18);label('발신기',L.alarm.x,1.92,16.027,0,.45,.16,'#d6bca4','#61281e');light(L.alarm.x,2.4,L.alarm.z+.2,'#a5523b',2);
     const push=new T.Mesh(new T.CylinderGeometry(.078,.078,.026,20),dark);push.rotation.x=Math.PI/2;push.position.set(L.alarm.x,1.38,16.094);root.add(push);label('누름',L.alarm.x,1.38,16.109,0,.105,.052,'#c8bdb1','#7d291f');for(let i=0;i<4;i++)box(L.alarm.x,1.52+i*.016,16.091,.18,.006,.008,dark);
