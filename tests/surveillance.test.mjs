@@ -40,3 +40,19 @@ test('disposing an archive releases the private recording scene and render targe
   const counts=new Map();for(const resource of resources)resource.addEventListener('dispose',()=>counts.set(resource,(counts.get(resource)??0)+1));
   disposeWorld(world.root);assert.equal(counts.size,resources.size);assert.ok([...counts.values()].every(n=>n===1));
 });
+
+
+test('office footage shows arrival, the missing interval and a lone walking driver, then rewinds on retry',()=>{
+  const scene=new T.Scene(),world=buildWorld(scene,'office'),r=renderer();
+  try{
+    assert.ok(world.surveillance,'office CCTV must show the actual recording');
+    world.updateStory('office_playback',100,false);world.surveillance.render(r,scene);
+    const footage=r.calls.at(-1).scene,car=footage.getObjectByName('cctv-car'),driver=footage.getObjectByName('cctv-driver'),first=car.position.clone();
+    assert.equal(driver.visible,false,'driver is still seated before the missing interval');
+    world.updateStory('office_playback',101.5,false);world.surveillance.render(r,scene);assert.ok(car.position.distanceTo(first)>.5);
+    world.updateStory('office_playback',103.3,false);world.surveillance.render(r,scene);assert.equal(driver.visible,true,'the cut reveals the driver already outside the closed door');const steppedOut=driver.position.clone();
+    world.updateStory('office_playback',107,false);world.surveillance.render(r,scene);assert.ok(driver.position.distanceTo(steppedOut)>1,'the driver walks away rather than remaining a standing mannequin');
+    const last=driver.position.clone();world.updateStory('office_leave',111,false);world.surveillance.render(r,scene);world.updateStory('office_leave',120,false);world.surveillance.render(r,scene);assert.ok(driver.position.distanceTo(last)<.001,'the evidence freezes on its last frame');
+    world.reset();world.updateStory('office_playback',200,false);world.surveillance.render(r,scene);assert.equal(driver.visible,false);assert.ok(car.position.distanceTo(first)<.0001);
+  }finally{disposeWorld(world.root);}
+});

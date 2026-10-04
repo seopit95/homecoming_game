@@ -146,17 +146,20 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   runTo(-1.6,3.15);runTo(0,3.15);runTo(3.8,3.15);use([3.8,1.65,3.15],[3.8,1.5,3.94],'resident_return');assert.match(game.snapshot().objective,/조사 완료/);
   runTo(0,3.15);runTo(0,-4.65);use([0,1.65,-4.65],[0,1.25,-5.65],'resident_departure');tick(1);
   runTo(0,-7.95);aim(renderedCamera.position.toArray(),[3,1.65,-7.95],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='resident_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'office_record');runTo(0,11.8);runTo(0,6.5);
-  renderedScene.getObjectByName('resident-remains').visible=true;
-  renderedScene.getObjectByName('resident-remains').position.set(0,0,-5);aim([-2.5,1.65,-5],[-2.5,1.65,-7],false);
-  game.key('ShiftLeft',true);tick(6.1);assert.ok(game.snapshot().threat<.2,'holding Shift behind a wall is silent');
-  game.key('KeyW',true);tick(.3);game.key('KeyW',false);game.key('ShiftLeft',false);assert.ok(game.snapshot().threat>.5,'actual running behind the wall attracts the ghost');
   use([-3.7,1.65,2.8],[-3.7,.86,1.8],'office_fuse');
   use([-2.1,1.65,-4.5],[-2.1,1.38,-5.37],'office_power');
   use([3.8,1.65,-4],[5.34,1.45,-4],'office_power');
   use([3.8,1.65,-4.55],[5.34,1.45,-4.55],'office_power');
   use([3.8,1.65,-3.45],[5.34,1.45,-3.45],'office_tape');
   use([-1.95,1.65,2.6],[-1.95,.9,1.8],'office_tape');
-  use([-2.65,1.65,2.6],[-2.65,1.17,1.79],'office_leave');
+  use([-2.65,1.65,2.6],[-2.65,1.17,1.79],'office_playback');
+  assert.equal(game.snapshot().prompt,'');const playbackAt=game.snapshot().elapsed;game.pause();tick(5);assert.equal(game.snapshot().elapsed,playbackAt);game.pause(false);tick(5);assert.equal(game.snapshot().story.stage,'office_playback');tick(6.1);assert.equal(game.snapshot().story.stage,'office_key');assert.ok(game.snapshot().story.notes.includes('monitor'));
+  const waitingGhost=renderedScene.getObjectByName('resident-remains').position.clone();
+  renderedScene.getObjectByName('resident-remains').position.set(0,0,-5);aim([-2.5,1.65,-5],[-2.5,1.65,-7],false);
+  game.key('ShiftLeft',true);tick(6.1);assert.ok(game.snapshot().threat<.2,'holding Shift behind a wall is silent');
+  game.key('KeyW',true);tick(.3);game.key('KeyW',false);game.key('ShiftLeft',false);assert.ok(game.snapshot().threat>.5,'actual running behind the wall attracts the ghost');renderedScene.getObjectByName('resident-remains').position.copy(waitingGhost);
+  use([-2.13,1.65,2.6],[-2.13,.82,1.28],'office_leave');assert.equal(renderedScene.getObjectByName('office-exit-key').visible,false);
+
   use([0,1.65,-6.3],[0,1.25,-7.48],'office_departure');
   function cross(stage,next,z,x=0){tick(1);aim(renderedCamera.position.toArray(),[x,renderedCamera.position.y,z],false);game.key('KeyW',true);for(let i=0;i<600&&game.snapshot().story.stage===stage;i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,next);}
   cross('office_departure','service_ride',-10);tick(11.3);assert.equal(game.snapshot().story.stage,'service_open');cross('service_open','annex_arrival',-4);
@@ -533,4 +536,16 @@ for(const [from,crossing,area,newZ,activation] of [
   assert.ok(ghost.position.z<newZ,'the pursuer enters the actual room');
   assert.ok(canStandAt(ghost.position.x,ghost.position.z,reference.solids,.43,reference.bounds),'the pursuing body remains outside solid geometry');
  }finally{game.dispose();disposeWorld(reference.root);win.localStorage=previousStorage;}
+});
+
+test('office pursuer is already physically waiting before the recording, rather than appearing on its final frame',()=>{
+  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'office_record',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  try{tick();game.continueGame();tick();const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,true,'returning to the passage must reveal the existing pursuer');const waiting=ghost.position.clone();tick(4);assert.ok(ghost.position.distanceTo(waiting)<.001,'it waits behind the fire door while the records are investigated');assert.equal(game.snapshot().story.stage,'office_record');
+    function use(id,pos){renderedCamera.position.set(...pos);const points={record:[-3.7,.86,1.8],fuse:[-2.1,1.38,-5.37],circuit_b:[5.34,1.45,-4],circuit_a:[5.34,1.45,-4.55],circuit_c:[5.34,1.45,-3.45],tape_next:[-1.95,.9,1.8],monitor:[-2.65,1.17,1.79]},point=points[id],dx=point[0]-pos[0],dy=point[1]-pos[1],dz=point[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,id);game.interact();tick();}
+    for(const [id,pos] of [['record',[-3.7,1.65,2.8]],['fuse',[-2.1,1.65,-4.5]],['circuit_b',[3.8,1.65,-4]],['circuit_a',[3.8,1.65,-4.55]],['circuit_c',[3.8,1.65,-3.45]],['tape_next',[-1.95,1.65,2.6]],['monitor',[-2.65,1.65,2.6]]])use(id,pos);
+    tick(13);assert.equal(game.snapshot().story.stage,'office_key');assert.ok(ghost.position.distanceTo(waiting)>1,'the pursuer must leave its waiting point after playback');assert.ok(renderedScene.getObjectByName('connection-fire-door').rotation.y<-1.4,'the waiting body must not jam the opening door');
+  }
+  finally{game.dispose();win.localStorage=previous;}
 });

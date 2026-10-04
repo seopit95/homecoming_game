@@ -1,4 +1,6 @@
 import * as T from 'three';
+import {createSurveillance,type Surveillance} from './surveillance.ts';
+import {tapeTimes} from './story.ts';
 import {connectionPassage,setDoorAngle} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import {buildCourtyard} from './courtyard.ts';
@@ -171,7 +173,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     light(0,3.2,3,'#8f9c83',5);light(-1,5.3,-4.8,'#b0a17b',3);light(1,-.3,-4.8,'#769789',3);
   }
   if(area==='office'){
-    connectionPassage(root,solids,lamps,-3,bz+6);bounds.z=bz+6.2;
+    connectionPassage(root,solids,lamps,-3,bz+6,0,.9);bounds.z=bz+6.2;
     for(const x of [-.95,.95]){wall(x,-4.9,.13,5.5);wall(x,3.8,.13,1.8);}
     wall(-4,-1.6,3.4,.13);wall(4,-1.6,3.4,.13);
     // Full-size desk with a drawer pedestal, knee space and a supported CRT.
@@ -184,11 +186,11 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const x of [-2.97,-2.33])box(x,1.15,1.672,.035,.48,.035,dark);for(const y of [.923,1.39])box(-2.65,y,1.67,.65,.045,.035,dark);for(let i=0;i<5;i++)box(-2.83+i*.065,.936,1.694,.04,.006,.005,metal);
     for(const z of [1.31,1.37,1.43,1.49])for(const x of [-2.969,-2.331])box(x,1.24,z,.006,.115,.015,dark);
     const monitorCable=new T.CatmullRomCurve3([new T.Vector3(-2.65,.95,1.27),new T.Vector3(-2.65,.82,1.04),new T.Vector3(-2.72,.45,1.01),new T.Vector3(-3,.08,1.01)]);root.add(new T.Mesh(new T.TubeGeometry(monitorCable,20,.006,6,false),dark));box(-2.65,.813,1.45,.39,.026,.29,dark);box(-2.65,.8605,1.45,.16,.069,.14,dark);
-    const display=label('신호 없음',-2.65,1.17,1.655,0,.56,.38,'#8dba96','#0e1914',true);setDisplay=display.update;target('monitor','선택한 CCTV 기록 재생',monitor,-2.65,1.17,1.79);
+    const screen=createSurveillance('office');screen.position.set(-2.65,1.17,1.655);screen.scale.set(.56/.72,.38/.54,1);root.add(screen);const surveillance=screen.userData.surveillance as Surveillance;target('monitor','선택한 CCTV 기록 재생',monitor,-2.65,1.17,1.79);
     const dial=box(-1.95,.8375,1.68,.2,.075,.18,metal);const selector=new T.Mesh(new T.CylinderGeometry(.048,.05,.025,24),dark);selector.position.set(-1.95,.8875,1.63);root.add(selector);box(-1.95,.901,1.608,.005,.002,.022,white);target('tape_next','CCTV 시간 선택',dial,-1.95,.9,1.8);const dialLabel=label('시간 선택',-1.95,.877,1.74,0,.18,.08,'#292b27','#bcb79b');dialLabel.mesh.rotation.x=-Math.PI/2;
     const exitKey=new T.Group();exitKey.name='office-exit-key';root.add(exitKey);
     const keyRing=new T.Mesh(new T.TorusGeometry(.035,.006,6,14),metal);keyRing.rotation.x=-Math.PI/2;keyRing.position.set(-2.13,.807,1.16);exitKey.add(keyRing);
-    const keyStem=box(-2.13,.806,1.24,.023,.012,.1,metal);exitKey.attach(keyStem);const keyTooth=box(-2.105,.806,1.28,.07,.012,.025,metal);exitKey.attach(keyTooth);
+    const keyStem=box(-2.13,.806,1.24,.023,.012,.1,metal);exitKey.attach(keyStem);const keyTooth=box(-2.105,.806,1.28,.07,.012,.025,metal);exitKey.attach(keyTooth);target('service_key','관리용 승강기 열쇠 챙기기',exitKey,-2.13,.82,1.28);
     const fuse=box(-2.1,1.31,-5.7,.15,.3,.12,white);box(-2.1,.58,-5.7,.8,1.16,.5,wood,true);target('fuse','예비 퓨즈 챙기기',fuse,-2.1,1.38,-5.37);
     for(const y of [-.125,.125]){const cap=new T.Mesh(softBox(.152,.05,.124,.005),metal);cap.position.y=y;fuse.add(cap);}for(const x of [-.045,0,.045]){const seam=new T.Mesh(new T.BoxGeometry(.008,.14,.004),dark);seam.position.set(x,0,.062);fuse.add(seam);}
     for(const x of [-4.8,-3.6]){solids.push({x,z:-4.4,w:.64,d:3.1,y:1.1,h:2.2});for(const dx of [-.28,.28])for(const z of [-5.9,-2.9])box(x+dx,1.1,z,.045,2.2,.045,metal);for(const y of [.12,.77,1.42,2.16]){box(x,y,-4.4,.64,.035,3.1,metal);if(y>2)continue;for(let z=-5.6;z<-3.1;z+=.3){box(x+.07,y+.19,z,.4,.34,.23,mat(z<-4.3?'#827861':'#4c615d'));label('기록',x+.278,y+.19,z,Math.PI/2,.17,.09,'#302f26','#bdb592');}}}
@@ -202,10 +204,10 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     fixture(0,4);fixture(0,-4,false);light(-3,2.5,1,'#b49f7d',4);light(-3,2.5,-4,'#8b9b85',3);light(3.5,2.5,-4,'#839c96',3);
     const serviceHinge=new T.Group();serviceHinge.name='office-service-door';serviceHinge.position.set(-.6,0,-bz+.12);root.add(serviceHinge);
     const serviceLeaf=box(0,1.1,-bz+.12,1.18,2.2,.09,metal);serviceHinge.attach(serviceLeaf);doorHardware(serviceLeaf,1.18);target('service_exit','관리용 승강기 열기',serviceLeaf,0,1.25,-bz+.32);
-    const serviceBlock={x:0,z:-bz+.12,w:1.2,d:.12,y:1.1,h:2.2};solids.push(serviceBlock);let serviceAt=-1;reset=()=>{serviceAt=-1;};bounds.z=bz+6.2;
+    const serviceBlock={x:0,z:-bz+.12,w:1.2,d:.12,y:1.1,h:2.2};solids.push(serviceBlock);let serviceAt=-1,playAt=-1;reset=()=>{serviceAt=-1;playAt=-1;};bounds.z=bz+6.2;
     box(0,-.09,-bz-1.35,2.2,.18,2.7,floorMat);box(0,2.8,-bz-1.35,2.2,.12,2.7,metal);for(const x of [-1.1,1.1])box(x,1.4,-bz-1.35,.12,2.8,2.7,metal,true);box(0,1.4,-bz-2.7,2.2,2.8,.12,metal,true);light(0,2.5,-bz-1.3,'#98ad9b',3,4);label('관리용 승강기 · 1F',0,2.5,-bz+.094,0,1.8,.2);
     label('17층 · 구 관리사무소',0,2.57,bz-.094,Math.PI,1.65,.2);puddle(2.6,5,.45,1);
-    updateStory=(stage,time,_reduced,_story,occupants)=>{fuse.visible=['office_record','office_fuse'].includes(stage);exitKey.visible=!['office_leave','office_departure'].includes(stage);if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0)setDoorAngle(serviceHinge,serviceBlock,1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85),.6,0,occupants);};
+    updateStory=(stage,time,_reduced,story,occupants)=>{if(stage==='office_playback'&&playAt<0)playAt=time;surveillance.update(stage,playAt<0?0:time-playAt,stage==='office_tape'?tapeTimes[story?.tapeIndex??0]:'신호 없음');fuse.visible=['office_record','office_fuse'].includes(stage);exitKey.visible=!['office_leave','office_departure'].includes(stage);if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0)setDoorAngle(serviceHinge,serviceBlock,1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85),.6,0,occupants);};
   }
   if(area==='parking'){
     bounds.z=bz+6.8;connectionPassage(root,solids,lamps,-3,bz+6,0,.9);

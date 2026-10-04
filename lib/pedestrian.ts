@@ -5,10 +5,10 @@ import {skinArm,poseSkinArm} from './ghost-limbs.ts';
 import {extremity} from './ghost-anatomy.ts';
 import {createLeatherShoe} from './entry-props.ts';
 
-export function createPedestrian(parent:T.Group){
+export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='victim'){
  const root=new T.Group();root.name='memory-pedestrian';parent.add(root);
  const pivot=new T.Group(),body=new T.Group();pivot.position.y=.87;body.position.y=-.87;root.add(pivot);pivot.add(body);
- const skin=new T.MeshStandardMaterial({color:'#b29987',roughness:.58}),coat=upholstery('#66716d'),pants=upholstery('#333b3e'),hair=new T.MeshStandardMaterial({color:'#131919',roughness:.55});
+ const skin=new T.MeshStandardMaterial({color:'#b29987',roughness:.58}),coat=upholstery(appearance==='driver'?'#293544':'#66716d'),pants=upholstery('#333b3e'),hair=new T.MeshStandardMaterial({color:'#131919',roughness:.55});
  const add=(geometry:T.BufferGeometry,material:T.Material,parent:T.Object3D)=>{const m=new T.Mesh(geometry,material);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;};
  const torso=new T.Group();torso.position.y=.92;body.add(torso);
  const profile=[[-.13,.22],[0,.22],[.12,.19],[.3,.19],[.41,.205],[.47,.16],[.51,.065]].map(([y,r])=>new T.Vector2(r,y));
@@ -28,7 +28,7 @@ export function createPedestrian(parent:T.Group){
  const scalp=face.geometry.clone(),scalpIndex:number[]=[];
  for(let i=0;i<headData.index.length;i+=3){const tri=headData.index.slice(i,i+3),y=tri.reduce((sum,v)=>sum+headData.position[v*3+1],0)/3,z=tri.reduce((sum,v)=>sum+headData.position[v*3+2],0)/3;if(y>.137&&(z<.072||y>.174))scalpIndex.push(...tri);}
  scalp.setIndex(scalpIndex);const scalpPosition=scalp.getAttribute('position');for(let i=0;i<scalpPosition.count;i++)scalpPosition.setXYZ(i,scalpPosition.getX(i)*1.035,.1+(scalpPosition.getY(i)-.1)*1.035,.01+(scalpPosition.getZ(i)-.01)*1.035);add(scalp,hair,head);
- for(let i=0;i<46;i++){
+ for(let i=0;i<(appearance==='driver'?0:46);i++){
   const a=(i/45)*Math.PI*2,x=Math.cos(a)*.087,z=Math.sin(a)*.085+.005;if(z>.064&&Math.abs(x)<.067)continue;
   const points=[new T.Vector3(x*.67,.18,z*.7),new T.Vector3(x,.10,z),new T.Vector3(x*1.07,-.015,z-.008),new T.Vector3(x*.94,-.09+(i%4)*.005,z-.017)];
   add(new T.TubeGeometry(new T.CatmullRomCurve3(points),10,.011+(i%3)*.002,6,false),hair,head);
@@ -62,5 +62,6 @@ export function createPedestrian(parent:T.Group){
    poseSkinArm(sleeves[i],arms[i],elbows[i],wrists[i]);poseSkinArm(trousers[i],legs[i],knees[i],ankles[i]);
   }
  }
+ if(appearance==='driver'){root.scale.set(1.08,1.06,1.05);head.scale.set(1.06,1.02,1.03);}
  pose(0,null);return {root,pose,pivot};
 }

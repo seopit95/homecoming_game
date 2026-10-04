@@ -11,7 +11,10 @@ test('office requires the documented circuit order and correct tape timestamp',(
  let s={...initialStory(),stage:'office_power'};s=transition(s,'circuit_a');assert.deepEqual(s.circuit,[]);
  for(const a of ['circuit_b','circuit_a'])s=transition(s,a);assert.equal(s.stage,'office_power');
  s=transition(s,'circuit_c');assert.equal(s.stage,'office_tape');assert.equal(transition(s,'monitor'),s);
- s=transition(s,'tape_next');assert.equal(s.tapeIndex,1);s=transition(s,'monitor');assert.equal(s.stage,'office_leave');
+ s=transition(s,'tape_next');assert.equal(s.tapeIndex,1);s=transition(s,'monitor');assert.equal(s.stage,'office_playback');
+ assert.equal(s.notes.includes('monitor'),false,'evidence is not awarded before it is played');assert.equal(transition(s,'service_exit'),s);assert.equal(transition(s,'tape_next'),s);
+ s=transition(s,'office_finish');assert.equal(s.stage,'office_key');assert.ok(s.notes.includes('monitor'));assert.equal(transition(s,'service_exit'),s,'the physical key has not been picked up');
+ s=transition(s,'service_key');assert.equal(s.stage,'office_leave');
 });
 test('parking escape requires key, both isolation valves and drainage before the alarm',()=>{
  let s={...initialStory(),stage:'parking_gate'};s=transition(s,'exit');assert.equal(s.stage,'parking_key');assert.equal(transition(s,'alarm'),s);
