@@ -9,6 +9,7 @@ import {wetTexture,createLeatherShoe} from './entry-props.ts';
 import type {Solid,Target} from './world.ts';
 import type {Action,Stage,Story} from './story.ts';
 import {archiveReplay,type ExpansionArea} from './expansion-story.ts';
+import {storageMaterials,storageShelf} from './storage.ts';
 
 export const expansionLayout={
  courtyard:courtyardLayout,
@@ -48,10 +49,9 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   for(const dx of [-.21,.21])for(const dz of [-.21,.21])box(dx,.22,dz,.035,.44,.035,metal,false,chair);
   box(0,.47,0,.49,.06,.49,wood,false,chair);for(const dx of [-.21,.21])box(dx,.71,-.21,.035,.48,.035,metal,false,chair);box(0,.82,-.22,.48,.23,.04,wood,false,chair);
   solids.push({x:x+.45,z:z-1,w:.5,d:.5,y:.46,h:.92});const note=label(title,x,.826,z,.48,.32);note.rotation.x=-Math.PI/2;return target(id,title,note,[x,.84,z+.1],[x,z+1]);}
+ let storage:ReturnType<typeof storageMaterials>|undefined;
  function rack(x:number,z:number,w=2.4,d=.62,folders=true){
-  const group=new T.Group();group.name='grounded-shelving';group.position.set(x,0,z);group.userData.floorProp=true;root.add(group);
-  for(const dx of [-w/2+.025,w/2-.025])for(const dz of [-d/2+.025,d/2-.025])box(dx,1.03,dz,.05,2.06,.05,metal,false,group);
-  for(const y of [.15,.75,1.35,2.03]){box(0,y,0,w,.04,d,metal,false,group);if(folders&&y<1.9)for(let dx=-w/2+.18;dx<w/2-.15;dx+=.25)box(dx,y+.23,0,.19,.42,d*.73,dx<0?paper:blue,false,group);}
+  const group=storageShelf(w,d,metal,storage??=storageMaterials(),Math.abs(Math.round(x*11+z*7)),!folders);group.position.set(x,0,z);root.add(group);
   solids.push({x,z,w,d,y:1.03,h:2.06});return group;
  }
  function valve(id:Action,title:string,x:number,z:number){
@@ -154,7 +154,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   water=puddle(0,-20,3.5,19,.68);water.position.y=.075;
   box(0,.24,-15,3.5,.48,.16,metal,true);for(let x=-1.5;x<=1.5;x+=.25)box(x,.59,-15,.019,.7,.03,metal);
   box(0,.75,-14.982,2.08,.32,.025,metal);label('침수 · 좌우 통로로 우회',0,.75,-14.9675,2,.28);
-  rack(-X,2,2.5,.7,false);for(const x of [-X-.7,-X+.6])box(x,.35,2,.42,.35,.35,blue);
+  rack(-X,2,2.5,.7,false);
   for(const z of [24,0,-24])roundPipe(root,[-bx+.3,2.6,z],[bx-.3,2.6,z],.07,rust);
  }
  // Wall-attached radiators, storage and seating give the perimeter a maintenance-room scale.
