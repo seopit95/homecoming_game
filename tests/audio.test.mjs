@@ -8,7 +8,11 @@ test('the apparition crossfades a connected music layer through volume and pause
   class Context{sampleRate=22050;currentTime=17;state='running';destination=new Node();nodes=[];make(){const n=new Node();this.nodes.push(n);return n;}createGain(){return this.make();}createBufferSource(){return this.make();}createBiquadFilter(){return this.make();}createOscillator(){return this.make();}createStereoPanner(){return this.make();}createBuffer(_channels,length){const data=new Float32Array(length);return {getChannelData:()=>data};}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}}
   const previousFetch=globalThis.fetch,previousContext=globalThis.AudioContext;globalThis.AudioContext=Context;globalThis.fetch=async()=>({ok:false});
   const audio=new HorrorAudio();try{
-    audio.start();const ctx=audio.context;assert.ok(audio.haunt.connections.includes(audio.musicBus)&&audio.musicBus.connections.includes(audio.master));assert.ok(ctx.nodes.filter(n=>n.connections.includes(audio.haunt)).length>=7,'the drone voices and wind feed the music layer');assert.equal(audio.haunt.gain.value,0);
+    audio.prepare();const prepared=audio.context;
+    assert.equal(prepared.state,'suspended','loading prepares the audio device without playing sound');assert.equal(audio.master.gain.value,0);
+    audio.prepare();assert.equal(audio.context,prepared,'repeated preparation reuses the device');
+    audio.start();const ctx=audio.context;assert.equal(ctx,prepared,'the start gesture must reuse the already prepared device');assert.equal(ctx.state,'running');assert.ok(audio.master.gain.targets.at(-1)[0]>0,'only the start gesture enables sound');
+    assert.ok(audio.haunt.connections.includes(audio.musicBus)&&audio.musicBus.connections.includes(audio.master));assert.ok(ctx.nodes.filter(n=>n.connections.includes(audio.haunt)).length>=7,'the drone voices and wind feed the music layer');assert.equal(audio.haunt.gain.value,0);
     assert.ok(audio.chase.connections.includes(audio.musicBus),'the chase score follows the music mixer');
     audio.setChase(.5);const tempo=audio.chasePulse.frequency.targets.at(-1)[0];audio.setChase(1);
     assert.ok(audio.chasePulse.frequency.targets.at(-1)[0]>tempo,'closer pursuit raises the pulse');

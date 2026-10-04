@@ -46,3 +46,19 @@ test('the full-sized pursuer can leave the archive entrance and reach every evid
     }
   }finally{disposeWorld(world.root);globalThis.document=original;}
 });
+
+test('the courtyard pursuit respects the current fire-door angle after reopening and closing',async()=>{
+  const T=await import('three'),{buildWorld,disposeWorld}=await import('../lib/world.ts'),{setConnectionDoor}=await import('../lib/passage.ts'),{findPursuitPath,pursuerRadius,clearPath}=await import('../lib/navigation.ts');
+  const original=globalThis.document;globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}})})};
+  const world=buildWorld(new T.Scene(),'courtyard'),start={x:-2.95,z:53.55},goal={x:-25,z:34};
+  const door=world.root.children.find(o=>o.name==='continuous-connection'&&o.position.z===54).getObjectByName('connection-fire-door');
+  try{
+    for(const opening of [0,.4,.75,1,0,1]){
+      setConnectionDoor(door,opening,[]);
+      const path=findPursuitPath(start,goal,world.solids,world.bounds);
+      if(opening===0)assert.deepEqual(path,[],'the closed door blocks pursuit');
+      if(opening===1)assert.ok(path.length,'the opened door admits pursuit without stale collision');
+      let from=start;for(const to of path){assert.ok(clearPath(from,to,world.solids,world.bounds,pursuerRadius),'every route segment clears the actual rotated leaf');from=to;}
+    }
+  }finally{disposeWorld(world.root);globalThis.document=original;}
+});

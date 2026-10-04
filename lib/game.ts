@@ -697,6 +697,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const compilation=[renderer.compileAsync?.(scene,camera),renderer.compileAsync?.(hands.scene,hands.camera)];
   const ready=Promise.all(compilation).then(async()=>{
     if(disposed||started)return;preparing=true;world.root.removeFromParent();
+    try{audio.prepare();}catch{audio.dispose();} // Retry from the start gesture on restricted devices.
     const oldTarget=renderer.getRenderTarget(),viewport=new T.Vector4();renderer.getViewport?.(viewport);
     const oldVisibility=canvas.style?.visibility;if(canvas.style)canvas.style.visibility='hidden';
     const savedCamera=camera.position.clone(),oldRotation=camera.quaternion.clone();

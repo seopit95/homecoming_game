@@ -26,8 +26,14 @@ export class HorrorAudio {
   exertion:GainNode|null=null;exertionSource:AudioBufferSourceNode|null=null;exertionWanted=0;exertionLevel=-1;
   volume = .42;
   start() {
-    if(this.context){void this.context.resume();return;}
-    const ctx=this.context=new AudioContext();this.master=ctx.createGain();this.master.gain.value=this.volume*.48;this.master.connect(ctx.destination);
+    this.prepare();void this.context!.resume();this.setVolume(this.volume);
+  }
+  prepare() {
+    if(this.context)return;
+    // Opening the device can block for over 100 ms. Do it while the game loads,
+    // with both suspension and a silent master until the player's start gesture.
+    const ctx=this.context=new AudioContext();void ctx.suspend();
+    this.master=ctx.createGain();this.master.gain.value=0;this.master.connect(ctx.destination);
     this.musicBus=ctx.createGain();this.effectsBus=ctx.createGain();this.voiceBus=ctx.createGain();for(const bus of [this.musicBus,this.effectsBus,this.voiceBus])bus.connect(this.master);this.mix(this.levels);
     const noise=this.noise=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate);const data=noise.getChannelData(0);
     for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
