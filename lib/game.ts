@@ -689,6 +689,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(started&&!paused&&story.stage!=='ended')findTarget();
     if(started&&!paused&&elapsed-lastEmit>.09){lastEmit=elapsed;emit();}
     if(road)road.renderMirror(renderer);
+    world.surveillance?.render(renderer,scene);
     renderer.render(scene,camera);
     if(hands.root.visible){renderer.autoClear=false;renderer.clearDepth();renderer.render(hands.scene,hands.camera);renderer.autoClear=true;}
   }
@@ -701,7 +702,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const oldTarget=renderer.getRenderTarget(),viewport=new T.Vector4();renderer.getViewport?.(viewport);
     const oldVisibility=canvas.style?.visibility;if(canvas.style)canvas.style.visibility='hidden';
     const savedCamera=camera.position.clone(),oldRotation=camera.quaternion.clone();
-    async function warm(root:T.Group,spawn:T.Vector3,extraPass?:()=>void){
+    async function warm(root:T.Group,spawn:T.Vector3,extraPass?:()=>void|Promise<void>){
       scene.add(root);camera.position.copy(spawn);camera.rotation.set(0,0,0);camera.updateMatrixWorld();
       const flags:{o:T.Object3D;visible:boolean;frustum:boolean}[]=[];
       root.traverse(o=>{flags.push({o,visible:o.visible,frustum:o.frustumCulled});if(!(o instanceof T.Light))o.visible=true;o.frustumCulled=false;});
@@ -709,12 +710,12 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
         // The default framebuffer uses different tone-mapping/color shaders than a render target.
         renderer.setRenderTarget(null);renderer.setViewport?.(0,0,128,128);
         await renderer.compileAsync?.(scene,camera);
-        if(!disposed){renderer.render(scene,camera);extraPass?.();}
+        if(!disposed){renderer.render(scene,camera);await extraPass?.();}
       }finally{for(const f of flags){f.o.visible=f.visible;f.o.frustumCulled=f.frustum;}root.removeFromParent();}
       await new Promise<void>(resolve=>setTimeout(resolve,0));
     }
     try{
-      for(const next of Object.keys(chapters) as Area[]){if(disposed)break;const w=preparedWorld(next);await warm(w.root,w.spawn);if(next==='lift'){w.updateStory?.('service_open',0,false);await warm(w.root,w.spawn);w.reset();}}
+      for(const next of Object.keys(chapters) as Area[]){if(disposed)break;const w=preparedWorld(next);await warm(w.root,w.spawn,()=>w.surveillance?.prepare(renderer,scene));if(next==='lift'){w.updateStory?.('service_open',0,false);await warm(w.root,w.spawn);w.reset();}}
       // The mirror uses a linear render target and hides the car's lights. Its
       // material programs differ from the main camera, even for the same mesh.
       for(const ending of [false,true]){if(disposed)break;const r=preparedRoad(ending);await warm(r.root,new T.Vector3(1.8,1.4,4),()=>r.renderMirror(renderer));}

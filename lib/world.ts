@@ -9,6 +9,7 @@ import {dressApartment} from './japan.ts';
 import {batchStaticGeometry} from './static-geometry.ts';
 import {solidContainsPoint,type Occupant} from './collision.ts';
 import {setDoorAngle} from './passage.ts';
+import type {Surveillance} from './surveillance.ts';
 
 export type Bounds={x:number;z:number;minX?:number};
 export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number; yaw?:number };
@@ -48,12 +49,14 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
     content.solids.splice(0,content.solids.length,...originalSolids.map(({solid,value})=>{delete solid.yaw;return Object.assign(solid,value);}));
     for(const p of poses){p.object.position.copy(p.position);p.object.quaternion.copy(p.quaternion);p.object.scale.copy(p.scale);p.object.visible=p.visible;delete p.object.userData.openRequested;}
   }
-  return {...content,root,updateStory,reset};
+  const surveillance=root.getObjectByName('surveillance-screen')?.userData.surveillance as Surveillance|undefined;
+  return {...content,root,updateStory,reset,surveillance};
 }
 export function disposeWorld(root:T.Object3D){
+  root.traverse(o=>o.userData.surveillance?.dispose());
   const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();
   root.traverse(o=>{if(o instanceof T.SpotLight||o instanceof T.PointLight||o instanceof T.DirectionalLight)o.shadow.map?.dispose();});
-  root.traverse(o=>{if(o instanceof T.Mesh||o instanceof T.Line){geometries.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material])){materials.add(m);for(const v of Object.values(m))if(v instanceof T.Texture)textures.add(v);}}});
+  root.traverse(o=>{if(o instanceof T.Mesh||o instanceof T.Line){geometries.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material])){materials.add(m);for(const v of Object.values(m))if(v instanceof T.Texture&&!v.isRenderTargetTexture)textures.add(v);}}});
   geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());root.removeFromParent();
 }
 function buildApartment(scene:T.Group) {

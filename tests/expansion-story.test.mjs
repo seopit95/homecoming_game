@@ -6,6 +6,10 @@ import {expansionTargetActive} from '../lib/expansion-story.ts';
 const state=stage=>({...initialStory(),stage});
 const act=(s,...actions)=>actions.reduce(transition,s);
 
+test('archive playback prompt is available only when the assembled record can actually start',()=>{
+ for(const [stage,active] of [['archive_reveal',true],['archive_edit',false],['archive_playback',false],['archive_escape',false]])assert.equal(expansionTargetActive(state(stage),'archive_play'),active);
+});
+
 test('the management exit goes through a service lift before the communal facilities',()=>{
  let s=act(state('office_leave'),'service_exit');assert.equal(s.stage,'office_departure');
  s=act(s,'service_board');assert.equal(s.stage,'service_ride');assert.equal(areaFor(s),'lift');

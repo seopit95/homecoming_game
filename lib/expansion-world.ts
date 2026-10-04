@@ -10,6 +10,7 @@ import type {Solid,Target} from './world.ts';
 import type {Action,Stage,Story} from './story.ts';
 import {archiveReplay,type ExpansionArea} from './expansion-story.ts';
 import {storageMaterials,storageShelf} from './storage.ts';
+import {createSurveillance,type Surveillance} from './surveillance.ts';
 
 export const expansionLayout={
  courtyard:courtyardLayout,
@@ -89,6 +90,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  connectionPassage(root,solids,lamps,0,-bz);
  const heightAt=(_x:number,_z:number)=>0;
  let display:T.Mesh|undefined;
+ let surveillance:Surveillance|undefined;
  const faceText=(text:string)=>{if(!display)return;const map=(display.material as T.MeshStandardMaterial).map! as T.CanvasTexture;const c=map.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#101d18';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#b7cdae';ctx.font=`${Math.min(c.height*.26,650/Math.max(1,...text.split('\n').map(l=>l.length)))}px sans-serif`;ctx.textAlign='center';text.split('\n').forEach((l,i)=>ctx.fillText(l,c.width/2,c.height*(.34+i*.3)));map.needsUpdate=true;};
  const X=bx-6;
  let water:T.Mesh|undefined;
@@ -133,7 +135,15 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
    // The plate overlaps the upper shelf edge, not the aisle between two racks.
    box(x+1.6,1.93,z+.317,1.34,.26,.018,metal);label(title,x+1.6,1.93,z+.328,1.3,.24);
   }
-  table(X,-20,3.6,1);const monitor=box(X,1.15,-20.15,1.1,.64,.45,dark);display=label('복원 대기\n원본 기록 3개가 필요합니다',X,1.17,-19.911,.97,.52,0,true);target('archive_play','복원된 기록 재생',monitor,[X,1.17,-19.82],[X,-18.9]);
+  table(X,-20,3.6,1);box(X,.835,-20.15,.5,.03,.36,dark);box(X,.905,-20.15,.16,.11,.17,metal);
+  const monitor=box(X,1.30,-20.15,.88,.68,.57,dark);target('archive_play','복원된 기록 재생',monitor,[X,1.31,-19.84],[X,-18.9]);
+  const screen=createSurveillance();screen.position.set(X,1.31,-19.864);root.add(screen);surveillance=screen.userData.surveillance;
+  for(const y of [1.015,1.605])box(X,y,-19.849,.8,.035,.03,metal);
+  for(const x of [X-.383,X+.383])box(x,1.31,-19.849,.035,.56,.03,metal);
+  for(let i=0;i<4;i++)box(X-.19+i*.08,.99,-19.855,.035,.014,.026,metal);
+  roundPipe(root,[X,.99,-20.43],[X,.86,-20.52],.006,dark);roundPipe(root,[X,.86,-20.52],[X,.07,-20.52],.006,dark);
+  box(14.65,2.70,-29,.035,.20,.035,metal);const cameraCase=new T.Group();cameraCase.name='archive-cctv-camera';cameraCase.position.set(14.65,2.54,-29);cameraCase.rotation.set(.11,-1.29,0,'YXZ');root.add(cameraCase);
+  box(0,0,0,.18,.12,.32,metal,false,cameraCase);const lens=new T.Mesh(new T.CylinderGeometry(.041,.041,.02,20),dark);lens.rotation.x=Math.PI/2;lens.position.z=.169;cameraCase.add(lens);
   for(const [i,id,title] of [[0,'archive_sequence_road','도로'],[1,'archive_sequence_call','호출'],[2,'archive_sequence_gate','입차']] as const){const x=X+(i-1)*.88;const control=box(x,.867,-19.67,.6,.09,.27,metal);target(id,title+' 기록 연결',control,[x,.93,-19.58],[x,-18.6]);label(title,x,.917,-19.67,.5,.19).rotation.x=-Math.PI/2;}
   for(const [x,z] of [[-X,20],[X,20],[-X,-3]])for(const dx of [-.45,.45]){box(x+dx,.857,z,.29,.065,.19,dark);for(const ox of [-.07,.07]){const reel=new T.Mesh(new T.TorusGeometry(.027,.007,6,16),paper);reel.rotation.x=-Math.PI/2;reel.position.set(x+dx+ox,.894,z);root.add(reel);}}
   for(const x of [-X-.8,-X+.8])box(x,.12,-22,.95,.24,.7,wood,true);puddle(-X,-19,4,7);label('임의 폐기 금지\n사고 관련 원본 보존',0,2.1,7,2,.55,0);box(0,2.1,6.97,2.08,.62,.04,metal);for(const x of [-.8,.8])roundPipe(root,[x,2.41,7],[x,2.8,7],.009,metal);
@@ -186,6 +196,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const text=area==='archive'?(stage==='archive_playback'?replayText:(stage==='archive_edit'?`원본 연결 ${story?.circuit.length??0}/3\n각 기록의 시각을 대조하세요`:stage==='archive_reveal'?'기록 연결 완료\n재생 버튼을 누르세요':['archive_escape','archive_departure'].includes(stage)?'03:20 / 2803 통화 원본\n「잘못 거셨어요.」':'원본 기록 3개를 회수하세요')):
    area==='annex'?['annex_exit_ready','annex_departure'].includes(stage)?'2803 연결됨\n북쪽 방화문 잠금 해제':'마지막 호출 수신처\n1704 / 2803 / 관리실':drained?'수위 LOW\n주차장 통행 가능':drainAt>=0?'배수 가동 중\n젖은 통로에 접근 금지':'수위 HIGH\n급수 차단 후 전원 연결';
   if(text!==lastDisplay){lastDisplay=text;faceText(text);}
+  surveillance?.update(stage,replayTime,text);
  }
  return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,updateStory,reset(){opened=-1;drainAt=-1;replayAt=-1;lastDisplay='';}};
 }

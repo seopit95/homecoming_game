@@ -101,6 +101,7 @@ export function expansionObjective(s:Story){
  return expansionObjectives[s.stage as ExpansionStage];
 }
 export function expansionTargetActive(s:Story,id:Action){
+ if(id==='archive_play')return s.stage==='archive_reveal';
  if(id.startsWith('court_digit_')||id==='court_confirm')return s.stage==='court_search'||s.stage==='court_code';
  if(id==='court_exit')return s.stage==='court_unlocked';
  if(id.startsWith('annex_line_'))return s.stage==='annex_unlock';
@@ -117,6 +118,6 @@ export const archiveReplay=[
  {at:0,screen:'03:17 / 정문 도로\n충돌 이후 브레이크등',text:'충돌 뒤에야 브레이크등이 켜진다.\n운전석의 나는 그 순간에도 휴대전화를 보고 있었다.'},
  {at:5,screen:'03:20 / 2803 통화 원본\n「잘못 거셨어요.」',text:'경비원의 호출. 「아직 현장에 사람이…」\n녹음 속 내가 말을 자른다. 「잘못 거셨어요.」 연결이 끊긴다.'},
  {at:12,screen:'03:26 / 입차 후 9초\n문 좀 열어 주세요.',text:'나는 아직 운전석에 있다. 조수석에서 「문 좀 열어 주세요.」\n내 손이 잠금 버튼을 누른다. 딸깍. 그 뒤에야 혼자 내렸다.'},
- {at:20,screen:'현재 03:17 / 편집실\n기록 작성 중',text:'재생이 끝났는데 모니터의 시간이 지금으로 바뀐다.\n아무것도 누르지 않았는데 새 기록이 써지고 있다.'},
+ {at:21,screen:'현재 03:17 / 편집실\n기록 작성 중',text:'재생이 끝났는데 모니터의 시간이 지금으로 바뀐다.\n아무것도 누르지 않았는데 새 기록이 써지고 있다.'},
  {at:27,screen:'현재 03:17 / 편집실\n네 뒤에 있어',text:'「네 뒤에 있어」\n문밖에서 손톱이 바닥을 긁는다. 여기를 나가야 한다.'},
 ] as const;

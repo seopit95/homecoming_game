@@ -20,6 +20,7 @@ export function createSedan(color:string,damaged=false){
   const glass=new T.MeshPhysicalMaterial({color:'#26322f',metalness:.22,roughness:.14,transparent:true,opacity:.8,depthWrite:false,side:T.DoubleSide,clearcoat:1});
   const headlamp=new T.MeshPhysicalMaterial({color:'#87938a',metalness:.35,roughness:.26,clearcoat:1});
   const tail=new T.MeshPhysicalMaterial({color:'#721b17',roughness:.24,clearcoat:1});
+  tail.name='sedan-tail-lamps';
   const amber=new T.MeshPhysicalMaterial({color:'#90602b',roughness:.26,clearcoat:1});
   const scratch=new T.MeshStandardMaterial({color:'#8b9693',roughness:.8});
   const batches=new Map<T.Material,T.BufferGeometry[]>();
