@@ -11,15 +11,16 @@ export function createFace(head:T.Group,skin:T.Material){
   const mouth=new T.Group();mouth.name='ghost-attack-mouth';head.add(mouth);
   const throat=new T.Mesh(new T.BufferGeometry(),new T.MeshStandardMaterial({color:'#10090d',roughness:.96,side:T.DoubleSide}));mouth.add(throat);
   const lip=new T.Mesh(new T.BufferGeometry(),new T.MeshStandardMaterial({color:'#32191e',roughness:.38,side:T.DoubleSide}));mouth.add(lip);
+  const gums=[false,true].map(bottom=>{const mesh=new T.Mesh(new T.BufferGeometry(),new T.MeshStandardMaterial({color:'#44262b',roughness:.48,side:T.DoubleSide}));mesh.name=bottom?'ghost-lower-gum':'ghost-upper-gum';mouth.add(mesh);return mesh;});
   const teeth=new T.Group();head.add(teeth);const lower=new T.Group();lower.name='ghost-lower-teeth';jaw.add(lower);
   const enamel=new T.MeshStandardMaterial({color:'#a8a091',roughness:.56});
   for(let i=0;i<8;i++)for(const bottom of [false,true]){
-    const tooth=new T.Mesh(new T.SphereGeometry(1,8,8),enamel);tooth.scale.set(.0055,.010+(i%3)*.002,.007);if(i===1&&!bottom||i===6&&bottom)tooth.scale.y*=.35;
-    tooth.position.set((i-3.5)*.014,-.006+(bottom?-.015:.011),.163-Math.abs(i-3.5)*.002);tooth.rotation.z=(i-3.5)*.035+Math.sin(i*3.1)*.14;(bottom?lower:teeth).add(tooth);
+    const tooth=new T.Mesh(new T.SphereGeometry(1,12,10),enamel);tooth.name=`ghost-${bottom?'lower':'upper'}-tooth-${i}`;tooth.scale.set(.0052+(i===3||i===4?.001:0),.008+(i%3)*.001,.006);if(i===1&&!bottom||i===6&&bottom)tooth.scale.y*=.35;
+    tooth.rotation.z=(i-3.5)*.035+Math.sin(i*3.1)*.14;(bottom?lower:teeth).add(tooth);
   }
   const eyes=new T.Group();head.add(eyes);
   for(const mesh of [face,back,throat,lip]){mesh.castShadow=true;mesh.receiveShadow=true;}
-  const state={face,back,mouth,throat,lip,jaw,teeth,eyes,lower,lastOpen:-1};poseFace(state,0);return state;
+  const state={face,back,mouth,throat,lip,jaw,teeth,eyes,lower,gums,lastOpen:-1};poseFace(state,0);return state;
 }
 export type FaceRig=ReturnType<typeof createFace>;
 const N=64,R=24;
@@ -65,7 +66,21 @@ export function poseFace(r:FaceRig,open:number){
     lips.push(v.x*(1+row*.021),center+(v.y-center)*(1+row*.012),v.z+.001+width);
   }
   grid(r.lip,2,N,lips);
-  r.jaw.position.set(open*.005,-.222*open,.009*open);
+  r.jaw.position.set(-open*.018,-.222*open,.009*open);
+  // Dental arches stay attached to the jaws; the stretched lips pass over them.
+  [r.teeth,r.lower].forEach((group,row)=>{
+    const xOffset=row===0?open*.012:r.jaw.position.x,y=row===0?-.014:.010+r.jaw.position.y;
+    group.children.forEach((tooth,i)=>{
+      const x=(i-3.5)*.013,z=.151+(row===1?r.jaw.position.z:0)-((i-3.5)/3.5)**2*.035;
+      tooth.position.set(x+xOffset,y,z);if(row===1)tooth.position.sub(r.jaw.position);
+    });
+    const gum:number[]=[];
+    for(let band=0;band<=2;band++)for(let i=0;i<=16;i++){
+      const x=(i-8)*.0062,z=.146+(row===1?r.jaw.position.z:0)-((i-8)/7.34)**2*.035;
+      gum.push(x+xOffset,y+(row===0?1:-1)*(.004+band*.004),z+Math.sin(band*Math.PI/2)*.003);
+    }
+    grid(r.gums[row],2,16,gum);
+  });
   // The back of the head is above the lip; the chin is wholly part of the face mesh.
-  r.teeth.visible=r.lower.visible=open>.02;r.mouth.visible=open>.002;
+  r.teeth.visible=r.lower.visible=open>.22;r.mouth.visible=open>.002;
 }

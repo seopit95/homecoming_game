@@ -5,12 +5,12 @@ const rows=14,cols=2,locks=96;
 export function createHair(head:T.Group){
   const data=new Uint8Array(128*256*4);
   for(let y=0;y<256;y++)for(let x=0;x<128;x++){
-    const u=x/127,v=y/255,wave=Math.sin(v*9)*2,strand=Math.max(0,Math.sin((x+wave)*2.4)+.35*Math.sin(x*6.8));
-    const a=Math.min(1,u*10,(1-u)*10)*Math.min(1,(1-v)*13)*(.3+strand*.7),i=(y*128+x)*4;
+    const u=x/127,v=y/255,wave=Math.sin(v*9)*2,strand=Math.max(0,Math.cos((x+wave)*.38))**.5;
+    const a=Math.min(1,u*10,(1-u)*10)*Math.min(1,(1-v)*13)*(.015+strand*.985),i=(y*128+x)*4;
     data[i]=data[i+1]=data[i+2]=Math.round(Math.min(1,a)*255);data[i+3]=255;
   }
-  const alpha=new T.DataTexture(data,128,256);alpha.needsUpdate=true;alpha.minFilter=T.LinearFilter;alpha.magFilter=T.LinearFilter;
-  const material=surface('hair','#c4c7c9',{roughness:.46,metalness:0,alphaMap:alpha,alphaTest:.14,side:T.DoubleSide});
+  const alpha=new T.DataTexture(data,128,256);alpha.needsUpdate=true;alpha.generateMipmaps=true;alpha.minFilter=T.LinearMipmapLinearFilter;alpha.magFilter=T.LinearFilter;alpha.anisotropy=4;
+  const material=surface('hair','#c4c7c9',{roughness:.46,metalness:0,alphaMap:alpha,alphaTest:.3,side:T.DoubleSide});
   const hair=new T.Group();hair.name='ghost-scalp-hair';head.add(hair);
   const capGeometry=new T.SphereGeometry(1,48,32),p=capGeometry.getAttribute('position');
   for(let i=0;i<p.count;i++){

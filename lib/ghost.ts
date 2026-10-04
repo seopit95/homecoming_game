@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {surface} from './materials.ts';
-import {skinArm,poseSkinArm} from './ghost-limbs.ts';
+import {skinArm,poseSkinArm,connectWrist} from './ghost-limbs.ts';
 import {createHair,settleHair} from './ghost-hair.ts';
 import {createFace,poseFace,type FaceRig} from './ghost-face.ts';
 import {createDress,poseDress} from './ghost-dress.ts';
@@ -39,6 +39,7 @@ export function createGhost(parent:T.Object3D){
   }
   const body=new T.Group();body.name='ghost-body';body.add(...figure.children);figure.add(body);
   const skinArms=arms.map(()=>skinArm(body,skin)),sleeves=arms.map(()=>skinArm(body,cloth,true));
+  skinArms.forEach((arm,i)=>connectWrist(arm,palms[i].children[0] as T.Mesh));
   sleeves[1].userData.torn=true;
   const drips=new T.InstancedMesh(new T.SphereGeometry(.003,6,5),new T.MeshPhysicalMaterial({color:'#39090c',roughness:.25,clearcoat:.7}),6);drips.name='ghost-blood-drips';drips.frustumCulled=false;body.add(drips);
   rigs.set(figure,{tuck:openClearance,drips,neck,face,sleeves,skinArms,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
