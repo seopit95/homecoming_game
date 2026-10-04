@@ -92,14 +92,14 @@ function buildApartment(scene:T.Group) {
   at(0,-6.25);
   const door=new T.Group();door.name='front-door';door.position.set(-.75,0,-6.11);door.rotation.y=0;scene.add(door);
   box(.725,1.22,0,1.45,2.44,.13,mat('#33413b'),false,door);box(.725,1.2,.08,1.2,1.7,.045,mat('#394740'),false,door);box(1.22,1.02,.17,.18,.055,.15,metal,false,door);
-  box(0,2.53,-5.98,1.65,.11,.18,wood);for(const x of [-.81,.81])box(x,1.25,-5.98,.12,2.6,.18,wood);sign('2803',-.94,1.98,-5.93,0,.32,.12);
+  box(0,2.53,-5.98,1.65,.11,.18,wood);for(const x of [-.81,.81])box(x,1.25,-5.98,.12,2.6,.18,wood);sign('2803',-.94,1.98,-6.354,Math.PI,.32,.12);
   // The home opens onto an exposed gallery: low parapet, railing and open night beyond.
   box(0,-.11,-7.55,14,.2,2.65,surface('oldTile','#9ca797'));box(0,2.9,-7.55,14,.18,2.7,surface('garage','#7b857e'));
   box(0,.43,-8.84,14,.86,.15,surface('decayWall','#7a897f'));
   for(const y of [.94,1.15])box(0,y,-8.84,14,.035,.04,metal);
   for(let x=-7;x<=7;x+=.8)box(x,1.05,-8.84,.025,.22,.025,metal);
   for(const x of [-5,5])box(x,1.45,-8.8,.22,2.9,.23,surface('garage','#828c84'));
-  sign('28층  ·  승강기 →',-2.2,2.47,-6.42,Math.PI,1.2,.2);
+  sign('28층  ·  승강기 →',-2.2,2.47,-6.354,Math.PI,1.2,.2);
 
   targets.push({id:'door',point:new T.Vector3(...home.door),label:'현관문 확인',mesh:door});
   at(1.18,-5.3);
@@ -169,7 +169,8 @@ function buildApartment(scene:T.Group) {
   for(const y of [.045,.2,.85,1.5,2.255])box(-6.12,y,-3.4,.65,.045,1.4,wood);
   for(let i=0;i<15;i++)box(-5.88,.423+Math.floor(i/5)*.65,-3.94+(i%5)*.23,.15,.4,.16,mat(['#4e4238','#515747','#655347'][i%3]));
   at(-5.3,-5.6);
-  box(-5.3,.82,-5.6,.6,.04,.4,cream);sign('백로아파트',-4.8,1.9,-6.12,0,.9,.3);
+  box(-5.3,.82,-5.6,.6,.04,.4,cream);
+  at(-4.8,-6.25);sign('백로아파트',-4.8,1.9,-6.146,0,.9,.3);
   // Bedroom wardrobe faces a generous clear floor, away from the bed.
   at(4.8,4.6);
   box(4.8,.25,4.6,2.3,.5,2.5,wood,true);box(4.8,.6,4.6,2.2,.23,2.4,upholstery('#cac5b6'));box(4.8,.76,4.25,2.18,.13,1.55,upholstery('#596966'));box(4.8,1.02,5.91,2.4,1.2,.13,wood);

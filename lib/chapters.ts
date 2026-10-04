@@ -58,7 +58,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     const shoe=createLeatherShoe('#302b27',false);shoe.name='resident-leather-shoe';shoe.position.set(1.6,.003,4.8);shoe.rotation.y=.45;root.add(shoe);target('belongings','가죽 신발과 관리비 봉투 확인',shoe,1.6,.15,4.8);
     box(2.4,.52,5.45,1.25,1.04,.62,wood,true);box(2.4,1.045,5.45,.4,.01,.24,paper);const envelope=label('1704 · 한서연',2.4,1.052,5.45,.38,.22);envelope.rotation.x=-Math.PI/2;target('belongings','1704호 한서연 · 관리비 봉투',envelope,2.4,1.06,5.3);
     for(const x of [2.09,2.71]){box(x,.54,5.129,.59,.93,.025,wood);box(x,.68,5.105,.03,.18,.027,metal);}box(2.4,1.057,5.45,.25,.001,.001,dark);
-    label('야간 당직 · 내선 17\n퇴근 후에는 연결문을 잠가 주세요',0,2.15,5.843,1.1,.4,Math.PI);
+    label('야간 당직 · 내선 17\n퇴근 후에는 연결문을 잠가 주세요',0,2.6,5.846,1.1,.3,Math.PI);
     const umbrella=new T.Group();umbrella.name='resident-folded-umbrella';umbrella.position.set(4.01,.08,5.2);root.add(umbrella);
     const canopy=new T.Mesh(new T.CylinderGeometry(.032,.07,.76,9),upholstery('#333f46'));canopy.position.y=.44;umbrella.add(canopy);
     const stem=new T.Mesh(new T.CylinderGeometry(.008,.008,1.08,10),metal);stem.position.y=.54;umbrella.add(stem);
@@ -94,7 +94,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     box(3,.86,-4.65,.42,.1,.26,paper);
     const window=new T.Mesh(new T.PlaneGeometry(2.4,1.5),nightWindow());window.position.set(2.7,1.85,-5.83);root.add(window);
     for(const x of [1.45,2.7,3.95])box(x,1.85,-5.8,.04,1.6,.06,metal);box(2.7,1.85,-5.79,2.55,.04,.08,metal);
-    label('1703호 · 임시 관리실',0,2.6,-5.74,1.25,.25);target('resident_leave','1703호 연결문 열기',rearDoor!,0,1.25,-5.65);
+    label('1703호 · 임시 관리실',0,2.6,-5.846,1.25,.25);target('resident_leave','1703호 연결문 열기',rearDoor!,0,1.25,-5.65);
     light(2.7,2,-4.9,'#6a899e',4.5,10);light(-4,2.25,4.6,'#aa936c',1.9,7);light(0,2.4,-5.2,'#84a49b',1.7,6);
     for(let i=0;i<8;i++){const print=new T.Mesh(new T.PlaneGeometry(.14,.3),new T.MeshPhysicalMaterial({map:wetTexture(true,17+i),color:'#25352e',transparent:true,opacity:.4,roughness:.06,depthWrite:false}));print.rotation.x=-Math.PI/2;print.rotation.z=i%2?.12:-.12;print.position.set((i%2?.16:-.16),.012,4.2-i*.56);print.name='return-footprint';print.visible=false;root.add(print);}
     figure.position.set(0,0,10.9);
@@ -164,7 +164,7 @@ export function buildResidentGallery(root:T.Group,closedStairs=true){
     const plaster=surface('decayWall','#9da598'),galleryFloor=surface('oldTile','#9a9e91',{roughness:.65});
     box(0,-.1,8.85,2.6,.2,5.8,galleryFloor);box(0,2.88,8.85,2.6,.16,5.8,plaster);
     for(const x of [-1.3,1.3]){box(x,1.4,8.85,.15,2.8,5.8,plaster,true);box(x,0.43,8.85,.16,.85,5.8,surface('wall','#4f6256'));}
-    if(closedStairs){box(0,1.4,11.85,2.6,2.8,.15,plaster,true);box(0,1.1,11.76,1.04,2.2,.08,metal);label('17F · 비상계단',0,2.45,11.7,1.2,.25,Math.PI);}
+    if(closedStairs){box(0,1.4,11.85,2.6,2.8,.15,plaster,true);box(0,1.1,11.76,1.04,2.2,.08,metal);label('17F · 비상계단',0,2.45,11.771,1.2,.25,Math.PI);}
     box(1.21,1.1,9.25,.06,2.2,.94,metal);label('1705',1.166,2.08,9.25,.34,.14,-Math.PI/2);
     for(const z of [7.4,10.4]){box(0,2.73,z,.17,.09,.78,metal);light(0,2.6,z,'#83998d',2.5,5);}
 

@@ -35,7 +35,7 @@ export function buildCourtyard(root:T.Group){
   for(let z=-44;z<=44;z+=11)roundPipe(root,[side*31.7,0,z],[side*31.7,35,z],.055,steel);
  }
  // A closed connecting door remains visible behind the arriving player.
- for(const x of [-.77,.77])box(x,1.22,47.86,.08,2.44,.18,steel);sign('공동시설',0,2.68,47.735,1.3,.26,Math.PI);
+ for(const x of [-.77,.77])box(x,1.22,47.86,.08,2.44,.18,steel);sign('공동시설',0,2.68,47.886,1.3,.26,Math.PI);
  // A fenced construction pit forces distinct east and west routes, with crossovers at both ends.
  box(0,.27,0,36,.54,46,dark,true);
  for(const x of [-18,18]){box(x,.74,0,.12,1.48,46,steel);for(let z=-22;z<=22;z+=2.5)roundPipe(root,[x,.2,z],[x,1.6,z],.025,rust);}
@@ -56,7 +56,7 @@ export function buildCourtyard(root:T.Group){
   box(x,-.025,z,6,.05,6,concrete);box(x,2.45,z,6.2,.18,6.2,steel);
   for(const dx of [-3,3])box(x+dx,1.2,z,.12,2.4,6,wall,true);box(x,1.2,z-3,6,2.4,.12,wall,true);
   for(const dx of [-2,2])box(x+dx,1.2,z+3,2,2.4,.12,wall,true);box(x,2.25,z+3,2,.3,.12,wall);
-  sign(title,x,2.3,z+3.07,2.8,.27);box(x,.75,z,2.4,.12,.9,wood,true);for(const dx of [-1,1])for(const dz of [-.3,.3])box(x+dx,.345,z+dz,.06,.69,.06,steel);
+  sign(title,x,2.225,z+3.064,2.8,.22);box(x,.75,z,2.4,.12,.9,wood,true);for(const dx of [-1,1])for(const dz of [-.3,.3])box(x+dx,.345,z+dz,.06,.69,.06,steel);
  }
  booth(-25,30,'서측 경비초소');booth(25,30,'동측 열쇠 보관 초소');
  const log=sign('03:26 / 2803 입차\n금고: 입차 분 + 당직 내선',-25,.82,30,.65,.38);log.rotation.x=-Math.PI/2;target('court_log','사흘 전 경비일지',log,[-25,.84,30.2],[-25,31.2]);
@@ -81,7 +81,8 @@ export function buildCourtyard(root:T.Group){
  for(const [x,z] of [[-22,38],[26,5],[-26,-40],[8,-40]]){const film=new T.Mesh(new T.PlaneGeometry(5,7),new T.MeshPhysicalMaterial({map:wetTexture(false,Math.round(x+z)),color:'#1a302b',transparent:true,opacity:.35,roughness:.07,depthWrite:false}));film.rotation.x=-Math.PI/2;film.position.set(x,.011,z);root.add(film);}
  // Main gate stays closed; the separate basement doorway becomes the actual exit.
  box(0,1.8,-47.8,8,3.6,.16,steel,true);for(let y=.2;y<3.6;y+=.16)box(0,y,-47.7,7.9,.025,.03,dark);
- const notice=sign('정문 셔터 고장\n지하문 열쇠: 동측 경비초소\n금고: 입차 분 + 당직 내선',0,1.5,-47.58,1.8,.9);target('court_gate','정문 공사 안내 확인',notice,[0,1.5,-47.5],[0,-46.3]);
+ box(0,1.5,-47.684,1.86,.96,.012,steel);
+ const notice=sign('정문 셔터 고장\n지하문 열쇠: 동측 경비초소\n금고: 입차 분 + 당직 내선',0,1.5,-47.674,1.8,.9);target('court_gate','정문 공사 안내 확인',notice,[0,1.5,-47.5],[0,-46.3]);
  const doorZ=-44,doorX=14;
  for(const x of [doorX-1.5,doorX+1.5])box(x,-.2,-48,.18,6.4,8.4,wall,true);box(doorX,2.9,-48,3.1,.2,8.4,wall);
  for(const x of [doorX-1.15,doorX+1.15])box(x,1.4,doorZ,.7,2.8,.18,wall,true);box(doorX,2.6,doorZ,1.6,.4,.18,wall);

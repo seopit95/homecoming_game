@@ -26,7 +26,7 @@ export function dressApartment(root:T.Group,area:Area){
     box(0,.008,-5.15,2.65,.012,1.9,surface('tile','#b9bdb4',{roughness:.47}));
     for(const x of [-.82,-.58]){const shoe=createLeatherShoe('#736854',false);shoe.position.set(x,.014,-4.55);shoe.rotation.y=.08;root.add(shoe);}
     at(-1.05,-5.8);cylinder(-1.05,.3,-5.8,.14,.6,steel);for(let i=0;i<3;i++)rod(new T.Vector3(-1.12+i*.07,.15,-5.8),new T.Vector3(-1.2+i*.11,1.15+i*.12,-5.82),.016,dark);
-    at(0,-6.25);notice(['백로아파트','3동 2803호','야간에는 조용히','관리사무소'],1.02,1.85,-5.83,0,.23,.38);
+    at(0,-6.25);notice(['백로아파트','3동 2803호','야간에는 조용히','관리사무소'],1.02,1.85,-6.146,0,.23,.38);
     at(6.08,1.55);for(const z of [1.05,2.05])box(5.556,1.24,z,.018,2.02,.96,paper);
     for(const y of [.23,1.22,2.25])box(5.532,y,1.55,.03,.034,2.04,wood);
     for(const z of [.53,1.55,2.57])box(5.526,1.25,z,.035,2.07,.027,wood);

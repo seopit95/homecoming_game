@@ -74,8 +74,8 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   for(let z=-bz+4;z<bz-2;z+=6)roundPipe(root,[side*(bx-.25),2.5,z],[side*(bx-.25),2.5,z+5.9],.036,rust);
  }
  for(const z of [-28,-14,2,18,30])fixture(0,z,2.8);
- for(const x of [-.77,.77])box(x,1.2,bz-.12,.08,2.4,.18,metal);label(area==='annex'?'관리용 승강기 · 1F':area==='archive'?'중정 계단':'기록보관실',0,2.59,bz-.206,1.8,.24,Math.PI,true);
- for(const side of [-1,1])for(const [i,z] of [[0,15.5],[1,-5.5]] as const)label(L.rooms[(side<0?0:2)+i],side*2.1,2.38,z,1.6,.28,side<0?-Math.PI/2:Math.PI/2);
+ for(const x of [-.77,.77])box(x,1.2,bz-.12,.08,2.4,.18,metal);label(area==='annex'?'관리용 승강기 · 1F':area==='archive'?'중정 계단':'기록보관실',0,2.59,bz-.094,1.8,.24,Math.PI,true);
+ for(const side of [-1,1])for(const [i,z] of [[0,15.5],[1,-5.5]] as const)label(L.rooms[(side<0?0:2)+i],side*2.104,2.54,z,1.6,.28,side<0?-Math.PI/2:Math.PI/2);
  for(const z of [26,-23]){label(`← ${L.rooms[0]}   ${L.rooms[2]} →`,0,2.49,z,3.1,.25,0,true);label(`↓ ${L.exit}`,0,2.2,z,2.5,.24,0,true);box(0,2.36,z-.035,3.2,.57,.05,metal);for(const x of [-1.2,1.2])roundPipe(root,[x,2.64,z],[x,2.8,z],.009,metal);}
  // Exit leaf, real opening, and an enclosed onward passage.
  const doorZ=-bz+.35;
@@ -85,7 +85,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  const leaf=box(.7,1.17,0,1.37,2.34,.08,metal,false,hinge);doorHardware(leaf,1.37);
  const doorBlock={x:0,z:doorZ,w:1.4,d:.12,y:1.17,h:2.34};solids.push(doorBlock);
  target(`${area}_exit` as Action,L.exit,leaf,[0,1.2,doorZ+.12],[0,doorZ+1.2]);
- label(L.exit,0,2.55,doorZ+.1,1.6,.25,0,true);
+ label(L.exit,0,2.55,-bz+.094,1.6,.25,0,true);
  connectionPassage(root,solids,lamps,0,-bz);
  const heightAt=(_x:number,_z:number)=>0;
  let display:T.Mesh|undefined;
@@ -124,12 +124,15 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   table(0,-21,2.4,1);box(0,1.22,-21.2,1.42,.8,.14,dark);display=label('마지막 호출 수신처\n연결 회선을 선택하세요',0,1.25,-21.119,1.3,.6,0,true);
   for(const [i,id,title] of [[0,'annex_line_victim','1704'],[1,'annex_line_home','2803'],[2,'annex_line_office','관리실']] as const){const x=(i-1)*.73;const button=box(x,.89,-20.75,.5,.12,.25,metal);target(id,title+' 회선 연결',button,[x,.97,-20.65],[x,-19.7]);label(title,x,.956,-20.75,.43,.18).rotation.x=-Math.PI/2;}
   rack(-X,-18,4,.65);table(X,-18,2.5);for(const x of [X-1,X+.2])box(x,.87,-18,.75,.1,.45,paper);
-  puddle(-X,4,3,4);puddle(0,9,1.5,6);label('정문 셔터 침수\n지하 차량 출구 이용',0,1.5,bz-.105,2,.7,Math.PI);
+  puddle(-X,4,3,4);puddle(0,9,1.5,6);label('정문 셔터 침수\n지하 차량 출구 이용',-1.921,1.5,29,2,.7,Math.PI/2);
  }else if(area==='archive'){
   evidenceDesk('archive_ledger','기록 인계 대장',.2,27);
   evidenceDesk('archive_road','A / 정문 도로 영상',-X,20);evidenceDesk('archive_call','B / 비상 호출 기록',X,20);evidenceDesk('archive_gate','C / 지하 입차 영상',-X,-3);
   for(const side of [-1,1])for(const z of [16,23,-2,-7,-18])for(const dx of [-2.4,1.6])rack(side*X+dx,z,2.2,.64);
-  for(const [x,z,title] of [[-X,23.37,'A · 정문 도로'],[X,23.37,'B · 통화 기록'],[-X,-6.63,'C · 지하 입차']] as const)label(title,x,1.8,z,1.3,.24);
+  for(const [x,z,title] of [[-X,23,'A · 정문 도로'],[X,23,'B · 통화 기록'],[-X,-7,'C · 지하 입차']] as const){
+   // The plate overlaps the upper shelf edge, not the aisle between two racks.
+   box(x+1.6,1.93,z+.317,1.34,.26,.018,metal);label(title,x+1.6,1.93,z+.328,1.3,.24);
+  }
   table(X,-20,3.6,1);const monitor=box(X,1.15,-20.15,1.1,.64,.45,dark);display=label('복원 대기\n원본 기록 3개가 필요합니다',X,1.17,-19.911,.97,.52,0,true);target('archive_play','복원된 기록 재생',monitor,[X,1.17,-19.82],[X,-18.9]);
   for(const [i,id,title] of [[0,'archive_sequence_road','도로'],[1,'archive_sequence_call','호출'],[2,'archive_sequence_gate','입차']] as const){const x=X+(i-1)*.88;const control=box(x,.867,-19.67,.6,.09,.27,metal);target(id,title+' 기록 연결',control,[x,.93,-19.58],[x,-18.6]);label(title,x,.917,-19.67,.5,.19).rotation.x=-Math.PI/2;}
   for(const [x,z] of [[-X,20],[X,20],[-X,-3]])for(const dx of [-.45,.45]){box(x+dx,.857,z,.29,.065,.19,dark);for(const ox of [-.07,.07]){const reel=new T.Mesh(new T.TorusGeometry(.027,.007,6,16),paper);reel.rotation.x=-Math.PI/2;reel.position.set(x+dx+ox,.894,z);root.add(reel);}}
@@ -149,7 +152,8 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   display=label('수위 HIGH\n급수 차단 후 전원 연결',0,1.65,-26,1.4,.55);box(0,1.62,-26.1,1.6,.75,.16,metal);for(const x of [-.6,.6])box(x,.63,-26.1,.07,1.26,.07,metal);
   // Flood stays below the dry raised perimeter; a visible grille blocks the central shortcut.
   water=puddle(0,-20,3.5,19,.68);water.position.y=.075;
-  box(0,.24,-15,3.5,.48,.16,metal,true);for(let x=-1.5;x<=1.5;x+=.25)box(x,.59,-15,.019,.7,.03,metal);label('침수 · 좌우 통로로 우회',0,1.15,-14.89,2,.28);
+  box(0,.24,-15,3.5,.48,.16,metal,true);for(let x=-1.5;x<=1.5;x+=.25)box(x,.59,-15,.019,.7,.03,metal);
+  box(0,.75,-14.982,2.08,.32,.025,metal);label('침수 · 좌우 통로로 우회',0,.75,-14.9675,2,.28);
   rack(-X,2,2.5,.7,false);for(const x of [-X-.7,-X+.6])box(x,.35,2,.42,.35,.35,blue);
   for(const z of [24,0,-24])roundPipe(root,[-bx+.3,2.6,z],[bx-.3,2.6,z],.07,rust);
  }
