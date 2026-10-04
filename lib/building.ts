@@ -31,7 +31,17 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   function label(text:string,x:number,y:number,z:number,ry=0,w=1.1,h=.26,color='#c9ceaf',background='#25372f',lit=false){
     const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;
     const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map:texture}):new T.MeshStandardMaterial({map:texture,roughness:.9}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);
-    const update=(text:string)=>{ctx.fillStyle=background;ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle=color;ctx.font=`${Math.min(c.height*.56,700/Math.max(1,text.length))}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,c.width/2,c.height/2);texture.needsUpdate=true;};update(text);return {mesh,update};
+    const update=(text:string)=>{
+      const lines=text.split('\n'),font=Math.min(lines.length===1?c.height*.56:c.height/(lines.length*1.55),700/Math.max(1,...lines.map(line=>[...line].length)));
+      ctx.fillStyle=background;ctx.fillRect(0,0,c.width,c.height);
+      if(lines.length>1){
+        // Small, fixed flecks give the paper a worn surface without another asset.
+        ctx.fillStyle='#887b6112';for(let i=0;i<900;i++)ctx.fillRect((i*197)%c.width,(i*263)%c.height,2+(i%3),1+(i%2));
+        ctx.strokeStyle='#665f4955';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(30,60);ctx.lineTo(c.width-30,60);ctx.moveTo(30,c.height-60);ctx.lineTo(c.width-30,c.height-60);ctx.stroke();
+      }
+      ctx.fillStyle=color;ctx.font=`${font}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      lines.forEach((line,i)=>ctx.fillText(line,c.width/2,c.height/2+(i-(lines.length-1)/2)*font*1.35));texture.needsUpdate=true;
+    };update(text);return {mesh,update};
   }
   function light(x:number,y:number,z:number,color='#a4b7a7',intensity=4,range=8){const l=new T.PointLight(color,intensity,range,2);l.position.set(x,y,z);l.userData.base=intensity;root.add(l);lamps.push(l);return l;}
   function fixture(x:number,z:number,on=true,y=ceiling-.08){box(x,y+.04,z,.14,.08,.9,metal);box(x,y,z,.22,.08,1.1,metal);box(x,y-.048,z,.09,.018,.92,mat('#bec5b0',{emissive:'#a0b09d',emissiveIntensity:on?.6:0}));if(on)light(x,y-.12,z);}
@@ -158,7 +168,10 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     label('연결 복도',-1,5.26,-5.906,0,.9,.18);target('up','방화문 열기',leaf,-1,4.05,-5.65);
     const {hinge:lowerHinge,leaf:lowerLeaf,block:lowerClosed}=buildStairDoor(root,solids,1,-2.8,-5.85,'stairs-loop-door');
     label('下 · 아래층',1,-.32,-5.906,0,.9,.18);target('down','아래층 방화문 열기',lowerLeaf,1,-1.55,-5.65);
-    const note=label('시설 점검 메모',1.25,1.65,5.89,Math.PI,.8,.35,'#34392e','#b8ae8c');note.mesh.name='stairs-clue-panel';target('stair_note','계단 점검 메모 읽기',note.mesh,1.25,1.65,5.7);
+    box(1.25,1.65,5.907,.325,.455,.002,mat('#a59b83'));
+    const note=label('백로아파트 · 시설 연락 메모\n\n같은 층으로 돌아왔다면\n계단 표지 아래를 확인하세요.\n\n17층 외벽 공사 / 임시 관리실 1703호\n야간 당직 한서연 · 내선 17\n부재 시 1704호로 연락 바랍니다.\n\n28 가 0317   /   03:17\n03:17   03:17   03:17\n\n그때 멈췄어야지.',1.25,1.65,5.904,Math.PI,.297,.42,'#34392e','#c6bfa6');note.mesh.name='stairs-clue-panel';
+    for(const x of [1.14,1.36])box(x,1.865,5.903,.026,.02,.014,metal);
+    target('stair_note','계단 점검 메모 읽기',note.mesh,1.25,1.65,5.7);
     const floorLabel=label('23층',-1.89,2,3,Math.PI/2,.9,.55);label('↓ 아래층',1.906,1.35,3,-Math.PI/2,.65,.2);
     light(0,3.2,3,'#8f9c83',5);light(-1,5.3,-4.8,'#b0a17b',3);light(1,-.3,-4.8,'#769789',3);
     // A physically connected second well makes the repeated floor believable
@@ -195,7 +208,8 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const desk=box(-3,.75,1.5,2.5,.1,.95,wood,true);box(-3.85,.35,1.5,.57,.7,.85,wood);
     for(const x of [-4.12,-1.88])for(const z of [1.14,1.86])box(x,.35,z,.065,.7,.065,metal);
     box(-2.65,.43,1.11,1.76,.47,.045,wood);for(const y of [.17,.39,.61]){box(-3.85,y,1.938,.52,.2,.023,wood);box(-3.85,y,1.96,.16,.025,.035,metal);}
-    box(-3.7,.809,1.58,.42,.018,.31,white);const log=label('야간 근무일지 · 03:26',-3.7,.819,1.58,0,.4,.28,'#292b27','#bcb79b');log.mesh.rotation.x=-Math.PI/2;target('record','야간 근무일지 읽기',desk,-3.7,.86,1.8);
+    box(-3.7,.809,1.58,.42,.018,.31,white);
+    const log=label('백로아파트 · 야간 근무 인계\n\n당직: 한서연 / 사고 다음 날 임시 관리실 폐쇄\n03:17  정문 횡단보도 보행자 사망 / 검은 차량 이탈\n03:26  파손 차량 입차 / 정차 직후 영상 9초 누락\n누락 구간은 지하 기록보관실 원본과 대조할 것.\n\n감시 설비 정전 시: 서고 예비 퓨즈 사용\n회로 복구: B 접지 → A 입력 → C 감시\n입차 시각으로 CCTV 열람 기록을 선택할 것.\n승강기 열쇠 보관: CCTV 오른쪽 책상',-3.7,.819,1.58,0,.4,.28,'#292b27','#c6bfa6');log.mesh.rotation.x=-Math.PI/2;log.mesh.name='office-duty-log';target('record','야간 근무일지 읽기',desk,-3.7,.86,1.8);
     const monitor=box(-2.65,1.15,1.45,.65,.51,.4,surface('leather','#7d8580',{roughness:.67}));
     const casing=monitor.geometry.getAttribute('position');for(let i=0;i<casing.count;i++){const rear=T.MathUtils.smoothstep(-casing.getZ(i),0,.2);casing.setX(i,casing.getX(i)*(1-rear*.18));casing.setY(i,casing.getY(i)*(1-rear*.16));}monitor.geometry.computeVertexNormals();
     for(const x of [-2.97,-2.33])box(x,1.15,1.672,.035,.48,.035,dark);for(const y of [.923,1.39])box(-2.65,y,1.67,.65,.045,.035,dark);for(let i=0;i<5;i++)box(-2.83+i*.065,.936,1.694,.04,.006,.005,metal);

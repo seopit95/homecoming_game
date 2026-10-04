@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
 import {buildWorld,disposeWorld} from '../lib/world.ts';
+import {archiveReplay} from '../lib/expansion-story.ts';
 
-globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}})})};
+globalThis.document={createElement:()=>{const text=[],context={fillRect(){},fillText(value){text.push(value);},beginPath(){},moveTo(){},lineTo(){},stroke(){}};return {width:0,height:0,text,getContext:()=>context};}};
 function renderer(){return {target:null,shadowMap:{autoUpdate:true},calls:[],getRenderTarget(){return this.target;},setRenderTarget(value){this.target=value;},render(scene,camera){this.calls.push({scene,camera,target:this.target});}};}
 
 test('archive replay renders the restored nine seconds before switching to the real room and resets on retry',()=>{
@@ -54,5 +55,19 @@ test('office footage shows arrival, the missing interval and a lone walking driv
     world.updateStory('office_playback',107,false);world.surveillance.render(r,scene);assert.ok(driver.position.distanceTo(steppedOut)>1,'the driver walks away rather than remaining a standing mannequin');
     const last=driver.position.clone();world.updateStory('office_leave',111,false);world.surveillance.render(r,scene);world.updateStory('office_leave',120,false);world.surveillance.render(r,scene);assert.ok(driver.position.distanceTo(last)<.001,'the evidence freezes on its last frame');
     world.reset();world.updateStory('office_playback',200,false);world.surveillance.render(r,scene);assert.equal(driver.visible,false);assert.ok(car.position.distanceTo(first)<.0001);
+  }finally{disposeWorld(world.root);}
+});
+
+test('the road aftermath keeps its brake lamps lit and displays the same account as the restored record',()=>{
+  const scene=new T.Scene(),world=buildWorld(scene,'archive'),r=renderer();
+  try{
+    world.updateStory('archive_playback',100,false);world.surveillance.render(r,scene);
+    const car=r.calls.at(-1).scene.getObjectByName('cctv-car');
+    const brake=car.children.map(mesh=>mesh.material).find(material=>material?.name==='sedan-tail-lamps');
+    assert.ok(brake.emissiveIntensity>0,'the first post-impact frame must not imply braking begins after the collision');
+    const overlay=world.root.getObjectByName('surveillance-screen').children.find(mesh=>mesh.material.transparent);
+    assert.deepEqual(overlay.material.map.image.text.slice(-2),archiveReplay[0].screen.split('\n'),'the actual CRT must not contradict its journal and subtitles');
+    world.updateStory('archive_playback',100.5,false);world.surveillance.render(r,scene);
+    assert.ok(brake.emissiveIntensity>0,'braking remains visible throughout the recorded aftermath');
   }finally{disposeWorld(world.root);}
 });

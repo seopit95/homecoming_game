@@ -66,7 +66,7 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
         const walking=Math.min(4,clock-3);driver.root.position.set(-1.27,0,.7+walking*.4);driver.root.rotation.y=0;driver.pose(walking,null);driver.root.updateMatrixWorld(true);
         let bottom=Infinity;for(const foot of feet)bottom=Math.min(bottom,footBox.setFromObject(foot).min.y);driver.root.position.y-=bottom;
       }
-    }else{car.position.set(0,0,-3+2.1*T.MathUtils.smoothstep(clock,0,2));camera.position.set(6,4.7,-8);camera.lookAt(0,.45,0);brake.emissiveIntensity=clock>.75?.8:0;}
+    }else{car.position.set(0,0,-3+2.1*T.MathUtils.smoothstep(clock,0,2));camera.position.set(6,4.7,-8);camera.lookAt(0,.45,0);brake.emissiveIntensity=.8;}
     ctx.globalCompositeOperation='copy';ctx.fillStyle=image.visible?'rgba(0,0,0,0)':'#0b1512';ctx.fillRect(0,0,640,480);ctx.globalCompositeOperation='source-over';
     ctx.fillStyle='rgba(4,14,10,.72)';ctx.fillRect(0,0,640,48);ctx.fillRect(0,398,640,82);
     ctx.fillStyle='#c0d2bd';ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='21px monospace';
@@ -79,7 +79,7 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     }
     if(mode==='office'&&clock>=3&&clock<3.4){ctx.fillStyle='rgba(95,113,103,.4)';for(let y=75;y<380;y+=26)ctx.fillRect(0,y,640,9);}
     ctx.fillStyle='#c0d2bd';ctx.font='24px sans-serif';ctx.textAlign='center';
-    const caption=mode==='idle'?text:mode==='office'?(clock<3?'2803 등록 차량 · 입차':clock<7?'03:26:03–11 / 기록 9초 누락':'귀가자 2명 / 2803호'):mode==='road'?'사고 직후 · 뒤늦게 켜지는 제동등':mode==='call'?'「잘못 거셨어요.」':mode==='gate'?`복원 구간 ${Math.min(9,Math.floor(clock-12)+1)} / 9초 · 동시 녹음` :clock<27?'현재 영상 · 기록 작성 중':'네 뒤에 있어';
+    const caption=mode==='idle'||mode==='road'?text:mode==='office'?(clock<3?'2803 등록 차량 · 입차':clock<7?'03:26:03–11 / 기록 9초 누락':'귀가자 2명 / 2803호'):mode==='call'?'「잘못 거셨어요.」':mode==='gate'?`복원 구간 ${Math.min(9,Math.floor(clock-12)+1)} / 9초 · 동시 녹음` :clock<27?'현재 영상 · 기록 작성 중':'네 뒤에 있어';
     const lines=caption.split('\n');lines.forEach((line,i)=>ctx.fillText(line,320,(mode==='idle'?220:425)+i*29));
     ctx.fillStyle='rgba(0,8,4,.14)';for(let y=51;y<398;y+=4)ctx.fillRect(0,y,640,1);
     overlayMap.needsUpdate=true;
