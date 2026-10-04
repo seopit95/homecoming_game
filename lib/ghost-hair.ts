@@ -10,15 +10,17 @@ export function createHair(head:T.Group){
     data[i]=data[i+1]=data[i+2]=Math.round(Math.min(1,a)*255);data[i+3]=255;
   }
   const alpha=new T.DataTexture(data,128,256);alpha.needsUpdate=true;alpha.generateMipmaps=true;alpha.minFilter=T.LinearMipmapLinearFilter;alpha.magFilter=T.LinearFilter;alpha.anisotropy=4;
-  const material=surface('hair','#c4c7c9',{roughness:.46,metalness:0,alphaMap:alpha,alphaTest:.3,side:T.DoubleSide});
+  const material=surface('hair','#302a27',{roughness:.7,metalness:0,alphaMap:alpha,alphaTest:.3,side:T.DoubleSide});
   const hair=new T.Group();hair.name='ghost-scalp-hair';head.add(hair);
-  const capGeometry=new T.SphereGeometry(1,48,32),p=capGeometry.getAttribute('position');
+  // An open sphere retains both triangles along the hairline. Reusing a
+  // closed sphere's south pole would leave a sawtooth band after reshaping it.
+  const capEnd=2.64,capGeometry=new T.SphereGeometry(1,96,32,0,Math.PI*2,0,capEnd),p=capGeometry.getAttribute('position');
   for(let i=0;i<p.count;i++){
-    const a=Math.atan2(p.getZ(i),p.getX(i)),t=Math.acos(p.getY(i))/Math.PI,ruffle=1+Math.sin(a*57+t*17)*.009+Math.sin(a*23-t*3)*.008,front=T.MathUtils.smoothstep(Math.sin(a),-.15,.65),max=2.64-front*(1.47+Math.sin(a*23)*.035+Math.sin(a*13)*.028);
+    const a=Math.atan2(p.getZ(i),p.getX(i)),t=Math.acos(p.getY(i))/capEnd,ruffle=1+Math.sin(a*57+t*17)*.009+Math.sin(a*23-t*3)*.008,front=T.MathUtils.smoothstep(Math.sin(a),-.15,.65),max=capEnd-front*(1.47+Math.sin(a*7)*.016+Math.sin(a*13)*.009);
     p.setXYZ(i,Math.cos(a)*Math.sin(t*max)*.183*ruffle,Math.cos(t*max)*.238+.125,Math.sin(a)*Math.sin(t*max)*.169*ruffle-.009);
     if(p.getZ(i)>0&&p.getY(i)<=.35&&Math.abs(p.getX(i))<.178)p.setZ(i,Math.max(p.getZ(i),faceDepth(p.getX(i),p.getY(i))+.008));
   }
-  capGeometry.computeVertexNormals();const cap=new T.Mesh(capGeometry,surface('hair','#a9acad',{roughness:.74,bumpScale:.0012}));cap.castShadow=true;hair.add(cap);
+  capGeometry.computeVertexNormals();const cap=new T.Mesh(capGeometry,surface('hair','#2d2826',{roughness:.83,bumpScale:.00045}));cap.name='ghost-hair-cap';cap.castShadow=true;hair.add(cap);
   const tails=new T.Group();tails.name='ghost-long-hair';head.add(tails);
   const positions:number[]=[],uvs:number[]=[],indices:number[]=[],specs:{angle:number;length:number;width:number;phase:number;bang:boolean}[]=[];
   for(let i=0;i<locks;i++){

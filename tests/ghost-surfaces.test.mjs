@@ -107,6 +107,24 @@ test('hair cards expose spaces between wet strands, not only at their outer edge
  }
 });
 
+test('the scalp hairline has a continuous final band without triangular missing patches',async()=>{
+  const {createHair}=await import('../lib/ghost-hair.ts'),{hair}=createHair(new T.Group()),cap=hair.children[0],p=cap.geometry.getAttribute('position');
+  cap.updateMatrixWorld(true);
+  // The open hairline is a ring, not a collapsed sphere pole. Each final
+  // surface patch must be present when viewed from immediately outside it.
+  const width=cap.geometry.parameters.widthSegments,rows=cap.geometry.parameters.heightSegments;
+  for(let i=0;i<width;i++){
+    const b=new T.Vector3().fromBufferAttribute(p,(rows-1)*(width+1)+i),c=new T.Vector3().fromBufferAttribute(p,rows*(width+1)+i),d=new T.Vector3().fromBufferAttribute(p,rows*(width+1)+i+1);
+    const normal=new T.Vector3().subVectors(c,b).cross(new T.Vector3().subVectors(d,b)).normalize(),point=b.clone().add(c).add(d).multiplyScalar(1/3);
+    const expected=[(rows-1)*(width+1)+i,rows*(width+1)+i,rows*(width+1)+i+1];
+    // Temple folds can cover a boundary facet; test that very facet rather
+    // than mistaking a nearer opaque fold for a missing perimeter patch.
+    const hit=new T.Raycaster(point.clone().addScaledVector(normal,.01),normal.clone().negate(),0,.012).intersectObject(cap).find(h=>h.face&&[h.face.a,h.face.b,h.face.c].every(index=>expected.includes(index)));
+    assert.ok(hit,`hairline patch ${i} cannot disappear as a triangular notch`);
+    assert.ok(hit.point.distanceTo(point)<.0001,'the hairline surface meets its actual perimeter');
+  }
+});
+
 test('partially opening the mouth never reverses or interpenetrates exposed tooth rows',()=>{
  const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial());
  for(const open of [.021,.05,.1,.13,.2,.220001,.4,1]){

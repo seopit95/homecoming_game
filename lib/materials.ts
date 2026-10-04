@@ -35,7 +35,8 @@ export function surface(kind:Surface,color='#ffffff',options:T.MeshStandardMater
   const map=source?.clone();if(map){map.needsUpdate=true;map.wrapS=map.wrapT=T.RepeatWrapping;}
   const roughness=kind==='skin'?.72:kind==='hair'?.48:kind==='ceramic'?.24:kind==='steel'?.48:['tile','oldTile'].includes(kind)?.58:kind==='leather'?.55:.86;
   const bumpScale=kind==='skin'?.0007:kind==='hair'?.00045:kind==='cloth'||kind==='fabric'?.0008:kind==='wall'||kind==='decayWall'?.0015:kind==='steel'?.0006:.0025;
-  const material=new T.MeshStandardMaterial({color:map?color:fallback[kind],roughness,map:map??null,bumpMap:map??null,bumpScale,...options});material.name=`surface-${kind}`;
+  const Material=kind==='hair'?T.MeshPhysicalMaterial:T.MeshStandardMaterial;
+  const material=new Material({color:map?color:fallback[kind],roughness,map:map??null,bumpMap:map??null,bumpScale,...(kind==='hair'?{specularIntensity:.08}:{}),...options});material.name=`surface-${kind}`;
   if(map){
     const [x,y]=tiles[kind],grid=character?2:3,repeat=kind==='fabric'?'8.0':kind==='cloth'?'1.0':kind==='leather'?'4.0':kind==='skin'?'1.0':'1.0';
     const uv=`vec2(${(x/grid+.003).toFixed(5)},${(y/grid+.003).toFixed(5)}) + (1.0 - abs(mod(uv * ${repeat}, 2.0) - 1.0)) * ${(1/grid-.006).toFixed(5)}`;
