@@ -1,4 +1,4 @@
-import {connectionPassage,setDoorAngle} from './passage.ts';
+import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import * as T from 'three';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
@@ -164,7 +164,12 @@ export function buildResidentGallery(root:T.Group,closedStairs=true){
     const plaster=surface('decayWall','#9da598'),galleryFloor=surface('oldTile','#9a9e91',{roughness:.65});
     box(0,-.1,8.85,2.6,.2,5.8,galleryFloor);box(0,2.88,8.85,2.6,.16,5.8,plaster);
     for(const x of [-1.3,1.3]){box(x,1.4,8.85,.15,2.8,5.8,plaster,true);box(x,0.43,8.85,.16,.85,5.8,surface('wall','#4f6256'));}
-    if(closedStairs){box(0,1.4,11.85,2.6,2.8,.15,plaster,true);box(0,1.1,11.76,1.04,2.2,.08,metal);label('17F · 비상계단',0,2.45,11.771,1.2,.25,Math.PI);}
+    const stairWall=surface('decayWall','#b5b6a6');
+    // The gallery-side finish stays present before and after the fire door closes.
+    for(const x of [-.96,.96])box(x,1.4,11.645,.68,2.8,.18,stairWall,true);
+    box(0,2.72,11.645,1.24,.76,.18,stairWall);
+    box(0,-.15,12.65,2,.3,2,surface('oldTile','#b0b1a4',{roughness:.62}));
+    if(closedStairs)buildStairDoor(root,solids,0,0,11.8,'resident-stair-door');
     box(1.21,1.1,9.25,.06,2.2,.94,metal);label('1705',1.166,2.08,9.25,.34,.14,-Math.PI/2);
     for(const z of [7.4,10.4]){box(0,2.73,z,.17,.09,.78,metal);light(0,2.6,z,'#83998d',2.5,5);}
 

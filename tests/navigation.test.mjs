@@ -62,3 +62,18 @@ test('the courtyard pursuit respects the current fire-door angle after reopening
     }
   }finally{disposeWorld(world.root);globalThis.document=original;}
 });
+
+test('the stair pursuer crosses the opened lower leaf and reaches the repeated landing',async()=>{
+  const T=await import('three'),{buildWorld,disposeWorld}=await import('../lib/world.ts'),{findPursuitPath,pursuerRadius,clearPath}=await import('../lib/navigation.ts');
+  const original=globalThis.document;globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}})})};
+  const world=buildWorld(new T.Scene(),'stairs'),goal={x:5.25,z:-13.35};
+  try{
+    world.updateStory('stairs_descent',0,false);world.updateStory('stairs_descent',1,false);
+    for(const start of [{x:0,z:5.25},{x:1,z:-4.8},{x:1,z:-6.9}]){
+      const path=findPursuitPath(start,goal,world.solids,world.bounds);
+      assert.ok(path.length,`a body-sized pursuer must reach the lower landing from ${start.x},${start.z}`);
+      let from=start;for(const to of path){assert.ok(clearPath(from,to,world.solids,world.bounds,pursuerRadius),'the route clears the actual leaf and frame');from=to;}
+      assert.ok(Math.hypot(from.x-goal.x,from.z-goal.z)<.67);
+    }
+  }finally{disposeWorld(world.root);globalThis.document=original;}
+});

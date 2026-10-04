@@ -1,7 +1,19 @@
 import * as T from 'three';
-import {surface,boxUV} from './materials.ts';
+import {surface,boxUV,softBox} from './materials.ts';
 import type {Solid} from './world.ts';
 import {solidContainsPoint,type Occupant} from './collision.ts';
+import {doorHardware} from './props.ts';
+
+// Both sides of the stair/gallery boundary use the same leaf and frame.
+export function buildStairDoor(root:T.Group,solids:Solid[],x:number,y:number,z:number,name:string){
+ const group=new T.Group();group.position.set(x,y,z);root.add(group);
+ const paint=surface('decayWall','#a7b0a0',{roughness:.79}),metal=surface('steel','#878d8b',{metalness:.55,roughness:.48});
+ function box(px:number,py:number,w:number,h:number,d:number,material:T.Material){const mesh=new T.Mesh(boxUV(softBox(w,h,d),px,py,0),material);mesh.position.set(px,py,0);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;}
+ const hinge=new T.Group();hinge.name=name;hinge.position.x=-.55;group.add(hinge);
+ const leaf=box(0,1.1,1.1,2.2,.09,paint);hinge.attach(leaf);doorHardware(leaf,1.1);
+ for(const px of [-.60,.60]){box(px,1.14,.16,2.28,.18,metal);solids.push({x:x+px,y:y+1.14,z,w:.16,h:2.28,d:.18});}box(0,2.28,1.36,.12,.18,metal);
+ const block={x,y:y+1.1,z,w:1.1,h:2.2,d:.1};solids.push(block);return {hinge,leaf,block};
+}
 
 const doorCenter=new T.Vector3(),doorRotation=new T.Quaternion();
 export function setDoorAngle(hinge:T.Object3D,block:Solid,angle:number,centerX:number,centerZ=0,occupants:Occupant[]=[]){

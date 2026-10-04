@@ -20,10 +20,10 @@ test('1704 has a clear standing approach to its fridge clue and a shaped leather
 });
 
 test('the stair, 1704 front door and service connection expose walkable openings after the leaves clear',()=>{
-  const stairs=buildWorld(new THREE.Scene(),'stairs');assert.equal(canStandAt(-1,-5.85,stairs.solids,.23,stairs.bounds),false);
-  stairs.updateStory('stairs_passage',0,false);assert.equal(canStandAt(-1,-5.85,stairs.solids,.23,stairs.bounds),false);
-  stairs.updateStory('stairs_passage',1,false);assert.ok(canStandAt(-1,-6.2,stairs.solids,.23,stairs.bounds));
-  assert.ok(hasLineOfSight({x:-1,y:4.45,z:-5},{x:-1,y:4.45,z:-7.5},stairs.solids));
+  const stairs=buildWorld(new THREE.Scene(),'stairs');assert.equal(canStandAt(3,-23.7,stairs.solids,.23,stairs.bounds),false);
+  stairs.updateStory('stairs_passage',0,false);assert.equal(canStandAt(3,-23.7,stairs.solids,.23,stairs.bounds),false);
+  stairs.updateStory('stairs_passage',1,false);assert.ok(canStandAt(3,-24.05,stairs.solids,.23,stairs.bounds));
+  assert.ok(hasLineOfSight({x:3,y:1.65,z:-22.85},{x:3,y:1.65,z:-25.35},stairs.solids));
   const room=buildWorld(new THREE.Scene(),'resident');room.updateStory('resident_arrival',0,false);
   assert.equal(canStandAt(0,5.95,room.solids,.23,room.bounds),false);
   room.updateStory('resident_entry',1,false);room.updateStory('resident_entry',2,false);
@@ -32,18 +32,48 @@ test('the stair, 1704 front door and service connection expose walkable openings
   room.updateStory('resident_departure',3,false);room.updateStory('resident_departure',4,false);
   assert.ok(canStandAt(0,-6.2,room.solids,.23,room.bounds));assert.ok(hasLineOfSight({x:0,y:1.65,z:-5},{x:0,y:1.65,z:-7.5},room.solids));
 });
-test('walking out of the stairs preserves the visible 1704 gallery geometry',()=>{
+test('the closing stair exit preserves the visible gallery in both directions',()=>{
   const stairs=buildWorld(new THREE.Scene(),'stairs'),room=buildWorld(new THREE.Scene(),'resident');
   stairs.updateStory('stairs_passage',0);stairs.updateStory('stairs_passage',1);
+  const player={x:3,z:-25.5,r:.23},door=stairs.root.getObjectByName('stairs-passage-door');
+  for(let t=1.025;t<3;t+=.025)stairs.updateStory('stairs_passage',t,false,undefined,[player]);
+  assert.ok(door.rotation.y<.015,'the fire door physically closes after clearing its sweep');
   stairs.root.updateMatrixWorld(true);room.root.updateMatrixWorld(true);
-  const offset=new THREE.Vector3(-1,2.8,-17.65),eye=new THREE.Vector3(0,1.65,11.43);
+  const offset=new THREE.Vector3(3,0,-35.5),eye=new THREE.Vector3(0,1.65,11.43);
   const visible=hit=>{for(let o=hit.object;o;o=o.parent)if(!o.visible)return false;return true;};
-  for(const direction of [[0,0,-1],[.2,0,-1],[-.2,0,-1],[.7,0,-1],[-.7,0,-1],[0,.2,-1],[0,-.3,-1]]){
+  for(const direction of [[0,0,-1],[.2,0,-1],[-.2,0,-1],[.7,0,-1],[-.7,0,-1],[0,.2,-1],[0,-.3,-1],[0,0,1],[.2,0,1],[-.2,0,1],[0,.2,1],[0,-.3,1]]){
     const dir=new THREE.Vector3(...direction).normalize();
     const before=new THREE.Raycaster(eye.clone().add(offset),dir).intersectObjects(stairs.root.children,true).find(visible);
     const after=new THREE.Raycaster(eye,dir).intersectObjects(room.root.children,true).find(visible);
     assert.ok(before&&after);
     assert.ok(Math.abs(before.distance-after.distance)<.015,`visible surfaces must not pop at the stair threshold: ${direction}: ${before.distance} -> ${after.distance}`);
+  }
+});
+test('the lower stair door opens onto a continuous repeated-floor passage',()=>{
+  const w=buildWorld(new THREE.Scene(),'stairs');
+  assert.equal(canStandAt(1,-5.85,w.solids,.23,w.bounds),false);
+  w.updateStory('stairs_descent',0,false);w.updateStory('stairs_descent',1,false);
+  for(const [x,z] of [[1,-6.2],[1,-7.85],[2.4,-7.85],[3.2,-7.85]])assert.ok(canStandAt(x,z,w.solids,.23,w.bounds),`clear lower passage ${x},${z}`);
+  assert.ok(hasLineOfSight({x:1,y:-1.15,z:-5},{x:1,y:-1.15,z:-7.8},w.solids),'the wall behind the open door is actually cut away');
+  for(const [x,z] of [[4,-10.5],[4,-12.5],[5.25,-13.35]])assert.ok(canStandAt(x,z,w.solids,.23,w.bounds),`the physical repeated landing exists ${x},${z}`);
+  const clue=w.targets.find(t=>t.id==='stair_note');assert.ok(clue.point.z<-12&&clue.point.y<0,'the clue is on the actual lower landing');
+  w.updateStory('stairs_passage',2,false);w.updateStory('stairs_passage',3,false);assert.ok(canStandAt(3,-24.05,w.solids,.23,w.bounds),'the upper exit on the repeated landing opens');
+  w.reset();w.updateStory('stairs_loop',0,false);assert.equal(canStandAt(1,-5.85,w.solids,.23,w.bounds),false,'retry restores the closed lower door');assert.equal(canStandAt(3,-23.7,w.solids,.23,w.bounds),false,'retry also closes the repeated landing exit');
+});
+test('the closed stair/gallery boundary has no side slits or mismatched visible floor finish',()=>{
+  const stairs=buildWorld(new THREE.Scene(),'stairs'),room=buildWorld(new THREE.Scene(),'resident');
+  stairs.updateStory('stairs_passage',0);stairs.updateStory('stairs_passage',1);
+  for(let t=1.025;t<3;t+=.025)stairs.updateStory('stairs_passage',t,false,undefined,[{x:3,z:-25.5,r:.23}]);
+  stairs.root.updateMatrixWorld(true);room.root.updateMatrixWorld(true);
+  const offset=new THREE.Vector3(3,0,-35.5),visible=h=>{for(let o=h.object;o;o=o.parent)if(!o.visible)return false;return true;};
+  const eyes=[[-.8,1,9.5],[-.8,1.65,9.5],[.8,1,9.5],[0,1.65,10.2],[0,.7,10.2]];
+  for(const p of eyes)for(const yaw of [-.5,-.25,-.0872665,0,.0872665,.25,.3490658504,.5])for(const pitch of [-.7,-.6,0,.4]){
+    const eye=new THREE.Vector3(...p),direction=new THREE.Vector3(Math.sin(yaw),pitch,Math.cos(yaw)).normalize();
+    const a=new THREE.Raycaster(eye.clone().add(offset),direction).intersectObjects(stairs.root.children,true).find(visible),b=new THREE.Raycaster(eye,direction).intersectObjects(room.root.children,true).find(visible);
+    assert.ok(a&&b,`closed gateway is visible from ${p} toward ${yaw},${pitch}`);
+    assert.ok(Math.abs(a.distance-b.distance)<.04,'the closed door/frame cannot leave a view into the removed well');
+    assert.equal(a.object.material.color.getHex(),b.object.material.color.getHex(),'the visible finish remains the same');
+    if(a.uv&&b.uv)assert.ok(a.uv.distanceTo(b.uv)<.07,`the texture cannot change coordinate phase: ${a.uv.toArray()} -> ${b.uv.toArray()}`);
   }
 });
 // Canvas texturing is irrelevant to this geometry test; no renderer is mocked.
@@ -66,6 +96,7 @@ test('every required interaction has a reachable position inside the apartment',
 });
 for(const area of ['landing','lift','corridor','stairs','resident','office','parking','aftermath'])test(`${area}: all required interactions are reachable from the spawn`,()=>{
   const world=buildWorld(new THREE.Scene(),area);assert.ok(world.bounds,`${area} must provide its own walkable area`);
+  if(area==='stairs'){world.updateStory('stairs_descent',0,false);world.updateStory('stairs_descent',1,false);}
   const {solids,targets,bounds,spawn,heightAt}=world;
   const start=[Math.round(spawn.x*4),Math.round(spawn.z*4)];
   const queue=[start],seen=new Set([start.join(',')]);

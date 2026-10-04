@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {tapeTimes} from './story.ts';
-import {connectionPassage,setDoorAngle} from './passage.ts';
+import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import {buildCourtyard} from './courtyard.ts';
 import {buildExpansion} from './expansion-world.ts';
@@ -144,33 +144,48 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     box(0,.012,bz,1.35,.023,.22,metal);
   }
   if(area==='stairs'){
-    heightAt=(x,z)=>z>=0?0:(x<0?1:-1)*Math.min(2.8,-z*2.8/4);
-    box(0,-.15,3,4,.3,6,floorMat);box(-1,2.65,-5,2,.3,2,floorMat);box(1,-2.95,-5,2,.3,2,floorMat);
-    wall(-2,0,.18,12,1.4,9);wall(2,0,.18,12,1.4,9);wall(-1.81,-6,.38,.18,1.4,9);wall(.81,-6,2.38,.18,1.4,9);box(-1,-.15,-6,1.24,5.9,.18,wallMat);box(-1,5.52,-6,1.24,.76,.18,wallMat);wall(-1.34,6,1.32,.18,1.4,9);wall(1.34,6,1.32,.18,1.4,9);box(0,4.1,6,1.36,3.6,.18,wallMat);box(0,-1.5,6,1.36,3,.18,wallMat);
-    connectionPassage(root,solids,lamps,-3,12);wall(0,-3,.12,6,1.4,9);
+    const roomStart=new Set(root.children),solidStart=solids.length;
+    heightAt=(x,z)=>{const second=z<-11.85,lx=second?x-4:x,lz=second?z+17.85:z;return (second?-2.8:0)+(lz>=0?0:(lx<0?1:-1)*Math.min(2.8,-lz*2.8/4));};
+    box(0,-.15,3,4,.3,6,floorMat);box(-1,2.65,-5,2,.3,2,floorMat).name='stairs-upper-landing';box(1,-2.95,-5,2,.3,2,floorMat);
+    wall(-2,0,.18,12,1.4,9);wall(2,0,.18,12,1.4,9);wall(-1.81,-6,.38,.18,1.4,9);wall(0,-6,.76,.18,1.4,9);wall(1.81,-6,.38,.18,1.4,9);box(-1,-.15,-6,1.24,5.9,.18,wallMat).name='stairs-upper-foundation';box(-1,5.52,-6,1.24,.76,.18,wallMat).name='stairs-upper-header';box(1,2.65,-6,1.24,6.5,.18,wallMat);box(1,-2.95,-6,1.24,.3,.18,wallMat);wall(-1.34,6,1.32,.18,1.4,9);wall(1.34,6,1.32,.18,1.4,9);box(0,4.1,6,1.36,3.6,.18,wallMat);box(0,-1.5,6,1.36,3,.18,wallMat);
+    wall(0,-3,.12,6,1.4,9);
     box(0,6,0,4,.2,12,concrete);
     for(let i=0;i<17;i++)for(const side of [-1,1]){const z=-(i+.5)*4/17,y=-side*(i+.5)*2.8/17;box(side,y-.082,z,1.82,.164,4/17,floorMat);box(side,y+.005,z-.09,1.72,.01,.025,metal);roundPipe(root,[side*.16,y,z],[side*.16,y+.9,z],.0125,rust);}
     // Continuous sloped handrails over the open newel side.
     for(const side of [-1,1]){roundPipe(root,[side*.16,.92,0],[side*.16,.92-side*2.8,-4],.023,rust);}
-    bounds.z=12.2;bounds.x=4.3;
-    const galleryRoot=new T.Group();galleryRoot.position.set(-1,2.8,-17.65);root.add(galleryRoot);
-    const gallery=buildResidentGallery(galleryRoot,false);lamps.push(...gallery.lamps);
-    solids.push(...gallery.solids.map(s=>({...s,x:s.x-1,y:(s.y??1.5)+2.8,z:s.z-17.65})));
-    const hinge=new T.Group();hinge.name='stairs-passage-door';hinge.position.set(-1.45,2.8,-5.85);root.add(hinge);
-    const leaf=box(-1,3.9,-5.85,.9,2.2,.09,paint);hinge.attach(leaf);
-    const handle=box(-.68,3.85,-5.77,.18,.045,.1,metal);hinge.attach(handle);
-    for(const x of [-1.51,-.49])box(x,3.94,-5.85,.09,2.28,.18,metal);box(-1,5.09,-5.85,1.11,.09,.18,metal);
+    bounds.z=29.75;bounds.x=6.3;
+    const {hinge,leaf,block:closed}=buildStairDoor(root,solids,-1,2.8,-5.85,'stairs-first-upper-door');leaf.name='stairs-upper-leaf';
     label('연결 복도',-1,5.26,-5.906,0,.9,.18);target('up','방화문 열기',leaf,-1,4.05,-5.65);
-    const closed={x:-1,z:-5.85,w:1.02,d:.1,y:3.9,h:2.2};solids.push(closed);
-    door('down','아래층 ↓',1,-5.85,-2.8,.85);
-    const note=label('시설 점검 메모',1.25,1.65,5.89,Math.PI,.8,.35,'#34392e','#b8ae8c');target('stair_note','계단 점검 메모 읽기',note.mesh,1.25,1.65,5.7);
+    const {hinge:lowerHinge,leaf:lowerLeaf,block:lowerClosed}=buildStairDoor(root,solids,1,-2.8,-5.85,'stairs-loop-door');
+    label('下 · 아래층',1,-.32,-5.906,0,.9,.18);target('down','아래층 방화문 열기',lowerLeaf,1,-1.55,-5.65);
+    const note=label('시설 점검 메모',1.25,1.65,5.89,Math.PI,.8,.35,'#34392e','#b8ae8c');note.mesh.name='stairs-clue-panel';target('stair_note','계단 점검 메모 읽기',note.mesh,1.25,1.65,5.7);
     const floorLabel=label('23층',-1.89,2,3,Math.PI/2,.9,.55);label('↓ 아래층',1.906,1.35,3,-Math.PI/2,.65,.2);
-    let opened=-1,shown='23층';reset=()=>{opened=-1;shown='';};updateStory=(stage,time,_reduced,_story,occupants)=>{
+    light(0,3.2,3,'#8f9c83',5);light(-1,5.3,-4.8,'#b0a17b',3);light(1,-.3,-4.8,'#769789',3);
+    // A physically connected second well makes the repeated floor believable
+    // even when the player looks back. Neither actor changes coordinate space.
+    const offset=new T.Vector3(4,-2.8,-17.85),repeated=new T.Group();repeated.name='repeated-stair-well';repeated.position.copy(offset);root.add(repeated);
+    for(const part of root.children.filter(o=>o!==repeated&&!roomStart.has(o)))repeated.add(part.clone(true));
+    // The shared gallery owns these finishes; duplicate coplanar meshes would
+    // flicker or expose a different texture phase when the scene changes.
+    for(const name of ['stairs-upper-landing','stairs-upper-header'])repeated.getObjectByName(name)!.removeFromParent();
+    const foundation=repeated.getObjectByName('stairs-upper-foundation')!;foundation.position.y-=.01;foundation.scale.y*=5.88/5.9;
+    const repeatSolids=solids.slice(solidStart).map(s=>({...s,x:s.x+4,y:(s.y??1.5)-2.8,z:s.z-17.85}));
+    const repeatClosed=repeatSolids[solids.indexOf(closed)-solidStart];solids.push(...repeatSolids);
+    const repeatHinge=repeated.getObjectByName('stairs-first-upper-door')!;repeatHinge.name='stairs-passage-door';repeated.getObjectByName('stairs-loop-door')!.name='stairs-repeat-lower-door';
+    for(const id of ['up','stair_note'] as const){const t=targets.find(t=>t.id===id)!;t.point.add(offset);t.mesh=repeated.getObjectByName(id==='up'?'stairs-upper-leaf':'stairs-clue-panel')!;}
+    repeated.traverse(o=>{if(o instanceof T.PointLight)lamps.push(o);});
+    connectionPassage(root,solids,lamps,-3,12);connectionPassage(root,solids,lamps,1,-5.85,-2.8);
+    const galleryRoot=new T.Group();galleryRoot.position.set(3,0,-35.5);root.add(galleryRoot);
+    const gallery=buildResidentGallery(galleryRoot,false);lamps.push(...gallery.lamps);
+    solids.push(...gallery.solids.map(s=>({...s,x:s.x+3,y:s.y??1.5,z:s.z-35.5})));
+    let opened=-1,lowerOpened=-1,updated=-1,shown='23층';reset=()=>{opened=lowerOpened=updated=-1;shown='';setDoorAngle(repeatHinge,repeatClosed,0,.55);setDoorAngle(lowerHinge,lowerClosed,0,.55);};updateStory=(stage,time,_reduced,_story,occupants)=>{
+      const dt=updated<0?0:Math.max(0,time-updated);updated=time;
       const text=stage==='stairs_reverse'||stage==='stairs_passage'?'17층':'23층';if(text!==shown){floorLabel.update(text);shown=text;}
       if(stage==='stairs_passage'&&opened<0)opened=time;
-      if(opened>=0)setDoorAngle(hinge,closed,1.55*T.MathUtils.smoothstep(time-opened,0,.85),.45,0,occupants);
+      if(opened>=0){const player=occupants?.[0],cleared=player&&player.z<-25.35&&Math.abs(player.x-3)<1.1,angle=cleared?0:1.55*T.MathUtils.smoothstep(time-opened,0,.85);setDoorAngle(repeatHinge,repeatClosed,T.MathUtils.damp(repeatHinge.rotation.y,angle,7,dt),.55,0,occupants);}
+      if(['stairs_descent','stairs_clue','stairs_reverse','stairs_passage'].includes(stage)&&lowerOpened<0)lowerOpened=time;
+      if(lowerOpened>=0)setDoorAngle(lowerHinge,lowerClosed,1.55*T.MathUtils.smoothstep(time-lowerOpened,0,.85),.55,0,occupants);
     };
-    light(0,3.2,3,'#8f9c83',5);light(-1,5.3,-4.8,'#b0a17b',3);light(1,-.3,-4.8,'#769789',3);
   }
   if(area==='office'){
     connectionPassage(root,solids,lamps,-3,bz+6,0,.9);bounds.z=bz+6.2;

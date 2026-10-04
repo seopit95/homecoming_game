@@ -133,11 +133,11 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   assert.ok(renderedScene.getObjectByName('lift-ceiling-hatch'));assert.ok(renderedScene.getObjectByName('resident-remains').position.y>2,'pursuer starts above the cab');
   runTo(-2.6,16);runTo(-2.6,-16);runTo(0,-18.5);
   use([0,1.65,-18.5],[0,1.25,-19.68],'corridor_departure');tick(1);runTo(0,-22);aim(renderedCamera.position.toArray(),[3,1.65,-22],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='corridor_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'stairs_loop');runTo(0,10);runTo(0,5.5);
-  use([1,-1.15,-4.8],[1,-1.55,-5.65],'stairs_clue');
-  use([1.25,1.65,4.5],[1.25,1.65,5.7],'stairs_reverse');
-  use([-1,4.45,-4.8],[-1,4.05,-5.65],'stairs_passage');
+  use([1,-1.15,-4.8],[1,-1.55,-5.65],'stairs_descent');tick(1);runTo(1,-7.85);runTo(4,-7.85);aim(renderedCamera.position.toArray(),[4,-1.15,-13],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='stairs_descent';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'stairs_clue');
+  use([5.25,-1.15,-13.35],[5.25,-1.15,-12.15],'stairs_reverse');assert.equal(game.snapshot().floor,'17F');
+  use([3,1.65,-22.65],[3,1.25,-23.5],'stairs_passage');
   assert.equal(renderedScene.getObjectByName('resident-1704'),undefined,'opening the stair door does not teleport into a home');
-  tick(1);aim(renderedCamera.position.toArray(),[-1,4.45,-7],false);game.key('KeyW',true);for(let i=0;i<100&&game.snapshot().story.stage==='stairs_passage';i++)tick(.025);game.key('KeyW',false);
+    tick(1);aim(renderedCamera.position.toArray(),[3,1.65,-25.5],false);game.key('KeyW',true);for(let i=0;i<220&&game.snapshot().story.stage==='stairs_passage';i++)tick(.025);game.key('KeyW',false);
   assert.equal(game.snapshot().story.stage,'resident_arrival');assert.ok(renderedCamera.position.z>6,'arrive outside 1704');assert.ok(deviceLevels.phone>0);
   runTo(0,7.25);use([0,1.65,7.25],[0,1.25,6.12],'resident_entry');tick(1);runTo(0,4.05);
   assert.equal(game.snapshot().threat,0,'the resident first visit leaves time to investigate');assert.equal(chaseLevel,0);assert.match(game.snapshot().objective,/0\/3/);
@@ -548,4 +548,92 @@ test('office pursuer is already physically waiting before the recording, rather 
     tick(13);assert.equal(game.snapshot().story.stage,'office_key');assert.ok(ghost.position.distanceTo(waiting)>1,'the pursuer must leave its waiting point after playback');assert.ok(renderedScene.getObjectByName('connection-fire-door').rotation.y<-1.4,'the waiting body must not jam the opening door');
   }
   finally{game.dispose();win.localStorage=previous;}
+});
+
+test('the lower stair door opens in place and the repeated floor begins only after walking around its corner',async()=>{
+  const previous=win.localStorage;
+  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'stairs_loop',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  function aim(target){const p=renderedCamera.position,dx=target[0]-p.x,dy=target[1]-p.y,dz=target[2]-p.z;const y=Math.atan2(-dx,-dz),x=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(y-renderedCamera.rotation.y)/.0021,clientY:-(x-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
+  try{
+    await game.ready;tick();game.continueGame();tick();
+    // One placement isolates the lower door; every crossing below uses physical input.
+    tick(5); // The stair pursuer's authored arrival delay has elapsed.
+    renderedCamera.position.set(1,-1.15,-4.8);aim([1,-1.55,-5.65]);assert.ok(game.snapshot().prompt);
+    const before=renderedCamera.position.toArray(),heading=renderedCamera.rotation.y;game.interact();
+    assert.deepEqual(renderedCamera.position.toArray(),before,'opening a leaf cannot relocate the player');
+    assert.equal(game.snapshot().story.stage,'stairs_descent');assert.equal(renderedCamera.rotation.y,heading);
+    tick(.2);game.pause();const leaf=renderedScene.getObjectByName('stairs-loop-door'),angle=leaf.rotation.y,at=renderedCamera.position.toArray();tick(3);assert.equal(leaf.rotation.y,angle);assert.deepEqual(renderedCamera.position.toArray(),at);game.pause(false);tick(.9);
+    assert.ok(leaf.rotation.y>1.2);assert.equal(game.snapshot().story.stage,'stairs_descent','waiting for the door cannot complete descent');
+    const repeated=renderedCamera.position.toArray();game.interact();assert.deepEqual(renderedCamera.position.toArray(),repeated,'rechecking the opened door cannot teleport either');
+    const pursuitStart=renderedScene.getObjectByName('resident-remains').position.clone();
+    game.key('ShiftLeft',true);
+    aim([1,-1.15,-7.85]);game.key('KeyW',true);for(let i=0;i<120&&renderedCamera.position.z>-7.82;i++)tick(.025);game.key('KeyW',false);
+    assert.ok(renderedCamera.position.z<-7.82,'the opened wall has a real walkable route');assert.equal(game.snapshot().story.stage,'stairs_descent');
+    aim([4,-1.15,-7.85]);game.key('KeyW',true);
+    for(let i=0;i<120&&renderedCamera.position.x<3.98;i++){const at=renderedCamera.position.clone();tick(.025);assert.ok(renderedCamera.position.distanceTo(at)<.09,'turning the corner cannot swap camera coordinates');}game.key('KeyW',false);
+    assert.equal(game.snapshot().story.stage,'stairs_descent','the first corner leads to a real lower landing');
+    aim([4,-1.15,-13]);game.key('KeyW',true);
+    const ghost=renderedScene.getObjectByName('resident-remains');
+    for(let i=0;i<150&&game.snapshot().story.stage==='stairs_descent';i++){const at=renderedCamera.position.clone(),enemy=ghost.position.clone();tick(.025);assert.ok(renderedCamera.position.distanceTo(at)<.09,'continuous movement onto the repeated floor');assert.ok(ghost.position.distanceTo(enemy)<.12,'the pursuer continues along the same route');assert.equal(ghost.visible,true,'no hidden waiting actor can pop into this landing');}game.key('KeyW',false);
+    assert.equal(game.snapshot().story.stage,'stairs_clue');assert.ok(renderedCamera.position.x>3.9&&renderedCamera.position.z<-12);assert.ok(Math.abs(renderedCamera.position.y+1.15)<.03);
+    game.key('ShiftLeft',false);
+    assert.ok(game.snapshot().message.includes('23'),'the repeated floor is revealed after reaching the physical landing');
+    tick(45);
+    assert.ok(ghost.position.distanceTo(pursuitStart)>8,`the pursuer actually follows through the opened doorway: ${pursuitStart.toArray()} -> ${ghost.position.toArray()}`);
+    assert.ok(['dying','ended'].includes(game.snapshot().story.stage),'a player waiting on the repeated landing remains catchable');
+  }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('the stair gallery transition waits for the visible fire door to close and allows retreat',async()=>{
+  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'stairs_loop',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  function aim(target){const p=renderedCamera.position,dx=target[0]-p.x,dy=target[1]-p.y,dz=target[2]-p.z,y=Math.atan2(-dx,-dz),x=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(y-renderedCamera.rotation.y)/.0021,clientY:-(x-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
+  try{
+    await game.ready;tick();game.continueGame();tick();
+    // Isolate the upper door after completing the prerequisite interactions.
+    renderedCamera.position.set(1,-1.15,-4.8);aim([1,-1.55,-5.65]);game.interact();tick(1);
+    renderedCamera.position.set(4,-1.15,-12.2);tick();assert.equal(game.snapshot().story.stage,'stairs_clue');
+    renderedCamera.position.set(5.25,-1.15,-13.35);aim([5.25,-1.15,-12.15]);game.interact();assert.equal(game.snapshot().story.stage,'stairs_reverse');
+    renderedCamera.position.set(3,1.65,-22.65);aim([3,1.25,-23.5]);game.interact();tick(1);
+    const door=renderedScene.getObjectByName('stairs-passage-door');assert.ok(door.rotation.y>1.2);
+    aim([3,1.65,-26]);game.key('KeyW',true);for(let i=0;i<130&&renderedCamera.position.z>-25.4;i++)tick(.025);game.key('KeyW',false);
+    assert.ok(renderedCamera.position.z<-25.35,'the player physically clears the leaf sweep');
+    assert.equal(game.snapshot().story.stage,'stairs_passage','crossing an open leaf does not erase the stairwell');
+    game.pause();const angle=door.rotation.y,position=renderedCamera.position.toArray();tick(3);assert.equal(door.rotation.y,angle);assert.deepEqual(renderedCamera.position.toArray(),position);game.pause(false);
+    aim([3,1.65,-23]);game.key('KeyW',true);for(let i=0;i<30&&renderedCamera.position.z<-24.75;i++)tick(.025);game.key('KeyW',false);tick(.8);
+    assert.ok(renderedCamera.position.z>-24.8,`the door permits physical retreat before it closes: ${renderedCamera.position.toArray()}, leaf ${door.rotation.y}`);
+    assert.equal(game.snapshot().story.stage,'stairs_passage');assert.ok(door.rotation.y>1.2,'retreat reopens the same physical leaf');
+    aim([3,1.65,-26]);game.key('KeyW',true);for(let i=0;i<80&&renderedCamera.position.z>-25.4;i++)tick(.025);game.key('KeyW',false);
+    const before=renderedCamera.position.clone(),heading=renderedCamera.rotation.y;
+    for(let i=0;i<120&&game.snapshot().story.stage==='stairs_passage';i++)tick(.025);
+    assert.equal(game.snapshot().story.stage,'resident_arrival',`player ${renderedCamera.position.toArray()}, leaf ${door.rotation.y}`);assert.ok(door.rotation.y<.015,'the actual door is closed before changing scenes');
+    assert.ok(Math.abs(renderedCamera.position.x-(before.x-3))<.001);assert.ok(Math.abs(renderedCamera.position.z-(before.z+35.5))<.001);assert.equal(renderedCamera.rotation.y,heading);
+  }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('a pursuer already through the upper fire door remains visible and lethal after the gallery transition',async()=>{
+  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'stairs_loop',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  function aim(target){const p=renderedCamera.position,dx=target[0]-p.x,dy=target[1]-p.y,dz=target[2]-p.z,y=Math.atan2(-dx,-dz),x=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(y-renderedCamera.rotation.y)/.0021,clientY:-(x-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
+  try{
+    await game.ready;tick();game.continueGame();tick();
+    renderedCamera.position.set(1,-1.15,-4.8);aim([1,-1.55,-5.65]);game.interact();tick(1);
+    renderedCamera.position.set(4,-1.15,-12.2);tick();renderedCamera.position.set(5.25,-1.15,-13.35);aim([5.25,-1.15,-12.15]);game.interact();
+    renderedCamera.position.set(3,1.65,-22.65);aim([3,1.25,-23.5]);game.interact();tick(6);
+    const ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(3,0,-24.6);ghost.rotation.y=Math.PI;ghost.visible=true;
+    renderedCamera.position.set(3,1.65,-26.7);aim([3,.65,-24.6]);game.key('KeyS',true);
+    let before;
+    for(let i=0;i<160&&game.snapshot().story.stage==='stairs_passage';i++){before={player:renderedCamera.position.clone(),ghost:ghost.position.clone(),heading:ghost.rotation.y,bodyY:ghost.getObjectByName('ghost-body').position.y};tick(.025);}
+    game.key('KeyS',false);assert.equal(game.snapshot().story.stage,'resident_arrival');
+    const current=renderedScene.getObjectByName('resident-remains'),offset=new THREE.Vector3(-3,0,35.5);
+    assert.equal(current.visible,true,'the on-screen pursuer cannot disappear at the closed-door scene change');
+    assert.ok(current.position.distanceTo(before.ghost.add(offset))<.06,'both actors retain the same physical relation');
+    assert.ok(Math.abs(current.rotation.y-before.heading)<.08,'the pursuing body retains its travel heading');
+    assert.ok(Math.abs(current.getObjectByName('ghost-body').position.y-before.bodyY)<.002,'the visible body cannot drop when stair grounding ends');
+    tick(.1);assert.ok(chaseLevel>0,'pursuit music continues through the transition');tick(8);
+    assert.ok(['dying','ended'].includes(game.snapshot().story.stage),'arrival cannot disable contact with the carried pursuer');
+  }finally{game.dispose();win.localStorage=previous;}
 });
