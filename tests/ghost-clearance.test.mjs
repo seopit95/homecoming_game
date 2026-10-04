@@ -51,6 +51,24 @@ test('open space keeps the authored long crawl and restores it after squeezing t
  assert.ok(original.max.z-original.min.z>2,'full crawl keeps the long hands and trailing gown');
 });
 
+test('the skirt gathers away from oblique side walls at the navigation clearance',()=>{
+ const f=createGhost(new T.Group());f.rotation.y=.717;
+ for(const [angle,phase,crawl] of [[15*Math.PI/8,0,0],[7*Math.PI/4,3*Math.PI/4,1],[3*Math.PI/8,3*Math.PI/4,0]]){
+  const wall={x:Math.cos(angle)*.531,z:Math.sin(angle)*.531,w:.2,d:4,yaw:-angle,y:1.5,h:3};
+  animateGhost(f,3,1,.8,false,phase,crawl,undefined,[wall]);
+  assert.equal(penetration(f,[wall]),undefined,`clothed body penetrates wall in ${crawl?'crawl':'walk'}`);
+ }
+});
+
+test('the whole body clears oblique walls while changing from walking to crawling',()=>{
+ const f=createGhost(new T.Group());f.rotation.y=.717;
+ for(const [angle,phase,crawl] of [[Math.PI/8,0,.25],[Math.PI/4,Math.PI/4,.25],[7*Math.PI/8,0,.75],[15*Math.PI/8,7*Math.PI/4,.75]]){
+  const wall={x:Math.cos(angle)*.531,z:Math.sin(angle)*.531,w:.2,d:4,yaw:-angle,y:1.5,h:3};
+  animateGhost(f,3,1,.8,false,phase,crawl,undefined,[wall]);
+  assert.equal(penetration(f,[wall]),undefined,`blend ${crawl}, phase ${phase}, wall ${angle}`);
+ }
+});
+
 test('stair grounding preserves wall clearance through each crawl turn',()=>{
  const f=createGhost(new T.Group()),solids=[{x:0,z:-3,w:.12,d:6,y:1.4,h:9}],floor=(x,z)=>z>=0?0:(x<0?1:-1)*Math.min(2.8,-z*.7);
  for(const x of [-1,-.75,-.5,.5,.75,1])for(const z of [-3,-.1,.5])for(let yaw=0;yaw<Math.PI*2;yaw+=Math.PI/6)for(const phase of [0,2,4]){

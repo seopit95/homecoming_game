@@ -76,6 +76,21 @@ test('crawling lowers the body, plants hands and restores the walking rig withou
   animateGhost(figure,3,1,.7,false,2,0);assert.ok(figure.getObjectByName('ghost-head').getWorldPosition(new T.Vector3()).y>1.5);
 });
 
+test('starting the crawl keeps the walking knee positions and hand and ankle orientations continuous',async()=>{
+ const {animateGhost}=await import('../lib/ghost.ts'),figure=makeFigure(new T.Group());
+ for(const phase of [0,.8,2,3.5,5])for(const solids of [[],[{x:.56,z:0,w:.2,d:4}]]){
+  animateGhost(figure,3,1,.8,false,phase,0,undefined,solids);
+  const poses=[-1,1].flatMap(side=>['knee','hand','ankle'].map(part=>{const o=figure.getObjectByName(`ghost-${part}-${side}`);return {o,part,p:o.getWorldPosition(new T.Vector3()),q:o.getWorldQuaternion(new T.Quaternion())};}));
+  const sleeves=[];figure.traverse(o=>{if(o.name==='ghost-fitted-sleeve'){const p=o.geometry.getAttribute('position');sleeves.push({o,points:Array.from({length:p.count},(_,i)=>new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld))});}});
+  animateGhost(figure,3,1,.8,false,phase,.000001,undefined,solids);
+  for(const {o,part,p,q} of poses){
+   assert.ok(p.distanceTo(o.getWorldPosition(new T.Vector3()))<.001,`${part} position snaps when crawling starts at phase ${phase}`);
+   if(part!=='knee')assert.ok(q.angleTo(o.getWorldQuaternion(new T.Quaternion()))<.01,`${part} orientation snaps when crawling starts at phase ${phase}`);
+  }
+  for(const {o,points} of sleeves){const p=o.geometry.getAttribute('position');for(let i=0;i<p.count;i++)assert.ok(points[i].distanceTo(new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld))<.001,`sleeve surface snaps at crawl entry, phase ${phase}`);}
+ }
+});
+
 test('ghost animation preserves its navigation root and remains finite at every pose',async()=>{
   const {animateGhost}=await import('../lib/ghost.ts');
   const root=new T.Group(),figure=makeFigure(root);figure.position.set(3,0,-4);figure.rotation.y=.7;

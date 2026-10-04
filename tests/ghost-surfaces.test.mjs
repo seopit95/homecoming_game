@@ -5,6 +5,53 @@ import {createGhost,animateGhost,animateGhostAttack,animateGhostPassenger} from 
 import {createFace,poseFace} from '../lib/ghost-face.ts';
 import {extremity} from '../lib/ghost-anatomy.ts';
 
+test('visible leg skin connects each hip to its knee in standing, crawling and folded poses',()=>{
+ const f=createGhost(new T.Group()),ray=new T.Raycaster(),center=new T.Vector3(),out=new T.Vector3();
+ for(const pose of ['walk','crawl','fold','passenger','attack'])for(const time of [0,.4,1.5]){
+  f.position.set(3,0,-4);f.rotation.y=.8;
+  if(pose==='attack')animateGhostAttack(f,time,false);else if(pose==='passenger')animateGhostPassenger(f,time,1,false);else animateGhost(f,time,1,.8,false,time*3,pose==='walk'?0:1,undefined,pose==='fold'?[{x:3,z:-3.4,w:4,d:.2},{x:3,z:-4.6,w:4,d:.2}]:[]);
+  f.updateMatrixWorld(true);
+  for(const side of [-1,1])for(const along of [.1,.2,.3,.405])for(const direction of [-1,1]){
+   const hip=f.getObjectByName(`ghost-hip-${side}`);center.set(0,-along,0).applyMatrix4(hip.matrixWorld);out.set(direction,0,0).transformDirection(hip.matrixWorld);
+   ray.set(center.clone().addScaledVector(out,.16),out.clone().negate());ray.far=.16;
+   const hit=ray.intersectObject(hip,true)[0];
+   assert.ok(hit&&hit.distance<.145,`${pose}, side ${side}, ${along} m below hip: missing exterior thigh skin`);
+  }
+ }
+});
+
+test('the skirt covers the upper legs while walking, crawling, folding and sitting',()=>{
+ const f=createGhost(new T.Group()),ray=new T.Raycaster(),center=new T.Vector3();
+ for(const pose of ['walk','crawl','fold','passenger'])for(const phase of [0,1.6,3.2,4.8]){
+  if(pose==='passenger')animateGhostPassenger(f,phase,1,false);else animateGhost(f,3,1,.7,false,phase,pose==='walk'?0:1,undefined,pose==='fold'?[{x:0,z:-.56,w:4,d:.2},{x:0,z:.56,w:4,d:.2}]:[]);f.updateMatrixWorld(true);
+  const gown=f.getObjectByName('ghost-wet-dress');
+  for(const side of [-1,1])for(const along of [.05,.15,.25,.35])for(const direction of [[side,0,0],[0,.5,1],[side,.5,-1]]){
+   const hip=f.getObjectByName(`ghost-hip-${side}`);center.set(0,-along,0).applyMatrix4(hip.matrixWorld);
+   const out=new T.Vector3(...direction).normalize();ray.set(center.clone().addScaledVector(out,.8),out.negate());ray.far=1.2;
+   const hit=ray.intersectObjects([gown,hip],true)[0];
+   assert.ok(hit?.object===gown,`upper leg emerges through unbroken cloth: pose ${pose}, phase ${phase}, side ${side}, ${along} m`);
+  }
+ }
+});
+
+test('gathering the skirt beside a wall never intersects the thigh skin',()=>{
+ const f=createGhost(new T.Group()),ray=new T.Raycaster(),a=new T.Vector3(),b=new T.Vector3();f.rotation.y=.717;
+ const angle=7*Math.PI/4,wall={x:Math.cos(angle)*.531,z:Math.sin(angle)*.531,w:.2,d:4,yaw:-angle,y:1.5,h:3};
+ for(const phase of [0,1.5,3,4.5]){
+  animateGhost(f,3,1,.8,false,phase,1,undefined,[wall]);f.updateMatrixWorld(true);
+  const gown=f.getObjectByName('ghost-wet-dress');
+  for(const side of [-1,1]){
+   const thigh=f.getObjectByName(`ghost-hip-${side}`).getObjectByName('ghost-thigh'),p=thigh.geometry.getAttribute('position'),idx=thigh.geometry.index,edges=new Set();
+   for(let i=0;i<idx.count;i+=3)for(const [j,k] of [[i,i+1],[i+1,i+2],[i+2,i]]){
+    const n=idx.getX(j),m=idx.getX(k),key=[Math.min(n,m),Math.max(n,m)].join(',');if(edges.has(key))continue;edges.add(key);
+    a.fromBufferAttribute(p,n).applyMatrix4(thigh.matrixWorld);b.fromBufferAttribute(p,m).applyMatrix4(thigh.matrixWorld);
+    ray.set(a,b.clone().sub(a).normalize());ray.near=.00001;ray.far=a.distanceTo(b)-.00001;
+    assert.equal(ray.intersectObject(gown,false).length,0,`skin cuts through intact cloth: phase ${phase}, side ${side}`);
+   }
+  }
+ }
+});
+
 function openWristEdges(arm,hand){
  const vertices=[],edges=new Map(),p=new T.Vector3(),inverse=hand.matrixWorld.clone().invert(),local=new T.Matrix4();
  for(const mesh of [arm,...arm.children,hand]){
