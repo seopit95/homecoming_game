@@ -19,7 +19,7 @@ export function buildCourtyard(root:T.Group){
  function target(id:Action,label:string,mesh:T.Object3D,p:[number,number,number],at:[number,number]){mesh.userData.approach={x:at[0],z:at[1]};targets.push({id,label,mesh,point:new T.Vector3(...p)});}
  function light(x:number,z:number,power=9){const l=new T.PointLight('#b0baa1',power,17,2);l.position.set(x,3.3,z);l.userData.base=power;lamps.push(l);root.add(l);roundPipe(root,[x,0,z],[x,3.5,z],.05,steel);box(x,3.5,z,.55,.09,.32,steel);return l;}
  box(0,-.13,2,64,.26,92,concrete);for(const [x,w] of [[-9.75,44.5],[23.75,16.5]])box(x,-.13,-46,w,.26,4,concrete);for(const x of [-32,32])box(x,2.7,0,.22,5.4,96,wall,true);
- for(const x of [-16.36,16.36])box(x,2.7,48,31.28,5.4,.22,wall,true);box(0,3.98,48,1.44,2.84,.22,wall);connectionPassage(root,solids,lamps,-3,54);for(const [x,w] of [[-18,28],[8.25,8.5],[23.75,16.5]])box(x,2.7,-48,w,5.4,.22,wall,true);
+ for(const x of [-16.36,16.36])box(x,2.7,48,31.28,5.4,.22,wall,true);box(0,3.98,48,1.44,2.84,.22,wall);connectionPassage(root,solids,lamps,-3,54,0,.9);for(const [x,w] of [[-18,28],[8.25,8.5],[23.75,16.5]])box(x,2.7,-48,w,5.4,.22,wall,true);
  // Closed perimeter, visible towers, and sheeted construction enclose a believable service yard.
  const windowGlass=new T.MeshStandardMaterial({color:'#182a30',metalness:.35,roughness:.25}),windowLit=new T.MeshStandardMaterial({color:'#9c9a75',emissive:'#746d43',emissiveIntensity:.22,roughness:.5});
  for(const side of [-1,1]){

@@ -144,3 +144,22 @@ test('the seated passenger stays above the cabin floor and resets to a full walk
  for(const scare of [0,.4,1]){animateGhostPassenger(figure,13,scare,false);assert.ok(new T.Box3().setFromObject(figure,true).min.y>=.22,'seated cloth, hair and feet clear the floorpan');}
  animateGhost(figure,2,1,.5,false);assert.equal(figure.getObjectByName('ghost-long-hair').scale.y,1);
 });
+
+test('attack and passenger arm surfaces do not reverse their cross-sections at an elbow',async()=>{
+  const {createGhost,animateGhostAttack,animateGhostPassenger}=await import('../lib/ghost.ts');
+  const figure=createGhost(new T.Group()),arms=[];
+  figure.traverse(o=>{if(o.name==='ghost-continuous-arm')arms.push(o);});
+  for(const pose of ['attack','passenger'])for(const time of [0,.2,.4,.65,1,1.7,2.8]){
+    if(pose==='attack')animateGhostAttack(figure,time,false);else animateGhostPassenger(figure,time,1,false);
+    for(const arm of arms){
+      const p=arm.geometry.getAttribute('position'),{radialSegments:cols,heightSegments:rows}=arm.geometry.parameters;
+      let previous;
+      for(let row=0;row<=rows;row++){
+        const center=new T.Vector3();for(let col=0;col<cols;col++)center.add(new T.Vector3().fromBufferAttribute(p,row*(cols+1)+col));center.divideScalar(cols);
+        const radial=new T.Vector3().fromBufferAttribute(p,row*(cols+1)).sub(center).normalize();
+        if(previous)assert.ok(previous.dot(radial)>.5,`${pose} ${time}s: adjacent arm rings fold back across each other at row ${row}`);
+        previous=radial;
+      }
+    }
+  }
+});

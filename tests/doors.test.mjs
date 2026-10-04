@@ -52,3 +52,16 @@ test('opening a corridor door stops at an occupant instead of sweeping through t
   w.updateStory('corridor_departure',3,false,undefined,[]);
   assert.ok(hinge.rotation.y>1.4,'opening resumes once the player steps away');
 });
+
+test('incoming passages support the crawling pursuer while it waits behind the door sweep',async()=>{
+ const {animateGhost}=await import('../lib/ghost.ts');
+ for(const [area,z]of [['courtyard',48],['archive',32],['plant',36],['parking',22]]){
+  const w=buildWorld(new T.Scene(),area),f=w.figure;f.visible=true;f.position.set(-2.95,0,z+5.55);f.rotation.y=Math.PI;animateGhost(f,12,0,.2,false,0,1,undefined,w.solids);w.root.updateMatrixWorld(true);
+  for(const side of [-1,1]){
+   const foot=f.getObjectByName(`ghost-foot-${side}`),vertices=foot.geometry.getAttribute('position');let toe=new T.Vector3(0,0,-Infinity);
+   for(let i=0;i<vertices.count;i++){const p=new T.Vector3().fromBufferAttribute(vertices,i).applyMatrix4(foot.matrixWorld);if(p.z>toe.z)toe=p;}
+   const ray=new T.Raycaster(new T.Vector3(toe.x,.25,toe.z),new T.Vector3(0,-1,0),0,.3),hits=ray.intersectObject(w.root).filter(hit=>{for(let o=hit.object;o;o=o.parent)if(o===f)return false;return true;});
+   assert.ok(hits.some(h=>h.point.y>=-.01),`${area}: the trailing toe at ${toe.toArray()} has a floor beneath it`);
+  }
+ }
+});

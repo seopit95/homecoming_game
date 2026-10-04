@@ -257,18 +257,26 @@ test('capture beside corridor walls keeps the ghost and falling camera inside th
   const previousStorage=win.localStorage;
   win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'lift_exit',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
   const w=buildWorld(new THREE.Scene(),'corridor');
-  for(const [playerX,ghostX] of [[2.3,2.95],[-3,-2.39]]){
+  for(const [playerX,playerZ,ghostX,ghostZ] of [[2.3,8,2.95,8],[-3,8,-2.39,8],[2.45,8,2.45,8.63]]){
     const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
     const game=createGame(canvas,()=>{},e=>assert.fail(e));
     try{
       tick();game.continueGame();tick(.6);renderedCamera.position.set(0,1.65,-1.9);tick();renderedCamera.position.set(-2.6,1.65,16);tick(4.3);
       const ghost=renderedScene.getObjectByName('resident-remains');
-      renderedCamera.position.set(playerX,1.65,8);ghost.position.set(ghostX,0,8);ghost.visible=true;
-      assert.ok(canStandAt(ghostX,8,w.solids,.43,w.bounds),'capture begins in a valid ghost position');
+      renderedCamera.position.set(playerX,1.65,playerZ);ghost.position.set(ghostX,0,ghostZ);ghost.visible=true;
+      assert.ok(canStandAt(ghostX,ghostZ,w.solids,.43,w.bounds),'capture begins in a valid ghost position');
       tick(.025);assert.equal(game.snapshot().story.stage,'dying');
       for(let i=0;i<30;i++){
         assert.ok(canStandAt(ghost.position.x,ghost.position.z,w.solids,.43,w.bounds),`ghost clears the wall at attack ${i}`);
         assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,w.solids,.23,w.bounds),`falling camera clears the wall at attack ${i}`);
+        ghost.updateMatrixWorld(true);const point=new THREE.Vector3();
+        ghost.traverse(mesh=>{if(!mesh.isMesh||mesh.isInstancedMesh)return;for(let o=mesh;o!==ghost;o=o.parent)if(!o.visible)return;const vertices=mesh.geometry.getAttribute('position');
+          for(let v=0;v<vertices.count;v++){point.fromBufferAttribute(vertices,v).applyMatrix4(mesh.matrixWorld);
+            for(const wall of w.solids){const c=Math.cos(wall.yaw??0),s=Math.sin(wall.yaw??0),dx=point.x-wall.x,dz=point.z-wall.z;
+              assert.ok(!(Math.abs(dx*c-dz*s)<wall.w/2-.002&&Math.abs(dx*s+dz*c)<wall.d/2-.002&&Math.abs(point.y-(wall.y??1.5))<(wall.h??3)/2-.002),`${mesh.name} passes through a wall at attack ${i}: ${point.toArray()}`);
+            }
+          }
+        });
         tick(.1);
       }
     }finally{game.dispose();}
@@ -490,4 +498,39 @@ test('prepared areas retain geometry through a restart and reset apartment door 
  game.start();game.skipMemory();tick(7);
  const again=renderedScene.getObjectByName('front-door');assert.ok(again===original,'restart must reuse the GPU-prepared world');assert.equal(again.rotation.y,0,'cached doors restart closed');
  game.dispose();
+});
+
+// Load the preceding checkpoint, then cross the real threshold. Starting a test
+// directly in the next room would bypass the incoming door and hide this deadlock.
+for(const [from,crossing,area,newZ,activation] of [
+ ['annex_departure',[1.6,1.65,-36],'courtyard',48,['court_gate','court_phone']],
+ ['court_departure',[15.6,-1.15,-53],'archive',32,['archive_ledger','archive_road','archive_call','archive_gate','archive_sequence_road','archive_sequence_call','archive_sequence_gate','archive_play']],
+ ['archive_departure',[1.6,1.65,-34],'plant',36,['plant_diagram','plant_valve_west']],
+ ['plant_departure',[1.6,1.65,-38],'parking',22,[]],
+])test(`${area}: the arriving pursuer can leave the connecting passage after its door reopens`,async()=>{
+ const {buildWorld,disposeWorld,canStandAt}=await import('../lib/world.ts');
+ const previousStorage=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:from,notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+ const game=createGame(canvas,()=>{},e=>assert.fail(e)),reference=buildWorld(new THREE.Scene(),area);
+ try{
+  tick();game.continueGame();tick();
+  const departing=renderedScene.getObjectByName('resident-remains');departing.position.set(crossing[0]-3,crossing[1]-1.65,crossing[2]);departing.visible=true;
+  renderedCamera.position.set(...crossing);tick();
+  assert.equal(game.snapshot().story.stage,({courtyard:'court_arrival',archive:'archive_arrival',plant:'plant_arrival',parking:'parking_gate'})[area]);
+  const ghost=renderedScene.getObjectByName('resident-remains'),start=ghost.position.clone();
+  renderedCamera.position.set(0,1.65,newZ-4);tick(12);
+  for(const id of activation){
+   const target=reference.targets.find(t=>t.id===id),at=target.mesh.userData.approach;renderedCamera.position.set(at.x,1.65,at.z);
+   const dx=target.point.x-at.x,dz=target.point.z-at.z,dy=target.point.y-1.65;
+   const yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));
+   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
+   assert.ok(game.snapshot().prompt,`can interact with ${id}`);game.interact();tick();
+  }
+  if(area==='archive')tick(32.1);
+  renderedCamera.position.set(0,1.65,newZ-12);tick(16);
+  assert.ok(ghost.visible,'the story activates the pursuit');
+  assert.ok(ghost.position.distanceTo(start)>3,`pursuer stuck at ${ghost.position.toArray()}`);
+  assert.ok(ghost.position.z<newZ,'the pursuer enters the actual room');
+  assert.ok(canStandAt(ghost.position.x,ghost.position.z,reference.solids,.43,reference.bounds),'the pursuing body remains outside solid geometry');
+ }finally{game.dispose();disposeWorld(reference.root);win.localStorage=previousStorage;}
 });

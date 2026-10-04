@@ -99,10 +99,10 @@ export function ghostStrideLength(figure:T.Group,solids:Solid[],crawl:boolean){
 
 // Reserve room for the full reaching pose, then gather the limbs toward the
 // body before a wall can enter their sweep. Ray tests use door-local axes.
-function crawlClearance(figure:T.Group,solids:Solid[]){
+function crawlClearance(figure:T.Group,solids:Solid[],height=1.3){
   const p=figure.position,yaw=figure.rotation.y,c=Math.cos(yaw),s=Math.sin(yaw),tuck:Clearance={side:0,front:0,back:0};
   for(const b of solids){
-    if((b.y??1.5)+(b.h??3)/2<p.y+.02||(b.y??1.5)-(b.h??3)/2>p.y+1.3)continue;
+    if((b.y??1.5)+(b.h??3)/2<p.y+.02||(b.y??1.5)-(b.h??3)/2>p.y+height)continue;
     if(Math.hypot(b.x-p.x,b.z-p.z)>Math.hypot(b.w,b.d)/2+1.6)continue;
     const bc=Math.cos(b.yaw??0),bs=Math.sin(b.yaw??0),ox=bc*(p.x-b.x)-bs*(p.z-b.z),oz=bs*(p.x-b.x)+bc*(p.z-b.z);
     for(let angle=0;angle<Math.PI*2;angle+=Math.PI/16){
@@ -215,7 +215,7 @@ export function animateGhostPassenger(figure:T.Group,time:number,scare:number,re
 
 }
 
-export function animateGhostAttack(figure:T.Group,time:number,reducedMotion:boolean,eyeHeight=1.65){
+export function animateGhostAttack(figure:T.Group,time:number,reducedMotion:boolean,eyeHeight=1.65,solids:Solid[]=[]){
   const rig=poseGhost(figure,time,0,1,reducedMotion,0);if(!rig)return;
   const opening=T.MathUtils.smoothstep(time,.12,.48),convulsion=(reducedMotion?.018:.12)*opening,fall=T.MathUtils.smoothstep(time,1.05,2.55);
   rig.torso.position.y=T.MathUtils.lerp(eyeHeight-.48,1.16,fall);
@@ -226,7 +226,22 @@ export function animateGhostAttack(figure:T.Group,time:number,reducedMotion:bool
   rig.head.position.z+=.055*opening;poseFace(rig.face,gape);rig.mouth.visible=true;
   rig.hair.rotation.set(0,0,0);rig.tails.rotation.set(0,0,0);
   for(let i=0;i<2;i++){const side=i===0?-1:1;rig.arms[i].rotation.set(-2.05+Math.sin(time*18+i)*convulsion*2,side*.3,side*.35);rig.forearms[i].rotation.set(-.8+Math.sin(time*21+i)*convulsion,0,side*.2);}
-  poseDress(rig.gown,rig.hem,rig.torso,time,0);settleHair(rig.tails,figure,time,0);poseArms(rig);bloodDrops(rig,time);
+  const clearance=crawlClearance(figure,solids,3),fold=armTuck(clearance),inverse=rig.torso.quaternion.clone().invert();
+  if(fold>0)for(let i=0;i<2;i++){
+    const side=i===0?-1:1,upper=rig.arms[i].quaternion.clone(),fore=upper.clone().multiply(rig.forearms[i].quaternion);
+    const elbow=new T.Vector3(0,-1,0).applyQuaternion(upper),foreAxis=new T.Vector3(0,-1,0).applyQuaternion(fore);
+    const hand=foreAxis.clone().multiplyScalar(.49).add(elbow.clone().multiplyScalar(.46)).add(rig.arms[i].position);
+    hand.lerp(new T.Vector3(side*.17,rig.torso.position.y+.32,.27).sub(rig.torso.position).applyQuaternion(inverse),fold);
+    const pole=elbow.clone().lerp(new T.Vector3(0,1,0).applyQuaternion(inverse),fold);
+    reach(rig.arms[i],rig.forearms[i],hand,.46,.49,side,pole);
+    const bentElbow=new T.Vector3(0,-1,0).applyQuaternion(rig.arms[i].quaternion),bentFore=new T.Vector3(0,-1,0).applyQuaternion(rig.forearms[i].quaternion).applyQuaternion(rig.arms[i].quaternion);
+    rig.arms[i].quaternion.setFromUnitVectors(elbow,bentElbow).multiply(upper);
+    const foreOrientation=new T.Quaternion().setFromUnitVectors(foreAxis,bentFore).multiply(fore);
+    rig.forearms[i].quaternion.copy(rig.arms[i].quaternion).invert().multiply(foreOrientation);
+    const wrist=rig.torso.quaternion.clone().multiply(fore).slerp(new T.Quaternion(),fold);
+    rig.palms[i].quaternion.copy(rig.torso.quaternion).multiply(foreOrientation).invert().multiply(wrist);
+  }
+  poseDress(rig.gown,rig.hem,rig.torso,time,0,false,clearance.back);settleHair(rig.tails,figure,time,0);poseArms(rig);bloodDrops(rig,time);
 }
 
 export function animateGhostEmergence(figure:T.Group,time:number,reducedMotion:boolean){

@@ -64,7 +64,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  // Broad footprint, human-scale 4 m spine and outer loop aisles around real rooms.
  box(0,-.12,0,bx*2,.24,bz*2,floor);box(0,2.91,0,bx*2,.22,bz*2,wall);
  for(const x of [-bx,bx])wallAt(x,0,.18,bz*2);for(const side of [-1,1])wallAt(side*(bx+.72)/2,bz,bx-.72,.18);box(0,2.6,bz,1.44,.4,.18,wall);
- if(area!=='annex')connectionPassage(root,solids,lamps,-3,bz+6);
+ if(area!=='annex')connectionPassage(root,solids,lamps,-3,bz+6,0,.9);
  for(const side of [-1,1]){
   const segments=[[-bz,-27],[-24,-7],[-4,14],[17,25],[28,bz]];
   for(const [a,b] of segments)wallAt(side*2,(a+b)/2,.15,b-a);

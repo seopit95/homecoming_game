@@ -19,7 +19,7 @@ export function setDoorAngle(hinge:T.Object3D,block:Solid,angle:number,centerX:n
 
 // Two right-angle turns hide distant rooms, while both chapter scenes contain
 // precisely the same landing, lights and walls at the crossing plane (local x=1.5).
-export function connectionPassage(root:T.Group,solids:Solid[],lamps:T.PointLight[],x:number,z:number,y=0){
+export function connectionPassage(root:T.Group,solids:Solid[],lamps:T.PointLight[],x:number,z:number,y=0,entryApron=0){
  const group=new T.Group();group.name='continuous-connection';group.position.set(x,y,z);root.add(group);
  const wall=surface('decayWall','#a6ada0'),floor=surface('oldTile','#929d94'),steel=surface('steel','#747f79',{metalness:.35});
  function box(px:number,py:number,pz:number,w:number,h:number,d:number,material:T.Material,solid=false){const mesh=new T.Mesh(boxUV(new T.BoxGeometry(w,h,d),px,py,pz),material);mesh.position.set(px,py,pz);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);if(solid)solids.push({x:x+px,y:y+py,z:z+pz,w,h,d});return mesh;}
@@ -34,6 +34,13 @@ export function connectionPassage(root:T.Group,solids:Solid[],lamps:T.PointLight
  // A hydraulic fire door is shared by the outgoing and incoming copies.
  const leaf=box(.85,1.15,-3,.08,2.3,1.92,steel);leaf.name='connection-fire-door';leaf.geometry.translate(0,0,.96);leaf.rotation.y=-Math.PI/2;
  const block={x:x-.11,y:y+1.15,z:z-3,w:.08,h:2.3,d:1.92,yaw:-Math.PI/2};solids.push(block);leaf.userData.block=block;
+ // The incoming copy needs floor behind the waiting pursuer. Keep this
+ // apron outside the shared landing so its geometry is identical at crossing.
+ if(entryApron>0){
+  const apron=new T.Group();apron.name='connection-entry-apron';apron.position.copy(group.position);root.add(apron);
+  apron.add(box(0,-.1,entryApron/2,2,.2,entryApron,floor),box(0,2.86,entryApron/2,2,.12,entryApron,wall));
+  for(const side of [-1,1])apron.add(box(side*1.08,1.4,entryApron/2,.16,2.8,entryApron,wall,true),box(side*1.08,.075,entryApron/2,.172,.15,entryApron+.012,steel));
+ }
  return group;
 }
 

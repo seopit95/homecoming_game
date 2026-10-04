@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import {createGhost,animateGhost} from '../lib/ghost.ts';
+import {createGhost,animateGhost,animateGhostAttack} from '../lib/ghost.ts';
 
 function treadClearance(figure,floor){
  figure.updateMatrixWorld(true);const point=new T.Vector3();let lowest=Infinity;
@@ -90,6 +90,44 @@ test('short crawl strokes keep a supporting wrist planted and parallel walls pre
    animateGhost(f,3,1,.7,false,phase,1,undefined,front);f.updateMatrixWorld(true);
    const wrist=f.getObjectByName(`ghost-hand-${side}`).getWorldPosition(new T.Vector3());planted??=wrist.clone();
    assert.ok(wrist.distanceTo(planted)<.005,`supporting wrist cannot skate during a short stroke: ${wrist.distanceTo(planted)}`);
+  }
+ }
+});
+
+test('capture fingers and sleeves stay on the room side of nearby walls',()=>{
+ const figure=createGhost(new T.Group());
+ for(const side of [-1,1])for(const yaw of [0,.55,1.3,2.2,3.1])for(const eye of [1,1.65])for(const time of [0,.2,.4,.65,1,1.7,2.8]){
+  figure.rotation.y=yaw;const wall={x:Math.cos(yaw)*side*.56,z:-Math.sin(yaw)*side*.56,w:.2,d:4,y:1.5,h:3,yaw};animateGhostAttack(figure,time,false,eye,[wall]);
+  assert.equal(penetration(figure,[wall]),undefined,`side ${side}, eye ${eye}, time ${time}`);
+ }
+});
+
+test('capture clearance covers oblique and elevated walls at the navigation radius',()=>{
+ const f=createGhost(new T.Group());
+ for(let a=0;a<32;a++)for(const eye of [1,1.65])for(const time of [0,.4,.65,1.7,2.8]){
+  const angle=a*Math.PI/16,wall={x:Math.cos(angle)*.531,z:Math.sin(angle)*.531,w:.2,d:4,y:1.5,h:3,yaw:-angle};
+  animateGhostAttack(f,time,false,eye,[wall]);assert.equal(penetration(f,[wall]),undefined,`wall angle ${angle}, eye ${eye}, time ${time}`);
+ }
+ const high={x:.531,z:0,w:.2,d:4,y:2,h:1};animateGhostAttack(f,0,false,1.65,[high]);assert.equal(penetration(f,[high]),undefined,'wall beside the raised hands');
+});
+
+test('capture arms enter wall avoidance continuously instead of snapping elbow planes',()=>{
+ const f=createGhost(new T.Group()),palm=f.getObjectByName('ghost-hand-1').parent,elbow=palm.parent;
+ animateGhostAttack(f,.4,false,1.65,[{x:.9151,z:0,w:.2,d:4}]);
+ const point=elbow.getWorldPosition(new T.Vector3()),rotation=palm.getWorldQuaternion(new T.Quaternion());
+ animateGhostAttack(f,.4,false,1.65,[{x:.9149,z:0,w:.2,d:4}]);
+ assert.ok(elbow.getWorldPosition(new T.Vector3()).distanceTo(point)<.005,'a .2 mm clearance change cannot move the elbow by centimetres');
+ assert.ok(palm.getWorldQuaternion(new T.Quaternion()).angleTo(rotation)<.02,'the wrist orientation changes smoothly as avoidance begins');
+});
+
+test('capture forearms do not switch bend branches during a partially folded attack',()=>{
+ const f=createGhost(new T.Group()),wall={x:0,z:1.05,w:.2,d:4,yaw:-Math.PI/2,y:1.5,h:3};
+ for(const reduced of [false,true]){
+  let previous;
+  for(let t=0;t<3.2;t+=.02){
+   animateGhostAttack(f,t,reduced,1.65,[wall]);const point=f.getObjectByName('ghost-hand--1').getWorldPosition(new T.Vector3());
+   if(previous)assert.ok(previous.distanceTo(point)<.07,`hand jumps at ${t}s, reduced motion ${reduced}`);
+   previous=point;
   }
  }
 });

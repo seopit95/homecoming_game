@@ -207,7 +207,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     updateStory=(stage,time,_reduced,_story,occupants)=>{fuse.visible=['office_record','office_fuse'].includes(stage);exitKey.visible=!['office_leave','office_departure'].includes(stage);if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0)setDoorAngle(serviceHinge,serviceBlock,1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85),.6,0,occupants);};
   }
   if(area==='parking'){
-    bounds.z=bz+6.8;connectionPassage(root,solids,lamps,-3,bz+6);
+    bounds.z=bz+6.8;connectionPassage(root,solids,lamps,-3,bz+6,0,.9);
     const L=buildingLayout.parking;
     door('exit','보행자 출구',0,-bz+.12);label('백로아파트  B1',0,2.25,bz-.11,Math.PI,2,.4);light(0,2.4,-21,'#74af8b',4);
     for(const x of [-9,0,9])for(const z of [-12,0,12]){box(x,1.35,z,.55,2.7,.55,concrete,true);box(x,.66,z,.58,.85,.58,mat('#aa8f3f'));for(const y of [.35,.65,.95])box(x,y,z,.59,.11,.59,dark);label('B1',x,1.75,z+.294,0,.4,.18);box(x,2.42,z,.9,.22,.9,concrete);}

@@ -539,7 +539,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     deathWanted.copy(deathOrigin).addScaledVector(deathDirection,T.MathUtils.lerp(1.03,.85,lunge));
     placeInsideRoom(world.figure.position,deathGhostOrigin,deathWanted,pursuerRadius);world.figure.position.y=world.heightAt(world.figure.position.x,world.figure.position.z);
     world.figure.rotation.set(0,Math.atan2(-deathDirection.x,-deathDirection.z),0,'YXZ');
-    animateGhostAttack(world.figure,t,reducedMotion,deathEye);
+    animateGhostAttack(world.figure,t,reducedMotion,deathEye,world.solids);
     deathWanted.copy(deathOrigin).addScaledVector(deathDirection,-fall*.2);placeInsideRoom(camera.position,deathOrigin,deathWanted,.23);camera.position.y=T.MathUtils.lerp(deathOrigin.y,deathFloor+.27,fall);
     world.figure.updateMatrixWorld(true);world.figure.getObjectByName('ghost-head')!.localToWorld(deathFace.set(0,-.055,.18));
     const dx=deathFace.x-camera.position.x,dy=deathFace.y-camera.position.y,dz=deathFace.z-camera.position.z;
@@ -604,7 +604,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     arrivalPursuit=visible&&area==='parking';
     if(area!=='parking')arrivalDoor=world.root.children.find(o=>o.name==='continuous-connection'&&o.position.z===newZ+6)?.getObjectByName('connection-fire-door');
     entranceDelay=Math.max(0,(distance-1.6)/(speed*.85));
-    world.figure.position.set(-2.95,0,newZ+4);world.figure.rotation.y=Math.PI/2;
+    // Wait behind the fire-door sweep; standing on the landing traps both
+    // the opening leaf and the pursuer against one another.
+    world.figure.position.set(-2.95,0,newZ+5.55);world.figure.rotation.y=Math.PI;
     world.figure.visible=visible&&entranceDelay===0;lastGhostPosition.copy(world.figure.position);
   }
   function crossThresholds(){
