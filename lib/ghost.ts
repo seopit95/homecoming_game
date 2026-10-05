@@ -232,6 +232,18 @@ export function animateGhostAttack(figure:T.Group,time:number,reducedMotion:bool
   rig.torso.position.y=T.MathUtils.lerp(eyeHeight-.48,1.16,fall);
   rig.torso.position.z=.02+.055*opening*(1-fall);
   rig.torso.rotation.set(.02+Math.sin(time*17)*convulsion*.4,Math.sin(time*13)*convulsion*.3,-.06+Math.sin(time*19)*convulsion*.4);
+  // Keep the pelvis below the lowered waist and balance it over planted feet.
+  // This keeps the waist/hip/knee guides descending and bends the knees forward
+  // on the same branch as the ordinary standing pose.
+  const clearance=crawlClearance(figure,solids,3),lower=Math.min(0,rig.torso.position.y-.95);
+  if(lower<0)for(let i=0;i<2;i++){
+    const foot=rig.ankles[i].position.clone().applyQuaternion(rig.knees[i].quaternion).add(rig.knees[i].position).applyQuaternion(rig.legs[i].quaternion).add(rig.legs[i].position);
+    const orientation=rig.legs[i].quaternion.clone().multiply(rig.knees[i].quaternion).multiply(rig.ankles[i].quaternion);
+    rig.legs[i].position.y+=lower;rig.legs[i].position.z-=Math.min(.22,-lower*.8);
+    const side=i===0?-1:1;
+    reach(rig.legs[i],rig.knees[i],foot,.42,.42,side,new T.Vector3(0,0,1));
+    rig.ankles[i].quaternion.copy(rig.legs[i].quaternion).multiply(rig.knees[i].quaternion).invert().multiply(orientation);
+  }
   rig.head.rotation.set(T.MathUtils.lerp(.16,-.09,opening)+Math.sin(time*31)*convulsion*.6,.025+Math.sin(time*23)*convulsion*.55,T.MathUtils.lerp(-.43,-.03,opening)+Math.sin(time*27)*convulsion*.65);
   const gape=opening*(1+Math.sin(time*33)*(reducedMotion?.006:.025));
   rig.head.position.z+=.055*opening;poseFace(rig.face,gape);rig.mouth.visible=true;
@@ -242,7 +254,7 @@ export function animateGhostAttack(figure:T.Group,time:number,reducedMotion:bool
     const fore=rig.arms[i].quaternion.clone().multiply(rig.forearms[i].quaternion),palm=new T.Quaternion().setFromEuler(new T.Euler(-1.38+Math.sin(time*21+i)*convulsion*.3,side*.12,side*.06));
     rig.palms[i].quaternion.copy(fore).invert().multiply(palm);
   }
-  const clearance=crawlClearance(figure,solids,3),fold=armTuck(clearance),inverse=rig.torso.quaternion.clone().invert();
+  const fold=armTuck(clearance),inverse=rig.torso.quaternion.clone().invert();
   if(fold>0)for(let i=0;i<2;i++){
     const side=i===0?-1:1,upper=rig.arms[i].quaternion.clone(),fore=upper.clone().multiply(rig.forearms[i].quaternion);
     const elbow=new T.Vector3(0,-1,0).applyQuaternion(upper),foreAxis=new T.Vector3(0,-1,0).applyQuaternion(fore);

@@ -94,6 +94,99 @@ test('arm and hand skin have no open wrist seam while reaching, folding and craw
 });
 
 function inside(p,polygon){let yes=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){const a=polygon[i],b=polygon[j];if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)yes=!yes;}return yes;}
+test('the recessed oral surface closes without collapsed center triangles',()=>{
+ const r=createFace(new T.Group(),new T.MeshStandardMaterial()),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3();
+ for(const open of [.021,.1,.3,.6,1]){
+  poseFace(r,open);const geometry=r.throat.geometry,positions=geometry.getAttribute('position'),indices=geometry.index;
+  for(let i=0;i<indices.count;i+=3){
+   a.fromBufferAttribute(positions,indices.getX(i));b.fromBufferAttribute(positions,indices.getX(i+1));c.fromBufferAttribute(positions,indices.getX(i+2));
+   assert.ok(b.sub(a).cross(c.sub(a)).length()>1e-10,`collapsed oral triangle ${i/3} at openness ${open}`);
+  }
+ }
+});
+
+test('the oral floor follows the dropped jaw and is occluded outside the lip',()=>{
+ const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial());poseFace(r,.3);head.updateMatrixWorld(true);
+ const floor=head.getObjectByName('ghost-tongue');assert.ok(floor,'the lower mouth needs a sculpted oral floor');
+ const start=floor.getWorldPosition(new T.Vector3()),jaw=r.jaw.getWorldPosition(new T.Vector3());
+ for(const open of [.3,.6,1]){
+  poseFace(r,open);head.updateMatrixWorld(true);
+  const offset=floor.getWorldPosition(new T.Vector3()).sub(start),dropped=r.jaw.getWorldPosition(new T.Vector3()).sub(jaw);
+  assert.ok(offset.distanceTo(dropped)<.00001,'the oral floor cannot float independently from the lower jaw');
+  const border=Array.from({length:64},(_,i)=>new T.Vector3().fromBufferAttribute(r.face.geometry.getAttribute('position'),i));
+  const vertices=floor.geometry.getAttribute('position');
+  for(let i=0;i<vertices.count;i++){
+   const p=new T.Vector3().fromBufferAttribute(vertices,i).applyMatrix4(floor.matrixWorld);if(inside(p,border))continue;
+   const hit=new T.Raycaster(new T.Vector3(p.x,p.y,1),new T.Vector3(0,0,-1)).intersectObjects([r.face,floor],false)[0];
+   assert.equal(hit?.object,r.face,`oral floor protrudes past the skin at openness ${open}`);
+  }
+ }
+ poseFace(r,0);assert.equal(floor.visible,false,'no oral prop should appear through the closed resting lips');
+});
+
+function oralCrossings(source,target){
+ const p=source.geometry.getAttribute('position'),indices=source.geometry.index,edges=new Set(),a=new T.Vector3(),b=new T.Vector3(),ray=new T.Raycaster();
+ for(let i=0;i<indices.count;i+=3)for(let j=0;j<3;j++){
+  const u=indices.getX(i+j),v=indices.getX(i+(j+1)%3),key=[Math.min(u,v),Math.max(u,v)].join('/');if(edges.has(key))continue;edges.add(key);
+  a.fromBufferAttribute(p,u).applyMatrix4(source.matrixWorld);b.fromBufferAttribute(p,v).applyMatrix4(source.matrixWorld);const length=a.distanceTo(b);if(length<1e-8)continue;
+  ray.set(a,b.clone().sub(a).normalize());ray.near=1e-7;ray.far=length-1e-7;
+  if(ray.intersectObject(target,false).length)return true;
+ }
+ return false;
+}
+
+test('the deformed tongue preserves outward triangle winding throughout visible opening',()=>{
+ const r=createFace(new T.Group(),new T.MeshStandardMaterial()),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3();
+ assert.equal(r.tongue.material.side,T.FrontSide,'the oral surface must render its outward face with the runtime material');
+ for(const open of [.220001,.225,.3,.6,1,1.025]){
+  poseFace(r,open);const p=r.tongue.geometry.getAttribute('position'),indices=r.tongue.geometry.index;let volume=0;
+  for(let i=0;i<indices.count;i+=3){a.fromBufferAttribute(p,indices.getX(i));b.fromBufferAttribute(p,indices.getX(i+1));c.fromBufferAttribute(p,indices.getX(i+2));volume+=a.dot(b.cross(c))/6;}
+  assert.ok(volume>1e-8,`tongue triangles must face outwards at ${open}: signed volume ${volume}`);
+ }
+});
+
+test('the runtime tongue exterior is visible above the floor with upward outward normals',()=>{
+ const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial()),ray=new T.Raycaster();
+ assert.equal(r.tongue.material.side,T.FrontSide);
+ for(const open of [.220001,.225,.3,.6,1,1.025]){
+  poseFace(r,open);head.updateMatrixWorld(true);
+  for(const dz of [-.02,-.01,0]){
+   ray.set(new T.Vector3(r.jaw.position.x+.0073,r.jaw.position.y+.1,r.jaw.position.z+.128+dz+.00031),new T.Vector3(0,-1,0));ray.far=.5;
+   const floor=ray.intersectObject(r.throat,false).at(-1);assert.ok(floor);
+   // Start inside the mouth, above the tongue but below the cavity roof.
+   ray.set(floor.point.clone().add(new T.Vector3(0,.02,0)),new T.Vector3(0,-1,0));
+   const hit=ray.intersectObjects([r.throat,r.tongue],false)[0];
+   assert.ok(hit?.object===r.tongue&&hit.point.y>floor.point.y+.001,`the runtime tongue exterior must be raised above the floor at ${open}, dz ${dz}`);
+   assert.ok(hit.face.normal.y>.2,`tongue exterior must have an upward outward normal at ${open}, dz ${dz}`);
+  }
+ }
+});
+
+test('the exposed tongue never cuts through either dental crown arch during continuous opening',()=>{
+ const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial());r.tongue.material.side=T.DoubleSide;
+ for(const open of [.220001,.225,.3,.6,1,1.025,...Array.from({length:33},(_,i)=>(i+9)/40)]){
+  poseFace(r,open);head.updateMatrixWorld(true);assert.ok(r.tongue.visible,`tongue must remain visible at ${open}`);
+  for(const tooth of [...r.teeth.children,...r.lower.children]){
+   const side=tooth.material.side;tooth.material.side=T.DoubleSide;
+   assert.ok(!oralCrossings(tooth,r.tongue)&&!oralCrossings(r.tongue,tooth),`${tooth.name} pierces the tongue at ${open}`);tooth.material.side=side;
+  }
+ }
+});
+
+for(const open of [.220001,.225,.3,.6,1,1.025])test(`the tongue underside is planted on the oral floor at openness ${open}`,()=>{
+ const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial()),ray=new T.Raycaster();r.tongue.material.side=T.DoubleSide;
+ {
+  poseFace(r,open);head.updateMatrixWorld(true);
+  for(const dz of [-.025,-.02,-.01,0,.01,.02,.025]){
+   ray.set(new T.Vector3(r.jaw.position.x+.0073,r.jaw.position.y+.1,r.jaw.position.z+.128+dz+.00031),new T.Vector3(0,-1,0));ray.far=.5;
+   const tongue=ray.intersectObject(r.tongue,false),floor=ray.intersectObject(r.throat,false);
+   assert.ok(tongue.length>=2&&floor.length,`missing supported tongue section at ${open}, dz ${dz}`);
+   const gap=tongue.at(-1).point.y-floor.at(-1).point.y;
+   assert.ok(gap<=.001&&gap>=-.002,`tongue underside must meet floor at ${open}, dz ${dz}: gap ${gap}`);
+  }
+ }
+});
+
 test('tooth crowns are recessed and the cheeks occlude teeth outside the mouth opening',()=>{
  const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial());
  for(const open of [.3,.6,1]){
