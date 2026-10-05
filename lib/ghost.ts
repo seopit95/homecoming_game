@@ -236,20 +236,25 @@ export function animateGhostAttack(figure:T.Group,time:number,reducedMotion:bool
   const gape=opening*(1+Math.sin(time*33)*(reducedMotion?.006:.025));
   rig.head.position.z+=.055*opening;poseFace(rig.face,gape);rig.mouth.visible=true;
   rig.hair.rotation.set(0,0,0);rig.tails.rotation.set(0,0,0);
-  for(let i=0;i<2;i++){const side=i===0?-1:1;rig.arms[i].rotation.set(-2.05+Math.sin(time*18+i)*convulsion*2,side*.3,side*.35);rig.forearms[i].rotation.set(-.8+Math.sin(time*21+i)*convulsion,0,side*.2);}
+  for(let i=0;i<2;i++){
+    const side=i===0?-1:1,hand=new T.Vector3(side*.34,.06+Math.sin(time*18+i)*convulsion*.18,.40+Math.sin(time*21+i)*convulsion*.08);
+    reach(rig.arms[i],rig.forearms[i],hand,.46,.49,side,new T.Vector3(side*.9,-.65,-.2));
+    const fore=rig.arms[i].quaternion.clone().multiply(rig.forearms[i].quaternion),palm=new T.Quaternion().setFromEuler(new T.Euler(-1.38+Math.sin(time*21+i)*convulsion*.3,side*.12,side*.06));
+    rig.palms[i].quaternion.copy(fore).invert().multiply(palm);
+  }
   const clearance=crawlClearance(figure,solids,3),fold=armTuck(clearance),inverse=rig.torso.quaternion.clone().invert();
   if(fold>0)for(let i=0;i<2;i++){
     const side=i===0?-1:1,upper=rig.arms[i].quaternion.clone(),fore=upper.clone().multiply(rig.forearms[i].quaternion);
     const elbow=new T.Vector3(0,-1,0).applyQuaternion(upper),foreAxis=new T.Vector3(0,-1,0).applyQuaternion(fore);
     const hand=foreAxis.clone().multiplyScalar(.49).add(elbow.clone().multiplyScalar(.46)).add(rig.arms[i].position);
-    hand.lerp(new T.Vector3(side*.17,rig.torso.position.y+.32,.27).sub(rig.torso.position).applyQuaternion(inverse),fold);
-    const pole=elbow.clone().lerp(new T.Vector3(0,1,0).applyQuaternion(inverse),fold);
+    hand.lerp(new T.Vector3(side*.17,rig.torso.position.y+.06,.22).sub(rig.torso.position).applyQuaternion(inverse),fold);
+    const pole=elbow.clone().lerp(new T.Vector3(0,-1,-.2).normalize().applyQuaternion(inverse),fold);
     reach(rig.arms[i],rig.forearms[i],hand,.46,.49,side,pole);
     const bentElbow=new T.Vector3(0,-1,0).applyQuaternion(rig.arms[i].quaternion),bentFore=new T.Vector3(0,-1,0).applyQuaternion(rig.forearms[i].quaternion).applyQuaternion(rig.arms[i].quaternion);
     rig.arms[i].quaternion.setFromUnitVectors(elbow,bentElbow).multiply(upper);
     const foreOrientation=new T.Quaternion().setFromUnitVectors(foreAxis,bentFore).multiply(fore);
     rig.forearms[i].quaternion.copy(rig.arms[i].quaternion).invert().multiply(foreOrientation);
-    const wrist=rig.torso.quaternion.clone().multiply(fore).slerp(new T.Quaternion(),fold);
+    const wrist=rig.torso.quaternion.clone().multiply(fore).multiply(rig.palms[i].quaternion).slerp(new T.Quaternion(),fold);
     rig.palms[i].quaternion.copy(rig.torso.quaternion).multiply(foreOrientation).invert().multiply(wrist);
   }
   poseDress(rig.gown,rig.hem,rig.torso,rig.knees,0,false,clearance.back,clearance.side,clearance.front);settleHair(rig.tails,figure,time,0);poseArms(rig);bloodDrops(rig,time);

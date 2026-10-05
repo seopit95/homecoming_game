@@ -5,6 +5,24 @@ import {createGhost,animateGhost,animateGhostAttack,animateGhostPassenger} from 
 import {createFace,poseFace} from '../lib/ghost-face.ts';
 import {extremity} from '../lib/ghost-anatomy.ts';
 
+test('capture arms leave the eyes and nose visible from the actual falling-player viewpoint',()=>{
+ const figure=createGhost(new T.Group()),ray=new T.Raycaster(),limbs=[];
+ figure.traverse(mesh=>{if(mesh.isMesh&&(mesh.name==='ghost-continuous-arm'||mesh.name==='ghost-fitted-sleeve'||mesh.name.startsWith('ghost-hand-')||mesh.name==='ghost-long-nail'))limbs.push(mesh);});
+ const cases=[{name:'open',solids:[]},...[-1,1].map(side=>({name:`side wall ${side}`,solids:[{x:side*.531,z:0,w:.2,d:4,y:1.5,h:3}]})),
+  {name:'resident door behind player',solids:[{x:0,z:1.1335,w:1.2,d:.1,y:1.15,h:2.3}]}];
+ for(const eye of [1,1.65])for(const reduced of [false,true])for(const {name,solids} of cases)for(const time of [.35,.55,.75,1,1.4,1.8,2.6]){
+  animateGhostAttack(figure,time,reduced,eye,solids);figure.updateMatrixWorld(true);
+  const fall=T.MathUtils.smoothstep(time,1.05,2.55),camera=new T.Vector3(0,T.MathUtils.lerp(eye,.27,fall),name==='resident door behind player'?Math.min(.8535,.85+fall*.2):.85+fall*.2);
+  const face=figure.getObjectByName('ghost-continuous-face'),positions=face.geometry.getAttribute('position');
+  for(const [x,y] of [[-.075,.245],[.075,.245],[0,.13],[0,.30]]){
+   let closest=Infinity,index=0;for(let i=0;i<positions.count;i++){const distance=(positions.getX(i)-x)**2+(positions.getY(i)-y)**2;if(distance<closest){closest=distance;index=i;}}
+   const point=new T.Vector3().fromBufferAttribute(positions,index).applyMatrix4(face.matrixWorld);
+   ray.set(camera,point.clone().sub(camera).normalize());ray.far=camera.distanceTo(point)-.005;
+   assert.equal(ray.intersectObjects(limbs,false).length,0,`limb obscures face (${x}, ${y}) at ${time}s, eye ${eye}, reduced ${reduced}, ${name}`);
+  }
+ }
+});
+
 test('visible leg skin connects each hip to its knee in standing, crawling and folded poses',()=>{
  const f=createGhost(new T.Group()),ray=new T.Raycaster(),center=new T.Vector3(),out=new T.Vector3();
  for(const pose of ['walk','crawl','fold','passenger','attack'])for(const time of [0,.4,1.5]){
