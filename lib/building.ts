@@ -103,7 +103,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       for(let y=-3;y>-83;y-=3){box(0,y-.1,0,bx*2,.2,bz*2,concrete);box(-bx,y+.44,0,.13,.88,bz*2,concrete);}
       for(const y of [3,6]){box(0,y+2.8,0,bx*2,.16,bz*2,concrete);box(-bx,y+.44,0,.13,.88,bz*2,concrete);}
       const skyline=new T.Mesh(new T.PlaneGeometry(100,90),nightWindow());skyline.position.set(-28,-26,-2);skyline.rotation.y=Math.PI/2;root.add(skyline);
-      label('백로아파트 · 1993',0,2.5,bz-.11,Math.PI,1.45,.2);
+      label('백로아파트 · 1994년 준공',0,2.5,bz-.11,Math.PI,1.45,.2);
     }else{
       const shaft=box(0,1.35,-1.57,2.1,2.7,.025,mat('#030505'));shaft.name='lift-shaft-darkness';
       let regularPreview:T.Object3D[]=[],servicePreview:T.Object3D[]=[];
@@ -120,7 +120,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       for(const x of [-2.65,2.65])box(x,-.1,dz-7,1.7,.2,14,floorMat);
       for(const x of [-3.38,3.38])for(const z of [10,15.2])unit(x,z-21.35,String(2401+Math.round((z+16)/5.2)+(x>0?8:0)));
       for(const x of [-2.65,2.65])fixture(x,16-21.35,true);
-      const signZ=17-21.35;box(0,2.4,signZ-.02,1.58,.27,.05,metal);for(const x of [-.55,.55])box(x,2.67,signZ-.02,.013,.27,.013,metal);label('← 비상계단 →',0,2.4,signZ+.012,0,1.5,.2);light(0,2.5,signZ,'#738877',3);
+      const signZ=17-21.35;box(0,2.4,signZ-.02,1.58,.27,.05,metal);for(const x of [-.55,.55])box(x,2.67,signZ-.02,.013,.27,.013,metal);label('복도 끝 비상계단',0,2.4,signZ+.012,0,1.5,.2);light(0,2.5,signZ,'#738877',3);
       regularPreview=root.children.slice(previewStart);regularPreview.forEach((mesh,i)=>{mesh.name=`lift-preview-24-${i}`;});
       const serviceStart=root.children.length,annexFloor=surface('oldTile','#aaa897',{roughness:.63}),annexWall=surface('decayWall','#b2b09b'),lower=surface('wall','#4b6054');
       box(0,-.12,dz-8,4,.24,16,annexFloor);box(0,2.91,dz-8,4,.22,16,annexWall);
@@ -140,7 +140,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const z of [-8,8]){box(0,1.4,z,3.8,2.8,12,plaster,true);for(const x of [-1.94,1.94]){label(z<0?'공동 배관실':'전기 설비실',Math.sign(x)*1.904,2,z,x<0?-Math.PI/2:Math.PI/2,.85,.18);box(x,1.02,z,.045,1.66,.79,metal);for(let i=0;i<7;i++)box(x+Math.sign(x)*.026,.54+i*.052,z,.012,.014,.55,dark);roundPipe(root,[x,2.36,z-5.8],[x,2.36,z+5.8],.017,metal);}}
     for(const x of [-bx+.12,bx-.12])for(let z=-16;z<18;z+=5.2)unit(x,z,String(2401+Math.round((z+16)/5.2)+(x>0?8:0)));
     for(const x of [-2.65,2.65])for(const z of [-16,-5,5,16])fixture(x,z,z!==5);
-    for(const z of [-17,0,17]){box(0,2.4,z-.02,1.58,.27,.05,metal);for(const x of [-.55,.55])box(x,2.67,z-.02,.013,.27,.013,metal);label('← 비상계단 →',0,2.4,z+.012,0,1.5,.2);light(0,2.5,z,'#738877',3);}
+    for(const z of [-17,0,17]){box(0,2.4,z-.02,1.58,.27,.05,metal);for(const x of [-.55,.55])box(x,2.67,z-.02,.013,.27,.013,metal);label('복도 끝 비상계단',0,2.4,z+.012,0,1.5,.2);light(0,2.5,z,'#738877',3);}
     for(const x of [-2.65,2.65])for(let z=-18;z<19;z+=3)box(x,.015,z,.06,.02,.55,mat('#92a68a',{emissive:'#455c3d',emissiveIntensity:.2}));
     box(-3.17,.38,2,.42,.76,.62,wood,true);box(3.18,.5,-3,.35,1,.6,metal,true);puddle(-2.6,-8,.3,2);
     // The cab remains physically behind the player after crossing the open lift sill.
@@ -167,7 +167,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const {hinge,leaf,block:closed}=buildStairDoor(root,solids,-1,2.8,-5.85,'stairs-first-upper-door');leaf.name='stairs-upper-leaf';
     label('연결 복도',-1,5.26,-5.906,0,.9,.18);target('up','방화문 열기',leaf,-1,4.05,-5.65);
     const {hinge:lowerHinge,leaf:lowerLeaf,block:lowerClosed}=buildStairDoor(root,solids,1,-2.8,-5.85,'stairs-loop-door');
-    label('下 · 아래층',1,-.32,-5.906,0,.9,.18);target('down','아래층 방화문 열기',lowerLeaf,1,-1.55,-5.65);
+    label('아래층',1,-.32,-5.906,0,.9,.18);target('down','아래층 방화문 열기',lowerLeaf,1,-1.55,-5.65);
     box(1.25,1.65,5.907,.325,.455,.002,mat('#a59b83'));
     const note=label('백로아파트 · 시설 연락 메모\n\n같은 층으로 돌아왔다면\n계단 표지 아래를 확인하세요.\n\n17층 외벽 공사 / 임시 관리실 1703호\n야간 당직 한서연 · 내선 17\n부재 시 1704호로 연락 바랍니다.\n\n28 가 0317   /   03:17\n03:17   03:17   03:17\n\n그때 멈췄어야지.',1.25,1.65,5.904,Math.PI,.297,.42,'#34392e','#c6bfa6');note.mesh.name='stairs-clue-panel';
     for(const x of [1.14,1.36])box(x,1.865,5.903,.026,.02,.014,metal);

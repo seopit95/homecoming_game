@@ -2,9 +2,10 @@ import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import * as T from 'three';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
-import {basin,sinkCounter,cabinet,roundPipe} from './props.ts';
+import {basin,sinkCounter,cabinet,roundPipe,drawerUnit,writingTable,bed,bookcase} from './props.ts';
 import {createGhost} from './ghost.ts';
 import {nightWindow} from './japan.ts';
+import {dressLivingSpace} from './room-dressing.ts';
 import {createLeatherShoe,wetTexture} from './entry-props.ts';
 import type {Solid,Target} from './world.ts';
 import type {Action,Stage} from './story.ts';
@@ -56,8 +57,8 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     for(const x of [-2.85,2.85])box(x,1.4,.3,3.5,2.8,.13,wall,true);
     box(0,.008,4.8,1.6,.02,1.8,surface('tile','#a5aaa2'));
     const shoe=createLeatherShoe('#302b27',false);shoe.name='resident-leather-shoe';shoe.position.set(1.6,.003,4.8);shoe.rotation.y=.45;root.add(shoe);target('belongings','가죽 신발과 관리비 봉투 확인',shoe,1.6,.15,4.8);
-    box(2.4,.52,5.45,1.25,1.04,.62,wood,true);box(2.4,1.045,5.45,.4,.01,.24,paper);const envelope=label('1704 · 한서연',2.4,1.052,5.45,.38,.22);envelope.rotation.x=-Math.PI/2;target('belongings','1704호 한서연 · 관리비 봉투',envelope,2.4,1.06,5.3);
-    for(const x of [2.09,2.71]){box(x,.54,5.129,.59,.93,.025,wood);box(x,.68,5.105,.03,.18,.027,metal);}box(2.4,1.057,5.45,.25,.001,.001,dark);
+    const entryCabinet=drawerUnit(1.25,1.04,.62,wood);entryCabinet.name='resident-entry-cabinet';entryCabinet.rotation.y=Math.PI;entryCabinet.position.set(2.4,0,5.45);root.add(entryCabinet);solids.push({x:2.4,z:5.45,w:1.25,d:.62,y:.52,h:1.04});box(2.4,1.045,5.45,.4,.01,.24,paper);const envelope=label('1704 · 한서연',2.4,1.052,5.45,.38,.22);envelope.rotation.x=-Math.PI/2;target('belongings','1704호 한서연 · 관리비 봉투',envelope,2.4,1.06,5.3);
+    box(2.4,1.057,5.45,.25,.001,.001,dark);
     label('야간 당직 · 내선 17\n퇴근 후에는 연결문을 잠가 주세요',0,2.6,5.846,1.1,.3,Math.PI);
     const umbrella=new T.Group();umbrella.name='resident-folded-umbrella';umbrella.position.set(4.01,.08,5.2);root.add(umbrella);
     const canopy=new T.Mesh(new T.CylinderGeometry(.032,.07,.76,9),upholstery('#333f46'));canopy.position.y=.44;umbrella.add(canopy);
@@ -66,9 +67,9 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     const umbrellaStand=new T.Mesh(new T.CylinderGeometry(.22,.2,.5,14),metal);umbrellaStand.position.set(4.01,.25,5.2);root.add(umbrellaStand);
     // Low table, a cushion, untouched tea and an answering machine.
     box(-2.8,.035,2.4,2.8,.05,2.5,upholstery('#88846a'));
-    box(-2.6,.39,2.2,1.45,.12,.85,wood,true);for(const x of [-3.2,-2])for(const z of [1.9,2.5])box(x,.17,z,.07,.34,.07,wood);
+    const lowTable=writingTable(1.45,.45,.85,wood);lowTable.name='resident-low-table';lowTable.position.set(-2.6,0,2.2);root.add(lowTable);solids.push({x:-2.6,z:2.2,w:1.45,d:.85,y:.225,h:.45});
     box(-2.6,.1,3.3,.75,.16,.6,upholstery('#536264'));
-    const machine=box(-3.8,.78,3.6,.52,.16,.38,metal);machine.name='resident-answering-machine';box(-3.8,.35,3.6,.8,.7,.62,wood,true);
+    const machine=box(-3.8,.78,3.6,.52,.16,.38,metal);machine.name='resident-answering-machine';const deviceCabinet=drawerUnit(.8,.7,.62,wood);deviceCabinet.name='resident-device-cabinet';deviceCabinet.position.set(-3.8,0,3.6);deviceCabinet.rotation.y=Math.PI;root.add(deviceCabinet);solids.push({x:-3.8,z:3.6,w:.8,d:.62,y:.35,h:.7});
     box(-3.8,.87,3.68,.4,.055,.09,dark);for(const x of [-3.97,-3.63])box(x,.875,3.65,.1,.075,.15,dark);
     for(let i=0;i<9;i++){const button=new T.Mesh(new T.CylinderGeometry(.018,.018,.012,12),i===8?paper:dark);button.position.set(-3.85+(i%3)*.05,.867,3.47+Math.floor(i/3)*.045);root.add(button);}
     const display=label('MSG 01',-3.965,.87,3.53,.12,.09,0,'#1b2926','#bcbe91');display.rotation.x=-Math.PI/2;
@@ -86,12 +87,12 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     box(3.8,1.02,4.4,.75,2.04,.85,paper,true);
     box(3.8,1.03,3.969,.69,1.94,.015,paper);box(4.07,1.35,3.935,.025,.33,.028,metal);
     const note=label('다음에는 맑은 날에.\n내일 오후 두 시',3.8,1.5,3.96,.48,.42,Math.PI);target('portrait','냉장고 쪽지 · 다음에는 맑은 날에',note,3.8,1.5,3.94);box(3.94,1.715,3.944,.07,.033,.016,dark);
-    box(-2.9,.15,-3.4,2,.3,3.1,wood,true);box(-2.9,.38,-3.4,1.9,.25,3,upholstery('#b0a68c'));box(-2.9,.55,-4.4,1.25,.18,.48,upholstery('#c3bba7'));
-    for(const z of [-4.79,-3.01])box(-4.45,1,z,.3,2,.055,wood);box(-4.59,1,-3.9,.035,2,1.8,wood);
-    for(const y of [.03,.5,.96,1.42,1.96])box(-4.45,y,-3.9,.3,.035,1.8,wood);
-    for(const z of [-4.5,-4.25,-4,-3.75])box(-4.42,.68,z,.22,.325,.18,paper);
-    box(3,.75,-4.65,2,.12,.65,wood,true);for(const x of [2.18,3.82])for(const z of [-4.87,-4.43])box(x,.345,z,.075,.69,.075,wood);box(3,.61,-4.88,1.73,.16,.055,wood);
+    const residentBed=bed(2,3.1,.505,wood,upholstery('#b0a68c'),upholstery('#727a69'));residentBed.name='resident-bed';residentBed.rotation.y=Math.PI;residentBed.position.set(-2.9,0,-3.4);root.add(residentBed);solids.push({x:-2.9,z:-3.4,w:2,d:3.1,y:.2525,h:.505},{x:-2.9,z:-5.01,w:2.1,d:.12,y:.72,h:1.2});
+    const residentShelf=bookcase(1.8,2,.3,wood);residentShelf.name='resident-bookcase';residentShelf.rotation.y=Math.PI/2;residentShelf.position.set(-4.45,0,-3.9);root.add(residentShelf);solids.push({x:-4.45,z:-3.9,w:.3,d:1.8,y:1,h:2});
+    const residentDesk=writingTable(2,.81,.65,wood);residentDesk.name='resident-study-desk';residentDesk.position.set(3,0,-4.65);root.add(residentDesk);solids.push({x:3,z:-4.65,w:2,d:.65,y:.405,h:.81});
     box(3,.86,-4.65,.42,.1,.26,paper);
+    box(-2.25,.454,1.98,.36,.008,.22,paper);const reminder=label('약속 메모\n내일 오후 두 시',-2.25,.4585,1.98,.33,.19);reminder.rotation.x=-Math.PI/2;
+    dressLivingSpace(root,solids,'resident');
     const window=new T.Mesh(new T.PlaneGeometry(2.4,1.5),nightWindow());window.position.set(2.7,1.85,-5.83);root.add(window);
     for(const x of [1.45,2.7,3.95])box(x,1.85,-5.8,.04,1.6,.06,metal);box(2.7,1.85,-5.79,2.55,.04,.08,metal);
     label('1703호 · 임시 관리실',0,2.6,-5.846,1.25,.25);target('resident_leave','1703호 연결문 열기',rearDoor!,0,1.25,-5.65);

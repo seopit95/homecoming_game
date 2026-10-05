@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {surface,softBox,boxUV} from './materials.ts';
+import {batchStaticGeometry} from './static-geometry.ts';
 export function roundPipe(parent:T.Object3D,a:number[],b:number[],radius:number,material:T.Material){
   const start=new T.Vector3(...a as [number,number,number]),end=new T.Vector3(...b as [number,number,number]);
   const pipe=new T.Mesh(new T.CylinderGeometry(radius,radius,start.distanceTo(end),12),material);pipe.position.copy(start).add(end).multiplyScalar(.5);pipe.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),end.sub(start).normalize());pipe.castShadow=true;pipe.receiveShadow=true;parent.add(pipe);return pipe;
@@ -53,4 +54,85 @@ export function bathtub(){
  const drain=new T.Mesh(new T.CylinderGeometry(.027,.027,.004,24),chrome);drain.position.set(.4,-.496,0);root.add(drain);
  roundPipe(root,[.6,.014,-.47],[.6,.13,-.47],.016,chrome);roundPipe(root,[.6,.13,-.47],[.6,.13,-.29],.016,chrome);
  return root;
+}
+
+// Batch in one local cell, then restore the assembly origin. Named cushions keep
+// their identity; world batching leaves the installed, named furniture intact.
+function finishFurniture(root:T.Group){
+  for(const child of root.children){child.position.x+=4;child.position.z+=4;}
+  batchStaticGeometry(root,[]);
+  for(const child of root.children){child.position.x-=4;child.position.z-=4;}
+  return root;
+}
+export function writingTable(width:number,topY:number,depth:number,wood:T.Material):T.Group{
+  const root=new T.Group(),thickness=.12,underside=topY-thickness;
+  box(root,[0,topY-thickness/2,0],[width,thickness,depth],wood);
+  const dx=width/2-(depth>.7?.17:.18),dz=depth/2-(depth>.7?.14:.105);
+  for(const x of [-dx,dx])for(const z of [-dz,dz])box(root,[x,underside/2,z],[.085,underside,.085],wood);
+  for(const x of [-dx,dx])box(root,[x,underside-.085,0],[.065,.17,depth-.12],wood);
+  box(root,[0,underside-.085,-dz],[width-.12,.17,.055],wood);
+  return finishFurniture(root);
+}
+export function drawerUnit(width:number,height:number,depth:number,wood:T.Material):T.Group{
+  const root=new T.Group(),t=.035;
+  box(root,[0,.045,0],[width-.08,.09,depth-.06],wood);
+  for(const x of [-1,1])box(root,[x*(width/2-t/2),height/2,0],[t,height,depth],wood);
+  box(root,[0,height-t/2,0],[width,t,depth],wood);box(root,[0,.105,0],[width-.07,.03,depth-.07],wood);
+  box(root,[0,height/2,-depth/2+t/2],[width-.07,height-.07,t],wood);
+  const count=height>.9?3:2,drawerH=(height-.15)/count;
+  for(let i=0;i<count;i++){
+    const y=.12+(i+.5)*drawerH;
+    box(root,[0,y,depth/2-t/2],[width-.08,drawerH-.008,t],wood);
+    box(root,[0,y+.018,depth/2+.012],[Math.min(.18,width*.3),.018,.024],wood);
+  }
+  return finishFurniture(root);
+}
+export function sofa(width:number,depth:number,wood:T.Material,fabric:T.Material):T.Group{
+  const root=new T.Group();
+  for(const x of [-width/2+.16,width/2-.16])for(const z of [-depth/2+.15,depth/2-.15])box(root,[x,.08,z],[.085,.16,.085],wood);
+  box(root,[0,.245,0],[width-.04,.19,depth-.08],wood);
+  box(root,[0,.67,-depth/2+.12],[width,.78,.24],fabric);
+  for(const x of [-width/2+.12,width/2-.12])box(root,[x,.515,0],[.24,.57,depth],fabric);
+  const seatW=(width-.5)/3;
+  for(let i=0;i<3;i++){const cushion=box(root,[(i-1)*(seatW+.015),.42,.07],[seatW,.16,depth-.37],fabric);cushion.geometry.dispose();cushion.geometry=boxUV(softBox(seatW,.16,depth-.37,.07));}
+  for(const [i,x] of [-width*.29,width*.29].entries()){
+    const pillow=box(root,[x,.59,-.10],[.5,.18,.34],fabric);pillow.name=i?'sofa-pillow-right':'sofa-pillow-left';pillow.geometry.dispose();pillow.geometry=boxUV(softBox(.5,.18,.34,.08));
+  }
+  return finishFurniture(root);
+}
+export function bed(width:number,depth:number,mattressTop:number,wood:T.Material,linen:T.Material,blanket:T.Material):T.Group{
+  const root=new T.Group(),mattressH=.23,baseTop=mattressTop-mattressH;
+  for(const x of [-width/2+.15,width/2-.15])for(const z of [-depth/2+.16,depth/2-.16])box(root,[x,.08,z],[.1,.16,.1],wood);
+  for(const x of [-width/2+.055,width/2-.055])box(root,[x,(baseTop+.13)/2,0],[.11,baseTop-.13,depth],wood);
+  box(root,[0,baseTop-.04,0],[width-.12,.08,depth-.08],wood);
+  for(const z of [-depth/2+.055,depth/2-.055])box(root,[0,(baseTop+.13)/2,z],[width,baseTop-.13,.11],wood);
+  box(root,[0,.72,depth/2+.06],[width+.1,1.2,.12],wood);
+  const mattress=box(root,[0,mattressTop-mattressH/2,0],[width-.1,mattressH,depth-.1],linen);mattress.geometry.dispose();mattress.geometry=boxUV(softBox(width-.1,mattressH,depth-.1,.075));
+  for(const [i,x] of [-width*.23,width*.23].entries()){
+    const pillow=box(root,[x,mattressTop+.1,depth/2-.43],[width*.37,.2,.46],linen);pillow.name=i?'bed-pillow-right':'bed-pillow-left';pillow.geometry.dispose();pillow.geometry=boxUV(softBox(width*.37,.2,.46,.085));
+  }
+  const cloth=box(root,[0,mattressTop+.018,-depth*.17],[width+.04,.036,depth*.58],blanket);cloth.name='bed-blanket';cloth.geometry.dispose();cloth.geometry=boxUV(softBox(width+.04,.036,depth*.58,.015));
+  // A thin hanging hem overlaps the top cloth at each side; its bottom remains above the floor.
+  for(const x of [-1,1])box(root,[x*(width/2+.008),mattressTop-.12,-depth*.17],[.025,.275,depth*.58],blanket);
+  return finishFurniture(root);
+}
+export function bookcase(width:number,height:number,depth:number,wood:T.Material):T.Group{
+  const root=new T.Group(),t=.035;
+  for(const x of [-1,1])box(root,[x*(width/2-t/2),height/2,0],[t,height,depth],wood);
+  box(root,[0,height/2,-depth/2+t/2],[width-.07,height,t],wood);
+  const shelves=[.055,.2,.2+(height-.3)/3,.2+2*(height-.3)/3,height-.045];
+  for(const y of shelves)box(root,[0,y,0],[width-.07,.035,depth],wood);
+  const pages=new T.MeshStandardMaterial({color:'#c1b99d',roughness:.95});pages.name='book-pages';
+  const covers=['#4e4238','#515747','#655347'].map(color=>{const material=new T.MeshStandardMaterial({color,roughness:.91});material.name='book-cover';return material;});
+  for(let row=0;row<3;row++){
+    let left=-width/2+.14;
+    for(let i=0;i<7;i++){
+      const thickness=[.025,.042,.032,.055,.028,.037,.046][i],h=.24+((i*3+row)%5)*.025,d=Math.min(depth-.085,.22+(i%3)*.015),y=shelves[row+1]+.0175,z=depth/2-d/2-.035,x=left+thickness/2,cover=covers[(row+i)%3];
+      box(root,[x,y+h/2,z],[thickness-.006,h-.006,d-.008],pages);
+      for(const side of [-1,1])box(root,[x+side*(thickness/2-.0015),y+h/2,z],[.003,h,d],cover);
+      box(root,[x,y+h/2,z+d/2-.003],[thickness,h,.006],cover);
+      left+=thickness+.012;
+    }
+  }
+  return finishFurniture(root);
 }

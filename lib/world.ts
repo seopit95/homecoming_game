@@ -4,8 +4,9 @@ import type { Action, Area } from './story';
 import {buildBuilding,makeFigure} from './building.ts';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {createEntryEvidence} from './entry-props.ts';
-import {basin,bathtub,sinkCounter,cabinet,roundPipe} from './props.ts';
+import {basin,bathtub,sinkCounter,cabinet,roundPipe,sofa,drawerUnit,writingTable,bed,bookcase} from './props.ts';
 import {dressApartment} from './japan.ts';
+import {dressLivingSpace} from './room-dressing.ts';
 import {batchStaticGeometry} from './static-geometry.ts';
 import {solidContainsPoint,type Occupant} from './collision.ts';
 import {setDoorAngle} from './passage.ts';
@@ -102,7 +103,7 @@ function buildApartment(scene:T.Group) {
   for(const y of [.94,1.15])box(0,y,-8.84,14,.035,.04,metal);
   for(let x=-7;x<=7;x+=.8)box(x,1.05,-8.84,.025,.22,.025,metal);
   for(const x of [-5,5])box(x,1.45,-8.8,.22,2.9,.23,surface('garage','#828c84'));
-  sign('28층  ·  승강기 →',-2.2,2.47,-6.354,Math.PI,1.2,.2);
+  sign('28층 · 바깥 복도 승강기',-2.2,2.47,-6.354,Math.PI,1.2,.2);
 
   targets.push({id:'door',point:new T.Vector3(...home.door),label:'현관문 확인',mesh:door});
   at(1.18,-5.3);
@@ -116,21 +117,19 @@ function buildApartment(scene:T.Group) {
   at(-3.2,2.4);
   box(-3.2,.018,2.4,5.2,.035,3.7,upholstery('#7b7967'));
   at(-1.2,2.5);
-  box(-1.2,.35,2.5,1.1,.5,3.2,wood,true);box(-.78,.89,2.5,.26,1,3.2,fabric);
-  for(const x of [-1.6,-.8])for(const z of [1.12,3.88])box(x,.06,z,.09,.12,.09,trim);
-  for(const z of [1,4])box(-1.2,.69,z,1.1,.5,.25,fabric);for(const z of [1.55,2.5,3.45]){const cushion=box(-1.28,.65,z,.85,.23,.85,fabric);cushion.geometry.dispose();cushion.geometry=softBox(.85,.23,.85,.1);}
+  const couch=sofa(3.2,1.1,wood,fabric);couch.name='home-sofa';couch.rotation.y=-Math.PI/2;couch.position.set(-1.2,0,2.5);scene.add(couch);solids.push({x:-1.2,z:2.5,w:1.1,d:3.2,y:.53,h:1.06});
   at(-3.15,2.4);
-  box(-3.15,.47,2.4,1.2,.13,1.8,wood,true);for(const x of [-3.62,-2.68])for(const z of [1.65,3.15])box(x,.22,z,.075,.45,.075,wood);
-  const phone=box(-3.15,.60,2.4,.37,.12,.42,cream);
-  box(-3.15,.71,2.23,.4,.085,.1,dark);for(const x of [-3.3,-3])box(x,.68,2.25,.12,.12,.16,dark);
-  for(let i=0;i<9;i++)box(-3.23+(i%3)*.07,.668,2.4+Math.floor(i/3)*.05,.045,.014,.03,dark);
-  const cord=[];for(let i=0;i<80;i++)cord.push(new T.Vector3(-3.39+Math.sin(i*.7)*.018,.62-i*.003,2.27+i*.009));
+  const phoneTable=writingTable(1.2,.535,1.8,wood);phoneTable.name='home-phone-table';phoneTable.position.set(-3.15,0,2.4);scene.add(phoneTable);solids.push({x:-3.15,z:2.4,w:1.2,d:1.8,y:.2675,h:.535});
+  const phone=box(-3.15,.595,2.4,.37,.12,.42,cream);
+  box(-3.15,.705,2.23,.4,.085,.1,dark);for(const x of [-3.3,-3])box(x,.675,2.25,.12,.12,.16,dark);
+  for(let i=0;i<9;i++)box(-3.23+(i%3)*.07,.663,2.4+Math.floor(i/3)*.05,.045,.014,.03,dark);
+  const cord=[];for(let i=0;i<80;i++)cord.push(new T.Vector3(-3.39+Math.sin(i*.7)*.018,.615-i*.003,2.27+i*.009));
   scene.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(cord),80,.007,5,false),dark));
-  const ps=new T.Mesh(new T.PlaneGeometry(.15,.07),new T.MeshBasicMaterial({map:print('03:17','#c3d9c8','#24483e',45,256,512)}));ps.position.set(-3.15,.667,2.32);ps.rotation.x=-Math.PI/2;scene.add(ps);
-  targets.push({id:'phone',point:new T.Vector3(...home.phone),label:'전화 받기',mesh:phone});const phoneGlow=new T.PointLight('#8cbf9f',.6,2);phoneGlow.position.set(-3.15,.8,2.4);scene.add(phoneGlow);
-  cyl(-3.35,.64,2.98,.11,.21,cream);cyl(-3.35,.751,2.98,.087,.004,mat('#201a13'));box(-3.1,.545,1.91,.45,.02,.33,cream);
+  const ps=new T.Mesh(new T.PlaneGeometry(.15,.07),new T.MeshBasicMaterial({map:print('03:17','#c3d9c8','#24483e',45,256,512)}));ps.position.set(-3.15,.662,2.32);ps.rotation.x=-Math.PI/2;scene.add(ps);
+  targets.push({id:'phone',point:new T.Vector3(...home.phone),label:'전화 받기',mesh:phone});const phoneGlow=new T.PointLight('#8cbf9f',.6,2);phoneGlow.position.set(-3.15,.795,2.4);scene.add(phoneGlow);
+  box(-3.1,.545,1.91,.45,.02,.33,cream);
   at(-6.12,2.4);
-  box(-6.12,.43,2.4,.62,.86,2.8,wood,true);box(-6.39,1.43,2.4,.13,1.13,2.3,dark);
+  const tvCabinet=drawerUnit(2.8,.86,.62,wood);tvCabinet.name='home-tv-cabinet';tvCabinet.rotation.y=Math.PI/2;tvCabinet.position.set(-6.12,0,2.4);scene.add(tvCabinet);solids.push({x:-6.12,z:2.4,w:.62,d:2.8,y:.43,h:.86});box(-6.39,1.43,2.4,.13,1.13,2.3,dark);
   const tvCanvas=document.createElement('canvas');tvCanvas.width=640;tvCanvas.height=320;
   const tvContext=tvCanvas.getContext('2d')!,tvTexture=new T.CanvasTexture(tvCanvas);tvTexture.colorSpace=T.SRGBColorSpace;
   const tvMaterial=new T.MeshBasicMaterial({map:tvTexture,color:0x000000});
@@ -163,21 +162,15 @@ function buildApartment(scene:T.Group) {
   at(-4.2,5.15);
   const timer=cyl(-4.2,.9,5.15,.105,.16,cream);targets.push({id:'lure',point:new T.Vector3(-4.2*S,.94,5.15*S),label:'주방 타이머 울리기',mesh:timer});
   at(-5.3,-5.6);
-  box(-5.3,.74,-5.6,2.1,.12,.8,wood,true);
-  for(const x of [-6.18,-4.42])for(const z of [-5.86,-5.34])box(x,.34,z,.085,.68,.085,wood);
-  box(-5.3,.59,-5.88,1.85,.18,.065,wood);
+  const study=writingTable(2.1,.8,.8,wood);study.name='home-study-desk';study.position.set(-5.3,0,-5.6);scene.add(study);solids.push({x:-5.3,z:-5.6,w:2.1,d:.8,y:.4,h:.8});
   at(-6.12,-3.4);
-  solids.push({x:-6.12,z:-3.4,w:.65,d:1.4,y:1.15,h:2.3});
-  box(-6.4,1.15,-3.4,.09,2.3,1.4,wood);for(const z of [-4.055,-2.745])box(-6.12,1.15,z,.65,2.3,.09,wood);
-  for(const y of [.045,.2,.85,1.5,2.255])box(-6.12,y,-3.4,.65,.045,1.4,wood);
-  for(let i=0;i<15;i++)box(-5.88,.423+Math.floor(i/5)*.65,-3.94+(i%5)*.23,.15,.4,.16,mat(['#4e4238','#515747','#655347'][i%3]));
+  const shelf=bookcase(1.4,2.3,.65,wood);shelf.name='home-bookcase';shelf.rotation.y=Math.PI/2;shelf.position.set(-6.12,0,-3.4);scene.add(shelf);solids.push({x:-6.12,z:-3.4,w:.65,d:1.4,y:1.15,h:2.3});
   at(-5.3,-5.6);
   box(-5.3,.82,-5.6,.6,.04,.4,cream);
   at(-4.8,-6.25);sign('백로아파트',-4.8,1.9,-6.146,0,.9,.3);
   // Bedroom wardrobe faces a generous clear floor, away from the bed.
   at(4.8,4.6);
-  box(4.8,.25,4.6,2.3,.5,2.5,wood,true);box(4.8,.6,4.6,2.2,.23,2.4,upholstery('#cac5b6'));box(4.8,.76,4.25,2.18,.13,1.55,upholstery('#596966'));box(4.8,1.02,5.91,2.4,1.2,.13,wood);
-  for(const x of [4.25,5.35])box(x,.8,5.43,.85,.2,.44,cream);
+  const sleepingBed=bed(2.3,2.5,.715,wood,upholstery('#cac5b6'),upholstery('#596966'));sleepingBed.name='home-bed';sleepingBed.position.set(4.8,0,4.6);scene.add(sleepingBed);solids.push({x:4.8,z:4.6,w:2.3,d:2.5,y:.3575,h:.715},{x:4.8,z:5.91,w:2.4,d:.12,y:.72,h:1.2});
   at(2.75,5.15);
   box(2.75,.47,5.15,.61,.94,.7,wood,true);const radio=box(2.75,1.07,5.15,.48,.28,.26,mat('#4d4638'));
   for(let i=0;i<8;i++)box(2.57+i*.035,1.07,5.007,.012,.19,.014,dark);
@@ -187,12 +180,11 @@ function buildApartment(scene:T.Group) {
   box(1.967,1.39,4.2,.009,.012,.025,new T.MeshBasicMaterial({color:'#778667'}));
   targets.push({id:'switch',point:new T.Vector3(...home.switch),label:'전등 스위치 켜기',mesh:lightSwitch});
   at(3.75,5.43);
-  const bedside=box(3.75,.34,5.43,.55,.68,.62,wood,true);bedside.name='bedside-nightstand';
-  for(const y of [.2,.48]){box(3.75,y,5.108,.48,.23,.023,trim);box(3.75,y,5.088,.12,.018,.024,metal);}
+  const bedside=drawerUnit(.55,.68,.62,wood);bedside.name='home-nightstand';bedside.rotation.y=Math.PI;bedside.position.set(3.75,0,5.43);scene.add(bedside);solids.push({x:3.75,z:5.43,w:.55,d:.62,y:.34,h:.68});
   const torchPickup=new T.Group();torchPickup.name='flashlight-pickup';scene.add(torchPickup);
-  const torchBody=cyl(3.75,.735,5.43,.035,.24,dark,torchPickup);torchBody.rotation.x=Math.PI/2;
-  const torchHead=cyl(3.75,.735,5.30,.05,.065,metal,torchPickup);torchHead.rotation.x=Math.PI/2;
-  const torchCap=cyl(3.75,.735,5.54,.05,.025,dark,torchPickup);torchCap.rotation.x=Math.PI/2;
+  const torchBody=cyl(3.75,.730,5.43,.035,.24,dark,torchPickup);torchBody.rotation.x=Math.PI/2;
+  const torchHead=cyl(3.75,.730,5.30,.05,.065,metal,torchPickup);torchHead.rotation.x=Math.PI/2;
+  const torchCap=cyl(3.75,.730,5.54,.05,.025,dark,torchPickup);torchCap.rotation.x=Math.PI/2;
   targets.push({id:'flashlight',point:new T.Vector3(...home.flashlight),label:'손전등 집어 들기',mesh:torchPickup});
   at(6.08,1.55);
   const closet=box(6.08,1.2,1.55,.95,2.4,2.1,wood,true);box(5.59,1.22,1.55,.045,2.26,2,mat('#544333'));targets.push({id:'closet',point:new T.Vector3(...home.closet),label:'장롱에 숨기',mesh:closet});
@@ -222,7 +214,7 @@ function buildApartment(scene:T.Group) {
   finish();
   const bathTile=surface('oldTile','#c9ccbf',{roughness:.43});box(5.3*S,.006,-3.375*S,2.6*S-.22,.008,5.75*S-.2,bathTile);box(5.3*S,.72,-6.25*S+.106,2.6*S-.19,1.44,.012,bathTile);box(6.6*S-.106,.72,-3.375*S,.012,1.44,5.75*S-.2,bathTile);
   const doorwayGlow=new T.SpotLight('#98b2bf',0,13,.56,.8,1.7);doorwayGlow.position.set(0,2.3,home.door[2]-.6);doorwayGlow.target.position.set(0,.1,home.door[2]+5);scene.add(doorwayGlow,doorwayGlow.target);
-  dressApartment(scene,'apartment');const figure=makeFigure(scene);figure.position.set(...home.haunt);lamps.forEach((lamp,i)=>{lamp.name=`apartment-lamp-${i}`;});
+  dressApartment(scene,'apartment');dressLivingSpace(scene,solids,'apartment');const figure=makeFigure(scene);figure.position.set(...home.haunt);lamps.forEach((lamp,i)=>{lamp.name=`apartment-lamp-${i}`;});
   const doorSolid={x:0,z:door.position.z,w:1.45,d:.13,y:1.22,h:2.44};solids.push(doorSolid);
   let openedAt=-1;
   function updateStory(stage:import('./story').Stage,time:number,reduced:boolean,_story?:import('./story').Story,occupants:Occupant[]=[]){

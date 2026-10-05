@@ -3,7 +3,9 @@
   "license_url": "https://polyhaven.com/license",
   "assets": [
     "https://polyhaven.com/a/painted_plaster_wall",
-    "https://polyhaven.com/a/concrete_floor_02"
+    "https://polyhaven.com/a/concrete_floor_02",
+    "https://polyhaven.com/a/dark_wood",
+    "https://polyhaven.com/a/old_wooden_floor_02"
   ],
   "maps": [
     {
@@ -41,6 +43,78 @@
       "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_02/concrete_floor_02_arm_1k.jpg",
       "md5": "5995ee8efda4e7966a277b3d9049eb2b",
       "bytes": 146483
+    },
+    {
+      "file": "wood-color.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dark_wood/dark_wood_diff_1k.jpg",
+      "md5": "47fa883f1bb33acc5711245f64b75975",
+      "bytes": 754754,
+      "sha256": "d68da31655bf47024af893156a6a01a6c95bb60f55d97e2dc9bdd47be320e5b5",
+      "asset": "dark_wood"
+    },
+    {
+      "file": "wood-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dark_wood/dark_wood_nor_gl_1k.jpg",
+      "md5": "ca74ffa4c1b7ff5afe7316bbfa87f9a0",
+      "bytes": 344338,
+      "sha256": "c42541f1bda0a14b39f120c24407eeba699af8ac85b371c7cef98ffd7d7b13bf",
+      "asset": "dark_wood"
+    },
+    {
+      "file": "wood-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dark_wood/dark_wood_arm_1k.jpg",
+      "md5": "5fcd59b788282269a279fef1d8fb3300",
+      "bytes": 618801,
+      "sha256": "01553cfe4659fa391ca05e0baf6e4f7f239927715ae2fd2cebec1413a69da1d6",
+      "asset": "dark_wood"
+    },
+    {
+      "file": "wood-floor-color.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_wooden_floor_02/old_wooden_floor_02_diff_1k.jpg",
+      "md5": "c3f6b1d3e8853b0fa46c49382e352da7",
+      "bytes": 845402,
+      "sha256": "c8ee5ae89179dd787a3c2ccdf1be1cb6bb3f33414bddf68f28d3b75654d58bb5",
+      "asset": "old_wooden_floor_02"
+    },
+    {
+      "file": "wood-floor-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_wooden_floor_02/old_wooden_floor_02_nor_gl_1k.jpg",
+      "md5": "b3376138dd783d331e063fc38115f30d",
+      "bytes": 526712,
+      "sha256": "40f1684cd664cae017b312278440703b01a1dcbe3b6f3de84fc882b9588c7e75",
+      "asset": "old_wooden_floor_02"
+    },
+    {
+      "file": "wood-floor-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_wooden_floor_02/old_wooden_floor_02_arm_1k.jpg",
+      "md5": "ad90dc186d6afd4e4a18962d99643bdb",
+      "bytes": 472555,
+      "sha256": "7804fc7c5c5f5591492854d49234df43ba94345c5821452caf32a1514eff4aff",
+      "asset": "old_wooden_floor_02"
     }
-  ]
+  ],
+  "asset_metadata": [
+    {
+      "asset": "dark_wood",
+      "url": "https://polyhaven.com/a/dark_wood",
+      "authors": {
+        "Dario Barresi": "Baking",
+        "Dimitrios Savva": "Photography",
+        "Rico Cilliers": "Tiling"
+      },
+      "physical_width_meters": 2,
+      "physical_height_meters": 2
+    },
+    {
+      "asset": "old_wooden_floor_02",
+      "url": "https://polyhaven.com/a/old_wooden_floor_02",
+      "authors": {
+        "Charlotte Baglioni": "Scanning",
+        "Jenelle van Heerden": "Processing"
+      },
+      "physical_width_meters": 2.03,
+      "physical_height_meters": 2.03
+    }
+  ],
+  "wood_payload_bytes": 3562562
 }
