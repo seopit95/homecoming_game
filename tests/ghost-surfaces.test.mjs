@@ -113,7 +113,7 @@ test('the oral floor follows the dropped jaw and is occluded outside the lip',()
   poseFace(r,open);head.updateMatrixWorld(true);
   const offset=floor.getWorldPosition(new T.Vector3()).sub(start),dropped=r.jaw.getWorldPosition(new T.Vector3()).sub(jaw);
   assert.ok(offset.distanceTo(dropped)<.00001,'the oral floor cannot float independently from the lower jaw');
-  const border=Array.from({length:64},(_,i)=>new T.Vector3().fromBufferAttribute(r.face.geometry.getAttribute('position'),i));
+  const border=r.face.userData.mouthBorder.map(i=>new T.Vector3().fromBufferAttribute(r.face.geometry.getAttribute('position'),i));
   const vertices=floor.geometry.getAttribute('position');
   for(let i=0;i<vertices.count;i++){
    const p=new T.Vector3().fromBufferAttribute(vertices,i).applyMatrix4(floor.matrixWorld);if(inside(p,border))continue;
@@ -190,7 +190,7 @@ for(const open of [.220001,.225,.3,.6,1,1.025])test(`the tongue underside is pla
 test('tooth crowns are recessed and the cheeks occlude teeth outside the mouth opening',()=>{
  const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial());
  for(const open of [.3,.6,1]){
-  poseFace(r,open);head.updateMatrixWorld(true);const positions=r.face.geometry.getAttribute('position'),border=Array.from({length:64},(_,i)=>new T.Vector3().fromBufferAttribute(positions,i));
+  poseFace(r,open);head.updateMatrixWorld(true);const positions=r.face.geometry.getAttribute('position'),border=r.face.userData.mouthBorder.map(i=>new T.Vector3().fromBufferAttribute(positions,i));
   for(const row of [r.teeth,r.lower])for(const tooth of row.children){
    const center=tooth.getWorldPosition(new T.Vector3());
    if(!inside(center,border)){const ray=new T.Raycaster(new T.Vector3(center.x,center.y,1),new T.Vector3(0,0,-1));const hit=ray.intersectObjects([r.face,tooth],false)[0];assert.equal(hit?.object,r.face,`tooth at ${open} is visible outside the lip`);}

@@ -138,7 +138,7 @@ function bloodDrops(rig:Rig,time:number,floor=.022){
 }
 
 function poseArms(rig:Rig){
-  const bottom=new T.Vector3(0,.37,-.012),top=new T.Vector3(0,.045,-.073).multiply(rig.head.scale).applyQuaternion(rig.head.quaternion).add(rig.head.position),axis=top.clone().sub(bottom);
+  const bottom=new T.Vector3(0,.37,-.012),top=new T.Vector3(0,-.090,-.020).multiply(rig.head.scale).applyQuaternion(rig.head.quaternion).add(rig.head.position),axis=top.clone().sub(bottom);
   rig.neck.position.copy(bottom).lerp(top,.5);rig.neck.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),axis.clone().normalize());rig.neck.scale.set(.035,axis.length()*.5+.023,.032);
   [rig.skinArms,rig.sleeves].forEach(meshes=>meshes.forEach((mesh,i)=>poseSkinArm(mesh,rig.arms[i],rig.forearms[i],rig.palms[i])));
 }

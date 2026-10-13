@@ -61,8 +61,18 @@ export function handSkinMaterial(){
 export function faceMaterial(){
   const map=sources.face?.clone();if(map)map.needsUpdate=true;
   const material=new T.MeshPhysicalMaterial({color:'#bcc3bf',map:map??null,roughness:.64,clearcoat:.12,clearcoatRoughness:.4,side:T.DoubleSide});
-  material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.rgb=diffuseColor.rgb*vec3(.96,1.0,1.015);');};
-  material.customProgramCacheKey=()=> 'accident-victim-face-v4';return material;
+  material.onBeforeCompile=shader=>{
+    shader.vertexShader='attribute float faceBlend; varying float vFaceBlend;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvFaceBlend=faceBlend;');
+    shader.fragmentShader='varying float vFaceBlend;\n'+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#ifdef USE_MAP
+      vec4 portrait=texture2D(map,vMapUv);
+      vec2 skinUv=vec2(.73,.30)+vec2(sin(vMapUv.x*18.0),cos(vMapUv.y*16.0))*.028;
+      vec4 skin=texture2D(map,skinUv);
+      diffuseColor*=mix(skin,portrait,vFaceBlend);
+      #endif
+      diffuseColor.rgb*=vec3(.96,1.0,1.015);`);
+  };
+  material.customProgramCacheKey=()=> 'anatomical-accident-face-v5';return material;
 }
 export function boxUV(geometry:T.BufferGeometry,x=0,y=0,z=0,scale=1.8){
   const p=geometry.getAttribute('position'),n=geometry.getAttribute('normal'),uv=geometry.getAttribute('uv');

@@ -31,7 +31,7 @@ test('resident capture body cannot precede oral tissue through the visible mouth
  for(const z of [6.233605619386225,0])for(const eye of [1,1.65])for(const reduced of [false,true]){
   const {world,figure,camera,pose}=fixture(z,eye,reduced),head=figure.getObjectByName('ghost-head'),face=figure.getObjectByName('ghost-continuous-face'),oral=meshesUnder(head),body=meshesUnder(figure).filter(m=>!oral.includes(m));
   try{for(const time of times){
-   pose(time);const p=face.geometry.getAttribute('position'),border=Array.from({length:64},(_,i)=>new T.Vector3().fromBufferAttribute(p,i)),center=border.reduce((a,b)=>a.add(b),new T.Vector3()).divideScalar(64);let checked=0;
+   pose(time);const p=face.geometry.getAttribute('position'),border=face.userData.mouthBorder.map(i=>new T.Vector3().fromBufferAttribute(p,i)),center=border.reduce((a,b)=>a.add(b),new T.Vector3()).divideScalar(64);let checked=0;
    // Interior points of the actual deformed lip, including the lower aperture
    // missed by the eyes/nose ray regression. Runtime material sides stay intact.
    for(let i=0;i<64;i+=4)for(const radial of [.25,.5,.75]){
