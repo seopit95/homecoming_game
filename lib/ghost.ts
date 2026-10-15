@@ -56,7 +56,7 @@ function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,red
   const rig=rigs.get(figure);if(!rig)return;
   rig.tuck=tuck;rig.crawl=crawl;
   rig.body.position.set(0,0,0);rig.body.quaternion.identity();
-  rig.face.jaw.rotation.set(0,0,0);rig.head.position.set(-.025,.46,.028);rig.arms[1].position.y=.245;
+  rig.head.position.set(-.025,.46,.028);rig.arms[1].position.y=.245;
   const step=Math.sin(phase),drag=Math.sin(phase/2),jerk=reducedMotion?0:Math.pow(Math.max(0,Math.sin(time*1.7)),22);
   rig.torso.rotation.set(.035+drag*.018*moving,Math.sin(time*.8)*.035,-.035+Math.max(0,step)*.025*moving);
   rig.torso.position.set(.035,1.16+Math.abs(step)*.014*moving,.02);

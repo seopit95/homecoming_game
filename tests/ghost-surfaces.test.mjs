@@ -135,6 +135,11 @@ function oralCrossings(source,target){
  return false;
 }
 
+function tongueProbe(r,fraction){
+ const box=new T.Box3().setFromObject(r.tongue,true);
+ return new T.Vector3(T.MathUtils.lerp(box.min.x,box.max.x,.58),box.max.y+.03,T.MathUtils.lerp(box.min.z,box.max.z,fraction));
+}
+
 test('the deformed tongue preserves outward triangle winding throughout visible opening',()=>{
  const r=createFace(new T.Group(),new T.MeshStandardMaterial()),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3();
  assert.equal(r.tongue.material.side,T.FrontSide,'the oral surface must render its outward face with the runtime material');
@@ -150,14 +155,16 @@ test('the runtime tongue exterior is visible above the floor with upward outward
  assert.equal(r.tongue.material.side,T.FrontSide);
  for(const open of [.220001,.225,.3,.6,1,1.025]){
   poseFace(r,open);head.updateMatrixWorld(true);
-  for(const dz of [-.02,-.01,0]){
-   ray.set(new T.Vector3(r.jaw.position.x+.0073,r.jaw.position.y+.1,r.jaw.position.z+.128+dz+.00031),new T.Vector3(0,-1,0));ray.far=.5;
-   const floor=ray.intersectObject(r.throat,false).at(-1);assert.ok(floor);
-   // Start inside the mouth, above the tongue but below the cavity roof.
-   ray.set(floor.point.clone().add(new T.Vector3(0,.02,0)),new T.Vector3(0,-1,0));
+  for(const section of [.25,.5,.75]){
+   ray.set(tongueProbe(r,section),new T.Vector3(0,-1,0));ray.far=.5;
+   const cavity=ray.intersectObject(r.throat,false),roof=cavity[0],floor=cavity.at(-1);assert.ok(roof&&floor);
+   // Use the actual shallow aperture below its roof, including early opening.
+   // The rotated rear floor can extend behind the fixed roof; there is then
+   // only one tissue hit and the original probe is already above that floor.
+   ray.set(cavity.length>1?roof.point.clone().add(new T.Vector3(0,-.001,0)):ray.ray.origin.clone(),new T.Vector3(0,-1,0));
    const hit=ray.intersectObjects([r.throat,r.tongue],false)[0];
-   assert.ok(hit?.object===r.tongue&&hit.point.y>floor.point.y+.001,`the runtime tongue exterior must be raised above the floor at ${open}, dz ${dz}`);
-   assert.ok(hit.face.normal.y>.2,`tongue exterior must have an upward outward normal at ${open}, dz ${dz}`);
+   assert.ok(hit?.object===r.tongue&&hit.point.y>floor.point.y+.001,`the runtime tongue exterior must be raised above the floor at ${open}, section ${section}`);
+   assert.ok(hit.face.normal.clone().transformDirection(r.tongue.matrixWorld).y>.2,`tongue exterior must have an upward outward normal at ${open}, section ${section}`);
   }
  }
 });
@@ -177,12 +184,12 @@ for(const open of [.220001,.225,.3,.6,1,1.025])test(`the tongue underside is pla
  const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial()),ray=new T.Raycaster();r.tongue.material.side=T.DoubleSide;
  {
   poseFace(r,open);head.updateMatrixWorld(true);
-  for(const dz of [-.025,-.02,-.01,0,.01,.02,.025]){
-   ray.set(new T.Vector3(r.jaw.position.x+.0073,r.jaw.position.y+.1,r.jaw.position.z+.128+dz+.00031),new T.Vector3(0,-1,0));ray.far=.5;
+  for(const section of [.15,.27,.38,.5,.62,.73,.85]){
+   ray.set(tongueProbe(r,section),new T.Vector3(0,-1,0));ray.far=.5;
    const tongue=ray.intersectObject(r.tongue,false),floor=ray.intersectObject(r.throat,false);
-   assert.ok(tongue.length>=2&&floor.length,`missing supported tongue section at ${open}, dz ${dz}`);
+   assert.ok(tongue.length>=2&&floor.length,`missing supported tongue section at ${open}, section ${section}`);
    const gap=tongue.at(-1).point.y-floor.at(-1).point.y;
-   assert.ok(gap<=.001&&gap>=-.002,`tongue underside must meet floor at ${open}, dz ${dz}: gap ${gap}`);
+   assert.ok(gap<=.001&&gap>=-.002,`tongue underside must meet floor at ${open}, section ${section}: gap ${gap}`);
   }
  }
 });

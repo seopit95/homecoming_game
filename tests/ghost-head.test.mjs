@@ -44,7 +44,10 @@ test('deep oral tissue occludes the retained anterior neck throughout opening',(
  for(const open of [.3,.65,1,1.025]){
   poseFace(r,open);head.updateMatrixWorld(true);
   for(const x of [-.015,-.01,0,.01,.015])for(const dy of [-.01,0,.01]){
-   const y=-.006-.111*open+dy;ray.set(new T.Vector3(x,y,1),new T.Vector3(0,0,-1));
+   const rim=r.face.userData.mouthBorder.map(i=>new T.Vector3().fromBufferAttribute(r.face.geometry.attributes.position,i)),center=rim.reduce((a,b)=>a.add(b),new T.Vector3()).divideScalar(rim.length);
+   // Probe the actual aperture after mandibular rotation, rather than the
+   // removed linear downward-jaw trajectory.
+   const y=center.y+dy;ray.set(new T.Vector3(center.x+x,y,1),new T.Vector3(0,0,-1));
    const hit=ray.intersectObjects([r.face,r.throat],false)[0];
    assert.ok(hit?.object===r.throat,`retained skin exposed inside aperture at open ${open}, x ${x}, y ${y}`);
    assert.ok(hit.point.z<.125,'the fitted rear tissue must remain recessed behind the rim');

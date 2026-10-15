@@ -151,6 +151,21 @@ test('the authored nightdress clears actual closed cabin surfaces through the vi
  }
 });
 
+test('the turning face and refitted hair clear actual closed cabin surfaces through the passenger scare',()=>{
+ const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160);
+ for(const [stage,time] of [['car_voice',3.5],...Array.from({length:55},(_,i)=>['car_crash',Math.min(i*.025,1.349)])]){
+  road.pose(stage,time,camera,false);road.root.updateMatrixWorld(true);
+  const car=road.root.getObjectByName('hero-sedan'),head=road.root.getObjectByName('finale-passenger').getObjectByName('ghost-head'),inverse=car.matrixWorld.clone().invert(),hit=cabinTriangles(car);
+  head.traverse(mesh=>{
+   if(!mesh.isMesh)return;for(let o=mesh;o!==head;o=o.parent)if(!o.visible)return;
+   const p=mesh.geometry.attributes.position,ix=mesh.geometry.index,matrix=inverse.clone().multiply(mesh.matrixWorld);
+   for(let i=0;i<ix.count;i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix.getX(i+j)).applyMatrix4(matrix))),crossing=hit(tri);
+    assert.equal(crossing,null,`${mesh.name} crosses ${crossing?.name} at ${stage} ${time}s, triangle ${i/3}`);
+   }
+  });
+ }
+});
+
 test('the added clavicle skin fits inside the actual passenger cabin',()=>{
  const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160);
  // Two representative cabin poses; the upper skin follows the moving neck

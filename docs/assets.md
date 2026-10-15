@@ -71,3 +71,22 @@ The ghost's old radial bodice and two independent pointed sleeves are replaced b
 `scripts/author-ghost-dress.mjs <tunic-dir> <pinned-base-and-target-dir>` fits the supplied hm08 bindings to the same pinned adult Asian female source as the ghost head, extends the skirt, and bakes cuff-to-bodice arm weights. It needs Node and the existing Three dependency only. The compact derivative is `lib/assets/ghost-dress.json`: 1,558 UV-seam vertices, 2,660 triangles; the source position topology is one connected garment with neck, hem and two cuff openings. Original raw assets stay outside the production checkout. Hashes and the transformations are embedded in the derivative metadata.
 
 Runtime shoulder skin beneath the opaque sleeves is omitted by triangle row, retaining the exposed elbows, forearms and wrist seams. A clavicle/neck excerpt from the same pinned CC0 MakeHuman body supplies the visible skin inside the open collar; it is clipped to the collar aperture and its upper edge blends into the moving neck bridge. The joined garment follows the existing arm rig and lower-body support guides. Sitting gathers the skirt over the real cushion and in front of the inclined seat bolsters in the figure's frame. The wet cotton bitmap from V48 is reused; no new raster or runtime dependency is introduced. These local art/physical improvements are not a whole-game commercial-quality certificate.
+
+### V50 — rotating mandible and source-shaped mouth boundary
+
+The same pinned CC0 head now carries mandibular skin weights instead of the old
+linear jaw-stretch deltas. Its irregular oral excision is smoothed along the
+source face and joined by polar direction, preserving the original philtrum
+and cheek form more closely than the earlier prescribed ellipse. The inner
+lip fits within that boundary. Skull, lids, eyeballs and the posterior neck
+attachment retain their established rig and scale.
+
+The lower face, lower dental arch and oral floor turn around a shared jaw
+frame, with a small asymmetric shift. The upper lip curls slightly during a
+scream, blending into the surrounding connected skin. Roof, floor and lip
+rim derive from the actual fitted lip; the tongue is supported on the posed
+floor behind the incisors. The long01 hair fit and its deformation are rebaked
+against the new skin using the existing pinned sources. Original face/hair
+bitmaps and the V49 garment remain in use. No new external asset, raster or
+runtime dependency is introduced. Representative geometry and art checks do
+not establish commercial character quality or whole-game completion.

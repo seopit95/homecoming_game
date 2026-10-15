@@ -16,23 +16,28 @@ const ringEdges=[...edges.values()].filter(e=>e.n===1&&vertices[e.u][1]>0),links
 let first=[...links.keys()].sort((a,b)=>vertices[b][0]-vertices[a][0])[0],prev=-1,current=first;const border=[];
 do{border.push(current);const next=links.get(current).find(i=>i!==prev);prev=current;current=next;}while(current!==first);
 let area=0;for(let i=0;i<border.length;i++){const a=vertices[border[i]],b=vertices[border[(i+1)%border.length]];area+=a[0]*b[1]-b[0]*a[1];}if(area<0)border.splice(1,border.length-1,...border.slice(1).reverse());
-const arc=[0];for(let i=1;i<=border.length;i++){const a=vertices[border[i-1]],b=vertices[border[i%border.length]];arc.push(arc.at(-1)+Math.hypot((a[0]-b[0])*1.9,(a[1]-b[1])*2));}const angles=new Map(border.map((id,i)=>[id,arc[i]/arc.at(-1)*Math.PI*2]));const angle=i=>angles.get(i);
+const angles=new Map(),angle=i=>angles.get(i);
 const used=[...outer],map=new Map(used.map((j,i)=>[j,i])),position=used.flatMap(i=>{const [x,y,z]=vertices[i];return [x*1.9,y*2-.069,z*1.55-.012];}),index=faces.flatMap(f=>f.map(i=>map.get(i)));
 // Taper the open source neck ring into the existing neck attachment, preserving
 // jaw/skull volume above it and leaving the head group scale unchanged.
 for(let i=0;i<position.length;i+=3){const t=Math.max(0,Math.min(1,(-position[i+1]-.065)/.044));position[i]*=1-t*.42;position[i+2]=-.02+(position[i+2]+.02)*(1-t*.4);}
 const N=64,rows=8,mouthBorder=[];
-function lip(a){const c=Math.cos(a),s=Math.sin(a);return [c*.056,-.006+s*.0025,.164-Math.abs(c)*.011];}
+function lip(a){const c=Math.cos(a),s=Math.sin(a);return [c*.049,-.006+s*.0025,.164-Math.abs(c)*.011];}
 const skinCount=position.length/3,neighbours=Array.from({length:skinCount},()=>new Set());for(let k=0;k<index.length;k+=3){const f=index.slice(k,k+3);for(const i of f)for(const j of f)if(i!==j)neighbours[i].add(j);}
 function harmonic(fixed){let d=Array.from({length:skinCount},(_,i)=>fixed.get(i)?.slice()??[0,0,0]);for(let iteration=0;iteration<180;iteration++){const next=d.map((v,i)=>fixed.has(i)?v:[0,1,2].map(axis=>[...neighbours[i]].reduce((sum,j)=>sum+d[j][axis],0)/neighbours[i].size));d=next;}return d;}
-// Regularise only the excised oral boundary; retain the source skull/eye/nose.
+// Smooth the irregular excision along the source face. A prescribed tall
+// ellipse pulls the philtrum/cheeks into straight ridges even at rest.
+let oralBorder=border.map(id=>position.slice(map.get(id)*3,map.get(id)*3+3));
+for(let pass=0;pass<6;pass++)oralBorder=oralBorder.map((v,i)=>v.map((x,a)=>x*.5+(oralBorder[(i+border.length-1)%border.length][a]+oralBorder[(i+1)%border.length][a])*.25));
+// Match polar directions at the slit and its surrounding skin. Arc length on
+// the jagged original excision mismatches those directions at the corners.
+for(let i=0;i<border.length;i++)angles.set(border[i],(Math.atan2((oralBorder[i][1]+.006)/.03,oralBorder[i][0]/.066)+Math.PI*2)%(Math.PI*2));
 const restFixed=new Map();for(let i=0;i<skinCount;i++)if(position[i*3+1]>.044||position[i*3+1]<-.08||position[i*3+2]<.10||Math.abs(position[i*3])>.09)restFixed.set(i,[0,0,0]);
-for(const id of border){const k=map.get(id),a=angle(id);restFixed.set(k,[Math.cos(a)*.073-position[k*3],-.006+Math.sin(a)*.042-position[k*3+1],0]);}
+for(let i=0;i<border.length;i++){const k=map.get(border[i]);restFixed.set(k,oralBorder[i].map((v,a)=>v-position[k*3+a]));}
 const restDelta=harmonic(restFixed);for(let i=0;i<skinCount;i++)for(let axis=0;axis<3;axis++)position[i*3+axis]+=restDelta[i][axis];
 const smooth=(x,a,b)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);};
-// A monotone jaw stretch keeps the original anatomical triangle ordering. The
-// posterior neck and upper face fade to zero; the whole anterior chin descends.
-const skinDelta=[];for(let i=0;i<skinCount;i++){const x=position[i*3],y=position[i*3+1],z=position[i*3+2],s=Math.max(-1,Math.min(1,(y+.006)/.042)),weight=smooth(z,.055,.105)*(1-smooth(y,.036,.055));skinDelta.push(.2*x*weight,-.111*(1-s)*weight,0);}
+// The mandibular skin follows a rotating jaw. Fade into the fixed posterior
+// neck and upper skull; the anterior chin keeps its volume with full weight.
 function boundary(a,values=position){let k=border.findIndex(i=>angle(i)>a);if(k<0)k=0;const b=border[k],c=border[(k+border.length-1)%border.length];let hi=angle(b),lo=angle(c);if(hi<lo)hi+=Math.PI*2;if(a<lo)a+=Math.PI*2;const t=(a-lo)/(hi-lo);return [0,1,2].map(j=>values[map.get(c)*3+j]*(1-t)+values[map.get(b)*3+j]*t);}
 const skinIndices=index.length,patchStart=position.length/3;
 for(let row=0;row<rows;row++)for(let i=0;i<N;i++){const a=i/N*Math.PI*2,l=lip(a),b=boundary(a),t=row/rows;const id=position.length/3;if(row===0)mouthBorder.push(id);position.push(...l.map((v,j)=>v*(1-t)+b[j]*t));if(row>0){const a=patchStart+(row-1)*N+i,b=patchStart+(row-1)*N+(i+1)%N,c=patchStart+row*N+i,d=patchStart+row*N+(i+1)%N;index.push(a,b,c,b,d,c);}}
@@ -44,7 +49,11 @@ for(const e of events){if(e.outer){index.push(inside,e.id,out);out=e.id;}else{in
 for(let i=skinIndices;i<index.length;i+=3){const b=index[i+1];index[i+1]=index[i+2];index[i+2]=b;}
 
 const uv=[];for(let i=0;i<position.length;i+=3){const x=position[i],y=position[i+1];const v=y<.059?.255+(y+.006)*2.31:y<.133?.405+(y-.059)*3.78:.685+(y-.133)*1.5;uv.push(.5+x*(2.65+.6*smooth(y,0,.12)),v);}
-const patchBoundaryDelta=Array.from({length:N},(_,i)=>boundary(i/N*Math.PI*2,skinDelta));
+const jawFixed=new Map();
+for(let i=0;i<skinCount;i++){const [,y,z]=position.slice(i*3,i*3+3);if(y>.03||y<-.108||z<.025)jawFixed.set(i,[0,0,0]);else if(y<-.045&&y>-.08&&z>.10)jawFixed.set(i,[1,0,0]);}
+for(const id of border)jawFixed.set(map.get(id),[(1-Math.sin(angle(id)))*.5,0,0]);
+const skinWeights=harmonic(jawFixed),jawWeights=skinWeights.map(v=>v[0]),weightField=skinWeights.flat();
+for(let row=0;row<rows;row++)for(let i=0;i<N;i++){const a=i/N*Math.PI*2,t=row/rows;jawWeights[patchStart+row*N+i]=(1-Math.sin(a))*.5*(1-t)+boundary(a,weightField)[0]*t;}
 // Ray/barycentric rasterisation is authoring only, never a runtime portrait mesh.
 const width=73,height=99,depth=[];for(let j=0;j<height;j++)for(let i=0;i<width;i++){const x=-.18+i/(width-1)*.36,y=-.12+j/(height-1)*.49;let z=0;for(let k=0;k<index.length;k+=3){const a=index[k]*3,b=index[k+1]*3,c=index[k+2]*3,ax=position[a],ay=position[a+1],bx=position[b],by=position[b+1],cx=position[c],cy=position[c+1],den=(by-cy)*(ax-cx)+(cx-bx)*(ay-cy);if(Math.abs(den)<1e-12)continue;const u=((by-cy)*(x-cx)+(cx-bx)*(y-cy))/den,v=((cy-ay)*(x-cx)+(ax-cx)*(y-cy))/den;if(u>=0&&v>=0&&u+v<=1)z=Math.max(z,u*position[a+2]+v*position[b+2]+(1-u-v)*position[c+2]);}depth.push(Math.round(z*1e6)/1e6);}
 const envelope={width,height,depth};
@@ -54,5 +63,5 @@ for(let row=0;row<=48;row++)for(let col=0;col<=96;col++){const a=col/96*Math.PI*
 for(let pass=0;pass<4;pass++){const copy=scalp.slice();for(let row=1;row<48;row++)for(let col=0;col<=96;col++)for(let axis=0;axis<3;axis++){const k=(row*97+col)*3+axis;scalp[k]=(copy[k-97*3]+copy[k]*2+copy[k+97*3])/4;}}
 scalpGeometry.dispose();scalpMesh.material.dispose();
 const eyes={};for(const [side,eye] of Object.entries(source.eyes))eyes[side]={...eye,position:eye.position.map((v,i)=>i%3===0?v*1.9:i%3===1?v*2-.069:v*1.55-.012),center:eye.center.map((v,i)=>i===0?v*1.9:i===1?v*2-.069:v*1.55-.012)};
-const result={position,index,uv,envelope,scalp,skinDelta,patchBoundaryDelta,mouthBorder,patchStart,patchRows:rows,sourceBoundary:border.map(i=>map.get(i)),eyes,metadata:{license:'CC0-1.0',sourceSha256:crypto.createHash('sha256').update(raw).digest('hex'),source:'pedestrian-head.json',sourceMetadata:source.metadata,transform:'x=1.9*x; y=2*y-.069; z=1.55*z-.012',construction:'Weld coincident source vertices. Taper lower source neck to existing attachment. Harmonic local oral regularisation and monotone analytic jaw-stretch deltas; upper skull/lids/nose fixed. Bake triangle-ray forehead and scalp envelopes with seam-safe samples and four smoothing passes. Excise local oral ellipse (x/.035)^2+((y-.032)/.012)^2<1,z>.095; discard disconnected sealed internal mouth shell. Keep full anatomical skull, lids, nose, ears and jaw. Stitch original 32-vertex oral boundary to 64-vertex lip with 8 rings and zipper triangles. Separate source eye meshes retained.'}};
+const result={position,index,uv,envelope,scalp,jawWeights,mouthBorder,patchStart,patchRows:rows,sourceBoundary:border.map(i=>map.get(i)),eyes,metadata:{license:'CC0-1.0',sourceSha256:crypto.createHash('sha256').update(raw).digest('hex'),source:'pedestrian-head.json',sourceMetadata:source.metadata,transform:'x=1.9*x; y=2*y-.069; z=1.55*z-.012',construction:'Weld coincident source vertices. Taper lower source neck to existing attachment. Six local boundary smoothing passes with harmonic displacement, retaining the source perioral form; rotating-mandible skin weights; upper skull/lids/nose fixed. Bake triangle-ray forehead and scalp envelopes with seam-safe samples and four smoothing passes. Excise local oral ellipse (x/.035)^2+((y-.032)/.012)^2<1,z>.095; discard disconnected sealed internal mouth shell. Keep full anatomical skull, lids, nose, ears and jaw. Stitch original 32-vertex oral boundary to 64-vertex lip with 8 rings and zipper triangles. Separate source eye meshes retained.'}};
 fs.writeFileSync(new URL('../lib/assets/ghost-head.json',import.meta.url),JSON.stringify(result));console.log({vertices:position.length/3,triangles:index.length/3,border:border.length});
