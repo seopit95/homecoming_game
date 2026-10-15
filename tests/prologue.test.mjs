@@ -124,7 +124,7 @@ test('the visible hero hood and steering wheel receive the fatal impact and rese
 test('the full visible crash reach clears actual closed cabin glass and solid surfaces',()=>{
  const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160),car=road.root.getObjectByName('hero-sedan'),passenger=road.root.getObjectByName('finale-passenger');
  road.pose('car_crash',0,camera,false);road.root.updateMatrixWorld(true);const limbs=[];
- passenger.traverse(o=>{if(o.isMesh&&/ghost-(continuous-arm|fitted-sleeve|wrist-skin|hand-|long-nail)/.test(o.name))limbs.push(o);});assert.equal(limbs.length,18,'both full arm/hand/nail chains are measured');
+ passenger.traverse(o=>{if(o.isMesh&&/ghost-(continuous-arm|wrist-skin|hand-|long-nail)/.test(o.name))limbs.push(o);});assert.equal(limbs.length,16,'both arm/hand/nail chains; the joined garment has its own cabin surface check');
  for(const t of [...Array.from({length:54},(_,i)=>i*.025),1.349]){road.pose('car_crash',t,camera,false);road.root.updateMatrixWorld(true);assert.equal(passenger.visible,true);
   const collision=cabinTriangles(car),inverse=car.matrixWorld.clone().invert(),head=passenger.getObjectByName('ghost-head'),face=head.localToWorld(new T.Vector3(0,.13,.16)),opaque=[];car.traverse(o=>{if(o.isMesh&&!o.material.transparent)opaque.push(o);});
   const ray=new T.Raycaster(camera.position.clone(),face.clone().sub(camera.position).normalize(),.02,camera.position.distanceTo(face)-.02);assert.equal(ray.intersectObjects(opaque,false).length,0,`face remains clear at ${t}`);
@@ -136,5 +136,28 @@ test('the full visible crash reach clears actual closed cabin glass and solid su
   for(const o of limbs){const p=o.geometry.getAttribute('position'),ix=o.geometry.index,m=inverse.clone().multiply(o.matrixWorld);
    for(let i=0;i<(ix?ix.count:p.count);i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix?ix.getX(i+j):i+j).applyMatrix4(m))),hit=collision(tri);assert.ok(!hit,JSON.stringify({t,limb:o.name,triangle:i/3,cabin:hit?.name,glass:hit?.glass,point:hit?.point}));}
   }
+ }
+});
+
+test('the authored nightdress clears actual closed cabin surfaces through the visible scare',()=>{
+ const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160);
+ for(const [stage,time] of [['car_voice',3.5],...Array.from({length:55},(_,i)=>['car_crash',Math.min(i*.025,1.349)])]){
+  road.pose(stage,time,camera,false);road.root.updateMatrixWorld(true);
+  const car=road.root.getObjectByName('hero-sedan'),gown=road.root.getObjectByName('finale-passenger').getObjectByName('ghost-wet-dress'),p=gown.geometry.attributes.position,ix=gown.geometry.index;
+  const hit=cabinTriangles(car),matrix=car.matrixWorld.clone().invert().multiply(gown.matrixWorld);
+  for(let i=0;i<ix.count;i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix.getX(i+j)).applyMatrix4(matrix))),crossing=hit(tri);
+   assert.equal(crossing,null,`gown crosses ${crossing?.name} at ${stage} ${time}s, triangle ${i/3}, point ${crossing?.point}`);
+  }
+ }
+});
+
+test('the added clavicle skin fits inside the actual passenger cabin',()=>{
+ const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160);
+ // Two representative cabin poses; the upper skin follows the moving neck
+ // bridge. These samples do not establish continuous-sweep clearance.
+ for(const [stage,time] of [['car_voice',3.5],['car_crash',.4]]){
+  road.pose(stage,time,camera,false);road.root.updateMatrixWorld(true);
+  const car=road.root.getObjectByName('hero-sedan'),skin=road.root.getObjectByName('finale-passenger').getObjectByName('ghost-clavicle-skin'),p=skin.geometry.attributes.position,ix=skin.geometry.index,hit=cabinTriangles(car),m=car.matrixWorld.clone().invert().multiply(skin.matrixWorld);
+  for(let i=0;i<ix.count;i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix.getX(i+j)).applyMatrix4(m)));assert.equal(hit(tri),null,`clavicle crosses cabin at ${stage}, triangle ${i/3}`);}
  }
 });

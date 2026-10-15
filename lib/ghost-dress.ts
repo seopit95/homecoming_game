@@ -1,26 +1,31 @@
 import * as T from 'three';
-const rows=40,cols=48;
-// One rounded garment from neckline to hem; no detached collar, belt or strips.
+import asset from './assets/ghost-dress.json' with {type:'json'};
+// The neckline, bodice and sleeves are one authored surface. UV seams are
+// duplicated only for sampling; their positions and skin weights are identical.
 export function createDress(torso:T.Group,cloth:T.Material){
-  const profile=new T.CatmullRomCurve3([
-    new T.Vector3(.065,.41,.056),new T.Vector3(.137,.36,.087),new T.Vector3(.199,.29,.102),new T.Vector3(.183,.19,.129),new T.Vector3(.147,.055,.108),new T.Vector3(.14,-.06,.101),new T.Vector3(.185,-.23,.132),new T.Vector3(.226,-.42,.205),new T.Vector3(.247,-.68,.205),new T.Vector3(.29,-1.055,.21)
-  ]);
-  const p:number[]=[],uv:number[]=[],ids:number[]=[],colors:number[]=[];
-  for(let row=0;row<=rows;row++){
-    const t=row/rows,r=profile.getPoint(t);
-    for(let col=0;col<=cols;col++){
-      const a=col/cols*Math.PI*2,pleat=(.017+T.MathUtils.smoothstep(t,.3,1)*.024)*(Math.sin(a*13+r.y*1.3)+Math.sin(a*21-r.y)*.28),fold=1+pleat;
-      const hem=T.MathUtils.smoothstep(t,.92,1)*(.037*Math.sin(a*5)+.027*Math.cos(a*11)+.055*Math.max(0,Math.cos(a*3+.9))**6);
-      const dirt=1-T.MathUtils.smoothstep(t,.65,1)*(.28+.1*Math.sin(a*3+t*10));colors.push(dirt*.94,dirt*.96,dirt);
-      const crush=T.MathUtils.smoothstep(t,0,.4)*(1-T.MathUtils.smoothstep(t,.4,.75));
-      p.push(Math.cos(a)*r.x*fold+crush*.022,r.y+hem-Math.max(0,Math.cos(a))*.055*(1-t),Math.sin(a)*r.z*fold-crush*.02);uv.push(col/cols,1-row/rows);
-      if(row<rows&&col<cols&&!(r.y<-.98&&Math.sin(a*7+.9)>.91&&Math.sin(a*11)>.1)){const k=row*(cols+1)+col;ids.push(k,k+1,k+cols+1,k+1,k+cols+2,k+cols+1);}
+  const g=new T.BufferGeometry(),colors=asset.position.flatMap((_,i)=>i%3?[]:[.94,.96,1]);
+  g.setAttribute('position',new T.Float32BufferAttribute(asset.position,3));g.setAttribute('uv',new T.Float32BufferAttribute(asset.uv,2));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.setIndex(asset.index);g.computeVertexNormals();
+  const gown=new T.Mesh(g,cloth);gown.name='ghost-wet-dress';gown.castShadow=true;gown.receiveShadow=true;torso.add(gown);return {gown,hem:new Float32Array(asset.position)};
+}
+export function createClavicle(torso:T.Group,skin:T.Material){
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(asset.chest.position,3));g.setAttribute('uv',new T.Float32BufferAttribute(asset.chest.uv,2));g.setIndex(asset.chest.index);g.computeVertexNormals();
+  const chest=new T.Mesh(g,skin);chest.name='ghost-clavicle-skin';chest.castShadow=true;chest.receiveShadow=true;chest.userData.rest=new Float32Array(asset.chest.position);torso.add(chest);return chest;
+}
+export function poseClavicle(chest:T.Mesh,neck:T.Mesh){
+  const p=chest.geometry.getAttribute('position'),rest=chest.userData.rest as Float32Array,inverse=neck.quaternion.clone().invert(),v=new T.Vector3(),target=new T.Vector3();
+  for(let i=0;i<p.count;i++){
+    v.fromArray(rest,i*3);const weight=T.MathUtils.smoothstep(v.y,.355,.392);
+    if(weight>0){
+      target.copy(v).sub(neck.position).applyQuaternion(inverse).divide(neck.scale);
+      const y=T.MathUtils.clamp(target.y,-.95,.95),angle=Math.atan2(target.z,target.x),radius=Math.sqrt(1-y*y)*.97;
+      target.set(Math.cos(angle)*radius,y*.97,Math.sin(angle)*radius).multiply(neck.scale).applyQuaternion(neck.quaternion).add(neck.position);v.lerp(target,weight);
     }
+    p.setXYZ(i,v.x,v.y,v.z);
   }
-  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.setIndex(ids);g.computeVertexNormals();
-  const gown=new T.Mesh(g,cloth);gown.name='ghost-wet-dress';gown.castShadow=true;gown.receiveShadow=true;torso.add(gown);return {gown,hem:new Float32Array(p)};
+  p.needsUpdate=true;chest.geometry.computeVertexNormals();chest.geometry.computeBoundingSphere();
 }
 export function poseDress(gown:T.Mesh,rest:Float32Array,torso:T.Group,knees:T.Group[],crawl:number,seated=false,tuck=0,sideClearance=0,frontClearance=0){
+  gown.userData.seated=seated;
   const p=gown.geometry.getAttribute('position'),q=torso.quaternion,inverse=q.clone().invert(),v=new T.Vector3(),left=new T.Vector3(),right=new T.Vector3(),center=new T.Vector3(),tangent=new T.Vector3(),otherTangent=new T.Vector3();
   const levels=[.41,.29,.055,-.23,-.68,-1.055];
   // The skirt follows the same hips and knees as the skin. Separate side guides
@@ -47,4 +52,31 @@ export function poseDress(gown:T.Mesh,rest:Float32Array,torso:T.Group,knees:T.Gr
     v.y=Math.max(seated?.25:.022,v.y);v.sub(torso.position).applyQuaternion(inverse);p.setXYZ(i,v.x,v.y,v.z);
   }
   p.needsUpdate=true;gown.geometry.computeVertexNormals();gown.geometry.boundingSphere??=new T.Sphere(new T.Vector3(0,-.4,0),1.8);
+}
+
+export function poseDressArms(gown:T.Mesh,rest:Float32Array,arms:T.Group[]){
+  const p=gown.geometry.getAttribute('position'),v=new T.Vector3(),base=new T.Vector3(),point=new T.Vector3(),pivot=new T.Vector3(),q=new T.Quaternion();
+  const deltas=arms.map((arm,i)=>{
+    const bind=new T.Quaternion().setFromUnitVectors(new T.Vector3(0,-1,0),new T.Vector3((i===0?-1:1)*.68,-.733212,0).normalize());
+    return arm.quaternion.clone().multiply(bind.invert());
+  });
+  const shifts=arms.map((arm,i)=>arm.position.clone().sub(new T.Vector3((i===0?-1:1)*.18,.308,0)));
+  for(let i=0;i<p.count;i++){
+    const w=asset.armWeight[i];if(w<=0)continue;
+    base.fromArray(rest,i*3);const side=base.x<0?0:1;point.fromBufferAttribute(p,i).sub(base);
+    pivot.set((side===0?-1:1)*.18,.308,0);q.identity().slerp(deltas[side],w);
+    v.copy(base).sub(pivot).applyQuaternion(q).add(pivot).addScaledVector(shifts[side],w).addScaledVector(point,1-w);p.setXYZ(i,v.x,v.y,v.z);
+  }
+  if(gown.userData.seated){
+    const torso=gown.parent!,inverse=torso.quaternion.clone().invert();
+    for(let i=0;i<p.count;i++){
+      v.fromBufferAttribute(p,i).applyQuaternion(torso.quaternion).add(torso.position);
+      // The cushion and inclined side bolsters meet the cloth in the figure
+      // frame, including during the car's crash roll. Loose hem hangs forward.
+      const side=T.MathUtils.smoothstep(Math.abs(v.x),.12,.18);v.z=Math.max(v.z,.036+side*.059-.15*v.y);
+      if(rest[i*3+1]<-.18)v.y=Math.max(v.y,T.MathUtils.lerp(.605,.25,T.MathUtils.smoothstep(v.z,.315,.39)));
+      v.sub(torso.position).applyQuaternion(inverse);p.setXYZ(i,v.x,v.y,v.z);
+    }
+  }
+  p.needsUpdate=true;gown.geometry.computeVertexNormals();
 }

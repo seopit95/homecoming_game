@@ -3,14 +3,14 @@ import {surface} from './materials.ts';
 import {skinArm,poseSkinArm,connectWrist} from './ghost-limbs.ts';
 import {createHair,settleHair} from './ghost-hair.ts';
 import {createFace,poseFace,type FaceRig} from './ghost-face.ts';
-import {createDress,poseDress} from './ghost-dress.ts';
+import {createDress,createClavicle,poseClavicle,poseDress,poseDressArms} from './ghost-dress.ts';
 import {extremity} from './ghost-anatomy.ts';
 import type {Solid} from './world.ts';
 
 type Clearance={side:number;front:number;back:number};
 const openClearance:Clearance={side:0,front:0,back:0};
 const armTuck=(t:Clearance)=>T.MathUtils.smoothstep(Math.max(t.side,t.front),0,.65);
-type Rig={crawl:number;tuck:Clearance;drips:T.InstancedMesh;neck:T.Mesh;face:FaceRig;sleeves:T.Mesh[];skinArms:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
+type Rig={crawl:number;tuck:Clearance;drips:T.InstancedMesh;neck:T.Mesh;clavicle:T.Mesh;face:FaceRig;skinArms:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
 const rigs=new WeakMap<T.Group,Rig>();
 export function createGhost(parent:T.Object3D){
   const figure=new T.Group();figure.name='resident-remains';figure.rotation.order='YXZ';parent.add(figure);figure.visible=false;
@@ -25,6 +25,7 @@ export function createGhost(parent:T.Object3D){
   const {gown,hem}=createDress(torso,cloth);
   const head=new T.Group();head.name='ghost-head';head.position.set(-.025,.46,.028);head.scale.set(.67,.68,.68);torso.add(head);
   const neck=ellipsoid(torso,0,.41,0,.036,.09,.033,skin);neck.name='ghost-neck';
+  const clavicle=createClavicle(torso,skin);
   const face=createFace(head,skin),{mouth}=face;
   const {hair,tails}=createHair(head);
   const arms:T.Group[]=[],forearms:T.Group[]=[],palms:T.Group[]=[],legs:T.Group[]=[],knees:T.Group[]=[],ankles:T.Group[]=[];
@@ -39,11 +40,17 @@ export function createGhost(parent:T.Object3D){
     const ankle=new T.Group();ankle.name=`ghost-ankle-${side}`;ankle.position.y=-.42;knee.add(ankle);ankles.push(ankle);ankle.add(extremity('foot',side,skin));
   }
   const body=new T.Group();body.name='ghost-body';body.add(...figure.children);figure.add(body);
-  const skinArms=arms.map(()=>skinArm(body,skin)),sleeves=arms.map(()=>skinArm(body,cloth,true));
+  const skinArms=arms.map(()=>skinArm(body,skin));
+  // The opaque authored sleeves replace covered shoulder skin; keep an overlap
+  // before the cuff and the complete exposed elbow/forearm/wrist surfaces.
+  skinArms.forEach(arm=>{
+    const source=arm.geometry.index!,visible:number[]=[];
+    for(let i=0;i<source.count;i+=3){const face=[source.getX(i),source.getX(i+1),source.getX(i+2)];if(face.every(v=>Math.floor(v/17)>=6))visible.push(...face);}
+    arm.geometry.setIndex(visible);
+  });
   skinArms.forEach((arm,i)=>connectWrist(arm,palms[i].children[0] as T.Mesh));
-  sleeves[1].userData.torn=true;
   const drips=new T.InstancedMesh(new T.SphereGeometry(.003,6,5),new T.MeshPhysicalMaterial({color:'#39090c',roughness:.25,clearcoat:.7}),6);drips.name='ghost-blood-drips';drips.frustumCulled=false;body.add(drips);
-  rigs.set(figure,{crawl:0,tuck:openClearance,drips,neck,face,sleeves,skinArms,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
+  rigs.set(figure,{crawl:0,tuck:openClearance,drips,neck,clavicle,face,skinArms,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
 }
 function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,tuck:Clearance=openClearance){
   const rig=rigs.get(figure);if(!rig)return;
@@ -140,7 +147,9 @@ function bloodDrops(rig:Rig,time:number,floor=.022){
 function poseArms(rig:Rig){
   const bottom=new T.Vector3(0,.37,-.012),top=new T.Vector3(0,-.090,-.020).multiply(rig.head.scale).applyQuaternion(rig.head.quaternion).add(rig.head.position),axis=top.clone().sub(bottom);
   rig.neck.position.copy(bottom).lerp(top,.5);rig.neck.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),axis.clone().normalize());rig.neck.scale.set(.035,axis.length()*.5+.023,.032);
-  [rig.skinArms,rig.sleeves].forEach(meshes=>meshes.forEach((mesh,i)=>poseSkinArm(mesh,rig.arms[i],rig.forearms[i],rig.palms[i])));
+  poseClavicle(rig.clavicle,rig.neck);
+  rig.skinArms.forEach((mesh,i)=>poseSkinArm(mesh,rig.arms[i],rig.forearms[i],rig.palms[i]));
+  poseDressArms(rig.gown,rig.hem,rig.arms);
 }
 function crawlFloor(rig:Rig){return rig.torso.position.y<.8?.018:0;}
 
