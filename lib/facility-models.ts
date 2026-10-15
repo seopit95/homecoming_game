@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {loadTexture} from './texture-loader.ts';
 import assets from './assets/facility-models.json' with {type:'json'};
 
 // Source-authored static geometry is available without a browser; images decode
@@ -9,8 +10,8 @@ let loading:Promise<void>|undefined;
 export function prepareFacilityModels(){
  if(!loading)loading=(async()=>{
   const files=new Set<string>();for(const root of Object.values(templates))root.traverse(o=>{if(o instanceof T.Mesh)for(const file of Object.values((o.material as T.Material).userData.facilityTextures) as string[])files.add(file);});
-  const loader=new T.TextureLoader(),results=await Promise.allSettled([...files].map(async file=>{const texture=await loader.loadAsync('/models/facility/'+file);texture.flipY=false;texture.colorSpace=file.includes('_diff_')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;return {file,texture};}));
-  if(results.some(r=>r.status==='rejected')){for(const r of results)if(r.status==='fulfilled')r.value.texture.dispose();loading=undefined;throw new Error('Facility model textures could not be loaded');}
+  const results=await Promise.allSettled([...files].map(async file=>{const texture=await loadTexture('/models/facility/'+file,false);texture.flipY=false;texture.colorSpace=file.includes('_diff_')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;return {file,texture};}));
+  if(results.some(r=>r.status==='rejected')){for(const r of results)if(r.status==='fulfilled'){r.value.texture.dispose();r.value.texture.image?.close?.();}loading=undefined;throw new Error('Facility model textures could not be loaded');}
   for(const r of results)if(r.status==='fulfilled')textures.set(r.value.file,r.value.texture);
  })();return loading;
 }
