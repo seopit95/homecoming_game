@@ -2,13 +2,19 @@ import * as T from 'three';
 import {surface} from './materials.ts';
 import authored from './assets/ghost-hair.json' with {type:'json'};
 
+// UV copies share a surface, so they must also share its lighting normal.
+const copies=new Map<string,number[]>();
+for(let i=0;i<authored.position.length;i+=3){const key=authored.position.slice(i,i+3).join(',');if(!copies.has(key))copies.set(key,[]);copies.get(key)!.push(i/3);}
+const seams=[...copies.values()].filter(group=>group.length>1);
+
 export function createHair(head:T.Group){
   const hair=new T.Group();hair.name='ghost-scalp-hair';head.add(hair);
   const tails=new T.Group();tails.name='ghost-long-hair';head.add(tails);
   const geometry=new T.BufferGeometry();
   geometry.setAttribute('position',new T.Float32BufferAttribute(authored.position,3));
   geometry.setAttribute('uv',new T.Float32BufferAttribute(authored.uv,2));geometry.setIndex(authored.index);
-  const material=surface('hair','#626d72',{roughness:.65,bumpScale:.00025,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide});
+  const material=surface('hair','#828b8e',{roughness:.42,bumpScale:.00025,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide}) as T.MeshPhysicalMaterial;
+  material.specularIntensity=.65;material.anisotropy=.6;material.clearcoat=.08;material.clearcoatRoughness=.4;
   const mesh=new T.Mesh(geometry,material);mesh.name='ghost-authored-long-hair';
   mesh.userData.rest=new Float32Array(authored.position);mesh.userData.anchors=new Float32Array(authored.anchor);mesh.userData.skinDelta=new Float32Array(authored.skinDelta);
   mesh.userData.face=head.getObjectByName('ghost-continuous-face');
@@ -45,5 +51,11 @@ export function settleHair(tails:T.Group,figure:T.Group,time:number,floor:number
     }
     point.applyMatrix4(inverse);p.setXYZ(i,point.x,point.y,point.z);
   }
-  p.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingSphere();
+  p.needsUpdate=true;mesh.geometry.computeVertexNormals();
+  const normals=mesh.geometry.getAttribute('normal'),normal=new T.Vector3();
+  for(const group of seams){normal.set(0,0,0);for(const i of group)normal.add(point.fromBufferAttribute(normals,i));normal.normalize();for(const i of group)normals.setXYZ(i,normal.x,normal.y,normal.z);}
+  normals.needsUpdate=true;
+  // Without vertex tangents the anisotropic highlight changes direction at
+  // every triangle, making this smooth hair read as reflective metal plates.
+  mesh.geometry.computeTangents();mesh.geometry.getAttribute('tangent').needsUpdate=true;mesh.geometry.computeBoundingSphere();
 }
