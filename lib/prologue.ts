@@ -16,7 +16,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const rubber=new T.MeshStandardMaterial({color:'#14191d',roughness:.86});
   const body=new T.MeshPhysicalMaterial({color:'#1b252c',roughness:.25,metalness:.7,clearcoat:.7});
   const steel=new T.MeshStandardMaterial({color:'#626f75',roughness:.3,metalness:.8});
-  const paint=new T.MeshStandardMaterial({color:'#9faba5',roughness:.43});
+  const paint=surface('concrete','#d0cbb7',{roughness:.86,normalScale:new T.Vector2(.2,.2)});
   const warm=new T.MeshStandardMaterial({color:'#a29372',emissive:'#c7ad80',emissiveIntensity:.55,roughness:.6});
   const red=new T.MeshBasicMaterial({color:'#c44424'}),darkGlass=new T.MeshPhysicalMaterial({color:'#13232e',metalness:.4,roughness:.12});
   function mesh(g:T.BufferGeometry,m:T.Material,p:number[],parent:T.Object3D=root){const o=new T.Mesh(g,m);o.position.set(...p as [number,number,number]);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
@@ -31,13 +31,14 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const roadCenter=escapeDrive?-6.5:18,roadLength=escapeDrive?311:360;
   box(0,-.12,roadCenter,9,.24,roadLength,asphalt);
   for(const x of [-5.2,5.2]){box(x,.06,roadCenter,1.3,.14,roadLength,concrete);box(x<0?-4.57:4.57,.12,roadCenter,.14,.24,roadLength,concrete);}
-  for(let z=-150;z<(escapeDrive?148:190);z+=6)box(0,.008,z,.1,.012,2.8,paint);
-  for(const x of [-4.15,4.15])box(x,.008,escapeDrive?-6.5:18,.09,.012,escapeDrive?311:350,paint);
-  for(let x=-3.7;x<4;x+=1.03)box(x,.016,-2,.58,.012,3.3,paint);
-  box(-2.05,.016,1.5,3.8,.012,.32,paint);
+  function marking(x:number,z:number,w:number,d:number){const m=box(x,.00075,z,w,.0015,d,paint);m.castShadow=false;}
+  for(let z=-150;z<(escapeDrive?148:190);z+=6)marking(0,z,.1,2.8);
+  for(const x of [-4.15,4.15])marking(x,escapeDrive?-6.5:18,.09,escapeDrive?311:350);
+  for(let x=-3.7;x<4;x+=1.03)marking(x,-2,.58,3.3);
+  marking(-2.05,1.5,3.8,.32);
   // Wet patches catch broken pools of streetlight without an expensive second scene render.
   const puddle=new T.MeshPhysicalMaterial({color:'#566570',metalness:.48,roughness:.07,transparent:true,opacity:.3,depthWrite:false});
-  for(let i=0;i<(escapeDrive?35:38);i++){const p=mesh(new T.CircleGeometry(1,24),puddle,[Math.sin(i*19.3)*3.8,.024,-140+i*8.3]);p.castShadow=false;p.rotation.x=-Math.PI/2;p.scale.set(.22+(i%4)*.18,1.2+(i%5)*.3,1);}
+  for(let i=0;i<(escapeDrive?35:38);i++){const p=mesh(new T.CircleGeometry(1,24),puddle,[Math.sin(i*19.3)*3.8,.0018,-140+i*8.3]);p.castShadow=false;p.rotation.x=-Math.PI/2;p.scale.set(.22+(i%4)*.18,1.2+(i%5)*.3,1);}
   const glow=new T.ShaderMaterial({transparent:true,depthWrite:false,vertexShader:'varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 v;void main(){vec2 p=abs(v*2.-1.);float a=pow(1.-p.x,2.)*(1.-p.y)*(.6+.4*sin(v.y*190.));gl_FragColor=vec4(.51,.61,.66,a*.12);}'});
   for(let z=-135;z<(escapeDrive?149:170);z+=18){
     for(const side of [-1,1]){
@@ -53,7 +54,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     }
     rod([4.95,.1,z],[4.95,5.5,z],.065,steel);rod([4.95,5.5,z],[3.8,5.5,z],.035,steel);box(3.8,5.42,z,.55,.1,.3,warm);
 
-    const shine=mesh(new T.PlaneGeometry(1.3,8),glow,[2.6,.027,z+2]);shine.rotation.x=-Math.PI/2;shine.castShadow=false;
+    const shine=mesh(new T.PlaneGeometry(1.3,8),glow,[2.6,.002,z+2]);shine.rotation.x=-Math.PI/2;shine.castShadow=false;
     for(let i=0;i<4;i++)box(4.32,.025,z+i*.13,.4,.025,.045,rubber);
   }
   const streetLights=Array.from({length:4},()=>{const light=new T.SpotLight('#b8c9d2',65,22,.9,.9,2);root.add(light,light.target);return light;});
@@ -262,14 +263,14 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
       victim.rotation.set(0,Math.PI/2-.18*slide,0);
     }
     pedestrian.pose(driving?clock:driveDuration,driving?null:hitTime);
-    if(!driving){contactBounds.setFromObject(victim,true);victim.position.y+=Math.max(0,.012-contactBounds.min.y);}
+    if(!driving){contactBounds.setFromObject(victim,true);victim.position.y+=Math.max(0,.002-contactBounds.min.y);}
     victim.updateWorldMatrix(true,true);root.worldToLocal(carryHand.getWorldPosition(carriedBag));carriedBag.y-=.29;
     const bagSway=Math.sin((driving?clock:driveDuration)/.92*Math.PI*2)*.035;
     if(driving){bag.position.copy(carriedBag);bag.rotation.set(0,0,bagSway);phone.visible=false;}
     else{const scatter=T.MathUtils.smoothstep(hitTime,.15,1.15);bag.position.copy(carriedBag).lerp(new T.Vector3(2.79,.11,-3.59),scatter);bag.rotation.set(scatter*Math.PI/2,0,T.MathUtils.lerp(bagSway,.7,scatter));phone.visible=hitTime>.35;phone.position.set(3.1,.009,-3.9);phone.rotation.y=.8;}
-    if(!driving){contactBounds.setFromObject(bag,true);const offset=.012-contactBounds.min.y;bag.position.y+=offset<0?offset*T.MathUtils.smoothstep(hitTime,.15,1.15):offset;}
+    if(!driving){contactBounds.setFromObject(bag,true);const offset=.002-contactBounds.min.y;bag.position.y+=offset<0?offset*T.MathUtils.smoothstep(hitTime,.15,1.15):offset;}
     const detached=!driving&&hitTime>.25;victim.getObjectByName('memory-shoe')!.visible=!detached;looseShoe.visible=detached;
-    const shoeFall=T.MathUtils.smoothstep(hitTime,.25,1.1);looseShoe.position.set(2.08+shoeFall*.55,Math.sin(shoeFall*Math.PI)*.28+.026,-2.25-shoeFall*1.65);looseShoe.rotation.set(0,shoeFall*1.6,0);
+    const shoeFall=T.MathUtils.smoothstep(hitTime,.25,1.1);looseShoe.position.set(2.08+shoeFall*.55,Math.sin(shoeFall*Math.PI)*.28+.026-.024*shoeFall,-2.25-shoeFall*1.65);looseShoe.rotation.set(0,shoeFall*1.6,0);
     (phoneScreen.material as T.MeshBasicMaterial).color.setScalar(.025);
     rain.position.set(x,-(clock*4.6)%6,z);
     return speed;

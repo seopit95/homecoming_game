@@ -2,7 +2,7 @@ import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 // Decode each source once; floor changes own disposable texture clones.
-const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'cockpit'|'hair'|'cloth',T.Texture>>={};
+const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'cockpit'|'hair'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair',T.Texture>>={};
 const physicalSources:Partial<Record<`${'plaster'|'concrete'|'wood'|'wood-floor'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
@@ -12,10 +12,13 @@ export function prepareVisuals(){
       const file=key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
       const texture=await loader.loadAsync(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     });
+    const livingJobs=(['pedestrian-skin','pedestrian-shirt','pedestrian-shirt-normal','pedestrian-hair'] as const).map(async key=>{
+      const texture=await loader.loadAsync('/textures/'+key+'-v1.webp');texture.colorSpace=key.endsWith('-normal')?T.NoColorSpace:T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
+    });
     const physicalJobs=(['plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm','wood-color','wood-normal','wood-arm','wood-floor-color','wood-floor-normal','wood-floor-arm'] as const).map(async key=>{
       const texture=await loader.loadAsync(`/textures/pbr/${key}.jpg`);texture.colorSpace=key.endsWith('color')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.setScalar(.9);return {key,texture};
     });
-    const [results,physical]=await Promise.all([Promise.allSettled(jobs),Promise.allSettled(physicalJobs)]);
+    const [results,physical]=await Promise.all([Promise.allSettled([...jobs,...livingJobs]),Promise.allSettled(physicalJobs)]);
     if([...results,...physical].some(r=>r.status==='rejected')){for(const r of [...results,...physical])if(r.status==='fulfilled')r.value.texture.dispose();loading=undefined;throw new Error('Visual asset loading failed');}
     for(const r of results)if(r.status==='fulfilled')sources[r.value.key]=r.value.texture;
     for(const r of physical)if(r.status==='fulfilled')physicalSources[r.value.key]=r.value.texture;
@@ -55,6 +58,10 @@ export function surface(kind:Surface,color='#ffffff',options:T.MeshStandardMater
   return material;
 }
 export function upholstery(color:string){return surface('fabric',color,{roughness:.94,bumpScale:.0007});}
+export function livingMaterial(part:'skin'|'shirt'|'hair'){
+  const copy=(key:keyof typeof sources)=>{const t=sources[key]?.clone();if(t)t.needsUpdate=true;return t??null;},hair=part==='hair',shirt=part==='shirt';
+  return new T.MeshPhysicalMaterial({map:copy(('pedestrian-'+part) as keyof typeof sources),color:hair?'#35302b':'#ffffff',roughness:hair?.6:shirt?.88:.68,sheen:shirt?.3:hair?.18:0,sheenRoughness:.8,normalMap:shirt?copy('pedestrian-shirt-normal'):null,normalScale:new T.Vector2(.35,.35),side:shirt||hair?T.DoubleSide:T.FrontSide,alphaTest:hair?.35:0,alphaToCoverage:false});
+}
 export function handSkinMaterial(){
   const map=sources.hand?.clone();if(map){map.needsUpdate=true;map.wrapS=map.wrapT=T.RepeatWrapping;}
   return new T.MeshPhysicalMaterial({color:map?'#cdc7bc':'#a47a60',map:map??null,bumpMap:map??null,bumpScale:.0003,roughness:.68,sheen:.2,sheenColor:'#ba9177'});

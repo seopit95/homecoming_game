@@ -32,7 +32,7 @@ test('a foot touching the crossing stays planted as the pedestrian advances',()=
   }
  }
  assert.ok(contacts>80,'each step must contain a real supported stance');
- assert.ok(lowest>=.005,`shoe sole clearance is only ${(lowest*100).toFixed(2)}cm above the road`);
+ assert.ok(lowest>=.001,`shoe sole clearance is only ${(lowest*100).toFixed(2)}cm above the road`);
  assert.ok(worstSlip<.3,`a planted foot slides at ${worstSlip.toFixed(2)}m/s`);
 });
 
@@ -57,8 +57,8 @@ test('the moving hand holds the bag handle and the dropped bag rests on the road
   assert.ok(handle.distanceTo(grip)<.05,'the handle must follow the palm, not a detached world path');
  }
  road.pose('drive',opening.drive.duration,camera,true);const carried=bag.position.clone();road.pose('impact',0,camera,true);assert.ok(bag.position.distanceTo(carried)<.02,'the bag must not jump at contact');
- for(let i=0;i<=36;i++){road.pose('impact',i/24,camera,true);assert.ok(new T.Box3().setFromObject(road.root.getObjectByName('memory-pedestrian'),true).min.y>=.005,'the initial reaction must not put the shoes below the crossing');}
- road.pose('impact',2,camera,true);const landed=new T.Box3().setFromObject(bag,true),bottom=landed.min.y;assert.ok(bottom>=.005&&bottom<.035,`the bag bottom is ${bottom}m above the road`);
+ for(let i=0;i<=36;i++){road.pose('impact',i/24,camera,true);assert.ok(new T.Box3().setFromObject(road.root.getObjectByName('memory-pedestrian'),true).min.y>=.001,'the initial reaction must not put the shoes below the crossing');}
+ road.pose('impact',2,camera,true);const landed=new T.Box3().setFromObject(bag,true),bottom=landed.min.y;assert.ok(bottom>=.0005&&bottom<.006,`the bag bottom is ${bottom}m above the road`);
  assert.ok(landed.max.y-landed.min.y<.13,'the dropped bag must lie on a broad side rather than balance on one corner');
 });
 
