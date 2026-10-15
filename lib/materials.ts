@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {prepareFacilityModels} from './facility-models.ts';
 
 // Decode each source once; floor changes own disposable texture clones.
 const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'hair'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair',T.Texture>>={};
@@ -18,8 +19,8 @@ export function prepareVisuals(){
     const physicalJobs=(['plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm','wood-color','wood-normal','wood-arm','wood-floor-color','wood-floor-normal','wood-floor-arm'] as const).map(async key=>{
       const texture=await loader.loadAsync(`/textures/pbr/${key}.jpg`);texture.colorSpace=key.endsWith('color')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.setScalar(.9);return {key,texture};
     });
-    const [results,physical]=await Promise.all([Promise.allSettled([...jobs,...livingJobs]),Promise.allSettled(physicalJobs)]);
-    if([...results,...physical].some(r=>r.status==='rejected')){for(const r of [...results,...physical])if(r.status==='fulfilled')r.value.texture.dispose();loading=undefined;throw new Error('Visual asset loading failed');}
+    const [results,physical,facility]=await Promise.all([Promise.allSettled([...jobs,...livingJobs]),Promise.allSettled(physicalJobs),Promise.allSettled([prepareFacilityModels()])]);
+    if([...results,...physical,...facility].some(r=>r.status==='rejected')){for(const r of [...results,...physical])if(r.status==='fulfilled')r.value.texture.dispose();loading=undefined;throw new Error('Visual asset loading failed');}
     for(const r of results)if(r.status==='fulfilled')sources[r.value.key]=r.value.texture;
     for(const r of physical)if(r.status==='fulfilled')physicalSources[r.value.key]=r.value.texture;
   })();

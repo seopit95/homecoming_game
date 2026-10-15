@@ -1,0 +1,105 @@
+[
+  {
+    "id": "cassette_player",
+    "name": "Cassette Player",
+    "authors": {
+      "Oday Abuzaeed": "All"
+    },
+    "source": "https://polyhaven.com/a/cassette_player",
+    "license": "CC0-1.0",
+    "licenseURL": "https://polyhaven.com/license",
+    "filesAPI": "https://api.polyhaven.com/files/cassette_player",
+    "adaptation": "Static native geometry merged per source material with 1e-6m numeric precision; supplied1k PBR images converted to WebP, original authored UVs and part poses retained. Models scaled to world-owned physical furniture/equipment.",
+    "textures": [
+      {
+        "file": "cassette_player_body_arm_1k.webp",
+        "bytes": 120972,
+        "sha256": "6455a7b6b5a250859c203a52773f20067a4eb07f3c52c3090adb9fb7d7d2785e"
+      },
+      {
+        "file": "cassette_player_body_diff_1k.webp",
+        "bytes": 46634,
+        "sha256": "6c861cd1c6c2cc51855ed2ade61699c3aaabc11e68a2ae6f338ebc7b00addf7c"
+      },
+      {
+        "file": "cassette_player_body_nor_gl_1k.webp",
+        "bytes": 126904,
+        "sha256": "6f9e88cd99f77fb1789cc49806a4979b1db0cf4b5de665db1e00aa01f128d545"
+      },
+      {
+        "file": "cassette_player_tape_arm_1k.webp",
+        "bytes": 58940,
+        "sha256": "4a8a0a243b26bc55922a6bc95a6b2a73ea5702ff1eaf426f5423cf12644512a1"
+      },
+      {
+        "file": "cassette_player_tape_nor_gl_1k.webp",
+        "bytes": 108062,
+        "sha256": "93db1230678dd614e9d4447097b465e20d81ae6626a8bae77427c22d52870201"
+      },
+      {
+        "file": "cassette_player_tape_orangeblue_diff_1k.webp",
+        "bytes": 75000,
+        "sha256": "17795aeff24ad0dbf9c53a9b37f468632fafd5f7525df5ec0abd59ad4dc12ccd"
+      }
+    ]
+  },
+  {
+    "id": "power_box_01",
+    "name": "Power Box 01",
+    "authors": {
+      "Rico Cilliers": "Modeling & Texturing",
+      "Yann Kervran": "Rigging"
+    },
+    "source": "https://polyhaven.com/a/power_box_01",
+    "license": "CC0-1.0",
+    "licenseURL": "https://polyhaven.com/license",
+    "filesAPI": "https://api.polyhaven.com/files/power_box_01",
+    "adaptation": "Static native geometry merged per source material with 1e-6m numeric precision; supplied1k PBR images converted to WebP, original authored UVs and part poses retained. Models scaled to world-owned physical furniture/equipment.",
+    "textures": [
+      {
+        "file": "power_box_01_arm_1k.webp",
+        "bytes": 153406,
+        "sha256": "0c07b28931aecb4cc9a13a893b0420a88764176bc46038cc6154f5a50f69fa34"
+      },
+      {
+        "file": "power_box_01_diff_1k.webp",
+        "bytes": 76324,
+        "sha256": "ab3b94912b0353f7c3e5bb90e26d4a504a28456c9f143082f549d192ce843cac"
+      },
+      {
+        "file": "power_box_01_nor_gl_1k.webp",
+        "bytes": 161238,
+        "sha256": "7023d71550d20a53b7a0c492c5caff20cb9df8fb7eedffb2c6eefc1fa0e55f00"
+      }
+    ]
+  },
+  {
+    "id": "metal_office_desk",
+    "name": "Metal Office Desk",
+    "authors": {
+      "Ulan Cabanilla": "All"
+    },
+    "source": "https://polyhaven.com/a/metal_office_desk",
+    "license": "CC0-1.0",
+    "licenseURL": "https://polyhaven.com/license",
+    "filesAPI": "https://api.polyhaven.com/files/metal_office_desk",
+    "adaptation": "Static native geometry merged per source material with 1e-6m numeric precision; supplied1k PBR images converted to WebP, original authored UVs and part poses retained. Models scaled to world-owned physical furniture/equipment.",
+    "textures": [
+      {
+        "file": "metal_office_desk_arm_1k.webp",
+        "bytes": 121710,
+        "sha256": "765adf098fe5eeeb954207890851588e29d8fe137d95ebdaa2746f629c7555f7"
+      },
+      {
+        "file": "metal_office_desk_diff_1k.webp",
+        "bytes": 64298,
+        "sha256": "fb2f477fd04a96500cfe4041abd369ee18df41b33aec795ea3c7d8864efa25a5"
+      },
+      {
+        "file": "metal_office_desk_nor_gl_1k.webp",
+        "bytes": 32568,
+        "sha256": "727691e4ebba971b12587b7fe175cac6334e5fee84ad42811d1dfccb1d464630"
+      }
+    ]
+  }
+]

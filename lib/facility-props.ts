@@ -2,6 +2,7 @@ import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {boxUV,softBox} from './materials.ts';
 import {roundPipe} from './props.ts';
+import {facilityModel} from './facility-models.ts';
 
 // Local static assemblies share caller-owned finishes; the world disposes the result.
 function assembly(name:string){
@@ -18,11 +19,34 @@ function assembly(name:string){
 }
 
 export function facilityTable(w:number,d:number,wood:T.Material,metal:T.Material){
+ if(w<=2.5){const group=new T.Group();group.name='grounded-worktable';group.userData.floorProp=true;group.rotation.y=Math.PI;const desk=facilityModel('metal_office_desk'),bounds=new T.Box3().setFromObject(desk,true),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());desk.scale.set(w/size.x,.82/size.y,d/size.z);desk.position.set(-center.x*desk.scale.x,-bounds.min.y*desk.scale.y,-center.z*desk.scale.z);group.add(desk);return group;}
  const a=assembly('grounded-worktable');a.box(0,.7975,0,w,.045,d,wood);
  for(const x of [-w/2+.075,w/2-.075])for(const z of [-d/2+.075,d/2-.075]){a.box(x,.391,z,.038,.758,.038,metal);a.box(x,.006,z,.05,.012,.05,metal);}
  for(const z of [-d/2+.065,d/2-.065])a.box(0,.742,z,w-.11,.065,.025,metal);
  for(const x of [-w/2+.065,w/2-.065]){a.box(x,.742,0,.025,.065,d-.11,metal);a.box(x,.19,0,.025,.025,d-.11,metal);}
  a.box(0,.19,-d/2+.065,w-.11,.025,.025,metal);a.box(0,.49,-d/2+.055,w-.17,.37,.018,wood);return a.finish();
+}
+
+export function cartridgeFuse(metal:T.Material){
+ const group=new T.Group(),glass=new T.MeshPhysicalMaterial({color:'#d9e0d9',roughness:.14,transparent:true,opacity:.38,depthWrite:false});
+ const tube=new T.Mesh(new T.CylinderGeometry(.0035,.0035,.026,16),glass);tube.rotation.z=Math.PI/2;group.add(tube);
+ for(const x of [-.015,.015]){const cap=new T.Mesh(new T.CylinderGeometry(.0038,.0038,.006,16),metal);cap.rotation.z=Math.PI/2;cap.position.x=x;group.add(cap);}
+ roundPipe(group,[-.012,0,0],[.012,0,0],.00025,metal);return group;
+}
+
+export function videoCassette(dark:T.Material,pale:T.Material,glass:T.Material){
+ const a=assembly('vhs-original');a.box(0,.002,0,.188,.004,.104,dark);
+ for(const x of [-.092,.092])a.box(x,.014,0,.004,.024,.104,dark);
+ for(const z of [-.05,.05])a.box(0,.014,z,.18,.024,.004,dark);
+ const top=new T.Shape();top.moveTo(-.094,-.052);top.lineTo(.094,-.052);top.lineTo(.094,.052);top.lineTo(-.094,.052);top.closePath();
+ for(const x of [-.045,.045]){
+  const opening=new T.Path();opening.absellipse(x,.006,.023,.018,0,Math.PI*2,true);top.holes.push(opening);
+  const window=new T.CircleGeometry(.023,32);window.rotateX(-Math.PI/2);window.scale(1,1,.018/.023);a.mesh(window,glass,x,.0245,-.006);
+  a.mesh(new T.CylinderGeometry(.019,.019,.004,32),dark,x,.0195,-.006);a.mesh(new T.CylinderGeometry(.014,.014,.003,24),pale,x,.022,-.006);a.mesh(new T.CylinderGeometry(.004,.004,.002,16),dark,x,.023,-.006);
+ }
+ const shell=new T.ExtrudeGeometry(top,{depth:.002,bevelEnabled:false,curveSegments:24});shell.rotateX(-Math.PI/2);a.mesh(shell,dark,0,.023,0);
+ a.box(0,.0255,.029,.10,.001,.022,pale);for(const x of [-.08,.08])a.box(x,.0257,-.039,.009,.0014,.006,dark);
+ return a.finish(false);
 }
 export function facilityChair(wood:T.Material,metal:T.Material){
  const a=assembly('grounded-desk-chair');
