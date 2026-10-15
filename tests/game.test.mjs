@@ -2,6 +2,7 @@ import {archiveReplay} from '../lib/expansion-story.ts';
 import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import * as realLighting from '../lib/lighting.ts';
 import {opening,finale} from '../lib/story.ts';
 import {accidentCar} from '../lib/chapters.ts';
 import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/apartment-layout.ts';
@@ -12,8 +13,8 @@ let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLeve
 let pendingCompiles=null,rendererDisposals=0;
 class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
-mock.module('../lib/lighting.ts',{namedExports:{roomReflections:()=>({dispose(){}})}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setVolume(){}mix(){}recording(){voiceCalls.push('memory');}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/lighting.ts',{namedExports:{...realLighting,roomReflections:()=>({dispose(){}})}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setArchiveRecord(){}setVolume(){}mix(){}recording(){voiceCalls.push('memory');}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -490,7 +491,7 @@ test('resuming a previously played archive record allows replay and shows the ti
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:0,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();assert.equal(game.snapshot().story.stage,'archive_playback');
   tick(12.2);assert.equal(game.snapshot().message,archiveReplay[2].text);
   game.pause();const at=game.snapshot().elapsed;tick(10);assert.equal(game.snapshot().elapsed,at);game.pause(false);
-  tick(15);assert.match(game.snapshot().message,/네 뒤에 있어/);assert.equal(game.snapshot().story.stage,'archive_playback');tick(5);assert.equal(game.snapshot().story.stage,'archive_escape');
+  tick(2.9);assert.match(game.snapshot().message,/네 뒤에 있어/);assert.equal(game.snapshot().story.stage,'archive_playback');tick(4);assert.equal(game.snapshot().story.stage,'archive_escape');
  }finally{game.dispose();win.localStorage=previous;}
 });
 
@@ -636,4 +637,51 @@ test('a pursuer already through the upper fire door remains visible and lethal a
     tick(.1);assert.ok(chaseLevel>0,'pursuit music continues through the transition');tick(8);
     assert.ok(['dying','ended'].includes(game.snapshot().story.stage),'arrival cannot disable contact with the carried pursuer');
   }finally{game.dispose();win.localStorage=previous;}
+});
+
+
+test('the two investigation boundaries retain a moving follower and save the carried threat immediately',async()=>{
+ const previous=win.localStorage;
+ try{for(const c of [
+  {stage:'court_departure',next:'archive_arrival',notes:['court_gate','court_confirm'],player:[15.55,-1.15,-53],ghost:[14,-2.8,-53]},
+  {stage:'archive_departure',next:'plant_arrival',notes:['archive_ledger','archive_road','archive_call','archive_gate','archive_play'],player:[1.55,1.65,-34],ghost:[0,0,-34]},
+ ]){
+  let raw=JSON.stringify({version:2,stage:c.stage,notes:c.notes,elapsed:0,circuit:[],pursuit:false});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  try{
+   await game.ready;tick();game.continueGame();tick(.1);const before=renderedScene.getObjectByName('resident-remains');before.position.set(...c.ghost);before.visible=true;renderedCamera.position.set(...c.player);tick(.025);
+   assert.equal(game.snapshot().story.stage,c.next);const after=renderedScene.getObjectByName('resident-remains'),at=after.position.clone();tick(.7);assert.equal(after.visible,true,'follower must emerge after its actual travel delay at '+c.next);
+   tick(1);assert.ok(after.position.distanceTo(at)>.1,'follower freezes after entering '+c.next);assert.equal(JSON.parse(raw).pursuit,true,'an immediate quit cannot erase the just-carried follower');
+  }finally{game.dispose();}
+ }}finally{win.localStorage=previous;}
+});
+
+test('continuing a threatened archive investigation preserves conclusions and restores an entrance approach',async()=>{
+ const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'archive_edit',notes:['court_confirm','archive_ledger','archive_road','archive_call','archive_gate'],circuit:['archive_sequence_road'],elapsed:480,pursuit:true});
+ win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{
+  await game.ready;tick();game.continueGame();tick(.1);assert.deepEqual(game.snapshot().story.circuit,['archive_sequence_road']);const g=renderedScene.getObjectByName('resident-remains'),at=g.position.clone();assert.equal(g.visible,false,'the checkpoint leaves a fair approach interval');
+  tick(3.5);assert.equal(g.visible,true,'continue must not disable a previously carried hunt');assert.ok(g.position.distanceTo(at)>.05,'the restored follower must move through the actual entry route');assert.equal(game.snapshot().story.stage,'archive_edit','the player cannot be caught at spawn before the approach is announced');
+ }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('a threatened investigation retry preserves marked evidence and allows the follower to approach again',async()=>{
+ const previous=win.localStorage;const raw=JSON.stringify({version:2,stage:'archive_edit',notes:['court_confirm','archive_ledger','archive_road','archive_call','archive_gate'],circuit:['archive_sequence_call'],elapsed:480,pursuit:true});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem(){},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{
+  await game.ready;tick();game.continueGame();tick(3.1);const g=renderedScene.getObjectByName('resident-remains');g.position.copy(renderedCamera.position);g.position.y=0;g.position.z+=.45;g.visible=true;tick(.025);assert.equal(game.snapshot().story.stage,'dying');tick(3.3);assert.equal(game.snapshot().story.stage,'ended');
+  game.start(true);tick(.1);assert.equal(game.snapshot().story.stage,'archive_edit');assert.deepEqual(game.snapshot().story.circuit,['archive_sequence_call']);assert.equal(g.visible,false,'retry starts outside contact range');tick(3.1);assert.equal(g.visible,true,'retry must restore the carried follower');assert.equal(game.snapshot().story.stage,'archive_edit');assert.equal(game.snapshot().paused,false);
+ }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('stopping an archive recording leaves a visible nearby pursuer moving',async()=>{
+ const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'archive_edit',notes:['archive_ledger','archive_road','archive_call','archive_gate'],circuit:[],elapsed:0,pursuit:true}):null,setItem(){},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ function aim(p,target){renderedCamera.position.set(...p);const dx=target[0]-p[0],dy=target[1]-p[1],dz=target[2]-p[2],y=Math.atan2(-dx,-dz),x=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(y-renderedCamera.rotation.y)/.0021,clientY:-(x-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick(.025);}
+ try{
+  await game.ready;tick();game.continueGame();tick(2.1);const g=renderedScene.getObjectByName('resident-remains');g.position.set(6.6,0,-17.2);g.rotation.y=2.1;g.visible=true;
+  aim([9,1.65,-18.6],[9,.94,-19.76]);game.interact();assert.match(game.snapshot().message,/어느 쪽/);
+  aim([8.88,1.65,-18.45],[8.88,.94,-19.61]);game.interact();assert.match(game.snapshot().message,/일시정지/);const at=g.position.clone(),elapsed=game.snapshot().elapsed;tick(.35);assert.ok(g.position.distanceTo(at)>.2,'record pause must not pause the actual hunt');assert.ok(game.snapshot().elapsed>elapsed+.3);assert.equal(game.snapshot().paused,false);assert.equal(game.snapshot().story.stage,'archive_edit');
+ }finally{game.dispose();win.localStorage=previous;}
 });

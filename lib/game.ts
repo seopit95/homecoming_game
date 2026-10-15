@@ -114,7 +114,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function persist(){
     if(!storage||isMemory(story.stage)||story.stage==='tv'||story.stage==='wake_ring')return;
-    const ok=writeProgress(storage,story,elapsed);if(ok)saved=readProgress(storage);
+    const ok=writeProgress(storage,story,elapsed,arrivalPursuit);if(ok)saved=readProgress(storage);
     saveNotice=ok?'이 기기에 진행 상황 저장됨':'저장 공간을 사용할 수 없습니다';saveUntil=elapsed+3;
   }
   function advance(action:Action){
@@ -152,8 +152,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function start(retry:boolean|'continue'=false){
     if(preparing){void ready.then(()=>{if(!disposed)start(retry);});return;}
     try{audio.start();audio.setVolume(settings.volume);audio.mix(settings);}catch{onError('소리를 시작하지 못했습니다. 소리 없이도 플레이할 수 있습니다.');}
+    const resumePursuit=retry?(retry==='continue'?saved?.pursuit:arrivalPursuit):false;
     if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&residentEvidence.every(id=>story.notes.includes(id)))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathRecovery=false;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
     lastStep=elapsed;lastEmit=elapsed-1;loadArea(areaFor(story));
+    if(resumePursuit&&(area==='archive'||area==='plant'))carryPursuit(5.2,true,expansionLayout[area].z);
     audio.setTV(story.stage==='tv');
     if(isCinematic(story.stage)||story.stage==='tv'||story.stage==='wake_ring')openingScene();
     if(retry&&story.stage==='light_switch'){camera.position.set(...home.wakeStand);yaw=2.045;pitch=-.137;}
@@ -624,13 +626,13 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
   }
   function carryPursuit(distance:number,visible:boolean,newZ:number,speed=2.15){
-    arrivalPursuit=visible&&(area==='parking'||area==='courtyard');
+    arrivalPursuit=visible;
     if(area!=='parking')arrivalDoor=world.root.children.find(o=>o.name==='continuous-connection'&&o.position.z===newZ+6)?.getObjectByName('connection-fire-door');
     entranceDelay=Math.max(0,(distance-1.6)/(speed*.85));
     // Wait behind the fire-door sweep; standing on the landing traps both
     // the opening leaf and the pursuer against one another.
     world.figure.position.set(-2.95,0,newZ+5.55);world.figure.rotation.y=Math.PI;
-    world.figure.visible=visible&&entranceDelay===0;lastGhostPosition.copy(world.figure.position);
+    world.figure.visible=visible&&entranceDelay===0;lastGhostPosition.copy(world.figure.position);persist();
   }
   function crossThresholds(){
     if(story.hidden)return;
