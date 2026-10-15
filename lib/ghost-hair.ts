@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {surface} from './materials.ts';
+import {ghostHairMaterials} from './materials.ts';
 import authored from './assets/ghost-hair.json' with {type:'json'};
 
 // UV copies share a surface, so they must also share its lighting normal.
@@ -13,8 +13,9 @@ export function createHair(head:T.Group){
   const geometry=new T.BufferGeometry();
   geometry.setAttribute('position',new T.Float32BufferAttribute(authored.position,3));
   geometry.setAttribute('uv',new T.Float32BufferAttribute(authored.uv,2));geometry.setIndex(authored.index);
-  const material=surface('hair','#828b8e',{roughness:.42,bumpScale:.00025,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide}) as T.MeshPhysicalMaterial;
-  material.specularIntensity=.65;material.anisotropy=.6;material.clearcoat=.08;material.clearcoatRoughness=.4;
+  geometry.setAttribute('uv1',new T.Float32BufferAttribute(authored.position.flatMap((y,i)=>i%3===1?[.5,i/3<authored.metadata.scalpVertices?T.MathUtils.clamp((y+.14)/.26,0,1):1]:[]),2));
+  for(const group of authored.groups)geometry.addGroup(group.start,group.count,group.materialIndex);
+  const material=ghostHairMaterials();
   const mesh=new T.Mesh(geometry,material);mesh.name='ghost-authored-long-hair';
   mesh.userData.rest=new Float32Array(authored.position);mesh.userData.anchors=new Float32Array(authored.anchor);mesh.userData.skinDelta=new Float32Array(authored.skinDelta);
   mesh.userData.face=head.getObjectByName('ghost-continuous-face');

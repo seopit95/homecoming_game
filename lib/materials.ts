@@ -3,14 +3,14 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {prepareFacilityModels} from './facility-models.ts';
 
 // Decode each source once; floor changes own disposable texture clones.
-const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'hair'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair',T.Texture>>={};
+const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair',T.Texture>>={};
 const physicalSources:Partial<Record<`${'plaster'|'concrete'|'wood'|'wood-floor'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
     const loader=new T.TextureLoader();
-    const jobs=(['surfaces','remains','face','hand','hand-view','hair','cloth'] as const).map(async key=>{
-      const file=key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
+    const jobs=(['surfaces','remains','face','hand','hand-view','hair','hair-locks','cloth'] as const).map(async key=>{
+      const file=key==='hair-locks'?'ghost-hair-locks-v1.webp':key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
       const texture=await loader.loadAsync(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     });
     const livingJobs=(['pedestrian-skin','pedestrian-shirt','pedestrian-shirt-normal','pedestrian-hair'] as const).map(async key=>{
@@ -59,6 +59,16 @@ export function surface(kind:Surface,color='#ffffff',options:T.MeshStandardMater
   return material;
 }
 export function upholstery(color:string){return surface('fabric',color,{roughness:.94,bumpScale:.0007});}
+export function ghostHairMaterials(){
+  const scalp=surface('hair','#828b8e',{roughness:.42,bumpScale:.00025,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide}) as T.MeshPhysicalMaterial;
+  scalp.specularIntensity=.65;scalp.anisotropy=.6;scalp.clearcoat=.08;scalp.clearcoatRoughness=.4;
+  const loose=scalp.clone(),map=sources['hair-locks']?.clone()??null;if(map)map.needsUpdate=true;
+  // A separate UV channel fades the clipped cap into the loose roots. Native
+  // alphaMap handling applies the same cutout to the visible and shadow passes.
+  const fade=new T.DataTexture(new Uint8Array([0,0,0,255,255,255,255,255]),1,2);fade.channel=1;
+  fade.magFilter=fade.minFilter=T.LinearFilter;fade.needsUpdate=true;scalp.alphaMap=loose.alphaMap=fade;
+  loose.name='surface-wet-hair-locks';loose.map=loose.bumpMap=map;loose.color.set('#a9afb0');return [scalp,loose];
+}
 export function livingMaterial(part:'skin'|'shirt'|'hair'){
   const copy=(key:keyof typeof sources)=>{const t=sources[key]?.clone();if(t)t.needsUpdate=true;return t??null;},hair=part==='hair',shirt=part==='shirt';
   return new T.MeshPhysicalMaterial({map:copy(('pedestrian-'+part) as keyof typeof sources),color:hair?'#35302b':'#ffffff',roughness:hair?.6:shirt?.88:.68,sheen:shirt?.3:hair?.18:0,sheenRoughness:.8,normalMap:shirt?copy('pedestrian-shirt-normal'):null,normalScale:new T.Vector2(.35,.35),side:shirt||hair?T.DoubleSide:T.FrontSide,alphaTest:hair?.35:0,alphaToCoverage:false});
