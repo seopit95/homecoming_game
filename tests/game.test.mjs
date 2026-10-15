@@ -170,7 +170,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
    ['annex',[['annex_map','annex_fuse'],['annex_fuse','annex_restore'],['annex_restore','annex_search'],['annex_badge','annex_search'],['annex_notice','annex_search'],['annex_call','annex_unlock'],['annex_line_home','annex_exit_ready'],['annex_exit','annex_departure']],'court_arrival'],
    ['courtyard',[['court_gate','court_search'],['court_log','court_search'],['court_evidence','court_search'],['court_phone','court_code'],...Array.from('2617').flatMap((n,i)=>Array.from({length:Number(n)},()=>[`court_digit_${i}`,'court_code'])),['court_confirm','court_unlocked'],['court_exit','court_departure']],'archive_arrival'],
    ['archive',[['archive_ledger','archive_search'],['archive_road','archive_search'],['archive_call','archive_search'],['archive_gate','archive_edit'],['archive_sequence_road','archive_edit'],['archive_sequence_call','archive_edit'],['archive_sequence_gate','archive_reveal'],['archive_play','archive_playback'],['archive_exit','archive_departure']],'plant_arrival'],
-   ['plant',[['plant_diagram','plant_isolate'],['plant_valve_west','plant_isolate'],['plant_valve_east','plant_power'],['plant_circuit_pump','plant_power'],['plant_circuit_air','plant_power'],['plant_start','plant_drain'],['plant_exit','plant_departure']],'parking_gate'],
+   ['plant',[['plant_diagram','plant_isolate'],['plant_valve_west','plant_isolate'],['plant_valve_east','plant_power'],['plant_filter','plant_power'],['plant_route','plant_power'],['plant_route','plant_power'],['plant_circuit_pump','plant_power'],['plant_circuit_air','plant_power'],['plant_start','plant_drain'],['plant_exit','plant_departure']],'parking_gate'],
   ]){
    const reference=buildWorld(new THREE.Scene(),area);
    try{
@@ -702,5 +702,16 @@ test('continuing a distant incoming hunt respects its saved remaining travel tim
  try{
   await game.ready;tick();game.continueGame();tick(3);const g=renderedScene.getObjectByName('resident-remains'),at=g.position.clone();assert.equal(g.visible,false,'continue may not turn12sec of transit into a2sec arrival');assert.equal(game.snapshot().story.stage,'plant_arrival');
   tick(10);assert.equal(g.visible,true,'the pending follower must eventually arrive');assert.ok(g.position.distanceTo(at)>.05,'the arrived follower resumes actual navigation');
+ }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('using a plant valve cannot reveal a pursuer that is still physically in transit',async()=>{
+ const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'plant_isolate',notes:['archive_play','plant_diagram'],circuit:[],elapsed:500,pursuit:true,pursuitWait:24});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{
+  await game.ready;tick();game.continueGame();tick(.1);const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,false);
+  renderedCamera.position.set(-8,1.65,20.1);const target=new THREE.Vector3(-8,1.22,19.32),d=target.sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));
+  event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
+  assert.match(game.snapshot().prompt,/서측/);game.interact();assert.ok(game.snapshot().story.notes.includes('plant_valve_west'));assert.equal(ghost.visible,false,'operating the valve must not teleport the delayed follower into view');
  }finally{game.dispose();win.localStorage=previous;}
 });

@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive} from './expansion-story.ts';
+import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive,plantProblem,plantRoute} from './expansion-story.ts';
 import {expansionLayout} from './expansion-world.ts';
 import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,clampLightOrigin,type Target} from './world.ts';
 import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength} from './ghost.ts';
@@ -226,12 +226,18 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(lureUsed){say('태엽이 다 풀렸다.',2);return;}lureUsed=true;const point=hover!.point;lastSeen={x:point.x,z:point.z};seenAt=elapsed;tracking=true;noiseRadius=0;audio.sound('alarm',-.65,.45);say('태엽 소리가 울린다. 멀리서 발소리가 방향을 바꿨다.',4);return;
     }
     if((action.startsWith('annex_')||action.startsWith('court_')||action.startsWith('archive_')||action.startsWith('plant_'))&&story.notes.includes(action)&&action in expansionJournal&&!(action==='archive_play'&&story.stage==='archive_reveal')){say(expansionJournal[action as keyof typeof expansionJournal].text.split('\n\n')[0],10);return;}
-    const wasHidden=story.hidden;
+    const wasHidden=story.hidden,plantFault=action==='plant_start'?plantProblem(story):null;
     if(action==='stay'){say(stageTime<12?'전화 너머에서 주소를 확인한다. 사이렌이 가까워진다.':'통화를 유지한 채 잠시 기다리자.',5);return;}
     if(!advance(action)){
       if(action==='court_confirm'){audio.sound('slam',0,.4);noiseRadius=24;noiseUntil=elapsed+4;say('금고가 열리지 않는다. 경비일지의 입차 분과 비상전화의 당직 내선을 대조하자.',6);return;}
       if(action.startsWith('annex_line_')){audio.sound('phone',0,.45);noiseRadius=16;noiseUntil=elapsed+3;say('이 회선은 마지막 호출의 수신처가 아니다. 우편실 안내문과 통신실 녹음에 답이 있다.',7);return;}
-      if(action==='plant_start'){audio.sound('metal',0,.5);noiseRadius=18;noiseUntil=elapsed+3;say('차단기가 떨어졌다. 배관 계통도에서 침수 시 끊어야 할 회로를 다시 확인하자.',7);return;}
+      if(action==='plant_start'){
+        const powered=story.circuit.includes('plant_circuit_pump')&&story.circuit.includes('plant_circuit_air');
+        if(powered){world.plantAttempt?.(elapsed,story);noiseRadius=18;noiseUntil=elapsed+3;}
+        audio.sound(powered?'motor':'click',0,powered?.5:.3);
+        const faults={isolation:'유입이 계속된다. 양쪽 급수 차단 밸브부터 잠가야 한다.',filter:'모터가 짧게 울다 멎었다. 서측 펌프실로 돌아가 흡입망과 계기의 노란 시험 바늘을 확인하자.',route:plantRoute(story)==='closed'?'모터 보호 장치가 시험 운전을 멈췄다. 서측 토출 계기의 노란 시험 바늘과 선택기를 확인하자.':'펌프가 시험 회전했지만 수위가 그대로다. 서측 토출 선택기와 외부 배관을 따라가 보자.',pump:'모터 전원이 꺼져 있다. 바로 옆 배수 회로를 확인하자.',air:'환기 연동이 잠겨 있다. 환기 회로를 연결해야 기동할 수 있다.',electrical:'침수된 조명 회로에 누전이 있다.'};
+        say(plantFault?faults[plantFault]:objectiveFor(story),7);return;
+      }
       if(action.startsWith('annex_')||action.startsWith('court_')||action.startsWith('archive_')||action.startsWith('plant_')){say(objectiveFor(story),6);return;}
 
       const responses:Partial<Record<Action,string>>={exit:'보행자 출구는 바깥에서 막혔다. 내 차를 타고 차량 출구로 나가야 한다.',resident_leave:objectiveFor(story),door:'문이 꿈쩍하지 않는다. 안쪽 잠금쇠는 풀려 있는데…',closet:'장롱 안에 몸을 숨길 수 있다.',up:'문이 움직이지 않는다. 먼저 아래쪽 계단을 확인하자.',fuse:'먼저 관리실 책상의 근무일지를 살펴보자.',security_power:'퓨즈가 빠져 있다. 서고의 예비 부품을 찾아야 한다.',monitor:story.stage==='office_tape'?'이 시각에는 내 차가 없다. 근무일지의 입차 시각을 다시 확인하자.':'화면이 꺼져 있다. 기록과 전원을 확인해야 한다.',service_exit:'비상 열쇠가 필요하다. CCTV 옆 열쇠함이 보인다.'};
@@ -242,7 +248,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       say(responses[action]||'이미 확인했다. 다음 단서를 찾아야 한다.',4);return;
     }
     if(isExpansion(story.stage)){
-      if(action==='plant_valve_west'||action==='plant_valve_east'||action==='plant_start'){world.figure.visible=true;audio.sound(action==='plant_start'?'motor':'metal',.4,.6);noiseRadius=18;noiseUntil=elapsed+2;}
+      if(action==='plant_start'&&plantFault==='electrical'){audio.sound('metal',0,.6);noiseRadius=18;noiseUntil=elapsed+3;say('누전 보호기가 떨어졌다. 배수와 외부조명 스위치가 내려갔다. 침수된 외부조명은 끄고 배수 전원만 다시 연결하자.',8);return;}
+      if(action==='plant_valve_west'||action==='plant_valve_east'||action==='plant_start'){audio.sound(action==='plant_start'?'motor':'metal',.4,.6);noiseRadius=18;noiseUntil=elapsed+2;}
+      if(action==='plant_route'){audio.sound('metal',-.3,.4);noiseRadius=12;noiseUntil=elapsed+1.5;say(plantRoute(story)==='drain'?'토출 → 외부 우수관. 배관이 서쪽 벽으로 이어진다.':plantRoute(story)==='closed'?'토출 → 차단. 이 위치에서는 물이 나갈 수 없다.':'토출 → 집수정 환수. 물이 다시 이 방으로 돌아온다.',5);return;}
       if(action==='annex_exit'){world.figure.visible=true;tracking=true;lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;ghostVoice('no',true);audio.sound('dread',0,.65);}
       if(action==='annex_line_home'){audio.sound('phone',-.4,.65);ghostVoice('here',true);}
       if(action==='archive_play'){audio.sound('dread');say(archiveReplay[0].text,5);scriptBeat=1;return;}

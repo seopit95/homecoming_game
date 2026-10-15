@@ -16,7 +16,7 @@ export const expansionObjectives={
  archive_reveal:'북동쪽 편집실 모니터에서 원본의 아홉 초를 재생하세요',
  archive_escape:'문밖에서 손톱 소리가 들린다. 북쪽 기계실 연결문으로 빠져나가세요',archive_departure:'열린 연결문을 지나 기계실로 이동하세요',
  plant_arrival:'침수된 통로 옆의 배관 계통도를 확인하세요',plant_isolate:'서측과 동측 급수 밸브를 모두 잠그세요',
- plant_power:'배관 계통도와 침수 주의사항에 맞춰 회로를 구성하고 펌프를 가동하세요',
+ plant_power:'서측 펌프실의 흡입망과 토출 방향을 확인하고 전기실에서 배수를 시험하세요',
  plant_drain:'배수가 진행 중이다. 기계실을 돌며 접근하는 소리를 피하세요',
  plant_exit_ready:'물이 빠졌다. 북쪽 주차장 연결문을 여세요',plant_departure:'열린 문을 지나 주차장으로 나가세요',
 } as const;
@@ -39,13 +39,14 @@ export const expansionJournal={
  archive_call:{title:'B실 · 양방향 통화 회수',text:'AUDIO-17 / 03:20 / 정문 비상벨 → 2803 등록 휴대전화. 양쪽 목소리를 보존한 원본 테이프다.\n\n통신실 장치에는 발신측만 남아 있었다. 이 테이프라면 그때 내가 무슨 말을 했는지, 누가 먼저 끊었는지 확인할 수 있다. 라벨의 수신자 이름을 손가락으로 가렸다.'},
  archive_gate:{title:'C실 · 입차 원본 회수',text:'CAM-04 / 03:26 / 지하 차량 출입구. 관리실 열람본에서 빠졌던 구간에 「영상·소리 동시 보존」 스티커가 붙어 있다.\n\n차를 세운 다음 아홉 초. 원본에는 차량 안에서 난 소리까지 남아 있다. 편집실에서 조수석을 잘 봐야 한다.'},
  archive_play:{title:'복원된 기록 · 누락 구간',text:'세 원본에 증거 표시를 남겼다. 보행 신호, 내가 끝낸 통화, 잠겨 있던 문.\n\n마지막 아홉 초를 다시 연결했다. 이제 내가 내리지 않았던 차 안의 소리가 끊김 없이 재생된다. 모니터에 익숙한 방이 비치기 시작한다. 편집실이다. 방금까지는 사흘 전 영상이었는데.'},
- plant_diagram:{title:'B1 · 배수 계통도',text:'차량 출구가 침수되어 있다. 기록보관실 북쪽의 기계실을 통해 배수 장치를 복구해야 한다.\n\n① 서측 저장탱크와 동측 급수관을 차단한다.\n② 전기실에서 배수 펌프와 환기 회로를 켠다. 침수된 외부조명 회로는 끈다.\n③ 기동 버튼을 누르고 수위가 내려가면 북쪽 주차장 연결문으로 나간다.\n\n한서연의 점검 서명 아래에 다른 글씨가 겹쳐 있다. 「나도 이 길로 돌아가고 싶었어.」'},
+ plant_diagram:{title:'B1 · 배수 계통도',text:'주차장 경사로 아래까지 물이 차 있다. 유입을 막지 않으면 배수를 해도 수위가 다시 오른다. 서측 저장탱크와 동측 급수관의 차단 위치가 표시돼 있다.\n\n서측 펌프실: 집수정 → 흡입망 → 펌프 → 토출 선택기. 평소에는 물을 집수정으로 되돌린다. 외부 우수관은 서쪽 벽을 통해 나간다.\n\n동측 전기실: 모터와 환기 연동. 현장 압력과 흡입망을 확인한 뒤 기동할 것. 한서연의 점검란에 「천 조각 유입 반복. 원인 미확인」이라고 적혀 있다.'},
  plant_valve_west:{title:'기계실 · 서측 차단',text:'저장탱크 쪽 급수관을 잠갔다. 녹슨 손잡이 아래에서 검은 물이 흘렀다. 탱크 안쪽에서 세 번 두드리는 소리가 났다. 동측 급수관까지 잠가야 한다.'},
- plant_valve_east:{title:'기계실 · 동측 차단',text:'동측 급수관을 잠갔다. 배관 진동이 멎자 벽 너머의 손톱 소리가 들렸다. 전기실 계통도대로 전원을 연결해야 한다.'},
+ plant_valve_east:{title:'기계실 · 동측 차단',text:'동측 급수관을 잠갔다. 배관 진동이 멎자 벽 너머의 손톱 소리가 들렸다. 서측 펌프실의 흡입망과 토출 선택기를 확인해야 한다.'},
+ plant_filter:{title:'펌프실 · 흡입망에 걸린 천',text:'흡입망을 덮은 젖은 천을 걷어냈다. 검은 머리카락이 철망 사이까지 감겨 있었다. 천 끝에는 야간 당직 명찰의 끊어진 고리가 붙어 있다.\n\n물이 빨려 들어가는 틈이 드러났다. 토출 배관을 따라가니 한쪽은 집수정으로 돌아오고, 다른 쪽은 서쪽 벽의 외부 우수관으로 이어진다. 나는 이 사람의 흔적을 또 치우고 있다.'},
  plant_start:{title:'기계실 · 물이 내려간다',text:'배수 펌프와 환기 장치가 돌아간다. 수면 아래에 있던 주차장 방향 표지가 드러났다.\n\n펌프의 울림 사이로 젖은 손이 콘크리트를 치는 소리가 섞인다. 북쪽 방화문까지 우회할 길을 기억해 둬야 한다. 멈춰 있으면 금방 따라잡힌다.'},
  plant_drained:{title:'주차장으로 · 다시 차에 탄다',text:'차량 진입로의 물이 빠졌다. 보행자 출구는 공사 셔터 때문에 여전히 막혀 있다.\n\n내 차는 사고 다음 날부터 같은 자리에 세워 두었다. 열쇠를 조수석 가방에 넣었던 기억이 난다. 경보로 그것을 다른 쪽에 유인하면 운전석까지 갈 수 있다.\n\n밖으로 나가기만 하면 끝날 거라고, 또 그렇게 생각했다.'},
 } as const;
-export type ExpansionAction=keyof typeof expansionJournal|'archive_preview_road'|'archive_preview_call'|'archive_preview_gate'|'archive_record_pause'|'archive_record_back'|'archive_record_forward'|'archive_record_mark'|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|'annex_exit'|'court_enter'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_exit'|'parking_enter';
+export type ExpansionAction=keyof typeof expansionJournal|'archive_preview_road'|'archive_preview_call'|'archive_preview_gate'|'archive_record_pause'|'archive_record_back'|'archive_record_forward'|'archive_record_mark'|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|'annex_exit'|'court_enter'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_route'|'plant_route_closed'|'plant_route_drain'|'plant_exit'|'parking_enter';
 export const annexEvidence:Action[]=['annex_badge','annex_notice','annex_call'];
 export const archiveEvidence:Action[]=['archive_road','archive_call','archive_gate'];
 export const courtEvidence:Action[]=['court_log','court_phone'];
@@ -59,6 +60,19 @@ const steps:Partial<Record<Stage,[Action,Stage]>>={
  archive_arrival:['archive_ledger','archive_search'],archive_reveal:['archive_play','archive_playback'],archive_playback:['archive_finish','archive_escape'],archive_escape:['archive_exit','archive_departure'],archive_departure:['plant_enter','plant_arrival'],
  plant_arrival:['plant_diagram','plant_isolate'],plant_drain:['plant_drained','plant_exit_ready'],plant_exit_ready:['plant_exit','plant_departure'],plant_departure:['parking_enter','parking_gate'],
 };
+type PlantState=Pick<Story,'stage'|'notes'|'circuit'>;
+const draining=(s:PlantState)=>['plant_drain','plant_exit_ready','plant_departure'].includes(s.stage);
+export function plantRoute(s:PlantState){return draining(s)||s.circuit.includes('plant_route_drain')?'drain':s.circuit.includes('plant_route_closed')?'closed':'return';}
+export function plantFilterCleared(s:PlantState){return draining(s)||s.notes.includes('plant_filter');}
+export function plantProblem(s:PlantState){
+ if(!['plant_valve_west','plant_valve_east'].every(a=>s.notes.includes(a as Action)))return 'isolation';
+ if(s.circuit.includes('plant_circuit_pump')&&s.circuit.includes('plant_circuit_lights'))return 'electrical';
+ if(!s.circuit.includes('plant_circuit_pump'))return 'pump';
+ if(!s.circuit.includes('plant_circuit_air'))return 'air';
+ if(!plantFilterCleared(s))return 'filter';
+ if(plantRoute(s)!=='drain')return 'route';
+ return null;
+}
 function noted(s:Story,action:Action,stage:Stage=s.stage):Story{return {...s,stage,notes:[...new Set([...s.notes,action])]};}
 export function expansionTransition(s:Story,action:Action):Story|undefined{
  if(['court_search','court_code','court_unlocked'].includes(s.stage)&&(courtEvidence.includes(action)||action==='court_evidence')){
@@ -82,8 +96,17 @@ export function expansionTransition(s:Story,action:Action):Story|undefined{
   return {...s,circuit,stage:circuit.length===3?'archive_reveal':s.stage};
  }
  if(s.stage==='plant_power'){
+  if(action==='plant_filter')return s.notes.includes(action)?s:noted(s,action);
+  if(action==='plant_route'){
+   const circuit:Action[]=s.circuit.filter(a=>a!=='plant_route_closed'&&a!=='plant_route_drain');const route=plantRoute(s);
+   if(route!=='drain')circuit.push(route==='return'?'plant_route_closed':'plant_route_drain');
+   return {...s,circuit};
+  }
   if(action.startsWith('plant_circuit_'))return {...s,circuit:s.circuit.includes(action)?s.circuit.filter(a=>a!==action):[...s.circuit,action]};
-  if(action==='plant_start'&&s.circuit.includes('plant_circuit_pump')&&s.circuit.includes('plant_circuit_air')&&!s.circuit.includes('plant_circuit_lights'))return noted(s,action,'plant_drain');
+  if(action==='plant_start'){
+   if(plantProblem(s)==='electrical')return {...s,circuit:s.circuit.filter(a=>a!=='plant_circuit_pump'&&a!=='plant_circuit_lights')};
+   if(!plantProblem(s))return noted(s,action,'plant_drain');
+  }
  }
  const step=steps[s.stage];if(step?.[0]!==action)return undefined;
  const next=action in expansionJournal?noted(s,action,step[1]):{...s,stage:step[1]};
@@ -97,7 +120,7 @@ export function expansionObjective(s:Story){
  if(ids){const missing=ids.filter(a=>!s.notes.includes(a));const places:Partial<Record<Action,string>>={annex_badge:'동측 경비 휴게실 · 당직 책상',annex_notice:'서측 우편실 · 반송함',annex_call:'동측 통신실 · 녹음기',archive_road:'서측 A실 · 도로 기록',archive_call:'동측 B실 · 통화 기록',archive_gate:'서측 C실 · 입차 기록'};return `기록 ${ids.length-missing.length}/${ids.length} · ${missing.map(a=>places[a]).join(' / ')}`;}
  if(s.stage==='archive_edit')return `${expansionObjectives.archive_edit} (${s.circuit.length}/3)`;
  if(s.stage==='plant_isolate')return `${expansionObjectives.plant_isolate} (${['plant_valve_west','plant_valve_east'].filter(a=>s.notes.includes(a)).length}/2)`;
- if(s.stage==='plant_power')return `배수 ${s.circuit.includes('plant_circuit_pump')?'ON':'OFF'} · 환기 ${s.circuit.includes('plant_circuit_air')?'ON':'OFF'} · 외부조명 ${s.circuit.includes('plant_circuit_lights')?'ON':'OFF'} / 배관 계통도와 대조하세요`;
+ if(s.stage==='plant_power')return `흡입망 ${plantFilterCleared(s)?'확인':'막힘'} · 토출 ${plantRoute(s)==='drain'?'외부배수':plantRoute(s)==='closed'?'차단':'집수정 환수'} · 서측 설비 확인 후 동측 전기실에서 기동하세요`;
  return expansionObjectives[s.stage as ExpansionStage];
 }
 export function expansionTargetActive(s:Story,id:Action){
@@ -109,7 +132,8 @@ export function expansionTargetActive(s:Story,id:Action){
  if(id==='court_exit')return s.stage==='court_unlocked';
  if(id.startsWith('annex_line_'))return s.stage==='annex_unlock';
  if(id.startsWith('archive_sequence_'))return s.stage==='archive_edit';
- if(id.startsWith('plant_circuit_')||id==='plant_start')return s.stage==='plant_power';
+ if(id==='plant_filter')return s.stage==='plant_power'&&!plantFilterCleared(s);
+ if(id==='plant_route'||id.startsWith('plant_circuit_')||id==='plant_start')return s.stage==='plant_power';
  if(id==='annex_exit')return s.stage==='annex_exit_ready';
  if(id==='archive_exit')return s.stage==='archive_escape';
  if(id==='plant_exit')return s.stage==='plant_exit_ready';

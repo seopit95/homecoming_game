@@ -8,7 +8,7 @@ import {roundPipe,doorHardware} from './props.ts';
 import {wetTexture,createLeatherShoe} from './entry-props.ts';
 import type {Solid,Target} from './world.ts';
 import type {Action,Stage,Story} from './story.ts';
-import {archiveReplay,type ExpansionArea} from './expansion-story.ts';
+import {archiveReplay,plantRoute,plantFilterCleared,plantProblem,type ExpansionArea} from './expansion-story.ts';
 import {storageMaterials,storageShelf} from './storage.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {facilityTable,facilityChair,laundryMachine,dryingRail,waterTank,pumpSkid,cartridgeFuse,videoCassette} from './facility-props.ts';
@@ -96,6 +96,8 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  const faceText=(text:string)=>{if(!display)return;const map=(display.material as T.MeshStandardMaterial).map! as T.CanvasTexture;const c=map.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#101d18';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#b7cdae';ctx.font=`${Math.min(c.height*.26,650/Math.max(1,...text.split('\n').map(l=>l.length)))}px sans-serif`;ctx.textAlign='center';text.split('\n').forEach((l,i)=>ctx.fillText(l,c.width/2,c.height*(.34+i*.3)));map.needsUpdate=true;};
  const X=bx-6;
  let water:T.Mesh|undefined;
+ let filterCloth:T.Group|undefined,routeHandle:T.Group|undefined,fan:T.Group|undefined,pumpMotor:T.Group|undefined;
+ let suctionNeedle:T.Group|undefined,pressureNeedle:T.Group|undefined,suctionLast:T.Group|undefined,pressureLast:T.Group|undefined;
  let looseFuse:T.Group|undefined,installedFuse:T.Group|undefined,badge:T.Group|undefined;
  const recordings:{id:Action;mesh:T.Group}[]=[];
  if(area==='annex'){
@@ -194,9 +196,10 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   }
   for(const x of [-X-.8,-X+.8])box(x,.12,-22,.95,.24,.7,wood,true);puddle(-X,-19,4,7);label('임의 폐기 금지\n사고 관련 원본 보존',0,2.1,7,2,.55,0);box(0,2.1,6.97,2.08,.62,.04,metal);for(const x of [-.8,.8])roundPipe(root,[x,2.41,7],[x,2.8,7],.009,metal);
  }else{
-  const diagram=label('급수: 서측·동측 모두 차단\n배수 ON / 환기 ON / 외부조명 OFF\n수위 저하 후 주차장 진입',1.91,1.5,29,2,.85,-Math.PI/2);target('plant_diagram','배수 계통도 확인',diagram,[1.89,1.5,29],[.8,29]);
+  const paint=surface('paintedMetal','#c1c8c4');
+  const diagram=label('서측 저장탱크 / 동측 급수관\n↓ 集水井 · 집수정 ↓\n흡입망 → 펌프 → 토출 선택기\n환수 / 차단 / 외부 우수관\n서측: 배관 점검 · 동측: 전기실',1.91,1.5,29,2,1.15,-Math.PI/2);target('plant_diagram','배수 계통도 확인',diagram,[1.89,1.5,29],[.8,29]);
   for(const side of [-1,1])for(const z of [21,-3,-23]){
-   const x=side*X,tank=waterTank(metal,dark,rust);tank.position.set(x,0,z);root.add(tank);solids.push({x,z,w:2.8,d:2.8,y:1.3,h:2.6});
+   const x=side*X,tank=waterTank(paint,dark,rust);tank.position.set(x,0,z);root.add(tank);solids.push({x,z,w:2.8,d:2.8,y:1.3,h:2.6});
    roundPipe(root,[x,2.64,z],[side*(bx-.25),2.64,z],.1,rust);roundPipe(root,[side*(bx-.25),2.64,z],[side*(bx-.25),2.5,z],.1,rust);
    for(const px of [x,side*(bx-2)]){roundPipe(root,[px,2.64,z],[px,2.8,z],.012,metal);box(px,2.79,z,.18,.02,.14,metal);}
 
@@ -204,14 +207,70 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   roundPipe(root,[-X+3,2.6,19],[-X,2.6,19],.07,rust);roundPipe(root,[-X,2.6,19],[-X,2.49,21],.07,rust);roundPipe(root,[X+3,2.6,-3],[X,2.49,-3],.07,rust);
   valve('plant_valve_west','서측 급수 차단',-X+3,19);valve('plant_valve_east','동측 급수 차단',X+3,-3);
   for(const [i,id,title] of [[0,'plant_circuit_pump','배수'],[1,'plant_circuit_air','환기'],[2,'plant_circuit_lights','외부조명']] as const){const x=X+(i-1)*.75;box(x,1.05,-18,.67,2.1,.21,metal,true);const lever=box(x,1.32,-17.84,.12,.26,.12,red);lever.name=id;target(id,title+' 회로 전환',lever,[x,1.35,-17.73],[x,-16.8]);label(title,x,1.8,-17.882,.55,.18);}
-  box(X-2.4,.61,-18,.12,1.22,.12,metal);box(X-2.4,.025,-18,.4,.05,.4,metal);const start=box(X-2.4,1.26,-18,.43,.47,.24,blue);target('plant_start','배수 펌프 기동',start,[X-2.4,1.26,-17.86],[X-2.4,-16.8]);label('기동',X-2.4,1.32,-17.868,.3,.18);
+  box(X-2.4,.61,-18,.12,1.22,.12,metal);box(X-2.4,.025,-18,.4,.05,.4,metal);const start=box(X-2.4,1.26,-18,.43,.47,.24,paint);target('plant_start','배수 펌프 기동',start,[X-2.4,1.26,-17.86],[X-2.4,-16.8]);label('배수 기동',X-2.4,1.41,-17.878,.3,.07);
+  for(const [radius,depth,z,m] of [[.045,.018,-17.871,metal],[.031,.027,-17.857,new T.MeshStandardMaterial({color:'#286748',roughness:.45})]] as const){const button=new T.Mesh(new T.CylinderGeometry(radius,radius,depth,24),m);button.rotation.x=Math.PI/2;button.position.set(X-2.4,1.23,z);root.add(button);}
+  for(const x of [-.17,.17])for(const y of [-.19,.19]){const screw=new T.Mesh(new T.CylinderGeometry(.006,.006,.008,8),metal);screw.rotation.x=Math.PI/2;screw.position.set(X-2.4+x,1.26+y,-17.877);root.add(screw);}
+  roundPipe(root,[X-2.4,1.02,-18],[X-2.4,.08,-18],.012,dark);
+  box(X,2.31,-18,2.3,.4,.06,metal);label('환기 연동 · 모터 보호\n외부조명 누전: 사용 금지',X,2.31,-17.964,2.22,.34);
+  // Ventilation is mechanically readable before the pump is started.
+  const fanCase=new T.Group();fanCase.name='plant-ventilator';fanCase.position.set(X+2,2.42,-18);root.add(fanCase);
+  for(const x of [-.19,.19])box(x,-.16,0,.04,.32,.1,metal,false,fanCase);
+  box(X+2,1.12,-18,.55,2.24,.14,paint,true);
+  const housing=new T.Mesh(new T.CylinderGeometry(.27,.27,.14,32),dark);housing.rotation.x=Math.PI/2;fanCase.add(housing);
+  fan=new T.Group();fan.name='plant-fan-rotor';fan.position.z=.08;fanCase.add(fan);
+  for(let i=0;i<5;i++){const blade=box(0,.12,0,.075,.22,.012,metal,false,fan);blade.rotation.z=i*Math.PI*2/5;blade.position.set(-Math.sin(blade.rotation.z)*.12,Math.cos(blade.rotation.z)*.12,0);}
+  const guard=new T.Mesh(new T.TorusGeometry(.265,.012,6,32),metal);guard.position.z=.11;fanCase.add(guard);
+  for(let i=0;i<4;i++){const bar=box(0,0,.12,.51,.008,.009,metal,false,fanCase);bar.rotation.z=i*Math.PI/4;}
   display=label('수위 HIGH\n급수 차단 후 전원 연결',0,1.65,-26,1.4,.55);box(0,1.62,-26.1,1.6,.75,.16,metal);for(const x of [-.6,.6])box(x,.63,-26.1,.07,1.26,.07,metal);
   // Flood stays below the dry raised perimeter; a visible grille blocks the central shortcut.
   water=puddle(0,-20,3.5,19,.68);water.position.y=.075;
   box(0,.24,-15,3.5,.48,.16,metal,true);for(let x=-1.5;x<=1.5;x+=.25)box(x,.59,-15,.019,.7,.03,metal);
   box(0,.75,-14.982,2.08,.32,.025,metal);label('침수 · 좌우 통로로 우회',0,.75,-14.9675,2,.28);
   rack(-X,2,2.5,.7,false);
-  for(const z of [-3,-6]){const x=-X+4.8,pump=pumpSkid(metal,blue,dark,rust);pump.position.set(x,0,z);root.add(pump);solids.push({x,z,w:1.7,d:1.1,y:.5,h:1});roundPipe(root,[x+.4,1,z],[x+2,1,z],.075,rust);roundPipe(root,[x+2,1,z],[x+2,0,z],.075,rust);solids.push({x:x+1.2,z,w:1.75,d:.2,y:.5,h:1});}
+  for(const z of [-3,-6]){const x=-X+4.8,pump=pumpSkid(metal,paint,dark,rust);pump.position.set(x,0,z);root.add(pump);if(z===-3)pumpMotor=pump;solids.push({x,z,w:1.7,d:1.1,y:.5,h:1});
+   roundPipe(root,[x+.4,1,z],[x+.4,1.1,z],.075,paint);roundPipe(root,[x+.4,1.1,z],[-3.75,1.1,z],.075,paint);solids.push({x:(x+.4-3.75)/2,z,w:2.2,d:.2,y:.6,h:1.2});
+  }
+  // Both pump outlets join a supported selector; branches remain above the walking aisles.
+  roundPipe(root,[-3.75,1.1,-6],[-3.75,1.1,-3],.075,paint);solids.push({x:-3.75,z:-4.5,w:.23,d:3.25,y:.6,h:1.2});
+  for(const z of [-6,-3]){box(-3.75,.025,z,.36,.05,.36,metal);roundPipe(root,[-3.75,.05,z],[-3.75,1.1,z],.022,metal);}
+  box(-3.75,1.1,-3,.27,.27,.27,paint,true);
+  roundPipe(root,[-3.75,1.1,-3],[-3.75,1.1,-3.8],.075,paint);roundPipe(root,[-3.75,1.1,-3.8],[-3.75,0,-3.8],.075,paint);
+  roundPipe(root,[-3.75,1.1,-3],[-3.75,2.5,-3],.075,paint);roundPipe(root,[-3.75,2.5,-3],[-3.75,2.5,-9.8],.075,paint);roundPipe(root,[-3.75,2.5,-9.8],[-bx+.08,2.5,-9.8],.075,paint);
+  for(const x of [-4.2,-8,-13,-bx+.15]){roundPipe(root,[x,2.5,-9.8],[x,2.8,-9.8],.013,metal);box(x,2.79,-9.8,.2,.02,.2,metal);}
+  for(const z of [-4,-8]){roundPipe(root,[-3.75,2.5,z],[-3.75,2.8,z],.013,metal);box(-3.75,2.79,z,.2,.02,.2,metal);}
+  const flange=new T.Mesh(new T.CylinderGeometry(.16,.16,.05,24),metal);flange.rotation.z=Math.PI/2;flange.position.set(-bx+.1,2.5,-9.8);root.add(flange);
+  label('외부 우수관 ←',-5,2.29,-9.69,1.45,.24);roundPipe(root,[-5,2.41,-9.8],[-5,2.5,-9.8],.009,metal);
+  label('집수정 환수 ↓',-3.75,.75,-3.69,1.1,.23);box(-3.75,.75,-3.73,1.15,.27,.07,metal);
+  box(-3.75,1.26,-2.89,.8,.47,.07,metal);label('차단',-3.75,1.43,-2.852,.17,.065);label('환수',-4.02,1.3,-2.852,.17,.065);label('외부배수',-3.48,1.3,-2.852,.24,.065);
+  routeHandle=new T.Group();routeHandle.name='plant-route-handle';routeHandle.position.set(-3.75,1.1,-2.82);root.add(routeHandle);
+  roundPipe(routeHandle,[0,0,-.18],[0,0,0],.025,metal);box(0,.11,.01,.045,.24,.045,red,false,routeHandle);
+  target('plant_route','토출 선택기 돌리기',routeHandle,[-3.75,1.17,-2.78],[-3.75,-1.8]);
+  // The cloth is supported on a real basket grate, not suspended over the pump.
+  box(-5.8,.05,-1.9,.75,.1,.75,dark,true);const basketMaterial=paint.clone();basketMaterial.side=T.DoubleSide;const basket=new T.Mesh(new T.CylinderGeometry(.27,.3,.31,24,1,true),basketMaterial);basket.position.set(-5.8,.255,-1.9);root.add(basket);
+  solids.push({x:-5.8,z:-1.9,w:.75,d:.75,y:.24,h:.48});
+  const rim=new T.Mesh(new T.TorusGeometry(.27,.018,8,32),metal);rim.rotation.x=Math.PI/2;rim.position.set(-5.8,.425,-1.9);root.add(rim);
+  for(let x=-.2;x<=.2;x+=.05)box(-5.8+x,.432,-1.9,.012,.008,Math.sqrt(.26*.26-x*x)*2,metal);
+  roundPipe(root,[-5.8,.2,-2.13],[-5.8,.2,-2.52],.085,paint);roundPipe(root,[-5.8,.2,-2.52],[-5.8,0,-2.52],.085,paint);
+  filterCloth=new T.Group();filterCloth.name='plant-blocked-filter';root.add(filterCloth);
+  const clothHeight=(x:number,z:number)=>.001+.016*(.5+.5*Math.cos(x*42))*(.5+.5*Math.sin(z*35))-Math.max(0,Math.hypot(x,z)-.265)*1.6;
+  const clothGeo=new T.PlaneGeometry(.48,.44,24,22);clothGeo.rotateX(-Math.PI/2);const clothPos=clothGeo.getAttribute('position');for(let i=0;i<clothPos.count;i++)clothPos.setY(i,clothHeight(clothPos.getX(i),clothPos.getZ(i)));clothGeo.computeVertexNormals();
+  const cloth=new T.Mesh(clothGeo,upholstery('#bdb59e'));cloth.material.side=T.DoubleSide;cloth.position.set(-5.8,.436,-1.9);cloth.castShadow=true;cloth.receiveShadow=true;filterCloth.add(cloth);
+  for(let i=0;i<4;i++){const points=Array.from({length:13},(_,k)=>{const x=-.17+k*.026,z=-.09+i*.053+Math.sin(k*.45+i)*.018;return new T.Vector3(-5.8+x,.438+clothHeight(x,z),-1.9+z);});const strand=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points),24,.0014,4,false),dark);filterCloth.add(strand);}
+  const ring=new T.Mesh(new T.TorusGeometry(.017,.0025,6,20),metal);ring.rotation.x=-Math.PI/2;ring.position.set(-5.65,.4385+clothHeight(.15,.1),-1.8);filterCloth.add(ring);
+  target('plant_filter','흡입망에 걸린 천 걷어내기',filterCloth,[-5.8,.45,-1.9],[-5.8,-.5]);
+  box(-5.8,.69,-2.168,.74,.15,.032,metal);label('01 흡입망 · 이물 확인',-5.8,.69,-2.15,.7,.11);roundPipe(root,[-5.8,.41,-2.19],[-5.8,.69,-2.18],.012,metal);
+  function gauge(name:string,x:number,y:number,z:number,caption:string){
+   roundPipe(root,[x,1.1,z-.08],[x,y-.12,z-.08],.018,metal);
+   const group=new T.Group();group.name=name;group.position.set(x,y,z);root.add(group);
+   const casing=new T.Mesh(new T.CylinderGeometry(.145,.145,.06,32),metal);casing.rotation.x=Math.PI/2;group.add(casing);
+   const face=new T.Mesh(new T.CircleGeometry(.129,32),paper);face.position.z=.031;group.add(face);
+   for(let i=0;i<=10;i++){const a=2.4-i*.48,tick=box(-Math.sin(a)*.108,Math.cos(a)*.108,.034,.008,.02,.003,i>=8?red:dark,false,group);tick.rotation.z=a;}
+   const last=new T.Group();last.name=name+'-last-test';last.position.z=.037;last.visible=false;group.add(last);box(0,.038,0,.009,.08,.003,new T.MeshStandardMaterial({color:'#e3a43e',roughness:.65}),false,last);
+   const needle=new T.Group();needle.name=name+'-needle';needle.position.z=.038;group.add(needle);box(0,.046,0,.007,.103,.003,red,false,needle);
+   box(x,y+.26,z+.015,.65,.19,.026,metal);label(caption+'\n노랑=직전시험 / 빨강=현재',x,y+.26,z+.03,.61,.15);roundPipe(root,[x,y+.13,z],[x,y+.26,z],.006,metal);return {needle,last};
+  }
+  const pressure=gauge('plant-pressure',-4.4,1.52,-2.92,'토출 MPa');pressureNeedle=pressure.needle;pressureLast=pressure.last;
+  roundPipe(root,[-5.8,.2,-2.4],[-5.8,1.1,-2.4],.018,metal);const suction=gauge('plant-suction',-5.8,1.3,-2.32,'흡입 · 막힘 →');suctionNeedle=suction.needle;suctionLast=suction.last;
   for(const x of [X-.75,X,X+.75]){box(x,.06,-18,.7,.12,.36,dark);for(const y of [.42,.47,.52])box(x,y,-17.887,.4,.016,.018,dark);for(const y of [.45,1.7])box(x-.29,y,-17.88,.03,.12,.025,metal);roundPipe(root,[x,2.1,-18],[x,2.79,-18],.022,metal);}
   roundPipe(root,[X-1.1,2.72,-18],[X+1.1,2.72,-18],.04,metal);
   for(const z of [24,0,-24])roundPipe(root,[-bx+.3,2.6,z],[bx-.3,2.6,z],.07,rust);
@@ -230,7 +289,11 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  for(const side of [-1,1])for(const z of [26,-25]){box(side*1.86,.18,z,.13,.36,.2,red);roundPipe(root,[side*1.86,.18,z],[side*1.86,.43,z],.016,metal);box(side*1.93,.2,z,.025,.4,.28,metal);}
  for(const z of [-27,-3,21]){box(-1.45,.009,z,.3,.012,1.1,metal);for(let dz=-.45;dz<.5;dz+=.07)box(-1.45,.017,z+dz,.25,.008,.016,dark);}
  const figure=createGhost(root);figure.position.set(0,0,bz-2);figure.rotation.y=Math.PI;figure.visible=false;
- let opened=-1,drainAt=-1,replayAt=-1,lastDisplay='';
+ let opened=-1,drainAt=-1,replayAt=-1,lastDisplay='',plantAttemptAt=-10;
+ function recordPlantTrial(story:Story){
+  if(suctionLast){suctionLast.visible=true;suctionLast.rotation.z=2.4-(plantFilterCleared(story)?1.2:4.6);}
+  if(pressureLast){pressureLast.visible=true;pressureLast.rotation.z=2.4-(plantRoute(story)==='closed'?4.6:plantRoute(story)==='drain'?2.5:.6);}
+ }
  function updateStory(stage:Stage,time:number,reduced=false,story?:Story,occupants:Occupant[]=[]){
   const leaving=stage===`${area}_departure`;if(leaving&&opened<0)opened=time;
   if(opened>=0)setDoorAngle(hinge,doorBlock,1.5*T.MathUtils.smoothstep(time-opened,0,reduced?.2:.9),.7,0,occupants);
@@ -239,18 +302,27 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   for(const {id,mesh} of recordings)mesh.visible=!notes.includes(id);
   for(const id of ['plant_valve_west','plant_valve_east']){const wheel=root.getObjectByName(id);if(wheel&&notes.includes(id))wheel.rotation.z=-Math.PI*.6;}
   for(const id of ['plant_circuit_pump','plant_circuit_air','plant_circuit_lights']){const lever=root.getObjectByName(id);if(lever)lever.rotation.x=story?.circuit.includes(id as Action)?-.5:.5;}
-  if(stage==='plant_drain'&&drainAt<0)drainAt=time;
+  if(stage==='plant_drain'&&drainAt<0){drainAt=time;if(story)recordPlantTrial(story);}
   const drained=['plant_exit_ready','plant_departure'].includes(stage),drain=drained?1:drainAt>=0?T.MathUtils.clamp((time-drainAt)/12,0,1):0;
-  if(water){water.scale.y=1-drain*.82;(water.material as T.MeshPhysicalMaterial).opacity=.68-drain*.42;}
+  if(water){water.position.y=.075-drain*.067;(water.material as T.MeshPhysicalMaterial).opacity=.68-drain*.42;}
+  if(area==='plant'&&story){
+   const running=stage==='plant_drain',pulse=T.MathUtils.clamp((time-plantAttemptAt)/1.4,0,1),trial=pulse>0&&pulse<1?Math.sin(Math.PI*pulse):0,power=running?1:trial,route=plantRoute(story);
+   if(filterCloth)filterCloth.visible=!plantFilterCleared(story);
+   if(routeHandle)routeHandle.rotation.z=route==='drain'?-.85:route==='closed'?0:.85;
+   if(fan)fan.rotation.z=running||story.circuit.includes('plant_circuit_air')?time*(reduced?.8:11):0;
+   if(pumpMotor)pumpMotor.position.x=-X+4.8+(reduced?0:Math.sin(time*59)*.0015*power);
+   if(suctionNeedle)suctionNeedle.rotation.z=2.4-power*(plantFilterCleared(story)?1.2:4.6);
+   if(pressureNeedle)pressureNeedle.rotation.z=2.4-power*(route==='closed'?4.6:route==='drain'?2.5:.6);
+  }
   if(stage==='archive_playback'&&replayAt<0)replayAt=time;
   const replayTime=time-replayAt;
   const replayText=archiveReplay.findLast(cue=>replayTime>=cue.at)?.screen??archiveReplay[0].screen;
   const text=area==='archive'?(stage==='archive_playback'?replayText:(stage==='archive_edit'?`증거 표시 ${story?.circuit.length??0}/3\n원본 선택 · 정지 · ±1초 · 표시`:stage==='archive_reveal'?'기록 연결 완료\n재생 버튼을 누르세요':['archive_escape','archive_departure'].includes(stage)?'현재 03:17 / 편집실\n네 뒤에 있어':'원본 기록 3개를 회수하세요')):
-   area==='annex'?['annex_exit_ready','annex_departure'].includes(stage)?'2803 연결됨\n북쪽 방화문 잠금 해제':'마지막 호출 수신처\n1704 / 2803 / 관리실':drained?'수위 LOW\n주차장 통행 가능':drainAt>=0?'배수 가동 중\n젖은 통로에 접근 금지':'수위 HIGH\n급수 차단 후 전원 연결';
+   area==='annex'?['annex_exit_ready','annex_departure'].includes(stage)?'2803 연결됨\n북쪽 방화문 잠금 해제':'마지막 호출 수신처\n1704 / 2803 / 관리실':drained?'수위 LOW\n주차장 통행 가능':drainAt>=0?'배수 가동 중\n젖은 통로에 접근 금지':story&&stage==='plant_power'?`수위 HIGH / 토출 ${plantRoute(story)==='drain'?'외부':plantRoute(story)==='closed'?'차단':'환수'}\n${plantProblem(story)?'현장 확인 후 시험 기동':'배수 준비 완료'}`:'수위 HIGH\n유입 · 펌프실 점검';
   if(text!==lastDisplay){lastDisplay=text;faceText(text);}
   const review=stage==='archive_edit'?archiveReview?.read(time):undefined;
   const reviewText=review?.source?`${archiveClips[review.source].title}\n${review.playing?'재생':'정지'} ${review.time.toFixed(1)}초 / ${archiveClips[review.source].duration}초`:text;
   surveillance?.update(stage,review?.source?review.time:replayTime,reviewText,review);
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,archiveReview,updateStory,reset(){opened=-1;drainAt=-1;replayAt=-1;lastDisplay='';archiveReview?.reset();}};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,archiveReview,plantAttempt:area==='plant'?(time:number,story:Story)=>{plantAttemptAt=time;recordPlantTrial(story);}:undefined,updateStory,reset(){opened=-1;drainAt=-1;replayAt=-1;plantAttemptAt=-10;lastDisplay='';archiveReview?.reset();}};
 }

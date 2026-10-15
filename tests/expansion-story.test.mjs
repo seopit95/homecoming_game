@@ -33,8 +33,8 @@ test('archive conclusions are independent and the restored interval unlocks the 
 test('the plant enforces isolation and a safe electrical load before drainage unlocks parking',()=>{
  let s=act(state('plant_arrival'),'plant_diagram');assert.equal(transition(s,'plant_start'),s);
  s=act(s,'plant_valve_west');assert.equal(s.stage,'plant_isolate');s=act(s,'plant_valve_east');assert.equal(s.stage,'plant_power');
- s=act(s,'plant_circuit_pump','plant_circuit_air','plant_circuit_lights');assert.equal(transition(s,'plant_start'),s);
- s=act(s,'plant_circuit_lights','plant_start');assert.equal(s.stage,'plant_drain');assert.equal(transition(s,'plant_exit'),s);
+ s=act(s,'plant_filter','plant_route','plant_route','plant_circuit_pump','plant_circuit_air','plant_circuit_lights','plant_start');assert.equal(s.stage,'plant_power');assert.ok(!s.circuit.includes('plant_circuit_pump'));
+ s=act(s,'plant_circuit_pump','plant_start');assert.equal(s.stage,'plant_drain');assert.equal(transition(s,'plant_exit'),s);
  s=act(s,'plant_drained','plant_exit','parking_enter');assert.equal(s.stage,'parking_gate');
  s=act(s,'exit','car_search');assert.equal(s.stage,'parking_alarm','completed plant drainage must not ask for the old pump puzzle again');
 });
