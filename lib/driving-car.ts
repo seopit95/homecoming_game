@@ -1,12 +1,14 @@
 import * as T from 'three';
 import {createSedan} from './sedan.ts';
 import {softBox,upholstery} from './materials.ts';
+import {carSeatBag} from './facility-props.ts';
 
 // One complete sedan for memory, garage and escape. Canonical forward is -Z,
 // driver on -X; the accident begins with an intact body and lights.
-export function createDrivingCar(damaged=true){
+export function createDrivingCar(damaged=true,passengerAccess=false){
   const root=new T.Group();root.name='hero-sedan';
-  const shell=createSedan('#222c31',damaged,true);shell.rotation.y=Math.PI;root.add(shell);
+  const shell=createSedan('#222c31',damaged,true,passengerAccess);shell.rotation.y=Math.PI;root.add(shell);
+  const belongings=damaged?carSeatBag():undefined;if(belongings){belongings.bag.position.set(.38,.2735,.17);belongings.bag.scale.z=.8;belongings.key.visible=passengerAccess;root.add(belongings.bag);}
   const door=shell.getObjectByName('hero-driver-door')!,hood=shell.getObjectByName('hero-hood')!,wheel=shell.getObjectByName('hero-steering-wheel')!;
   const rubber=new T.MeshStandardMaterial({color:'#202623',roughness:.8});
   const steel=new T.MeshStandardMaterial({color:'#a2a8a7',metalness:.8,roughness:.35});
@@ -60,5 +62,5 @@ export function createDrivingCar(damaged=true){
     if(lampMaterial){const m=lampMaterial.material as T.MeshPhysicalMaterial;m.emissive.set('#751912');m.emissiveIntensity=engine?.7:0;}
   }
   pose(0,0,false);
-  return {root,door,pose};
+  return {root,door,pose,key:belongings?.key};
 }

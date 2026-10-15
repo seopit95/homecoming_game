@@ -198,7 +198,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   console.log('Expanded chapters known-route simulation seconds',Math.round(game.snapshot().elapsed-expansionStart));
   runTo(2,20);runTo(2,-20.3);
   use([0,1.65,-20.3],[0,1.25,-21.68],'parking_key');
-  use([7.1,1.65,-17.8],[6.02,1.1,-17.8],'parking_alarm');
+  use([7.1,1.65,-17.8],[6.02,1.1,-17.8],'parking_key');tick(1);use([7.1,1.65,-17.8],[5.415,.31,-17.83],'parking_alarm');
   use([-10.8,1.65,17.4],[-10.8,1.4,16.18],'parking_run');
   const lured=renderedScene.getObjectByName('resident-remains'),beforeLure=lured.position.clone();tick(1);assert.ok(lured.position.distanceTo(beforeLure)>.8,'the apparition actually follows the alarm around the mounting wall');
   runTo(-2.2,17.4);runTo(-2.2,-20);runTo(0,-20);
@@ -714,4 +714,25 @@ test('using a plant valve cannot reveal a pursuer that is still physically in tr
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
   assert.match(game.snapshot().prompt,/서측/);game.interact();assert.ok(game.snapshot().story.notes.includes('plant_valve_west'));assert.equal(ghost.visible,false,'operating the valve must not teleport the delayed follower into view');
  }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('continuing into the garage retains a saved distant follower instead of spawning it beside the entrance',async()=>{
+ const previous=win.localStorage;const raw=JSON.stringify({version:2,stage:'parking_gate',notes:['plant_drained'],circuit:[],elapsed:1200,pursuit:true,pursuitWait:12});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem(){},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{await game.ready;tick();game.continueGame();tick(.1);const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,false,'continue must retain the saved pending garage approach');tick(11);assert.equal(ghost.visible,false);tick(2);assert.equal(ghost.visible,true);}
+ finally{game.dispose();win.localStorage=previous;}
+});
+
+test('a recovered parking key survives an older entry save and a death retry without another search',async()=>{
+ const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'parking_gate',notes:['plant_drained','car_passenger','car_search'],circuit:[],elapsed:1200,pursuit:true,pursuitWait:12});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{await game.ready;tick();game.continueGame();tick(.1);assert.equal(game.snapshot().story.stage,'parking_alarm');assert.equal(renderedScene.getObjectByName('garage-car-key').visible,false);
+  const g=renderedScene.getObjectByName('resident-remains');g.visible=true;g.position.copy(renderedCamera.position);g.position.y=0;tick(.1);assert.equal(game.snapshot().story.stage,'dying');game.start(true);tick(.1);assert.equal(game.snapshot().story.stage,'parking_alarm');assert.equal(renderedScene.getObjectByName('garage-car-key').visible,false);
+ }finally{game.dispose();win.localStorage=previous;}
+});
+test('a boarding checkpoint never redisplays a key that has already been recovered',async()=>{
+ const previous=win.localStorage;const raw=JSON.stringify({version:2,stage:'car_departure',notes:['plant_drained','car_passenger','car_search'],circuit:[],elapsed:1300});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem(){},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{await game.ready;tick();game.continueGame();tick(.1);assert.equal(game.snapshot().story.stage,'car_departure');const keys=[];renderedScene.traverse(o=>{if(o.name==='garage-car-key')keys.push(o);});assert.ok(keys.length);assert.ok(keys.every(k=>!k.visible),'the cinematic must reconcile recovered inventory before its early render return');}
+ finally{game.dispose();win.localStorage=previous;}
 });

@@ -1,0 +1,34 @@
+{
+  "name": "Brown Leather",
+  "author": "Rob Tuytel",
+  "source": "https://polyhaven.com/a/brown_leather",
+  "license": "CC0",
+  "scale": "40CM X 40CM",
+  "files": [
+    {
+      "channel": "color",
+      "sourceURL": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_albedo_1k.jpg",
+      "md5": "080b3bf1372766ff2c7ff121ed07b5e8",
+      "originalBytes": 503348,
+      "runtime": "/textures/pbr/bag-leather-color.webp",
+      "runtimeBytes": 332450
+    },
+    {
+      "channel": "normal",
+      "sourceURL": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_nor_gl_1k.jpg",
+      "md5": "b63ae0121a415c23d74eed0b07fc6065",
+      "originalBytes": 863280,
+      "runtime": "/textures/pbr/bag-leather-normal.webp",
+      "runtimeBytes": 383270
+    },
+    {
+      "channel": "arm",
+      "sourceURL": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_arm_1k.jpg",
+      "md5": "40778465932d0a0816a9fbdab00e2a5d",
+      "originalBytes": 436931,
+      "runtime": "/textures/pbr/bag-leather-arm.webp",
+      "runtimeBytes": 545466
+    }
+  ],
+  "encoding": "Original1K JPG re-encoded WebP quality92; no crop or resize. Runtime material uses the source40cm physical scale."
+}

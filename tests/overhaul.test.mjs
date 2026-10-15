@@ -18,7 +18,7 @@ test('office requires the documented circuit order and correct tape timestamp',(
 });
 test('parking escape requires key, both isolation valves and drainage before the alarm',()=>{
  let s={...initialStory(),stage:'parking_gate'};s=transition(s,'exit');assert.equal(s.stage,'parking_key');assert.equal(transition(s,'alarm'),s);
- s=transition(s,'car_search');assert.equal(s.stage,'parking_pump');assert.equal(transition(s,'pump'),s);
+ s=transition(s,'car_passenger');s=transition(s,'car_search');assert.equal(s.stage,'parking_pump');assert.equal(transition(s,'pump'),s);
  s=transition(s,'valve_a');assert.equal(transition(s,'pump'),s);s=transition(s,'valve_b');s=transition(s,'pump');assert.equal(s.stage,'parking_alarm');
 });
 test('sprinting exhausts, cannot restart immediately, and recovers without trapping walking',()=>{

@@ -36,7 +36,7 @@ test('the plant enforces isolation and a safe electrical load before drainage un
  s=act(s,'plant_filter','plant_route','plant_route','plant_circuit_pump','plant_circuit_air','plant_circuit_lights','plant_start');assert.equal(s.stage,'plant_power');assert.ok(!s.circuit.includes('plant_circuit_pump'));
  s=act(s,'plant_circuit_pump','plant_start');assert.equal(s.stage,'plant_drain');assert.equal(transition(s,'plant_exit'),s);
  s=act(s,'plant_drained','plant_exit','parking_enter');assert.equal(s.stage,'parking_gate');
- s=act(s,'exit','car_search');assert.equal(s.stage,'parking_alarm','completed plant drainage must not ask for the old pump puzzle again');
+ s=act(s,'exit','car_passenger','car_search');assert.equal(s.stage,'parking_alarm','completed plant drainage must not ask for the old pump puzzle again');
 });
 test('a mid-puzzle save and retry retain evidence and circuit input with a useful objective',()=>{
  const s=act(state('archive_arrival'),'archive_ledger','archive_road','archive_call','archive_gate','archive_sequence_road');

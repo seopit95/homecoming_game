@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {buildWorld,canStandAt,hasLineOfSight} from '../lib/world.ts';
 import {accidentCar} from '../lib/chapters.ts';
+import {initialStory} from '../lib/story.ts';
 
 test('1704 has a clear standing approach to its fridge clue and a shaped leather shoe',()=>{
   const w=buildWorld(new THREE.Scene(),'resident');
@@ -97,6 +98,10 @@ test('every required interaction has a reachable position inside the apartment',
 for(const area of ['landing','lift','corridor','stairs','resident','office','parking','aftermath'])test(`${area}: all required interactions are reachable from the spawn`,()=>{
   const world=buildWorld(new THREE.Scene(),area);assert.ok(world.bounds,`${area} must provide its own walkable area`);
   if(area==='stairs'){world.updateStory('stairs_descent',0,false);world.updateStory('stairs_descent',1,false);}
+  if(area==='parking'){
+    const story={...initialStory(),stage:'parking_key',notes:['car_passenger']};
+    world.updateStory('parking_key',0,false,story);world.updateStory('parking_key',1.2,false,story);
+  }
   const {solids,targets,bounds,spawn,heightAt}=world;
   const start=[Math.round(spawn.x*4),Math.round(spawn.z*4)];
   const queue=[start],seen=new Set([start.join(',')]);

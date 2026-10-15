@@ -260,7 +260,8 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     carDeparture=buildCarDeparture(root,solids);reset=()=>carDeparture!.reset();const own=carDeparture.car;
     for(const dx of [-1.27,1.27])box(L.car.x+dx,.008,L.car.z,.055,.016,4.85,white);box(L.car.x,.008,L.car.z+2.45,2.59,.016,.055,white);
     for(const dx of [-.55,.55])box(L.car.x+dx,.07,L.car.z+2.45,.55,.14,.16,dark);
-    target('car_search','조수석 조사 · 배수 설비 열쇠',own,6.02,1.1,-17.8);target('car_board','운전석 문 열고 탑승',own,3.98,1.1,-17.8);
+    target('car_passenger','조수석 문 열기',carDeparture.passengerDoor,6.02,1.1,-17.8);carDeparture.passengerDoor.userData.approach={x:7.1,z:-17.8};
+    target('car_search','가방에서 열쇠 꺼내기',carDeparture.key,5.415,.31,-17.83);carDeparture.key.userData.approach={x:7.1,z:-17.8};target('car_board','운전석 문 열고 탑승',own,3.98,1.1,-17.8);
     box(-11.3,1.35,15.82,1.4,2.7,.24,concrete,true);box(L.alarm.x,1.25,15.96,.55,1.85,.12,metal);
     const alarm=box(L.alarm.x,1.4,L.alarm.z,.3,.43,.17,red);target('alarm','화재경보기 작동',alarm,L.alarm.x,1.4,L.alarm.z+.18);label('발신기',L.alarm.x,1.92,16.027,0,.45,.16,'#d6bca4','#61281e');light(L.alarm.x,2.4,L.alarm.z+.2,'#a5523b',2);
     const push=new T.Mesh(new T.CylinderGeometry(.078,.078,.026,20),dark);push.rotation.x=Math.PI/2;push.position.set(L.alarm.x,1.38,16.094);root.add(push);label('누름',L.alarm.x,1.38,16.109,0,.105,.052,'#c8bdb1','#7d291f');for(let i=0;i<4;i++)box(L.alarm.x,1.52+i*.016,16.091,.18,.006,.008,dark);
@@ -280,7 +281,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const x of [-11.65,11.65])for(const z of [-12,0,12]){box(x,.001,z,.24,.002,2.6,metal);for(let dz=-1.2;dz<=1.2;dz+=.1)box(x,.0025,z+dz,.19,.001,.025,dark);}
     const extinguisher=new T.Mesh(new T.CylinderGeometry(.10,.10,.43,20),red);extinguisher.position.set(-11.25,.32,16.05);root.add(extinguisher);box(-11.25,.08,16.05,.26,.16,.26,metal);roundPipe(root,[-11.25,.54,16.05],[-11.25,.62,16.05],.024,metal);roundPipe(root,[-11.25,.59,16.05],[-11.37,.32,16.05],.012,dark);
     box(0,.025,-21.69,1.05,.05,.24,metal);const jam=box(.07,.06,-21.45,.79,.09,.16,wood);jam.rotation.y=.12;
-    const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,_time,_reduced,story)=>{const drained=story?.notes.includes('plant_drained')||['parking_alarm','parking_run','car_departure'].includes(stage);flood.scale.y=drained?.35:2.6;const target=targets.find(t=>t.id==='car_search');if(target)target.label=story?.notes.includes('plant_drained')?'조수석 가방 · 차 열쇠':'조수석 조사 · 배수 설비 열쇠';};
+    const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,time,_reduced,story,occupants)=>{const drained=story?.notes.includes('plant_drained')||['parking_alarm','parking_run','car_departure'].includes(stage);flood.scale.y=drained?.35:2.6;carDeparture!.inspect(stage,time,story,occupants);const target=targets.find(t=>t.id==='car_search');if(target)target.label=story?.notes.includes('plant_drained')?'조수석 가방 · 차 열쇠':'조수석 가방 · 설비 열쇠';};
     for(const x of [-2.2,2.2])for(const z of [-18,-6,6,18])fixture(x,z,z!==6);for(const x of [-8,8])pipe(x,2.47,0,43);for(const z of [-12,0,12])pipe(0,2.35,z,23,'x');
     for(let z=-18;z<20;z+=4){box(0,.014,z,.07,.025,1.5,white);}for(const z of [-12,6])label('출구 ↑',-11.89,1.9,z,Math.PI/2,1.2,.3);
     figure.position.set(-7.8,0,-18);figure.visible=true;

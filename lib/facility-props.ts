@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {boxUV,softBox} from './materials.ts';
+import {boxUV,softBox,surface} from './materials.ts';
 import {roundPipe} from './props.ts';
 import {facilityModel} from './facility-models.ts';
 
@@ -16,6 +16,26 @@ function assembly(name:string){
   for(const [material,geometries] of parts){const g=mergeGeometries(geometries)!;geometries.forEach(p=>p.dispose());const part=new T.Mesh(g,material);part.castShadow=part.receiveShadow=true;group.add(part);}return group;
  }
  return {group,box,mesh,pipe,finish};
+}
+
+export function carSeatBag(){
+ const leather=surface('bagLeather','#d5c8b7',{roughness:.76}),lining=surface('fabric','#292b29'),metal=surface('steel','#aeb6b2',{roughness:.28,metalness:.8}),thread=new T.MeshStandardMaterial({color:'#8b7960',roughness:1});
+ const a=assembly('garage-seat-bag');a.box(0,.012,0,.30,.024,.25,leather);a.box(0,.026,0,.27,.006,.22,lining);
+ a.box(-.143,.09,0,.016,.17,.25,leather);a.box(.143,.043,0,.016,.075,.25,leather);
+ const lip=(x:number)=>.17-.065*T.MathUtils.smoothstep(x,-.04,.15)+.008*Math.cos(x*19);
+ for(const z of [-.12,.12]){
+  const g=softBox(.3,.16,.018,.006),p=g.getAttribute('position');for(let i=0;i<p.count;i++){const x=p.getX(i),v=(p.getY(i)+.08)/.16;p.setY(i,.008+v*(lip(x)-.008));p.setZ(i,p.getZ(i)+Math.sin(x*25)*.004*v);}g.computeVertexNormals();a.mesh(boxUV(g,0,0,z),leather,0,0,z);
+  const curve=new T.CatmullRomCurve3([new T.Vector3(-.105,lip(-.105),z),new T.Vector3(-.08,.28,z),new T.Vector3(.07,.28,z),new T.Vector3(.105,lip(.105),z)]);a.mesh(boxUV(new T.TubeGeometry(curve,20,.005,6,false)),leather,0,0,0);
+  for(let i=0;i<22;i++){const x=-.13+i*.0124;a.box(x,lip(x)+.002,z,.003,.002,.009,metal);}
+  const seam=Array.from({length:19},(_,i)=>{const x=-.133+i*.0148;return new T.Vector3(x,lip(x)-.012,z+Math.sign(z)*.011);});a.mesh(new T.TubeGeometry(new T.CatmullRomCurve3(seam),22,.0008,4,false),thread,0,0,0);
+ }
+ const flap=a.box(.18,.068,0,.082,.012,.23,leather);flap.rotation.z=-.42;
+ const bag=a.finish(false),key=new T.Group();key.name='garage-car-key';key.position.set(.035,.029,0);key.rotation.y=.38;bag.add(key);
+ const keyHead=new T.Mesh(softBox(.025,.007,.031,.004),new T.MeshStandardMaterial({color:'#202522',roughness:.58}));keyHead.position.y=.0035;key.add(keyHead);
+ const blade=new T.Mesh(new T.BoxGeometry(.009,.003,.045),metal);blade.position.set(0,.002,.034);key.add(blade);
+ for(let i=0;i<4;i++){const tooth=new T.Mesh(new T.BoxGeometry(.004,.003,.004),metal);tooth.position.set(.005,.002,.022+i*.008);key.add(tooth);}
+ const ring=new T.Mesh(new T.TorusGeometry(.012,.0015,6,24),metal);ring.rotation.x=-Math.PI/2;ring.position.set(0,.002,-.026);key.add(ring);
+ return {bag,key};
 }
 
 export function facilityTable(w:number,d:number,wood:T.Material,metal:T.Material){
