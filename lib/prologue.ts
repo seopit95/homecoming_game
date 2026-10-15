@@ -168,9 +168,9 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   rod([-.26,.793,-1.08],[-.26,.89,-1.015],.014,rubber,car);
   const distraction=box(-.26,.92,-1,.09,.016,.18,rubber,car);distraction.rotation.x=.85;
   const message=label('새 메시지',.078,.15,[0,.02,0],distraction,'#1d343b','#a8c6c2');message.rotation.x=-Math.PI/2;
-  const pedestrian=createPedestrian(root),victim=pedestrian.root;
+  const pedestrian=createPedestrian(root),victim=pedestrian.root,carryHand=victim.getObjectByName('pedestrian-carry-hand')!;
   const pants=new T.MeshStandardMaterial({color:'#30383d',roughness:.93});
-  const bag=new T.Group();root.add(bag);const bagLeather=surface('leather','#342d29',{roughness:.68});
+  const bag=new T.Group();bag.name='memory-bag';root.add(bag);const bagLeather=surface('leather','#342d29',{roughness:.68});
   mesh(softBox(.26,.24,.095,.025),bagLeather,[0,0,0],bag);mesh(softBox(.235,.13,.012,.014),bagLeather,[0,.046,.049],bag);box(0,.005,.06,.034,.018,.008,steel,bag);
   for(const z of [-.035,.035])tube([[-.09,.1,z],[-.07,.22,z],[.07,.22,z],[.09,.1,z]],.008,bagLeather,bag);
   const phone=box(0,.045,0,.068,.012,.138,rubber);const phoneScreen=label('',.06,.1,[0,.052,0],phone);phoneScreen.rotation.x=-Math.PI/2;phoneScreen.position.set(0,.009,0);
@@ -198,7 +198,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     for(let i=0;i<11;i++)box(-2+i*.4,.82,.287,.2,.32,.02,i%2?rubber:warm,barrier!);
     label('도로 통제',1.8,.26,[0,1.55,.1],barrier!);for(const x of [-.8,.8])rod([x,.5,0],[x,1.7,0],.025,steel,barrier!);
   }
-  const facePosition=new T.Vector3();
+  const facePosition=new T.Vector3(),carriedBag=new T.Vector3(),contactBounds=new T.Box3();
   function finalPose(stage:Stage,t:number,camera:T.PerspectiveCamera,reduced:boolean){
     const driving=stage==='car_escape',speaking=stage==='car_voice',crashing=stage==='car_crash';
     const beforeCrash=finale.car_escape!.duration+finale.car_voice!.duration;
@@ -262,9 +262,12 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
       victim.rotation.set(0,Math.PI/2-.18*slide,0);
     }
     pedestrian.pose(driving?clock:driveDuration,driving?null:hitTime);
-    if(!driving&&hitTime>.9){const contact=new T.Box3().setFromObject(victim,true);victim.position.y+=Math.max(0,.012-contact.min.y);}
-    if(driving){bag.position.set(victim.position.x+.04,.69,-1.59);bag.rotation.set(0,0,0);phone.visible=false;}
-    else{const scatter=T.MathUtils.smoothstep(hitTime,.15,1.15);bag.position.set(2.19+scatter*.6,.69*(1-scatter)+scatter*.11,-1.59-scatter*2);bag.rotation.set(scatter*1.3,scatter*.7,scatter*.2);phone.visible=hitTime>.35;phone.position.set(3.1,.009,-3.9);phone.rotation.y=.8;}
+    if(!driving){contactBounds.setFromObject(victim,true);victim.position.y+=Math.max(0,.012-contactBounds.min.y);}
+    victim.updateWorldMatrix(true,true);root.worldToLocal(carryHand.getWorldPosition(carriedBag));carriedBag.y-=.29;
+    const bagSway=Math.sin((driving?clock:driveDuration)/.92*Math.PI*2)*.035;
+    if(driving){bag.position.copy(carriedBag);bag.rotation.set(0,0,bagSway);phone.visible=false;}
+    else{const scatter=T.MathUtils.smoothstep(hitTime,.15,1.15);bag.position.copy(carriedBag).lerp(new T.Vector3(2.79,.11,-3.59),scatter);bag.rotation.set(scatter*Math.PI/2,0,T.MathUtils.lerp(bagSway,.7,scatter));phone.visible=hitTime>.35;phone.position.set(3.1,.009,-3.9);phone.rotation.y=.8;}
+    if(!driving){contactBounds.setFromObject(bag,true);const offset=.012-contactBounds.min.y;bag.position.y+=offset<0?offset*T.MathUtils.smoothstep(hitTime,.15,1.15):offset;}
     const detached=!driving&&hitTime>.25;victim.getObjectByName('memory-shoe')!.visible=!detached;looseShoe.visible=detached;
     const shoeFall=T.MathUtils.smoothstep(hitTime,.25,1.1);looseShoe.position.set(2.08+shoeFall*.55,Math.sin(shoeFall*Math.PI)*.28+.026,-2.25-shoeFall*1.65);looseShoe.rotation.set(0,shoeFall*1.6,0);
     (phoneScreen.material as T.MeshBasicMaterial).color.setScalar(.025);

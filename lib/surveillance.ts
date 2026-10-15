@@ -63,7 +63,7 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
       car.position.set(0,0,office?-2+1.6*T.MathUtils.smoothstep(clock,0,2):-.4);
       camera.position.set(4.4,2.42,5.4);camera.lookAt(0,.9,.7);brake.emissiveIntensity=.8;
       if(driver.root.visible){
-        const walking=Math.min(4,clock-3);driver.root.position.set(-1.27,0,.7+walking*.4);driver.root.rotation.y=0;driver.pose(walking,null);driver.root.updateMatrixWorld(true);
+        const walking=Math.min(4,clock-3);driver.root.position.set(-1.27,0,.7+walking*.4);driver.root.rotation.y=0;driver.pose(walking,null,.4);driver.root.updateMatrixWorld(true);
         let bottom=Infinity;for(const foot of feet)bottom=Math.min(bottom,footBox.setFromObject(foot).min.y);driver.root.position.y-=bottom;
       }
     }else{car.position.set(0,0,-3+2.1*T.MathUtils.smoothstep(clock,0,2));camera.position.set(6,4.7,-8);camera.lookAt(0,.45,0);brake.emissiveIntensity=.8;}

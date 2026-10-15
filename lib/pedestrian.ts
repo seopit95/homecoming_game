@@ -39,7 +39,7 @@ export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='vi
  for(const side of [-1,1]){
   const arm=new T.Group();arm.position.set(side*.194,.405,0);torso.add(arm);arms.push(arm);
   const elbow=new T.Group();elbow.position.y=-.27;arm.add(elbow);elbows.push(elbow);
-  const wrist=new T.Group();wrist.position.y=-.25;elbow.add(wrist);wrists.push(wrist);wrist.add(extremity('hand',side,new T.MeshStandardMaterial({color:'#b49e8b',roughness:.65}),false));
+  const wrist=new T.Group();wrist.name=side===-1?'pedestrian-carry-hand':'pedestrian-free-hand';wrist.position.y=-.25;elbow.add(wrist);wrists.push(wrist);wrist.add(extremity('hand',side,new T.MeshStandardMaterial({color:'#b49e8b',roughness:.65}),false));
   const sleeve=skinArm(body,coat);sleeve.name='pedestrian-sleeve';sleeve.userData.radii=[.07,.062,.049,.045,.032];sleeves.push(sleeve);
   const leg=new T.Group();leg.position.set(side*.093,.87,0);body.add(leg);legs.push(leg);
   const knee=new T.Group();knee.position.y=-.405;leg.add(knee);knees.push(knee);
@@ -47,18 +47,29 @@ export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='vi
   const legMesh=skinArm(body,pants);legMesh.name='pedestrian-trouser-leg';legMesh.userData.radii=[.096,.085,.062,.062,.039];trousers.push(legMesh);
   const shoe=createLeatherShoe();shoe.name=side===1?'memory-shoe':'memory-other-shoe';shoe.position.y=-.06;ankle.add(shoe);
  }
- function pose(clock:number,hit:number|null){
-  const phase=clock*5,impact=hit!==null,wrap=impact?T.MathUtils.smoothstep(hit,0,.44):0,slide=impact?T.MathUtils.smoothstep(hit,.45,1.55):0;
-  pivot.rotation.set(impact?-.15*slide*(1-slide):0,0,1.3*wrap+.24*slide);
-  torso.rotation.set(impact?-.13*wrap:Math.sin(phase)*.012,0,impact?.19*wrap*(1-slide):Math.sin(phase)*.012);
-  head.rotation.set(impact?-.22*wrap:.015,impact?-.38*wrap:.25,impact?-.14*wrap*(1-slide):0);
+ function pose(clock:number,hit:number|null,speed=1.37){
+  const phase=clock/.92,beat=phase*Math.PI*2,impact=hit!==null,wrap=impact?T.MathUtils.smoothstep(hit,0,.44):0,slide=impact?T.MathUtils.smoothstep(hit,.45,1.55):0;
+  // Solve feet in the body's frame: a supporting foot travels backwards by
+  // exactly the root's advance. Swing is lifted, with matching takeoff/landing velocity.
+  const stance=.6,travel=speed*.92*stance,feet=[0,.5].map(offset=>{
+   const u=((phase+offset)%1+1)%1,v=(u-stance)/(1-stance);
+   return {planted:u<stance,z:u<stance?travel*(.5-u/stance):travel*(T.MathUtils.smoothstep(v,0,1)-.5)-speed*.92*(1-stance)*v*(1-v)*(1-2*v),y:.084+(u<stance?0:.115*Math.sin(v*Math.PI))};
+  });
+  const support=Math.min(...feet.filter(f=>f.planted).map(f=>Math.abs(f.z)));
+  body.position.y=.084+Math.sqrt(.81**2-support**2)-.005-pivot.position.y-legs[0].position.y;
+  pivot.rotation.set(-.15*slide*(1-slide),0,1.3*wrap+.24*slide);
+  torso.rotation.set(T.MathUtils.lerp(Math.sin(beat)*.012,-.13,wrap),0,Math.sin(beat)*.012*(1-wrap)+.19*wrap*(1-slide));
+  head.rotation.set(T.MathUtils.lerp(.015,-.22,wrap),T.MathUtils.lerp(.25,-.38,wrap),-.14*wrap*(1-slide));
   for(let i=0;i<2;i++){
-   const step=Math.sin(phase+i*Math.PI),bend=Math.max(0,-step)*.34;
-   legs[i].rotation.set(impact?(-.15+(i?-.36:.22))*wrap:step*.27,0,0);
-   knees[i].rotation.x=impact?.48*wrap+(i?.28:.08)*slide:bend;
+   const {y,z}=feet[i];
+   const dy=y-(pivot.position.y+body.position.y+legs[i].position.y),distance=Math.min(.809,Math.hypot(dy,z));
+   const knee=2*Math.acos(distance/.81),hip=Math.atan2(-z,-dy)-knee/2;
+   legs[i].rotation.set(T.MathUtils.lerp(hip,-.15+(i?-.36:.22),wrap),0,0);
+   knees[i].rotation.x=T.MathUtils.lerp(knee,.48+(i?.28:.08)*slide,wrap);
    ankles[i].rotation.x=-legs[i].rotation.x-knees[i].rotation.x;
-   arms[i].rotation.set(impact?-.8*wrap+(i?.35:-.1)*slide:-step*.16,impact?(i?.3:-.3)*wrap*(1-slide):0,impact?(i?.55:-.55)*wrap*(1-slide):0);
-   elbows[i].rotation.x=impact?-1.3*wrap:-.18;wrists[i].rotation.x=impact?-.25*wrap:0;
+   const swing=Math.sin(beat+i*Math.PI);
+   arms[i].rotation.set(T.MathUtils.lerp(-swing*(i?.24:.07),-.8+(i?.35:-.1)*slide,wrap),(i?.3:-.3)*wrap*(1-slide),(i?.55:-.55)*wrap*(1-slide));
+   elbows[i].rotation.x=T.MathUtils.lerp(-.18,-1.3,wrap);wrists[i].rotation.x=-.25*wrap;
    poseSkinArm(sleeves[i],arms[i],elbows[i],wrists[i]);poseSkinArm(trousers[i],legs[i],knees[i],ankles[i]);
   }
  }
