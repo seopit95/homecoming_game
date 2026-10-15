@@ -15,7 +15,7 @@ import {accidentCar} from './chapters.ts';
 import {landing,buildingLayout as layout} from './building.ts';
 import {freshStamina,stepStamina,canSprint} from './stamina.ts';
 import {perceives} from './perception.ts';
-import {roomReflections} from './lighting.ts';
+import {roomReflections,configureShadow} from './lighting.ts';
 import {createViewmodel} from './viewmodel.ts';
 import {defaultSettings,normalizeSettings,readSettings,readProgress,writeProgress,writeSettings,PROGRESS_KEY,keyLabel,type Settings} from './preferences.ts';
 export type {Settings} from './preferences.ts';
@@ -37,7 +37,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const roads=new Map<boolean,ReturnType<typeof buildRoad>>();let preparing=false;
   function preparedWorld(next:Area){let value=worlds.get(next);if(!value){value=buildWorld(scene,next);worlds.set(next,value);}return value;}
   function preparedRoad(final:boolean){let value=roads.get(final);if(!value){value=buildRoad(scene,final);roads.set(final,value);}return value;}
-  const flashlight=new T.SpotLight('#f0e9d9',42,24,Math.PI/7,.83,1.7);flashlight.castShadow=true;flashlight.shadow.mapSize.set(window.matchMedia('(pointer:coarse)').matches?1024:2048,window.matchMedia('(pointer:coarse)').matches?1024:2048);flashlight.shadow.bias=-.0002;
+  const flashlight=new T.SpotLight('#f0e9d9',42,24,Math.PI/7,.83,1.7);configureShadow(flashlight);flashlight.shadow.mapSize.set(window.matchMedia('(pointer:coarse)').matches?1024:2048,window.matchMedia('(pointer:coarse)').matches?1024:2048);
   flashlight.shadow.camera.near=.02;flashlight.shadow.camera.updateProjectionMatrix();
   scene.add(flashlight,flashlight.target);const fill=new T.PointLight('#dadde0',.6,3.5);scene.add(fill);
   let stamina=freshStamina(),breathRecovery=false;

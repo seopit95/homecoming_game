@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {configureShadow} from './lighting.ts';
 import {apartment as home,apartmentScale as S,spaceFurniture} from './apartment-layout.ts';
 import type { Action, Area } from './story';
 import {buildBuilding,makeFigure} from './building.ts';
@@ -203,7 +204,7 @@ function buildApartment(scene:T.Group) {
     at(x,z);
     const pane=new T.Mesh(new T.PlaneGeometry(1.5,1.6),new T.MeshBasicMaterial({color:'#283e46'}));pane.position.set(x,1.9,z);pane.rotation.y=ry;scene.add(pane);
     for(const zz of [z-.87,z+.87])box(x*.985,1.83,zz,.1,2.1,.27,mat('#5c665c'));
-    const light=new T.SpotLight('#93aebe',14,11,.92,.65,2);light.position.set(x*.89,2.6,z);light.target.position.set(x*.48,.3,z-1);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.bias=-.0004;scene.add(light,light.target);
+    const light=new T.SpotLight('#93aebe',14,11,.92,.65,2);light.position.set(x*.89,2.6,z);light.target.position.set(x*.48,.3,z-1);configureShadow(light);light.shadow.mapSize.set(1024,1024);scene.add(light,light.target);
   }
   const lamps:T.PointLight[]=[];
   for(const [x,z] of [[0,-4],[0,0],[-3.5,2.5],[-4,5],[4,2],[3,-3]]){

@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {configureShadow} from './lighting.ts';
 import {createDrivingCar} from './driving-car.ts';
 import {createPedestrian} from './pedestrian.ts';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -60,7 +61,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   rod([4.9,.1,-6],[4.9,5.9,-6],.095,steel);rod([4.9,5.7,-6],[-.1,5.7,-6],.065,steel);
   box(-.4,5.45,-6,1.18,.4,.28,rubber);
   for(let i=0;i<3;i++){const lens=mesh(new T.CircleGeometry(.12,24),i===2?red:darkGlass,[-.79+i*.38,5.45,-5.849]);box(-.79+i*.38,5.6,-5.79,.28,.075,.26,rubber);lens.castShadow=false;}
-  const crossingLight=new T.SpotLight('#c4d1d6',70,22,.85,.85,2);crossingLight.position.set(3.5,6,-2);crossingLight.target.position.set(-1,0,-2);crossingLight.castShadow=true;crossingLight.shadow.mapSize.set(1024,1024);crossingLight.shadow.bias=-.0005;root.add(crossingLight,crossingLight.target);
+  const crossingLight=new T.SpotLight('#c4d1d6',70,22,.85,.85,2);crossingLight.position.set(3.5,6,-2);crossingLight.target.position.set(-1,0,-2);configureShadow(crossingLight);crossingLight.shadow.mapSize.set(1024,1024);root.add(crossingLight,crossingLight.target);
   label('백로아파트  ｜  서행',2.4,.42,[3.4,3.6,-5.8]);
   box(4.92,1.18,7.4,.25,2.35,.25,concrete);box(5.35,.45,7.4,.8,.9,1.9,concrete);
   // A parked delivery van partially screens the pedestrian on the near pavement.
