@@ -11,7 +11,7 @@ export const expansionObjectives={
  annex_exit_ready:'북쪽 방화문을 열고 외부 중정으로 나가세요',annex_departure:'열린 방화문을 지나 중정으로 나가세요',
  court_arrival:'입구 왼쪽 안내판에서 지하 우회 통로를 확인하세요',court_search:'경비일지와 비상전화 안내에서 금고 번호를 찾으세요 · 번호를 알면 바로 입력할 수 있습니다',court_code:'동측 경비초소 금고 · 기록에서 찾은 네 자리 번호를 맞추고 확인하세요',court_unlocked:'금고에서 챙긴 열쇠로 북쪽 지하 기록보관실 문을 여세요',court_departure:'열린 계단을 따라 기록보관실로 내려가세요',
  archive_arrival:'기록보관실 입구의 인계 대장을 읽으세요',archive_search:'세 곳의 보관실에서 사고 당일 기록을 회수하세요',
- archive_edit:'북동쪽 편집실에서 도로·통화·입차 원본을 사건 순서로 연결하세요',
+ archive_edit:'북동쪽 편집실에서 원본을 재생하고 결정적인 순간에 증거 표시를 남기세요',
  archive_playback:'복원된 영상에서 지워진 아홉 초를 확인하세요',
  archive_reveal:'북동쪽 편집실 모니터에서 원본의 아홉 초를 재생하세요',
  archive_escape:'문밖에서 손톱 소리가 들린다. 북쪽 기계실 연결문으로 빠져나가세요',archive_departure:'열린 연결문을 지나 기계실로 이동하세요',
@@ -34,18 +34,18 @@ export const expansionJournal={
  annex_notice:{title:'우편실 · 반송된 안내문',text:'2803호 앞유리 파손 차량 확인 요청. 입주민께서는 관리실로 연락 바랍니다.\n\n수령란에는 내 서명이 있다. 사흘 전 오후. 「주차 중 파손」이라고 내가 적었다. 기억이 없는 것이 아니었다. 기억할 때마다 다른 말로 덮어 놓았던 것이다.\n\n뒷면의 교환기 점검 기록: 마지막 발신은 정문 비상벨, 수신은 사고 차량 소유자의 세대.'},
  annex_call:{title:'통신실 · 발신측 보조 녹음',text:'03:20 / 정문 비상벨 → 2803 등록 휴대전화 / 통화 종료.\n\n경비원 쪽 마이크만 남은 보조 녹음이다. 「차량 번호가 확인됐습니다. 내려와 주세요. 아직 현장에…」\n\n잠깐의 침묵 뒤에 연결이 끊긴다. 수신자 쪽 소리는 이 장치에 저장되지 않는다. 세대에서 받지 않으면 등록된 휴대전화로 넘어가는 회선. 나는 차 안에서 그 전화를 받았다. 마지막 호출의 수신처는 내가 돌아간 2803호였다.'},
  annex_line_home:{title:'교환기 · 2803호',text:'2803을 누르자 로비 위쪽에서 내가 사는 집의 벨소리가 들렸다.\n「이번에는… 끊지 마.」\n\n방화문 잠금이 풀렸다. 바닥의 젖은 자국은 계단 아래로 이어진다. 통신실에 없는 수신자 쪽 목소리는 지하 기록보관실의 통화 원본에 남아 있다.'},
- archive_ledger:{title:'B1 · 보관 인계 대장',text:'서측 A실: 정문 도로 카메라 원본. 동측 B실: 비상벨 양방향 통화 원본. 서측 C실: 지하 입차 카메라 원본. 북동쪽 편집실에서 세 기록을 연결한다.\n\n관리실 열람본에서 빠진 아홉 초는 C실 원본에 남아 있다. 통신실 보조 녹음에 없는 수신자의 목소리는 B실 원본으로 확인할 것. 도로, 통화, 입차 순서로 재생하면 그날의 기록이 끊김 없이 이어진다.\n\n사흘 전 기록 봉투에는 폐기 요청서가 붙어 있다. 요청인 이름은 내 이름이다. 서명 끝에서 물방울이 떨어진다. 여기는 비가 들어올 수 없는 곳이다.'},
- archive_road:{title:'A실 · 도로 영상 / 03:17',text:'녹색 보행 신호. 우산을 쓰지 않은 여자가 횡단보도를 건넌다. 화면 오른쪽에서 검은 승용차가 들어온다.\n\n충돌 몇 초 전, 운전석의 고개가 조수석 아래를 향한다. 휴대전화를 내려다보던 내가 고개를 들고 급히 제동한다. 브레이크등은 충돌 직전에 켜졌지만 이미 늦었다.\n\n프레임 끝에서 그녀의 신발 한 짝이 멈춘다.'},
- archive_call:{title:'B실 · 양방향 통화 원본 / 03:20',text:'사고를 목격한 경비원이 차 번호로 2803호에 연락했다. 등록된 내 휴대전화로 연결된 통화다. 이 원본에는 양쪽 목소리가 모두 남아 있다.\n\n경비원이 현장에 사람이 남아 있다고 말한다. 그 말을 자른 내 목소리. 「잘못 거셨어요.」 내가 먼저 전화를 끊었다.\n\n돌아갈 기회가 있었다. 못 들은 것이 아니었다.'},
- archive_gate:{title:'C실 · 지하 입차 원본 / 03:26',text:'앞부분이 찌그러진 차량이 멈춘다. 관리실 영상에서 빠졌던 아홉 초. 그동안 나는 운전석에 앉아 조수석 쪽을 보고 있다.\n\n손이 운전석 문으로 움직인다. 어두워서 무엇을 누르는지는 보이지 않는다. 아홉 초가 지나고 나서야 내가 내린다.\n\n인계표에는 「동시 녹음 보존」이라고 적혀 있다. 편집실에서 소리와 함께 재생해야 한다.'},
- archive_play:{title:'복원된 기록 · 아홉 초',text:'세 장면이 이어졌다. 충돌. 내가 끊어 버린 통화. 입차.\n\n차를 세운 뒤에도 나는 아홉 초 동안 운전석에 있었다. 조수석에서 목소리가 들렸다. 「문 좀 열어 주세요.」 내 손이 잠금 버튼을 누른다. 딸깍. 그 소리를 듣고도 혼자 차에서 내려 집으로 갔다.\n\n재생이 끝났는데 모니터의 시간이 현재 03:17로 바뀐다. 「기록 작성 중」. 내가 아무것도 누르지 않았는데 글자가 늘어난다. 마지막 문장. 「네 뒤에 있어」. 곧바로 문밖에서 손톱이 바닥을 긁는다.'},
+ archive_ledger:{title:'B1 · 보관 인계 대장',text:'서측 A실: 도로 카메라. 동측 B실: 양방향 비상 통화. 서측 C실: 지하 입차 원본. 실물 테이프를 북동쪽 편집실로 가져갈 것.\n\n편집 장치: A·B·C를 눌러 원본 선택. 정지/재생, ±1초 버튼으로 대조한 뒤 중요한 순간에 「증거 표시」. 검토 순서는 상관없다. 녹화를 멈춰도 보관실은 계속 움직인다.\n\n열람본의 누락 구간은 세 원본의 내용이 확인되어야 복원할 수 있다. 봉투 겉면에 내 이름으로 쓴 폐기 요청서가 붙어 있다.'},
+ archive_road:{title:'A실 · 도로 원본 회수',text:'CAM-01 / 03:17 / 정문 횡단보도. 봉인된 원본 VHS를 챙겼다.\n\n인계표에는 「보행 신호와 차량 후면이 한 화면에 들어옴」이라고 적혀 있다. 편집실에서 제동등이 언제 켜지는지 확인해야 한다. 내가 기억하는 것처럼 갑자기 뛰어든 사람이었을까.'},
+ archive_call:{title:'B실 · 양방향 통화 회수',text:'AUDIO-17 / 03:20 / 정문 비상벨 → 2803 등록 휴대전화. 양쪽 목소리를 보존한 원본 테이프다.\n\n통신실 장치에는 발신측만 남아 있었다. 이 테이프라면 그때 내가 무슨 말을 했는지, 누가 먼저 끊었는지 확인할 수 있다. 라벨의 수신자 이름을 손가락으로 가렸다.'},
+ archive_gate:{title:'C실 · 입차 원본 회수',text:'CAM-04 / 03:26 / 지하 차량 출입구. 관리실 열람본에서 빠졌던 구간에 「영상·소리 동시 보존」 스티커가 붙어 있다.\n\n차를 세운 다음 아홉 초. 원본에는 차량 안에서 난 소리까지 남아 있다. 편집실에서 조수석을 잘 봐야 한다.'},
+ archive_play:{title:'복원된 기록 · 누락 구간',text:'세 원본에 증거 표시를 남겼다. 보행 신호, 내가 끝낸 통화, 잠겨 있던 문.\n\n마지막 아홉 초를 다시 연결했다. 이제 내가 내리지 않았던 차 안의 소리가 끊김 없이 재생된다. 모니터에 익숙한 방이 비치기 시작한다. 편집실이다. 방금까지는 사흘 전 영상이었는데.'},
  plant_diagram:{title:'B1 · 배수 계통도',text:'차량 출구가 침수되어 있다. 기록보관실 북쪽의 기계실을 통해 배수 장치를 복구해야 한다.\n\n① 서측 저장탱크와 동측 급수관을 차단한다.\n② 전기실에서 배수 펌프와 환기 회로를 켠다. 침수된 외부조명 회로는 끈다.\n③ 기동 버튼을 누르고 수위가 내려가면 북쪽 주차장 연결문으로 나간다.\n\n한서연의 점검 서명 아래에 다른 글씨가 겹쳐 있다. 「나도 이 길로 돌아가고 싶었어.」'},
  plant_valve_west:{title:'기계실 · 서측 차단',text:'저장탱크 쪽 급수관을 잠갔다. 녹슨 손잡이 아래에서 검은 물이 흘렀다. 탱크 안쪽에서 세 번 두드리는 소리가 났다. 동측 급수관까지 잠가야 한다.'},
  plant_valve_east:{title:'기계실 · 동측 차단',text:'동측 급수관을 잠갔다. 배관 진동이 멎자 벽 너머의 손톱 소리가 들렸다. 전기실 계통도대로 전원을 연결해야 한다.'},
  plant_start:{title:'기계실 · 물이 내려간다',text:'배수 펌프와 환기 장치가 돌아간다. 수면 아래에 있던 주차장 방향 표지가 드러났다.\n\n펌프의 울림 사이로 젖은 손이 콘크리트를 치는 소리가 섞인다. 북쪽 방화문까지 우회할 길을 기억해 둬야 한다. 멈춰 있으면 금방 따라잡힌다.'},
  plant_drained:{title:'주차장으로 · 다시 차에 탄다',text:'차량 진입로의 물이 빠졌다. 보행자 출구는 공사 셔터 때문에 여전히 막혀 있다.\n\n내 차는 사고 다음 날부터 같은 자리에 세워 두었다. 열쇠를 조수석 가방에 넣었던 기억이 난다. 경보로 그것을 다른 쪽에 유인하면 운전석까지 갈 수 있다.\n\n밖으로 나가기만 하면 끝날 거라고, 또 그렇게 생각했다.'},
 } as const;
-export type ExpansionAction=keyof typeof expansionJournal|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|'annex_exit'|'court_enter'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_exit'|'parking_enter';
+export type ExpansionAction=keyof typeof expansionJournal|'archive_preview_road'|'archive_preview_call'|'archive_preview_gate'|'archive_record_pause'|'archive_record_back'|'archive_record_forward'|'archive_record_mark'|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|'annex_exit'|'court_enter'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_exit'|'parking_enter';
 export const annexEvidence:Action[]=['annex_badge','annex_notice','annex_call'];
 export const archiveEvidence:Action[]=['archive_road','archive_call','archive_gate'];
 export const courtEvidence:Action[]=['court_log','court_phone'];
@@ -77,8 +77,8 @@ export function expansionTransition(s:Story,action:Action):Story|undefined{
   if(action==='court_confirm'&&s.code==='2617')return noted(s,action,'court_unlocked');
  }
  if(s.stage==='archive_edit'&&action.startsWith('archive_sequence_')){
-  const order=['archive_sequence_road','archive_sequence_call','archive_sequence_gate'];
-  const circuit=action===order[s.circuit.length]?[...s.circuit,action]:[];
+  const order=['archive_sequence_road','archive_sequence_call','archive_sequence_gate'];if(!order.includes(action)||s.circuit.includes(action))return s;
+  const circuit=[...s.circuit,action];
   return {...s,circuit,stage:circuit.length===3?'archive_reveal':s.stage};
  }
  if(s.stage==='plant_power'){
@@ -104,6 +104,7 @@ export function expansionTargetActive(s:Story,id:Action){
  if(['annex_fuse','annex_badge',...archiveEvidence].includes(id)&&s.notes.includes(id))return false;
  if(id==='annex_restore')return s.stage==='annex_restore';
  if(id==='archive_play')return s.stage==='archive_reveal';
+ if(id.startsWith('archive_preview_')||id.startsWith('archive_record_'))return s.stage==='archive_edit';
  if(id.startsWith('court_digit_')||id==='court_confirm')return s.stage==='court_search'||s.stage==='court_code';
  if(id==='court_exit')return s.stage==='court_unlocked';
  if(id.startsWith('annex_line_'))return s.stage==='annex_unlock';
@@ -115,13 +116,12 @@ export function expansionTargetActive(s:Story,id:Action){
  return true;
 }
 
-export const archiveReplayDuration=32;
+export const archiveReplayDuration=19;
 export const archiveReplay=[
- {at:0,screen:'03:17 / 정문 도로\n충돌 직전의 늦은 제동',text:'휴대전화를 내려다보는 내 모습.\n고개를 들고 급히 제동했지만, 너무 늦었다.'},
- {at:5,screen:'03:20 / 2803 통화 원본\n「잘못 거셨어요.」',text:'경비원의 호출. 「아직 현장에 사람이…」\n녹음 속 내가 말을 자른다. 「잘못 거셨어요.」 연결이 끊긴다.'},
- {at:12,screen:'03:26 / 입차 후 9초\n문 좀 열어 주세요.',text:'나는 아직 운전석에 있다. 조수석에서 「문 좀 열어 주세요.」\n내 손이 잠금 버튼을 누른다. 딸깍. 그 뒤에야 혼자 내렸다.'},
- {at:21,screen:'현재 03:17 / 편집실\n기록 작성 중',text:'재생이 끝났는데 모니터의 시간이 지금으로 바뀐다.\n아무것도 누르지 않았는데 새 기록이 써지고 있다.'},
- {at:27,screen:'현재 03:17 / 편집실\n네 뒤에 있어',text:'「네 뒤에 있어」\n문밖에서 손톱이 바닥을 긁는다. 여기를 나가야 한다.'},
+ {at:0,screen:'03:26 / 누락된 9초\n동시 녹음 복원',text:'차를 세운 뒤에도 나는 운전석에 남아 있었다.\n조수석 창문에 손이 닿는다.'},
+ {at:5.8,screen:'03:26 / 잠금음\n운전석 미하차',text:'딸깍. 내가 문을 잠갔다.\n그 목소리를 들었는데도.'},
+ {at:9,screen:'현재 03:17 / 편집실\n기록 작성 중',text:'영상이 끝났는데 화면이 꺼지지 않는다.\n저 책상… 내가 지금 서 있는 방이다.'},
+ {at:15,screen:'현재 03:17 / 편집실\n네 뒤에 있어',text:'「네 뒤에 있어」\n창 너머에서 손톱이 바닥을 긁는다. 연결문으로 가야 한다.'},
 ] as const;
 
 // A continued investigation restarts the same entry approach as a carried pursuit.

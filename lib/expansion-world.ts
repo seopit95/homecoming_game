@@ -13,6 +13,7 @@ import {storageMaterials,storageShelf} from './storage.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {facilityTable,facilityChair,laundryMachine,dryingRail,waterTank,pumpSkid,cartridgeFuse,videoCassette} from './facility-props.ts';
 import {facilityModel} from './facility-models.ts';
+import {createArchiveReview,archiveClips,archiveCamera} from './archive-review.ts';
 
 export const expansionLayout={
  courtyard:courtyardLayout,
@@ -91,6 +92,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  const heightAt=(_x:number,_z:number)=>0;
  let display:T.Mesh|undefined;
  let surveillance:Surveillance|undefined;
+ const archiveReview=area==='archive'?createArchiveReview():undefined;
  const faceText=(text:string)=>{if(!display)return;const map=(display.material as T.MeshStandardMaterial).map! as T.CanvasTexture;const c=map.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#101d18';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#b7cdae';ctx.font=`${Math.min(c.height*.26,650/Math.max(1,...text.split('\n').map(l=>l.length)))}px sans-serif`;ctx.textAlign='center';text.split('\n').forEach((l,i)=>ctx.fillText(l,c.width/2,c.height*(.34+i*.3)));map.needsUpdate=true;};
  const X=bx-6;
  let water:T.Mesh|undefined;
@@ -149,11 +151,25 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  }else if(area==='archive'){
   evidenceDesk('archive_ledger','기록 인계 대장',.2,27);
   evidenceDesk('archive_road','A / 정문 도로 영상',-X,20);evidenceDesk('archive_call','B / 비상 호출 기록',X,20);evidenceDesk('archive_gate','C / 지하 입차 영상',-X,-3);
-  for(const side of [-1,1])for(const z of [16,23,-2,-7,-18])for(const dx of [-2.4,1.6])rack(side*X+dx,z===-18?-16.8:z,2.2,.64);
+  for(const side of [-1,1])for(const z of [16,23,-2,-7,-18])for(const dx of [-2.4,1.6]){if(side===1&&z===-18)continue;rack(side*X+dx,z===-18?-16.8:z,2.2,.64);}
   for(const [x,z,title] of [[-X,23,'A · 정문 도로'],[X,23,'B · 통화 기록'],[-X,-7,'C · 지하 입차']] as const){
    // The plate overlaps the upper shelf edge, not the aisle between two racks.
    box(x+1.6,1.93,z+.317,1.34,.26,.018,metal);label(title,x+1.6,1.93,z+.328,1.3,.24);
   }
+  // A real maintenance editing booth, with one open doorway and a service window.
+  // The low sill blocks bodies but leaves a genuine eye-level view of the aisle.
+  wallAt(9.5,-24,7.55,.14);wallAt(9.5,-16,7.55,.14);wallAt(13.2,-20,.14,8);
+  wallAt(5.8,-22.95,.14,2.1);wallAt(5.8,-18.05,.14,.3);wallAt(5.8,-16.25,.14,.5);
+  box(5.8,.45,-20.05,.14,.9,3.7,lower,true);box(5.8,2.57,-20.05,.14,.46,3.7,wall,true);
+  for(const z of [-21.9,-18.2])box(5.8,1.62,z,.19,1.44,.055,metal,true);
+  for(const y of [.92,2.33])box(5.8,y,-20.05,.24,.055,3.75,metal);
+  box(5.8,2.58,-17.2,.14,.44,1.4,wall);for(const z of [-17.9,-16.5])box(5.8,1.16,z,.2,2.32,.045,metal);
+  label('기록 편집실',5.706,2.52,-17.2,1.1,.2,-Math.PI/2);
+  fixture(9.8,-22,2.1,'#a4b1a1');
+  // Wall trunking and drops terminate on the equipment, rather than hanging in air.
+  roundPipe(root,[12.98,2.49,-23.7],[12.98,2.49,-20.6],.012,metal);
+  roundPipe(root,[12.98,2.49,-20.6],[12.98,.08,-20.6],.012,metal);
+  roundPipe(root,[12.98,.08,-20.6],[X+1.3,.08,-20.6],.008,dark);
   table(X,-20,3.6,1);box(X,.835,-20.15,.5,.03,.36,dark);box(X,.905,-20.15,.16,.11,.17,metal);
   const monitor=box(X,1.30,-20.15,.88,.68,.57,dark);target('archive_play','복원된 기록 재생',monitor,[X,1.31,-19.84],[X,-18.9]);
   const screen=createSurveillance();screen.position.set(X,1.31,-19.864);root.add(screen);surveillance=screen.userData.surveillance;
@@ -163,9 +179,12 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   roundPipe(root,[X,.99,-20.43],[X,.86,-20.52],.006,dark);roundPipe(root,[X,.86,-20.52],[X,.07,-20.52],.006,dark);
   for(const dx of [-1.2,1.2]){box(X+dx,.89,-20,.55,.14,.4,metal);box(X+dx,.89,-19.793,.48,.09,.018,dark);for(const ox of [-.14,.14])box(X+dx+ox,.89,-19.778,.045,.045,.025,metal);}
   roundPipe(root,[X,.07,-20.52],[X+1.3,.07,-20.52],.006,dark);roundPipe(root,[X+1.3,.07,-20.52],[X+1.3,.85,-20.18],.006,dark);
-  box(14.65,2.70,-29,.035,.20,.035,metal);const cameraCase=new T.Group();cameraCase.name='archive-cctv-camera';cameraCase.position.set(14.65,2.54,-29);cameraCase.rotation.set(.11,-1.29,0,'YXZ');root.add(cameraCase);
+  box(12.95,2.71,-23.65,.035,.18,.035,metal);const cameraCase=new T.Group();cameraCase.name='archive-cctv-camera';cameraCase.position.set(...archiveCamera.position);cameraCase.lookAt(...archiveCamera.lookAt);root.add(cameraCase);
   box(0,0,0,.18,.12,.32,metal,false,cameraCase);const lens=new T.Mesh(new T.CylinderGeometry(.041,.041,.02,20),dark);lens.rotation.x=Math.PI/2;lens.position.z=.169;cameraCase.add(lens);
-  for(const [i,id,title] of [[0,'archive_sequence_road','도로'],[1,'archive_sequence_call','호출'],[2,'archive_sequence_gate','입차']] as const){const x=X+(i-1)*.88;box(x,.821,-19.67,.6,.002,.27,dark);const control=box(x,.867,-19.67,.6,.09,.27,metal);target(id,title+' 기록 연결',control,[x,.93,-19.58],[x,-18.6]);label(title,x,.9122,-19.67,.5,.19).rotation.x=-Math.PI/2;}
+  // A single physical review deck: source keys behind transport/mark controls.
+  box(X,.866,-19.69,1.05,.092,.33,metal).name='archive-review-deck';
+  for(const [i,id,title] of [[0,'archive_preview_road','A 도로'],[1,'archive_preview_call','B 통화'],[2,'archive_preview_gate','C 입차']] as const){const x=X+(i-1)*.3;const control=box(x,.925,-19.76,.16,.026,.065,dark);target(id,title+' 원본 재생',control,[x,.94,-19.76],[x,-18.6]);label(title,x,.939,-19.76,.14,.045).rotation.x=-Math.PI/2;}
+  for(const [i,id,title] of [[0,'archive_record_back','−1초'],[1,'archive_record_pause','정지/재생'],[2,'archive_record_forward','+1초'],[3,'archive_record_mark','증거 표시']] as const){const x=X+(i-1.5)*.24;const button=box(x,.925,-19.61,.19,.026,.075,i===3?red:dark);target(id,title,button,[x,.94,-19.61],[x,-18.45]);label(title,x,.939,-19.61,.165,.043).rotation.x=-Math.PI/2;}
   for(const [id,x,z,title] of [['archive_road',-X,20,'A · 03:17 / 도로'],['archive_call',X,20,'B · 03:20 / 통화'],['archive_gate',-X,-3,'C · 03:26 / 입차']] as const){
    const recording=id==='archive_call'?facilityModel('cassette_tape'):videoCassette(dark,paper,glass);
    if(id==='archive_call'){recording.rotation.x=-Math.PI/2;recording.position.y=-.039985;}
@@ -226,10 +245,12 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   if(stage==='archive_playback'&&replayAt<0)replayAt=time;
   const replayTime=time-replayAt;
   const replayText=archiveReplay.findLast(cue=>replayTime>=cue.at)?.screen??archiveReplay[0].screen;
-  const text=area==='archive'?(stage==='archive_playback'?replayText:(stage==='archive_edit'?`원본 연결 ${story?.circuit.length??0}/3\n각 기록의 시각을 대조하세요`:stage==='archive_reveal'?'기록 연결 완료\n재생 버튼을 누르세요':['archive_escape','archive_departure'].includes(stage)?'03:20 / 2803 통화 원본\n「잘못 거셨어요.」':'원본 기록 3개를 회수하세요')):
+  const text=area==='archive'?(stage==='archive_playback'?replayText:(stage==='archive_edit'?`증거 표시 ${story?.circuit.length??0}/3\n원본 선택 · 정지 · ±1초 · 표시`:stage==='archive_reveal'?'기록 연결 완료\n재생 버튼을 누르세요':['archive_escape','archive_departure'].includes(stage)?'현재 03:17 / 편집실\n네 뒤에 있어':'원본 기록 3개를 회수하세요')):
    area==='annex'?['annex_exit_ready','annex_departure'].includes(stage)?'2803 연결됨\n북쪽 방화문 잠금 해제':'마지막 호출 수신처\n1704 / 2803 / 관리실':drained?'수위 LOW\n주차장 통행 가능':drainAt>=0?'배수 가동 중\n젖은 통로에 접근 금지':'수위 HIGH\n급수 차단 후 전원 연결';
   if(text!==lastDisplay){lastDisplay=text;faceText(text);}
-  surveillance?.update(stage,replayTime,text);
+  const review=stage==='archive_edit'?archiveReview?.read(time):undefined;
+  const reviewText=review?.source?`${archiveClips[review.source].title}\n${review.playing?'재생':'정지'} ${review.time.toFixed(1)}초 / ${archiveClips[review.source].duration}초`:text;
+  surveillance?.update(stage,review?.source?review.time:replayTime,reviewText,review);
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,updateStory,reset(){opened=-1;drainAt=-1;replayAt=-1;lastDisplay='';}};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,archiveReview,updateStory,reset(){opened=-1;drainAt=-1;replayAt=-1;lastDisplay='';archiveReview?.reset();}};
 }

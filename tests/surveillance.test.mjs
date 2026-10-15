@@ -15,10 +15,9 @@ test('archive replay renders the restored nine seconds before switching to the r
     assert.notEqual(r.calls[0].scene,scene,'recorded footage must not show the current room');
     const recorded=r.calls[0].scene,car=recorded.getObjectByName('cctv-car'),first=car.position.clone();
     world.updateStory('archive_playback',100.03,false);world.surveillance.render(r,scene);assert.equal(r.calls.length,1,'paused or sub-frame updates do not upload/redraw footage');
-    world.updateStory('archive_playback',101,false);world.surveillance.render(r,scene);assert.ok(car.position.distanceTo(first)>.1,'road footage actually moves');
-    world.updateStory('archive_playback',112,false);world.surveillance.render(r,scene);
-    world.updateStory('archive_playback',120.9,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,recorded,'the complete nine-second parking interval remains on screen');
-    world.updateStory('archive_playback',121,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,scene,'the last feed is this physical room');
+    const hand=recorded.getObjectByName('cctv-passenger-hand');assert.equal(hand.visible,false);world.updateStory('archive_playback',102,false);world.surveillance.render(r,scene);assert.equal(hand.visible,true,'the restored interval reveals a real hand behind the passenger pane');
+    world.updateStory('archive_playback',108.9,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,recorded,'the complete nine-second parking interval remains on screen');
+    world.updateStory('archive_playback',109,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,scene,'the last feed is this physical room');
     const beforeEscape=r.calls.length;world.updateStory('archive_escape',132,false);world.surveillance.render(r,scene);assert.equal(r.calls.length,beforeEscape+1,'the current-room warning remains on the monitor when the chase starts');assert.equal(r.calls.at(-1).scene,scene);
     world.reset();world.updateStory('archive_playback',200,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,recorded);assert.ok(car.position.distanceTo(first)<.0001,'retry starts at the first recorded frame');
   }finally{disposeWorld(world.root);}
@@ -58,16 +57,27 @@ test('office footage shows arrival, the missing interval and a lone walking driv
   }finally{disposeWorld(world.root);}
 });
 
-test('the road aftermath keeps its brake lamps lit and displays the same account as the restored record',()=>{
-  const scene=new T.Scene(),world=buildWorld(scene,'archive'),r=renderer();
-  try{
-    world.updateStory('archive_playback',100,false);world.surveillance.render(r,scene);
-    const car=r.calls.at(-1).scene.getObjectByName('cctv-car');
-    const brake=car.children.map(mesh=>mesh.material).find(material=>material?.name==='sedan-tail-lamps');
-    assert.ok(brake.emissiveIntensity>0,'the first post-impact frame must not imply braking begins after the collision');
-    const overlay=world.root.getObjectByName('surveillance-screen').children.find(mesh=>mesh.material.transparent);
-    assert.deepEqual(overlay.material.map.image.text.slice(-2),archiveReplay[0].screen.split('\n'),'the actual CRT must not contradict its journal and subtitles');
-    world.updateStory('archive_playback',100.5,false);world.surveillance.render(r,scene);
-    assert.ok(brake.emissiveIntensity>0,'braking remains visible throughout the recorded aftermath');
-  }finally{disposeWorld(world.root);}
+test('the chosen road original has a walking approach, late brake lamps, continuous contact and a grounded aftermath',()=>{
+ const scene=new T.Scene(),world=buildWorld(scene,'archive'),r=renderer();
+ try{
+  world.archiveReview.operate('archive_preview_road',0);
+  function at(t){world.updateStory('archive_edit',t,false);world.surveillance.render(r,scene);const recording=r.calls.at(-1).scene;recording.updateMatrixWorld(true);return {intact:recording.getObjectByName('cctv-intact-car'),car:recording.getObjectByName('cctv-car'),victim:recording.getObjectByName('memory-pedestrian')};}
+  const first=at(3.7),start=first.victim.position.clone();assert.equal(first.intact.visible,true);assert.equal(first.car.visible,false);
+  const lamp=first.intact.children.map(m=>m.material).find(m=>m?.name==='sedan-tail-lamps');assert.equal(lamp.emissiveIntensity,0,'no braking in the earlier approach');
+  const before=at(4.199),last=before.victim.position.clone();assert.ok(last.x-start.x>.5,'the woman really crosses the road');assert.ok(lamp.emissiveIntensity>0,'late braking is visible before contact');
+  const contact=at(4.2);assert.ok(contact.victim.position.distanceTo(last)<.02,'the impact may not teleport the pedestrian');assert.equal(contact.car.visible,true);assert.equal(contact.intact.visible,false);
+  const bumper=new T.Box3().setFromObject(contact.car,true),body=new T.Box3().setFromObject(contact.victim,true);assert.ok(bumper.intersectsBox(body),'the actual car and pedestrian must touch when impact begins');
+  const after=at(6);assert.ok(new T.Box3().setFromObject(after.victim,true).min.y>=-.002,'recorded victim may not sink under the road');
+ }finally{disposeWorld(world.root);}
+});
+
+test('recording pause updates its icon even when the same video frame stays on screen',()=>{
+ const scene=new T.Scene(),w=buildWorld(scene,'archive');
+ try{
+  w.archiveReview.operate('archive_preview_call',100);w.updateStory('archive_edit',101,false);
+  const overlay=w.root.getObjectByName('surveillance-screen').children.find(m=>m.material.transparent),text=overlay.material.map.image.text;
+  assert.ok(text.at(-1).startsWith('▶'),'recording begins playing');
+  w.archiveReview.operate('archive_record_pause',101);w.updateStory('archive_edit',101,false);
+  assert.ok(text.at(-1).startsWith('Ⅱ'),'same-frame pause must not retain a playing indicator');
+ }finally{disposeWorld(w.root);}
 });

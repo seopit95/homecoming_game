@@ -23,9 +23,9 @@ test('communal facilities require power and all caller evidence before the corre
  const repeated=transition(s,'annex_notice');assert.equal(repeated,s);
  s=act(s,'annex_line_home','annex_exit','court_enter');assert.equal(s.stage,'court_arrival');
 });
-test('the archive reconstruction rejects a wrong chronology without deleting collected evidence',()=>{
+test('archive conclusions are independent and the restored interval unlocks the onward exit',()=>{
  let s=act(state('archive_arrival'),'archive_ledger','archive_road','archive_gate','archive_call');assert.equal(s.stage,'archive_edit');
- s=act(s,'archive_sequence_road','archive_sequence_gate');assert.deepEqual(s.circuit,[]);assert.ok(s.notes.includes('archive_call'));
+ s=act(s,'archive_sequence_road','archive_sequence_gate');assert.deepEqual(s.circuit,['archive_sequence_road','archive_sequence_gate']);assert.ok(s.notes.includes('archive_call'));
  assert.equal(transition(s,'archive_exit'),s);
  s=act(s,'archive_sequence_road','archive_sequence_call','archive_sequence_gate');assert.equal(s.stage,'archive_reveal');
  s=act(s,'archive_play','archive_finish','archive_exit','plant_enter');assert.equal(s.stage,'plant_arrival');

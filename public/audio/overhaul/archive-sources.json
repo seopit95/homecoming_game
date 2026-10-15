@@ -1,0 +1,32 @@
+[
+  {
+    "path": "public/audio/overhaul/archive-guard.mp3",
+    "task": "d29d57a7-c18b-4280-804f-377d8d3a6e04",
+    "script": "2803호 차주분이시죠? 사고 현장에 사람이 아직 있어요. 지금 돌아와 주세요.",
+    "sha256": "034ede4f3319c84e47b3e87a8c449a0792296a6c5bd280812ca635267719a02d",
+    "bytes": 123758,
+    "provider": "Runway / eleven_multilingual_v2",
+    "language": "ko",
+    "purpose": "Fictional adult evidence recordings for the archive chapter"
+  },
+  {
+    "path": "public/audio/overhaul/archive-denial.mp3",
+    "task": "cbdaa5e4-5b84-4f26-9157-b35992e62edb",
+    "script": "잘못 거셨어요.",
+    "sha256": "baf9ea00f5817d3899b34402fe46ebdacd541b83625e8e3f70b2db805e96db7d",
+    "bytes": 23448,
+    "provider": "Runway / eleven_multilingual_v2",
+    "language": "ko",
+    "purpose": "Fictional adult evidence recordings for the archive chapter"
+  },
+  {
+    "path": "public/audio/overhaul/archive-plea.mp3",
+    "task": "33ccd3b9-56a2-4ab8-b520-52d1dd1347ab",
+    "script": "문 좀 열어 주세요.",
+    "sha256": "71bc9ac9aa397a3d4448c408495a0cea82cc6b71708b73e390cdc54a60680415",
+    "bytes": 24702,
+    "provider": "Runway / eleven_multilingual_v2",
+    "language": "ko",
+    "purpose": "Fictional adult evidence recordings for the archive chapter"
+  }
+]

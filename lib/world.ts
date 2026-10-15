@@ -52,7 +52,8 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
     for(const p of poses){p.object.position.copy(p.position);p.object.quaternion.copy(p.quaternion);p.object.scale.copy(p.scale);p.object.visible=p.visible;delete p.object.userData.openRequested;}
   }
   const surveillance=root.getObjectByName('surveillance-screen')?.userData.surveillance as Surveillance|undefined;
-  return {...content,root,updateStory,reset,surveillance};
+  const archiveReview='archiveReview' in content?content.archiveReview:undefined;
+  return {...content,root,updateStory,reset,surveillance,archiveReview};
 }
 export function disposeWorld(root:T.Object3D){
   root.traverse(o=>o.userData.surveillance?.dispose());

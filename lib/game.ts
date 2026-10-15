@@ -211,7 +211,13 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function interact(){
     if(!started||paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying'||story.stage==='tv'||story.stage==='wake_ring')return;
     if(contact())return;
-    findTarget();const action:Action|undefined=story.hidden?'closet':hover?.id;if(!action)return;
+    findTarget();let action:Action|undefined=story.hidden?'closet':hover?.id;if(!action)return;
+    if(story.stage==='archive_edit'&&(action.startsWith('archive_preview_')||action.startsWith('archive_record_'))){
+      const result=world.archiveReview!.operate(action,elapsed);audio.sound('click',0,.3);
+      if(!result.mark){say(result.message,5);return;}
+      if(story.circuit.includes(result.mark)){say('이미 표시한 증거다. 다른 원본을 대조하자.',4);return;}
+      action=result.mark;say(result.message,7);
+    }
     if(action==='pry'){say('문을 바라본 채 E 또는 화면의 문 벌리기 버튼을 길게 누르세요.',4);return;}
     if(action==='lure'){
       if(lureUsed){say('태엽이 다 풀렸다.',2);return;}lureUsed=true;const point=hover!.point;lastSeen={x:point.x,z:point.z};seenAt=elapsed;tracking=true;noiseRadius=0;audio.sound('alarm',-.65,.45);say('태엽 소리가 울린다. 멀리서 발소리가 방향을 바꿨다.',4);return;
@@ -236,12 +242,12 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(action==='plant_valve_west'||action==='plant_valve_east'||action==='plant_start'){world.figure.visible=true;audio.sound(action==='plant_start'?'motor':'metal',.4,.6);noiseRadius=18;noiseUntil=elapsed+2;}
       if(action==='annex_exit'){world.figure.visible=true;tracking=true;lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;ghostVoice('no',true);audio.sound('dread',0,.65);}
       if(action==='annex_line_home'){audio.sound('phone',-.4,.65);ghostVoice('here',true);}
-      if(action==='archive_play'){audio.sound('dread');say(archiveReplay[0].text,5);return;}
+      if(action==='archive_play'){audio.sound('dread');say(archiveReplay[0].text,5);scriptBeat=1;return;}
       if(action.startsWith('court_digit_')){audio.sound('click',0,.3);return;}
       if(action==='court_confirm'){audio.sound('metal',0,.6);say('금고 안의 인계 쪽지. 「차량 소유자가 녹음 삭제를 요청함. 거절」\n다음 날에도 내가 전화했다. 신고하려던 게 아니었다.\n…지하 계단 열쇠를 챙겼다.',12);return;}
       if(action==='court_evidence'&&!story.notes.includes('court_phone')){whisper='수첩을 펴자, 건너편 비상전화가 울리기 시작한다.';whisperUntil=elapsed+7;}
       if(action==='court_phone'){audio.setDevice('phone',0);audio.sound('phone',.3,.6);ghostVoice('cry',true);}
-      if(action.startsWith('archive_sequence_')){const ok=story.circuit.length>0;audio.sound(ok?'click':'slam',0,.45);if(!ok){noiseRadius=18;noiseUntil=elapsed+3;}say(story.stage==='archive_reveal'?'기록이 연결됐다. 모니터에서 재생해 보자.':ok?`기록 연결 ${story.circuit.length}/3`:'사건의 앞뒤가 맞지 않는다. 회수한 세 기록의 시각과 내용을 대조하자.',6);return;}
+      if(action.startsWith('archive_sequence_')){audio.sound('metal',0,.25);if(story.stage==='archive_reveal')say('세 원본이 같은 순간을 가리킨다.\n모니터에서 지워진 아홉 초를 재생하자.',7);return;}
       if(action.startsWith('plant_circuit_')){audio.sound('click');say(objectiveFor(story),4);return;}
     }
     if(action==='shoes'){
@@ -705,6 +711,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(message&&elapsed>messageUntil)message='';if(whisper&&elapsed>whisperUntil)whisper='';
     }
     if(stamina.exhausted)breathRecovery=true;else if(stamina.value>.9)breathRecovery=false;
+    const archiveFrame=started&&story.stage==='archive_edit'?world.archiveReview?.read(elapsed):started&&story.stage==='archive_playback'&&stageTime<9?{source:'gate' as const,time:stageTime,playing:true}:null;
+    const recordDx=9-camera.position.x,recordDz=-20-camera.position.z,recordDistance=Math.hypot(recordDx,recordDz);
+    audio.setArchiveRecord(archiveFrame??null,recordDistance<14?Math.min(1,2.5/Math.max(1,recordDistance)):0,T.MathUtils.clamp((recordDx*Math.cos(yaw)-recordDz*Math.sin(yaw))/Math.max(1,recordDistance),-1,1));
     audio.setExertion(started&&!isCinematic(story.stage)&&!['ended','dying'].includes(story.stage)&&breathRecovery?Math.min(1,(1-stamina.value)/.75):0);
     audio.setHaunt(started&&!isCinematic(story.stage)&&story.stage!=='ended'&&area!=='aftermath'?(tracking?Math.min(.9,.2+threat*.7):story.stage==='hide'?.65:world.figure.visible?.1+threat*.22:0):0);
     const chasing=started&&!story.hidden&&world.figure.visible&&chaseStages.includes(story.stage)&&(tracking||story.stage==='hide'||area==='landing');

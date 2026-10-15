@@ -5,6 +5,7 @@ import {extremity} from './ghost-anatomy.ts';
 import {surface,boxUV} from './materials.ts';
 import {disposeWorld} from './world.ts';
 import {officeReplayDuration,type Stage} from './story.ts';
+import {archiveCamera,type ArchiveFrame} from './archive-review.ts';
 
 // The small monitor has its own 10 fps recording, then switches to the real room.
 export function createSurveillance(kind:'archive'|'office'='archive'){
@@ -15,7 +16,8 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
   const key=new T.DirectionalLight('#bed0ce',2.4);key.position.set(2,8,5);recording.add(key);
   const fill=new T.PointLight('#b5c4ae',15,30,2);fill.position.set(-2,4,-2);recording.add(fill);
   const camera=new T.PerspectiveCamera(49,4/3,.1,60),liveCamera=new T.PerspectiveCamera(50,4/3,.1,65);
-  liveCamera.position.set(14.48,2.52,-28.95);liveCamera.lookAt(2.5,1.1,-25.5);
+  liveCamera.position.set(...archiveCamera.position);
+  liveCamera.position.addScaledVector(new T.Vector3(...archiveCamera.lookAt).sub(liveCamera.position).normalize(),.19);liveCamera.lookAt(...archiveCamera.lookAt);
   const road=new T.Group(),garage=new T.Group();recording.add(road,garage);
   const concrete=surface('concrete','#777e75'),asphalt=surface('concrete','#525e5b',{roughness:.66});
   const white=new T.MeshStandardMaterial({color:'#c2c2a9',roughness:.84}),dark=new T.MeshStandardMaterial({color:'#333e3c',roughness:.85});
@@ -34,6 +36,8 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
   for(const x of [-2.3,2.3])box(garage,x,.006,-.7,.075,.012,6,white);
   for(const z of [-9,-1,7]){box(garage,0,2.62,z,1.1,.06,.14,dark);box(garage,0,2.582,z,.9,.013,.08,white);}
   const car=createSedan('#242f31',true);car.name='cctv-car';recording.add(car);
+  const intactCar=createSedan('#242f31');intactCar.name='cctv-intact-car';recording.add(intactCar);
+  const intactBrake=(intactCar.children as T.Mesh[]).map(mesh=>mesh.material as T.MeshPhysicalMaterial).find(material=>material.name==='sedan-tail-lamps')!;intactBrake.emissive.set('#d53522');
   const brake=(car.children as T.Mesh[]).map(mesh=>mesh.material as T.MeshPhysicalMaterial).find(material=>material.name==='sedan-tail-lamps')!;
   brake.emissive.set('#d53522');brake.emissiveIntensity=0;
   const driver=createPedestrian(garage,'driver');driver.root.name='cctv-driver';driver.root.visible=false;
@@ -49,24 +53,35 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
   const overlayMap=new T.CanvasTexture(canvas);overlayMap.colorSpace=T.SRGBColorSpace;
   const overlay=new T.Mesh(new T.PlaneGeometry(.72,.54),new T.MeshBasicMaterial({map:overlayMap,transparent:true,toneMapped:false,depthWrite:false}));overlay.position.z=.0006;root.add(overlay);
   let mode='idle',lastKey='',pending=true,clock=0,disposed=false;
-  function update(stage:Stage,time:number,text:string){
+  function update(stage:Stage,time:number,text:string,review?:ArchiveFrame){
     const office=kind==='office',warning=stage==='archive_escape'||stage==='archive_departure';
-    const active=office?['office_playback','office_key','office_leave','office_departure'].includes(stage):stage==='archive_playback'||warning;
-    clock=office?Math.min(officeReplayDuration,Math.max(0,time)):Math.max(warning?27:0,time);
-    mode=!active?'idle':office?'office':clock<5?'road':clock<12?'call':clock<21?'gate':'live';
+    const preview=!office&&stage==='archive_edit'&&!!review?.source;
+    const active=office?['office_playback','office_key','office_leave','office_departure'].includes(stage):preview||stage==='archive_playback'||warning;
+    clock=office?Math.min(officeReplayDuration,Math.max(0,time)):preview?(review!.source==='road'?review!.time:review!.source==='call'?5+review!.time:12+review!.time):stage==='archive_playback'?12+time:Math.max(warning?27:0,time);
+    mode=!active?'idle':office?'office':preview?review!.source!:clock<5?'road':clock<12?'call':clock<21?'gate':'live';
     image.visible=active&&mode!=='call';
-    const frame=Math.floor(clock*10),next=`${mode}:${active?frame:text}`;if(next===lastKey)return;lastKey=next;pending=true;
+    const frame=Math.floor(clock*10),next=`${mode}:${active?frame:text}:${preview?review!.playing:''}`;if(next===lastKey)return;lastKey=next;pending=true;
     road.visible=!office&&(mode==='road'||mode==='idle');garage.visible=mode==='gate'||mode==='office';car.visible=active&&mode!=='call'&&mode!=='live';
+    intactCar.visible=false;
     hand.visible=mode==='office'?clock>=3:mode==='gate'&&clock>=14;
     driver.root.visible=mode==='office'&&clock>=3;
     if(mode==='gate'||mode==='office'){
+      car.rotation.y=0;
       car.position.set(0,0,office?-2+1.6*T.MathUtils.smoothstep(clock,0,2):-.4);
       camera.position.set(4.4,2.42,5.4);camera.lookAt(0,.9,.7);brake.emissiveIntensity=.8;
       if(driver.root.visible){
         const walking=Math.min(4,clock-3);driver.root.position.set(-1.27,0,.7+walking*.4);driver.root.rotation.y=0;driver.pose(walking,null,.4);driver.root.updateMatrixWorld(true);
         let bottom=Infinity;for(const foot of feet)bottom=Math.min(bottom,footBox.setFromObject(foot).min.y);driver.root.position.y-=bottom;
       }
-    }else{car.position.set(0,0,-3+2.1*T.MathUtils.smoothstep(clock,0,2));camera.position.set(6,4.7,-8);camera.lookAt(0,.45,0);brake.emissiveIntensity=.8;}
+    }else if(mode==='road'){
+      const t=review?.source==='road'?review.time:clock*6/5,hit=Math.max(0,t-4.2),wrap=T.MathUtils.smoothstep(hit,0,.44),slide=T.MathUtils.smoothstep(hit,.45,1.55),coast=Math.min(hit,.8);
+      const z=t<4.2?11.44-2.6*t:.52-.9*coast+.5625*coast*coast;
+      car.position.set(1.65,0,z);car.rotation.y=Math.PI;intactCar.position.copy(car.position);intactCar.rotation.copy(car.rotation);intactCar.visible=t<4.2;car.visible=t>=4.2;
+      intactBrake.emissiveIntensity=t>=3.8?.8:0;brake.emissiveIntensity=.8;
+      if(t<4.2){victim.root.position.set(-3.604+1.37*t,0,-1.85);victim.root.rotation.y=Math.PI/2;victim.pose(t,null);}
+      else{victim.root.position.set(2.15+.14*wrap+1.05*slide,-.12*wrap-.6*slide,-1.85-1.4*wrap-.55*slide);victim.root.rotation.y=Math.PI/2-.18*slide;victim.pose(4.2,hit);victim.root.updateMatrixWorld(true);victim.root.position.y+=Math.max(0,.002-new T.Box3().setFromObject(victim.root,true).min.y);}
+      camera.position.set(6,4.7,8);camera.lookAt(1.65,.65,-1.3);
+    }
     ctx.globalCompositeOperation='copy';ctx.fillStyle=image.visible?'rgba(0,0,0,0)':'#0b1512';ctx.fillRect(0,0,640,480);ctx.globalCompositeOperation='source-over';
     ctx.fillStyle='rgba(4,14,10,.72)';ctx.fillRect(0,0,640,48);ctx.fillRect(0,398,640,82);
     ctx.fillStyle='#c0d2bd';ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='21px monospace';
@@ -74,13 +89,15 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     ctx.fillText(mode==='live'?`LIVE  CAM-08  편집실  ${timecode}`:mode==='idle'?'BAEKRO / 감시 기록 장치':`${office?'저장':'원본'}  ${mode==='road'?'CAM-01':mode==='gate'||mode==='office'?'CAM-04':'AUDIO-17'}  ${timecode}`,20,25);
     if(mode==='call'){
       ctx.font='26px sans-serif';ctx.fillText('정문 비상벨 → 2803 등록 휴대전화',36,132);
-      for(let i=0;i<116;i++){const x=32+i*5,level=clock<10.8?(9+Math.abs(Math.sin(i*1.31+frame*.7)*Math.sin(i*.19-frame*.12))*54):2;ctx.fillRect(x,240-level,2,level*2);}
-      ctx.font='23px sans-serif';ctx.fillText(clock<10.8?'양방향 통화 원본 / 재생 중':'수신자 통화 종료',36,337);
+      for(let i=0;i<116;i++){const x=32+i*5,level=clock<14.5?(9+Math.abs(Math.sin(i*1.31+frame*.7)*Math.sin(i*.19-frame*.12))*54):2;ctx.fillRect(x,240-level,2,level*2);}
+      ctx.font='23px sans-serif';ctx.fillText(preview&&review!.time>=9.5?'수신자 통화 종료':'양방향 통화 원본',36,337);
     }
     if(mode==='office'&&clock>=3&&clock<3.4){ctx.fillStyle='rgba(95,113,103,.4)';for(let y=75;y<380;y+=26)ctx.fillRect(0,y,640,9);}
     ctx.fillStyle='#c0d2bd';ctx.font='24px sans-serif';ctx.textAlign='center';
-    const caption=mode==='idle'||mode==='road'?text:mode==='office'?(clock<3?'2803 등록 차량 · 입차':clock<7?'03:26:03–11 / 기록 9초 누락':'귀가자 2명 / 2803호'):mode==='call'?'「잘못 거셨어요.」':mode==='gate'?`복원 구간 ${Math.min(9,Math.floor(clock-12)+1)} / 9초 · 동시 녹음` :clock<27?'현재 영상 · 기록 작성 중':'네 뒤에 있어';
+    const caption=preview?(mode==='road'?(review!.time<3.8?'녹색 보행 신호 / CAM-01':review!.time<4.2?'제동등 점등 / 충돌 직전':'충돌 후 / 제동 유지'):mode==='call'?(review!.time<8?'「현장에 사람이 아직 있어요. 돌아와 주세요.」':review!.time<9.5?'「잘못 거셨어요.」':'수신자 통화 종료'):review!.time<5.8?'「문 좀 열어 주세요.」':'잠금음 / 운전석 미하차'):
+     mode==='idle'||mode==='road'?text:mode==='office'?(clock<3?'2803 등록 차량 · 입차':clock<7?'03:26:03–11 / 기록 9초 누락':'귀가자 2명 / 2803호'):mode==='call'?'「잘못 거셨어요.」':mode==='gate'?`복원 구간 ${Math.min(9,Math.floor(clock-12)+1)} / 9초 · 동시 녹음` :clock<27?'현재 영상 · 기록 작성 중':'네 뒤에 있어';
     const lines=caption.split('\n');lines.forEach((line,i)=>ctx.fillText(line,320,(mode==='idle'?220:425)+i*29));
+    if(preview){ctx.textAlign='right';ctx.font='17px monospace';ctx.fillText(`${review!.playing?'▶':'Ⅱ'} ${review!.time.toFixed(1)}s`,621,70);}
     ctx.fillStyle='rgba(0,8,4,.14)';for(let y=51;y<398;y+=4)ctx.fillRect(0,y,640,1);
     overlayMap.needsUpdate=true;
   }
@@ -92,11 +109,11 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     finally{renderer.setRenderTarget(previous);renderer.shadowMap.autoUpdate=shadows;root.visible=visible;}
   }
   const feed:Surveillance={update,render,async prepare(renderer:T.WebGLRenderer,liveScene:T.Scene){
-    const a=road.visible,b=garage.visible,c=car.visible,h=hand.visible,d=driver.root.visible,saved=mode;
-    road.visible=garage.visible=car.visible=hand.visible=driver.root.visible=true;recording.environment=liveScene.environment;
+    const a=road.visible,b=garage.visible,c=car.visible,h=hand.visible,d=driver.root.visible,intact=intactCar.visible,saved=mode;
+    road.visible=garage.visible=car.visible=hand.visible=driver.root.visible=intactCar.visible=true;recording.environment=liveScene.environment;
     try{await renderer.compileAsync?.(recording,camera);render(renderer,liveScene,true);if(kind==='archive'){mode='live';await renderer.compileAsync?.(liveScene,liveCamera);render(renderer,liveScene,true);}}
-    finally{road.visible=a;garage.visible=b;car.visible=c;hand.visible=h;driver.root.visible=d;mode=saved;pending=true;}
+    finally{road.visible=a;garage.visible=b;car.visible=c;hand.visible=h;driver.root.visible=d;intactCar.visible=intact;mode=saved;pending=true;}
   },dispose(){if(disposed)return;disposed=true;target.dispose();disposeWorld(recording);}};
   root.userData.surveillance=feed;update(kind==='office'?'office_record':'archive_reveal',0,kind==='office'?'신호 없음':'복원 대기\n원본 기록 3개가 필요합니다');return root;
 }
-export type Surveillance={update:(stage:Stage,time:number,text:string)=>void;render:(renderer:T.WebGLRenderer,scene:T.Scene,force?:boolean)=>void;prepare:(renderer:T.WebGLRenderer,scene:T.Scene)=>Promise<void>;dispose:()=>void};
+export type Surveillance={update:(stage:Stage,time:number,text:string,review?:ArchiveFrame)=>void;render:(renderer:T.WebGLRenderer,scene:T.Scene,force?:boolean)=>void;prepare:(renderer:T.WebGLRenderer,scene:T.Scene)=>Promise<void>;dispose:()=>void};
