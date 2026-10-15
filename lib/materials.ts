@@ -4,13 +4,13 @@ import {prepareFacilityModels} from './facility-models.ts';
 import {loadTexture} from './texture-loader.ts';
 
 // Decode each source once; floor changes own disposable texture clones.
-const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair',T.Texture>>={};
+const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair'|'resident-photo',T.Texture>>={};
 const physicalSources:Partial<Record<`${'plaster'|'concrete'|'wood'|'wood-floor'|'painted-metal'|'bag-leather'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
-    const jobs=(['surfaces','remains','face','hand','hand-view','hair','hair-locks','cloth'] as const).map(async key=>{
-      const file=key==='hair-locks'?'ghost-hair-locks-v1.webp':key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
+    const jobs=(['surfaces','remains','face','hand','hand-view','hair','hair-locks','cloth','resident-photo'] as const).map(async key=>{
+      const file=key==='resident-photo'?'resident-memory-photo-v1.webp':key==='hair-locks'?'ghost-hair-locks-v1.webp':key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
       const texture=await loadTexture(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     });
     const livingJobs=(['pedestrian-skin','pedestrian-shirt','pedestrian-shirt-normal','pedestrian-hair'] as const).map(async key=>{
@@ -107,3 +107,5 @@ export function softBox(w:number,h:number,d:number,radius=Math.min(.045,Math.min
 }
 
 export function cutoutMaterial(key:'hand-view'){const map=sources[key]?.clone();if(map)map.needsUpdate=true;return map?new T.MeshBasicMaterial({map,transparent:true,alphaTest:.06,depthWrite:false,toneMapped:false}):null;}
+
+export function residentPhotoMaterial(){const map=sources['resident-photo']?.clone()??null;if(map)map.needsUpdate=true;return new T.MeshStandardMaterial({map,color:'#ffffff',roughness:.68});}

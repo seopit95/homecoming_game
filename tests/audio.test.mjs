@@ -33,3 +33,13 @@ test('the apparition crossfades a connected music layer through volume and pause
     audio.setHaunt(0);assert.equal(audio.haunt.gain.targets.at(-1)[0],0);audio.dispose();assert.equal(ctx.state,'closed');assert.equal(audio.haunt,null);assert.equal(audio.deviceLoops.size,0);
   }finally{audio.dispose();globalThis.fetch=previousFetch;globalThis.AudioContext=previousContext;}
 });
+
+
+test('V65 answering tape stays positional and independent of apparition voices, then releases its nodes',()=>{
+  class Param{value=0;targets=[];setTargetAtTime(...args){this.targets.push(args);}}
+  class Node{gain=new Param();frequency=new Param();pan=new Param();connections=[];connect(n){this.connections.push(n);return n;}disconnect(){this.connections=[];this.disconnected=true;}start(){this.started=true;}stop(){this.stopped=true;}}
+  class Context{currentTime=3;state='running';nodes=[];make(){const n=new Node();this.nodes.push(n);return n;}createBufferSource(){return this.make();}createBiquadFilter(){return this.make();}createGain(){return this.make();}createStereoPanner(){return this.make();}}
+  const audio=new HorrorAudio(),ctx=new Context();audio.context=ctx;audio.voiceBus=new Node();audio.voices.memory={duration:5.36244898};const ghost=new Node();audio.voiceSource=ghost;
+  try{audio.recording();const source=ctx.nodes.find(n=>n.buffer===audio.voices.memory);assert.ok(source?.started);assert.equal(ghost.stopped,undefined,'playing a physical tape must not replace a ghost voice');audio.setRecordingPosition(.35,-.7);const p=ctx.nodes.find(n=>n.connections.includes(audio.voiceBus));assert.equal(p.pan.value,-.7);assert.ok(ctx.nodes.some(n=>n.gain.targets.at(-1)?.[0]>0));audio.stopVoices();assert.equal(source.stopped,undefined,'ghost chatter cleanup cannot cut the tape');audio.stopRecording();assert.equal(source.stopped,true);assert.ok(ctx.nodes.every(n=>n.disconnected),'all tape nodes are released');}
+  finally{audio.stopRecording?.();audio.context=null;}
+});

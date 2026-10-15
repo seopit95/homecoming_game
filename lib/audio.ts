@@ -13,6 +13,7 @@ export class HorrorAudio {
   voices:Partial<Record<GhostLine,AudioBuffer>>={};
   voiceSource:AudioBufferSourceNode|null=null;
   voiceNodes:AudioNode[]=[];
+  recordingSource:AudioBufferSourceNode|null=null;recordingGain:GainNode|null=null;recordingPan:StereoPannerNode|null=null;recordingNodes:AudioNode[]=[];recordingLevel=-1;
   cleanupTimer:ReturnType<typeof setTimeout>|undefined;
   haunt:GainNode|null=null;
   chase:GainNode|null=null;chasePulse:OscillatorNode|null=null;chaseFilter:BiquadFilterNode|null=null;chaseLevel=-1;
@@ -153,7 +154,19 @@ export class HorrorAudio {
     this.chase.gain.setTargetAtTime(level*.9,t,fade);this.chasePulse.frequency.setTargetAtTime(2.2+level*1.25,t,.45);this.chaseFilter.frequency.setTargetAtTime(650+level*1300,t,.6);
   }
   mix(levels:{music:number;effects:number;voice:number}){this.levels={music:levels.music,effects:levels.effects,voice:levels.voice};if(!this.context)return;for(const [key,bus] of [['music',this.musicBus],['effects',this.effectsBus],['voice',this.voiceBus]] as const)bus?.gain.setTargetAtTime(this.levels[key],this.context.currentTime,.12);}
-  recording(){this.voice('memory',0,.85);}
+  recording(){
+    this.stopRecording();const ctx=this.context,buffer=this.voices.memory;if(!ctx||!buffer||!this.voiceBus||ctx.state!=='running')return;
+    const source=this.recordingSource=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=this.recordingGain=ctx.createGain(),pan=this.recordingPan=ctx.createStereoPanner();
+    source.buffer=buffer;filter.type='lowpass';filter.frequency.value=2800;gain.gain.value=.54;source.connect(filter);filter.connect(gain);gain.connect(pan);pan.connect(this.voiceBus);this.recordingNodes=[source,filter,gain,pan];source.onended=()=>this.stopRecording();source.start();
+  }
+  setRecordingPosition(level:number,pan=0){
+    if(!this.context||!this.recordingGain||!this.recordingPan)return;
+    const value=Math.max(0,Math.min(1,level));if(Math.abs(value-this.recordingLevel)>.015){this.recordingLevel=value;this.recordingGain.gain.setTargetAtTime(value*.54,this.context.currentTime,.08);}this.recordingPan.pan.value=Math.max(-1,Math.min(1,pan));
+  }
+  stopRecording(){
+    if(this.recordingSource){this.recordingSource.onended=null;try{this.recordingSource.stop();}catch{}this.recordingSource=null;}
+    this.recordingNodes.forEach(n=>n.disconnect());this.recordingNodes=[];this.recordingGain=null;this.recordingPan=null;this.recordingLevel=-1;
+  }
   footstep(surface:'wood'|'tile'|'metal'|'wet',pan=0,level=1){
     const ctx=this.context;if(!ctx||!this.effectsBus||ctx.state!=='running')return;
     const t=ctx.currentTime,source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),p=ctx.createStereoPanner();
@@ -211,5 +224,5 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }

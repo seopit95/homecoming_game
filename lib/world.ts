@@ -54,7 +54,8 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const surveillance=root.getObjectByName('surveillance-screen')?.userData.surveillance as Surveillance|undefined;
   const archiveReview='archiveReview' in content?content.archiveReview:undefined;
   const plantAttempt='plantAttempt' in content?content.plantAttempt:undefined;
-  return {...content,root,updateStory,reset,surveillance,archiveReview,plantAttempt};
+  const answeringMachine='answeringMachine' in content?content.answeringMachine:undefined;
+  return {...content,root,updateStory,reset,surveillance,archiveReview,plantAttempt,answeringMachine};
 }
 export function disposeWorld(root:T.Object3D){
   root.traverse(o=>o.userData.surveillance?.dispose());

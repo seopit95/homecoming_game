@@ -14,7 +14,7 @@ let pendingCompiles=null,rendererDisposals=0;
 class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{...realLighting,roomReflections:()=>({dispose(){}})}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setArchiveRecord(){}setVolume(){}mix(){}recording(){voiceCalls.push('memory');}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setArchiveRecord(){}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(){voiceCalls.push('memory');}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -143,7 +143,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   runTo(0,7.25);use([0,1.65,7.25],[0,1.25,6.12],'resident_entry');tick(1);runTo(0,4.05);
   assert.equal(game.snapshot().threat,0,'the resident first visit leaves time to investigate');assert.equal(chaseLevel,0);assert.match(game.snapshot().objective,/0\/3/);
   runTo(1.6,4.05);use([1.6,1.65,4.05],[1.6,.15,4.8],'resident_memory');assert.match(game.snapshot().objective,/1\/3.*자동응답기/);
-  runTo(0,4.05);runTo(-1.65,4.05);runTo(-3.8,2.8);use([-3.8,1.65,2.8],[-3.8,.94,3.3],'resident_memory');assert.match(game.snapshot().objective,/2\/3.*냉장고/);assert.equal(deviceLevels.phone,0);
+  runTo(0,4.05);runTo(-1.65,4.05);runTo(-3.8,2.8);use([-3.8,1.65,2.8],[-3.674,.785,3.51],'resident_memory');assert.match(game.snapshot().objective,/재생 중/);tick(5.4);assert.match(game.snapshot().objective,/2\/3.*냉장고/);assert.equal(deviceLevels.phone,0);
   runTo(-1.6,3.15);runTo(0,3.15);runTo(3.8,3.15);use([3.8,1.65,3.15],[3.8,1.5,3.94],'resident_return');assert.match(game.snapshot().objective,/조사 완료/);
   runTo(0,3.15);runTo(0,-4.65);use([0,1.65,-4.65],[0,1.25,-5.65],'resident_departure');tick(1);
   runTo(0,-7.95);aim(renderedCamera.position.toArray(),[3,1.65,-7.95],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='resident_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'office_record');runTo(0,11.8);runTo(0,6.5);
@@ -440,28 +440,36 @@ test('the resident return searches even when the player remains silent out of si
   const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function use(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
-  try{tick();game.continueGame();tick();use([1.6,1.65,3.65],[1.6,.3,4.8]);use([-3.8,1.65,2.2],[-3.8,.94,3.3]);use([3.8,1.65,2.8],[3.8,1.5,3.95]);tick(4.5);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(2);assert.ok(ghost.position.distanceTo(before)>1,'silent players still face a searching pursuer');assert.equal(game.snapshot().story.stage,'resident_return');}
+  try{tick();game.continueGame();tick();use([1.6,1.65,3.65],[1.6,.3,4.8]);use([-3.8,1.65,2.2],[-3.674,.785,3.51]);use([3.8,1.65,2.8],[3.8,1.5,3.95]);tick(10);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(2);assert.ok(ghost.position.distanceTo(before)>1,'silent players still face a searching pursuer');assert.equal(game.snapshot().story.stage,'resident_return');}
   finally{game.dispose();win.localStorage=previous;}
 });
 
-for(const replay of [false,true])test(`resident recording ${replay?'replays after collection':'finishes before routine ghost chatter'}`,async()=>{
-  const previous=win.localStorage;
-  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['belongings','portrait'],elapsed:100}):null,setItem(){},removeItem(){}};
+for(const replay of [false,true])test(`V65 resident message ${replay?'replays independently after collection':'earns its clue only when the tape finishes'}`,async()=>{
+  const previous=win.localStorage,notes=replay?['belongings','portrait','answerphone']:['belongings','portrait'];
+  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes,elapsed:100}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const game=createGame(canvas,()=>{},e=>assert.fail(e));
-  function aim(target){const p=renderedCamera.position,dx=target[0]-p.x,dy=target[1]-p.y,dz=target[2]-p.z,yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
+  function aim(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
   try{
-    await game.ready;tick();game.continueGame();tick(2);voiceCalls.length=0;
-    renderedCamera.position.set(-2.4,1.65,4.6);aim([-3.8,.94,3.3]);assert.match(game.snapshot().prompt,/녹음/);
-    game.interact();assert.equal(game.snapshot().story.stage,'resident_return');assert.deepEqual(voiceCalls,['memory']);
-    if(replay){tick(.05);game.interact();assert.deepEqual(voiceCalls,['memory','memory'],'collecting the clue must not disable its playback');}
-    const startedAt=game.snapshot().elapsed,voices=voiceCalls.length,ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();
-    aim([0,1.65,4.2]);game.key('KeyW',true);tick(Math.hypot(2.4,.4)/2);game.key('KeyW',false);
-    aim([0,1.65,5.5]);game.key('KeyW',true);tick(.65);game.key('KeyW',false);aim([0,1.65,10]);
-    tick(5.37-(game.snapshot().elapsed-startedAt));
-    assert.equal(voiceCalls.length,voices,'the 5.362-second memory must finish before routine chatter replaces it');
-    assert.ok(ghost.position.distanceTo(before)>.5,'listening does not freeze the pursuer');assert.equal(game.snapshot().story.stage,'resident_return');
+    await game.ready;tick();game.continueGame();tick(.1);voiceCalls.length=0;
+    aim([-2.4,1.65,4.6],[-3.8,.82,3.52]);assert.match(game.snapshot().prompt,/녹음/);
+    game.interact();assert.deepEqual(voiceCalls,['memory']);
+    assert.equal(game.snapshot().story.stage,replay?'resident_return':'resident_entry','pressing PLAY cannot pre-collect an unheard message');
+    assert.match(game.snapshot().objective,/재생 중/);tick(.7);game.interact();assert.deepEqual(voiceCalls,['memory'],'repeated E does not restart the same tape');
+    game.pause();const at=game.snapshot().elapsed;tick(3);assert.equal(game.snapshot().elapsed,at);assert.equal(game.snapshot().story.notes.includes('answerphone'),replay);game.pause(false);
+    aim([-2.4,1.65,4.6],[-2.4,1.65,5.4]);const before=renderedCamera.position.clone();game.key('KeyW',true);tick(.3);game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(before)>.3,'the player can leave the telephone while it plays');
+    tick(4.8);assert.equal(game.snapshot().story.stage,'resident_return');assert.equal(game.snapshot().story.notes.filter(n=>n==='answerphone').length,1);assert.doesNotMatch(game.snapshot().objective,/재생 중/);
+    assert.equal(voiceCalls.filter(v=>v==='memory').length,1);
   }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('V65 other clues stay usable while the message runs without ending the investigation early',async()=>{
+  const previous=win.localStorage;
+  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['belongings'],elapsed:100}):null,setItem(){},removeItem(){}};
+  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  function use(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt);game.interact();}
+  try{await game.ready;tick();game.continueGame();tick();use([-2.4,1.65,4.6],[-3.8,.82,3.52]);use([3.8,1.65,2.8],[3.8,1.5,3.94]);assert.ok(game.snapshot().story.notes.includes('portrait'));assert.equal(game.snapshot().story.notes.includes('answerphone'),false);assert.notEqual(game.snapshot().story.stage,'resident_return');tick(5.5);assert.equal(game.snapshot().story.stage,'resident_return');}
+  finally{game.dispose();win.localStorage=previous;}
 });
 
 test('continuing 1704 preserves the remaining clue or restores an already completed investigation',()=>{

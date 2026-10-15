@@ -16,7 +16,7 @@ test('1704 has a clear standing approach to its fridge clue and a shaped leather
   assert.ok(Math.abs(new THREE.Box3().setFromObject(shoe).min.y)<.012,'the shoe rests on the floor');
   const cup=new THREE.Box3().setFromObject(w.root.getObjectByName('resident-teacup'));
   assert.ok(cup.min.y>=.45&&cup.min.y<.46,'the cup and saucer rest on the low table');
-  const phone=new THREE.Box3().setFromObject(w.root.getObjectByName('resident-answering-machine'));
+  const phone=new THREE.Box3().setFromObject(w.root.getObjectByName('answerphone-foot'));
   assert.ok(Math.abs(phone.min.y-.7)<.005,'the answering machine rests on its cabinet');
 });
 
@@ -207,4 +207,16 @@ test('the home threshold, 2803 entrance and elevator cab have connected walkable
 test('entry shoes have human dimensions and rest on the tile, with no box-shaped footwear',()=>{
   const w=buildWorld(new THREE.Scene()),shoes=[];w.root.traverse(o=>{if(o.name==='wet-leather-shoe')shoes.push(o);});assert.equal(shoes.length,4);
   for(const shoe of shoes){const b=new THREE.Box3().setFromObject(shoe),s=b.getSize(new THREE.Vector3());assert.ok(s.z>.22&&s.z<.30);assert.ok(s.y>.06&&s.y<.09);assert.ok(Math.abs(b.min.y-.014)<.003,'sole meets tile');}
+});
+
+
+test('V65 resident phone has supported feet, a cord outside the cabinet, an exposed play key and attached photo',()=>{
+  const w=buildWorld(new THREE.Scene(),'resident');w.root.updateMatrixWorld(true);
+  const machine=w.root.getObjectByName('resident-answering-machine'),box=new THREE.Box3().setFromObject(w.root.getObjectByName('answerphone-case')),size=box.getSize(new THREE.Vector3());
+  assert.ok(size.x>.3&&size.x<.4&&size.z<.3,'the ordinary telephone is human scale');
+  let feet=0;machine.traverse(o=>{if(o.name==='answerphone-foot'){feet++;const b=new THREE.Box3().setFromObject(o);assert.ok(Math.abs(b.min.y-.7)<.001);assert.ok(b.min.x>=-4.2&&b.max.x<=-3.4&&b.min.z>=3.29&&b.max.z<=3.91);}});assert.equal(feet,4);
+  const cord=new THREE.Box3().setFromObject(machine.getObjectByName('answerphone-coiled-cord'));assert.ok(cord.max.x< -4.2,'the hanging coil must not run through the cabinet');
+  const target=w.targets.find(t=>t.id==='answerphone'),button=w.root.getObjectByName('answerphone-play');assert.ok(target.point.distanceTo(button.getWorldPosition(new THREE.Vector3()))<.001);assert.ok(hasLineOfSight({x:-2.4,y:1.65,z:4.6},target.point,w.solids));
+  const photo=w.root.getObjectByName('resident-memory-photo'),photoBox=new THREE.Box3().setFromObject(photo);assert.ok(Math.abs(photoBox.max.z-3.9615)<.001,'the photo backing touches the refrigerator door');
+  const reels=machine.children.filter(o=>o instanceof THREE.Group);w.answeringMachine.setPlayback(2);assert.ok(reels.some(o=>Math.abs(o.rotation.y)>1));const angle=reels[0].rotation.y;w.answeringMachine.setPlayback(null);assert.equal(reels[0].rotation.y,angle,'stopping the tape must not snap the reels back');
 });

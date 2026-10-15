@@ -6,6 +6,7 @@ import {basin,sinkCounter,cabinet,roundPipe,drawerUnit,writingTable,bed,bookcase
 import {createGhost} from './ghost.ts';
 import {nightWindow} from './japan.ts';
 import {dressLivingSpace} from './room-dressing.ts';
+import {createAnsweringMachine,createResidentPhoto} from './resident-props.ts';
 import {createLeatherShoe,wetTexture} from './entry-props.ts';
 import type {Solid,Target} from './world.ts';
 import type {Action,Stage} from './story.ts';
@@ -33,6 +34,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
   const shoes=new T.Group(),phoneGlow=new T.PointLight(),radioLight=new T.PointLight();
   let frontDoor:T.Group|undefined,rearDoor:T.Group|undefined,frontBlock:Solid|undefined,rearBlock:Solid|undefined,frontAt=-1,rearAt=-1;
   let spawn=new T.Vector3(0,1.65,4.9),heading=0,door:T.Group|undefined,rain:T.LineSegments|undefined,carSolid:Solid|undefined;
+  let answeringMachine:ReturnType<typeof createAnsweringMachine>|undefined;
   const wet=new T.MeshStandardMaterial({color:'#263637',roughness:.08,transparent:true,opacity:.4});
   if(resident){
     root.name='resident-1704';
@@ -69,12 +71,9 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     box(-2.8,.035,2.4,2.8,.05,2.5,upholstery('#88846a'));
     const lowTable=writingTable(1.45,.45,.85,wood);lowTable.name='resident-low-table';lowTable.position.set(-2.6,0,2.2);root.add(lowTable);solids.push({x:-2.6,z:2.2,w:1.45,d:.85,y:.225,h:.45});
     box(-2.6,.1,3.3,.75,.16,.6,upholstery('#536264'));
-    const machine=box(-3.8,.78,3.6,.52,.16,.38,metal);machine.name='resident-answering-machine';const deviceCabinet=drawerUnit(.8,.7,.62,wood);deviceCabinet.name='resident-device-cabinet';deviceCabinet.position.set(-3.8,0,3.6);deviceCabinet.rotation.y=Math.PI;root.add(deviceCabinet);solids.push({x:-3.8,z:3.6,w:.8,d:.62,y:.35,h:.7});
-    box(-3.8,.87,3.68,.4,.055,.09,dark);for(const x of [-3.97,-3.63])box(x,.875,3.65,.1,.075,.15,dark);
-    for(let i=0;i<9;i++){const button=new T.Mesh(new T.CylinderGeometry(.018,.018,.012,12),i===8?paper:dark);button.position.set(-3.85+(i%3)*.05,.867,3.47+Math.floor(i/3)*.045);root.add(button);}
-    const display=label('MSG 01',-3.965,.87,3.53,.12,.09,0,'#1b2926','#bcbe91');display.rotation.x=-Math.PI/2;
-    const cord=Array.from({length:81},(_,i)=>new T.Vector3(-4.025+Math.cos(i*.9)*.018,.76-i*.003,3.65+Math.sin(i*.9)*.018));root.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(cord),80,.004,5,false),dark));const led=light(-3.8,.92,3.55,'#be6951',.24,1.3);led.name='answering-machine-led';
-    target('answerphone','자동응답기 · 녹음 재생',machine,-3.8,.94,3.3);
+    const deviceCabinet=drawerUnit(.8,.7,.62,wood);deviceCabinet.name='resident-device-cabinet';deviceCabinet.position.set(-3.8,0,3.6);deviceCabinet.rotation.y=Math.PI;root.add(deviceCabinet);solids.push({x:-3.8,z:3.6,w:.8,d:.62,y:.35,h:.7});
+    answeringMachine=createAnsweringMachine();answeringMachine.root.position.set(-3.8,.7,3.6);root.add(answeringMachine.root);
+    const play=answeringMachine.playButton.position.clone().add(answeringMachine.root.position);target('answerphone','자동응답기 · 녹음 재생',answeringMachine.playButton,play.x,play.y,play.z);
     box(-2.75,.457,2.16,.3,.014,.21,paper);label('9월 16일',-2.75,.465,2.16,.24,.13).rotation.x=-Math.PI/2;
     const cup=new T.Group();cup.name='resident-teacup';cup.position.set(-2.35,.452,2.3);root.add(cup);
     const ceramic=new T.MeshStandardMaterial({color:'#c9c0a9',roughness:.23});
@@ -86,12 +85,14 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     for(const z of [1.85,2.27]){const ring=new T.Mesh(new T.TorusGeometry(.15,.02,8,20),dark);ring.position.set(3.6,1.1,z);ring.rotation.x=Math.PI/2;root.add(ring);}
     box(3.8,1.02,4.4,.75,2.04,.85,paper,true);
     box(3.8,1.03,3.969,.69,1.94,.015,paper);box(4.07,1.35,3.935,.025,.33,.028,metal);
-    const note=label('다음에는 맑은 날에.\n내일 오후 두 시',3.8,1.5,3.96,.48,.42,Math.PI);target('portrait','냉장고 쪽지 · 다음에는 맑은 날에',note,3.8,1.5,3.94);box(3.94,1.715,3.944,.07,.033,.016,dark);
+    const photo=createResidentPhoto();photo.rotation.y=Math.PI;photo.position.set(3.78,1.63,3.9607);root.add(photo);
+    const note=label('다음에는 맑은 날에.\n내일 오후 두 시',3.8,1.32,3.9613,.43,.17,Math.PI);note.name='resident-photo-note';target('portrait','냉장고 사진과 손글씨 쪽지',photo,3.8,1.5,3.94);
+    box(3.92,1.408,3.956,.045,.021,.011,dark);
     const residentBed=bed(2,3.1,.505,wood,upholstery('#b0a68c'),upholstery('#727a69'));residentBed.name='resident-bed';residentBed.rotation.y=Math.PI;residentBed.position.set(-2.9,0,-3.4);root.add(residentBed);solids.push({x:-2.9,z:-3.4,w:2,d:3.1,y:.2525,h:.505},{x:-2.9,z:-5.01,w:2.1,d:.12,y:.72,h:1.2});
     const residentShelf=bookcase(1.8,2,.3,wood);residentShelf.name='resident-bookcase';residentShelf.rotation.y=Math.PI/2;residentShelf.position.set(-4.45,0,-3.9);root.add(residentShelf);solids.push({x:-4.45,z:-3.9,w:.3,d:1.8,y:1,h:2});
     const residentDesk=writingTable(2,.81,.65,wood);residentDesk.name='resident-study-desk';residentDesk.position.set(3,0,-4.65);root.add(residentDesk);solids.push({x:3,z:-4.65,w:2,d:.65,y:.405,h:.81});
     box(3,.86,-4.65,.42,.1,.26,paper);
-    box(-2.25,.454,1.98,.36,.008,.22,paper);const reminder=label('약속 메모\n내일 오후 두 시',-2.25,.4585,1.98,.33,.19);reminder.rotation.x=-Math.PI/2;
+    const receipt=label('관리비 납부 확인\n1704 · 한서연',-2.25,.455,1.98,.28,.17);receipt.rotation.x=-Math.PI/2;
     dressLivingSpace(root,solids,'resident');
     const window=new T.Mesh(new T.PlaneGeometry(2.4,1.5),nightWindow());window.position.set(2.7,1.85,-5.83);root.add(window);
     for(const x of [1.45,2.7,3.95])box(x,1.85,-5.8,.04,1.6,.06,metal);box(2.7,1.85,-5.79,2.55,.04,.08,metal);
@@ -141,12 +142,12 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
       if(rearOpen&&rearAt<0)rearAt=time;
       if(frontAt>=0)setDoorAngle(frontDoor!,frontBlock!,1.54*T.MathUtils.smoothstep(time-frontAt,0,.85),.59,0,occupants);
       if(rearAt>=0)setDoorAngle(rearDoor!,rearBlock!,1.54*T.MathUtils.smoothstep(time-rearAt,0,.85),.59,0,occupants);
-      root.children.forEach(o=>{if(o.name==='return-footprint')o.visible=stage==='resident_return'||stage==='resident_departure';});const led=root.getObjectByName('answering-machine-led') as T.PointLight;led.intensity=.16+(Math.sin(time*2)>0?.1:0);}
+      root.children.forEach(o=>{if(o.name==='return-footprint')o.visible=stage==='resident_return'||stage==='resident_departure';});}
     else{if(door)door.rotation.y=stage==='road_exit'?0:1.25;if(rain)rain.position.y=-(time*2)%4;
       if(carSolid){const i=solids.indexOf(carSolid);if(stage!=='road_exit'&&i<0)solids.push(carSolid);else if(stage==='road_exit'&&i>=0)solids.splice(i,1);}
       root.children.forEach(o=>{if(o.name==='rescue-light'&&o instanceof T.PointLight)o.intensity=stage==='road_wait'?(reducedMotion?3:Math.max(0,Math.sin(time*3+o.position.x))*14):0;});}
   }
-  return {bounds,solids,targets,lamps,figure,shoes,phoneGlow,radioLight,spawn,heading,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,updateStory,reset(){frontAt=-1;rearAt=-1;}};
+  return {bounds,solids,targets,lamps,figure,shoes,phoneGlow,radioLight,spawn,heading,answeringMachine,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,updateStory,reset(){frontAt=-1;rearAt=-1;}};
 }
 
 // Both sides of the stair threshold render this exact gallery before the world changes.
