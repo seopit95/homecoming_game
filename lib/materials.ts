@@ -2,14 +2,15 @@ import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 // Decode each source once; floor changes own disposable texture clones.
-const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'cockpit',T.Texture>>={};
+const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'cockpit'|'hair'|'cloth',T.Texture>>={};
 const physicalSources:Partial<Record<`${'plaster'|'concrete'|'wood'|'wood-floor'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
     const loader=new T.TextureLoader();
-    const jobs=(['surfaces','remains','face','hand','hand-view','cockpit'] as const).map(async key=>{
-      const texture=await loader.loadAsync(`/textures/${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
+    const jobs=(['surfaces','remains','face','hand','hand-view','cockpit','hair','cloth'] as const).map(async key=>{
+      const file=key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
+      const texture=await loader.loadAsync(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     });
     const physicalJobs=(['plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm','wood-color','wood-normal','wood-arm','wood-floor-color','wood-floor-normal','wood-floor-arm'] as const).map(async key=>{
       const texture=await loader.loadAsync(`/textures/pbr/${key}.jpg`);texture.colorSpace=key.endsWith('color')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.setScalar(.9);return {key,texture};
@@ -32,13 +33,13 @@ export function surface(kind:Surface,color='#ffffff',options:T.MeshStandardMater
     const arm=copy('arm'),material=new T.MeshStandardMaterial({color,map:copy('color'),normalMap:copy('normal'),normalScale:new T.Vector2(wood?.25:.65,wood?.25:.65),roughness:.95,roughnessMap:arm,aoMap:arm,aoMapIntensity:.55,...options});
     material.name=`surface-${kind}`;return material;
   }
-  const character=['skin','cloth','hair','wound'].includes(kind),source=sources[character?'remains':'surfaces'];
+  const character=['skin','cloth','hair','wound'].includes(kind),direct=kind==='hair'?sources.hair:kind==='cloth'?sources.cloth:undefined,source=direct??sources[character?'remains':'surfaces'];
   const map=source?.clone();if(map){map.needsUpdate=true;map.wrapS=map.wrapT=T.RepeatWrapping;}
   const roughness=kind==='skin'?.72:kind==='hair'?.48:kind==='ceramic'?.24:kind==='steel'?.48:['tile','oldTile'].includes(kind)?.58:kind==='leather'?.55:.86;
   const bumpScale=kind==='skin'?.0007:kind==='hair'?.00045:kind==='cloth'||kind==='fabric'?.0008:kind==='wall'||kind==='decayWall'?.0015:kind==='steel'?.0006:.0025;
   const Material=kind==='hair'?T.MeshPhysicalMaterial:T.MeshStandardMaterial;
-  const material=new Material({color:map?color:fallback[kind],roughness,map:map??null,bumpMap:map??null,bumpScale,...(kind==='hair'?{specularIntensity:.08}:{}),...options});material.name=`surface-${kind}`;
-  if(map){
+  const material=new Material({color:map?color:fallback[kind],roughness,map:map??null,bumpMap:map??null,bumpScale,...(kind==='hair'?{specularIntensity:.12,anisotropy:.25,anisotropyRotation:Math.PI/2}:{}),...options});material.name=`surface-${kind}`;
+  if(map&&!direct){
     const [x,y]=tiles[kind],grid=character?2:3,repeat=kind==='fabric'?'8.0':kind==='cloth'?'1.0':kind==='leather'?'4.0':kind==='skin'?'1.0':'1.0';
     const uv=`vec2(${(x/grid+.003).toFixed(5)},${(y/grid+.003).toFixed(5)}) + (1.0 - abs(mod(uv * ${repeat}, 2.0) - 1.0)) * ${(1/grid-.006).toFixed(5)}`;
     material.onBeforeCompile=shader=>{

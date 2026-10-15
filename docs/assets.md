@@ -34,3 +34,33 @@ they do not generate the visible skin. Fitted scalp hair and varying wet clumps
 remain procedural, world-owned and disposable. The face, oral and hair position
 buffers are reused through rest/gape and all existing poses; head-group scare
 scaling and navigation/body collision behavior are unchanged.
+
+### Authored long hair and cotton garment (V48)
+
+`lib/assets/ghost-hair.json` replaces the procedural scalp cap and 96 radial
+ribbon locks with the official MakeHuman **long01** hairstyle: 18 authored mesh
+islands, 3,314 UV-seam vertices and 4,108 triangles. The OBJ, binding and material
+headers explicitly release the asset as CC0 in September 2020. The
+[official asset list](https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html)
+also identifies long01 as CC0. Credits: MakeHuman Team, Data Collection AB,
+Joel Palmius and Jonas Hauquier. Exact source hashes and the official archive
+URL are retained in the mesh metadata.
+
+`node --experimental-strip-types scripts/author-ghost-hair.mjs <long01-directory>
+<pinned-base-and-target-directory>` applies the supplied hm08 barycentric
+bindings to the same pinned adult female shape used by the existing head.
+Nearby hair is fitted outside the complete skin surface and bound to its actual
+jaw deformation during authoring. Runtime keeps scalp attachments rigid,
+lets loose ends bend below the jaw and drapes seated lengths in front of the
+backrest. The old front-only skin raster and projection are no longer used.
+The face, jaw shape, navigation, limb animation and story remain unchanged.
+
+`public/textures/ghost-hair-long01-v1.webp` is the source's RGBA diffuse atlas,
+transcoded with WebP quality90 and alpha quality100. Its original transparent
+strand edges are retained. `public/textures/ghost-cloth-v5.webp` is an original
+built-in ImageGen output, transcoded at quality90, 1,254×1,254 pixels: two
+full-bleed panels of soaked ivory cotton, fine vertical creases, seams and
+uneven rust-brown accident stains at the shoulder/hem. It replaces the repeated
+cloth tile without changing garment geometry. The generated standalone hair
+swatch was rejected and is not shipped. These are material/hairstyle changes,
+not commercial character-art or whole-game completion acceptance.

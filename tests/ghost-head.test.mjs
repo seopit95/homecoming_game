@@ -20,7 +20,7 @@ test('the anatomical skin encloses the rear skull and the eyes sit in recessed l
  assert.ok(nose&&cheek&&nose.local.z-cheek.local.z>.035,`nose must project ahead of cheek: ${nose?.local.z}, ${cheek?.local.z}`);
 });
 
-import {createFace,poseFace,faceDepth,scalpPoint} from '../lib/ghost-face.ts';
+import {createFace,poseFace} from '../lib/ghost-face.ts';
 import {createHair,settleHair} from '../lib/ghost-hair.ts';
 
 test('the anatomical mouth morph keeps its joined rim, outward skin and exact reusable rest shape',()=>{
@@ -39,16 +39,6 @@ test('the anatomical mouth morph keeps its joined rim, outward skin and exact re
  poseFace(r,0);assert.deepEqual(storage,rest);assert.deepEqual(head.scale.toArray(),scale.toArray());
 });
 
-test('the hair collision envelope follows the real forehead and locks stay outside it',()=>{
- const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial()),figure=new T.Group();figure.add(head);head.position.y=1.4;
- const ray=new T.Raycaster();head.updateMatrixWorld(true);
- for(const [x,y] of [[0,.23],[.06,.23],[-.08,.19],[.1,.12]]){
-  ray.set(new T.Vector3(x,y+1.4,1),new T.Vector3(0,0,-1));const hit=ray.intersectObject(r.face)[0];assert.ok(hit);assert.ok(Math.abs(hit.point.z-faceDepth(x,y))<.004,`hair envelope misses actual skin at ${x},${y}`);
- }
- const {tails}=createHair(head);for(const tilt of [0,.7,1.2]){head.rotation.x=tilt;settleHair(tails,figure,3,.02);const p=tails.children[0].geometry.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);if(y>-.12&&y<.37&&z>0&&Math.abs(x)<.18&&faceDepth(x,y)>0)assert.ok(z>=faceDepth(x,y,r.hairDepth)+.0099);}}
- const point=scalpPoint(.7,.5,new T.Vector3());assert.ok(point.y>.28&&point.y<.37,'hair roots follow the upper skull');
-});
-
 test('deep oral tissue occludes the retained anterior neck throughout opening',()=>{
  const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial()),ray=new T.Raycaster();
  for(const open of [.3,.65,1,1.025]){
@@ -63,26 +53,21 @@ test('deep oral tissue occludes the retained anterior neck throughout opening',(
 });
 
 
-test('opaque strand interiors clear the actual posed skin at rest, gape and tilt',()=>{
+test('authored hair triangle interiors clear the actual posed skin at rest, gape and tilt',()=>{
  const figure=new T.Group(),head=new T.Group();figure.add(head);head.position.y=1.4;
- const r=createFace(head,new T.MeshStandardMaterial()),{tails}=createHair(head),mesh=tails.children[0],p=mesh.geometry.attributes.position,uv=mesh.geometry.attributes.uv,tex=mesh.material.alphaMap.image;
- const depth=r.hairDepth,other=createFace(new T.Group(),new T.MeshStandardMaterial()),otherRest=other.hairDepth.slice();
+ const r=createFace(head,new T.MeshStandardMaterial()),{tails}=createHair(head),mesh=tails.children[0],p=mesh.geometry.attributes.position,ix=mesh.geometry.index;
  const ray=new T.Raycaster(),q=new T.Vector3(),origin=new T.Vector3(),direction=new T.Vector3(),local=new T.Vector3();
- const alpha=(u,v)=>{const x=Math.max(0,Math.min(tex.width-1,u*tex.width-.5)),y=Math.max(0,Math.min(tex.height-1,v*tex.height-.5)),i=Math.floor(x),j=Math.floor(y),at=(a,b)=>tex.data[(Math.min(tex.height-1,b)*tex.width+Math.min(tex.width-1,a))*4+1]/255;return T.MathUtils.lerp(T.MathUtils.lerp(at(i,j),at(i+1,j),x-i),T.MathUtils.lerp(at(i,j+1),at(i+1,j+1),x-i),y-j);};
  for(const open of [0,1,1.025])for(const tilt of [0,.7]){
-  poseFace(r,open);assert.equal(r.hairDepth,depth);assert.deepEqual(other.hairDepth,otherRest);head.rotation.x=tilt;settleHair(tails,figure,3,.02);head.updateMatrixWorld(true);
-  let checked=0;
-  // Actual indexed triangles: sample along rows AND halfway through row quads.
-  for(let lock=0;lock<96;lock++)for(let row=0;row<48;row++)for(const down of [0,.5])for(let s=1;s<10;s++){
-   const across=s/10,col=across<.5?0:1,f=across*2-col,k=lock*147+row*3+col;
-   const ids=f+down<=1?[k,k+1,k+3]:[k+4,k+3,k+1],weights=f+down<=1?[1-f-down,f,down]:[f+down-1,1-f,1-down];
-   q.set(0,0,0);let u=0,v=0;for(let n=0;n<3;n++){q.x+=p.getX(ids[n])*weights[n];q.y+=p.getY(ids[n])*weights[n];q.z+=p.getZ(ids[n])*weights[n];u+=uv.getX(ids[n])*weights[n];v+=uv.getY(ids[n])*weights[n];}
-   if(alpha(u,v)<=.5||q.z<=0||q.y>.37||q.y<-.4||Math.abs(q.x)>.18)continue;
+  poseFace(r,open);head.rotation.x=tilt;settleHair(tails,figure,3,.02);head.updateMatrixWorld(true);let checked=0;
+  for(let t=0;t<ix.count;t+=3)for(const weights of [[.5,.5,0],[0,.5,.5],[.5,0,.5],[1/3,1/3,1/3]]){
+   q.set(0,0,0);for(let n=0;n<3;n++){const i=ix.getX(t+n);q.x+=p.getX(i)*weights[n];q.y+=p.getY(i)*weights[n];q.z+=p.getZ(i)*weights[n];}
+   // Conservative geometry coverage includes transparent texture-edge facets.
+   if(q.z<=0||q.y>.37||q.y<-.4||Math.abs(q.x)>.18)continue;
    origin.set(q.x,q.y,1).applyMatrix4(head.matrixWorld);direction.set(0,0,-1).transformDirection(head.matrixWorld);ray.set(origin,direction);
    const hits=ray.intersectObject(r.face);if(hits.length<2)continue;checked++;
    const front=head.worldToLocal(local.copy(hits[0].point)).z,rear=head.worldToLocal(local.copy(hits.at(-1).point)).z;
-   assert.ok(q.z>=front-.001||q.z<=rear+.001,`opaque lock ${lock}, row ${row}+${down}, u ${across} inside skin at open ${open}, tilt ${tilt}: point ${q.toArray()}, envelope ${faceDepth(q.x,q.y,r.hairDepth)}, front ${front}, rear ${rear}`);
+   assert.ok(q.z>=front-.001||q.z<=rear+.001,`authored triangle ${t/3} inside skin at open ${open}, tilt ${tilt}: ${q.toArray()}`);
   }
-  assert.ok(checked>100,'the real skin rays must cover opaque strip interiors');
+  assert.ok(checked>100,'actual front hair surfaces must be covered');
  }
 });

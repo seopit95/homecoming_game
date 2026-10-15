@@ -210,30 +210,14 @@ test('both hands render their outer palm and back instead of the inside surface'
  }
 });
 
-test('hair cards expose spaces between wet strands, not only at their outer edges',async()=>{
- const {createHair}=await import('../lib/ghost-hair.ts');const {tails}=createHair(new T.Group()),material=tails.children[0].material,{data,width}=material.alphaMap.image;
- for(const row of [80,160]){
-  let gaps=0,strands=0;for(let col=24;col<104;col++){if(data[(row*width+col)*4+1]/255<material.alphaTest)gaps++;else strands++;}
-  assert.ok(gaps>0&&strands>0,'the inside of a hair card must resolve into individual strands');
+test('authored hair actually covers the crown without a floating scalp shell',async()=>{
+ const {createHair,settleHair}=await import('../lib/ghost-hair.ts'),head=new T.Group(),figure=new T.Group();figure.add(head);head.position.y=1.4;
+ const face=createFace(head,new T.MeshStandardMaterial()),{tails}=createHair(head);settleHair(tails,figure,0,.02);head.updateMatrixWorld(true);
+ for(const x of [-.05,0,.05])for(const z of [-.03,.03]){
+  const ray=new T.Raycaster(new T.Vector3(x,2.2,z),new T.Vector3(0,-1,0));
+  const skin=ray.intersectObject(face.face)[0],hair=ray.intersectObject(tails,true)[0];assert.ok(skin&&hair);
+  const gap=skin.distance-hair.distance;assert.ok(gap>.001&&gap<.035,`crown hair needs to lie just outside actual skull: ${gap}m`);
  }
-});
-
-test('the scalp hairline has a continuous final band without triangular missing patches',async()=>{
-  const {createHair}=await import('../lib/ghost-hair.ts'),{hair}=createHair(new T.Group()),cap=hair.children[0],p=cap.geometry.getAttribute('position');
-  cap.updateMatrixWorld(true);
-  // The open hairline is a ring, not a collapsed sphere pole. Each final
-  // surface patch must be present when viewed from immediately outside it.
-  const width=cap.geometry.parameters.widthSegments,rows=cap.geometry.parameters.heightSegments;
-  for(let i=0;i<width;i++){
-    const b=new T.Vector3().fromBufferAttribute(p,(rows-1)*(width+1)+i),c=new T.Vector3().fromBufferAttribute(p,rows*(width+1)+i),d=new T.Vector3().fromBufferAttribute(p,rows*(width+1)+i+1);
-    const normal=new T.Vector3().subVectors(c,b).cross(new T.Vector3().subVectors(d,b)).normalize(),point=b.clone().add(c).add(d).multiplyScalar(1/3);
-    const expected=[(rows-1)*(width+1)+i,rows*(width+1)+i,rows*(width+1)+i+1];
-    // Temple folds can cover a boundary facet; test that very facet rather
-    // than mistaking a nearer opaque fold for a missing perimeter patch.
-    const hit=new T.Raycaster(point.clone().addScaledVector(normal,.01),normal.clone().negate(),0,.012).intersectObject(cap).find(h=>h.face&&[h.face.a,h.face.b,h.face.c].every(index=>expected.includes(index)));
-    assert.ok(hit,`hairline patch ${i} cannot disappear as a triangular notch`);
-    assert.ok(hit.point.distanceTo(point)<.0001,'the hairline surface meets its actual perimeter');
-  }
 });
 
 test('partially opening the mouth never reverses or interpenetrates exposed tooth rows',()=>{

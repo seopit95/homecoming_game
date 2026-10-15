@@ -228,7 +228,7 @@ export function animateGhostPassenger(figure:T.Group,time:number,scare:number,re
     const orientation=new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2,0,0)).slerp(new T.Quaternion().setFromEuler(new T.Euler(0,0,Math.PI/2)),scare);
     palm.quaternion.copy(upper.quaternion).multiply(lower.quaternion).invert().multiply(orientation);
   }
-  rig.head.rotation.set(.05,-.7,-.26+(reducedMotion?0:Math.sin(time*21)*.025*scare));
+  rig.head.rotation.set(.05,cabinReach?.7:-.7,-.26+(reducedMotion?0:Math.sin(time*21)*.025*scare));
   rig.head.position.z+=scare*.055;poseFace(rig.face,scare);rig.tails.scale.y=.68;
   poseDress(rig.gown,rig.hem,rig.torso,rig.knees,0,true);
   settleHair(rig.tails,figure,time,.25);poseArms(rig);bloodDrops(rig,time,.255);

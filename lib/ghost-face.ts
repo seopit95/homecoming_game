@@ -10,7 +10,6 @@ export function createFace(head:T.Group,skin:T.Material){
   const base=new Float32Array(anatomy.position),delta=new Float32Array(base.length),curve=new Float32Array(base.length);
   face.geometry.setAttribute('position',new T.BufferAttribute(base.slice(),3));face.geometry.setAttribute('uv',new T.Float32BufferAttribute(anatomy.uv,2));face.geometry.setIndex(anatomy.index);
   face.userData.mouthBorder=anatomy.mouthBorder;
-  const hairDepth=new Float32Array(145*309);face.userData.hairDepth=hairDepth;
   delta.set(anatomy.skinDelta);
   // Bake the local annulus coefficients once. Every later pose writes directly
   // into the same position buffer; the upper anatomical skull stays untouched.
@@ -62,28 +61,10 @@ export function createFace(head:T.Group,skin:T.Material){
     const mesh=new T.Mesh(g,material);mesh.name=`ghost-eye-${side}`;mesh.receiveShadow=true;eyes.add(mesh);
   }
   for(const mesh of [face,throat,lip]){mesh.castShadow=true;mesh.receiveShadow=true;}
-  const state={face,base,delta,curve,hairDepth,cavity:new Array<number>(17*(N+1)*3+3).fill(0),lipPositions:new Array<number>(3*(N+1)*3).fill(0),gumPositions:[new Array<number>(3*17*3).fill(0),new Array<number>(3*17*3).fill(0)],mouth,throat,lip,jaw,teeth,eyes,lower,gums,tongue,tongueShape,lastOpen:-1};poseFace(state,0);return state;
+  const state={face,base,delta,curve,cavity:new Array<number>(17*(N+1)*3+3).fill(0),lipPositions:new Array<number>(3*(N+1)*3).fill(0),gumPositions:[new Array<number>(3*17*3).fill(0),new Array<number>(3*17*3).fill(0)],mouth,throat,lip,jaw,teeth,eyes,lower,gums,tongue,tongueShape,lastOpen:-1};poseFace(state,0);return state;
 }
 export type FaceRig=ReturnType<typeof createFace>;
 const N=64;
-// Head-local skin depth. Hair passes its own rig's current raster; the baked
-// rest envelope remains available to callers without a constructed face.
-export function faceDepth(x:number,y:number,current?:Float32Array){
-  if(current){
-    if(x<-.18||x>.18||y<-.4||y>.37)return 0;
-    const i=Math.floor((x+.18)/.0025),j=Math.floor((y+.4)/.0025);let z=0;
-    // Conservative neighbouring samples cover the silhouette between grid rays.
-    for(let row=Math.max(0,j-1);row<=Math.min(308,j+2);row++)for(let col=Math.max(0,i-1);col<=Math.min(144,i+2);col++)z=Math.max(z,current[row*145+col]);
-    return z;
-  }
-  const {width:w,height:h,depth}=anatomy.envelope,u=T.MathUtils.clamp((x+.18)/.36,0,1)*(w-1),v=T.MathUtils.clamp((y+.12)/.49,0,1)*(h-1),i=Math.min(w-2,Math.floor(u)),j=Math.min(h-2,Math.floor(v));
-  return T.MathUtils.lerp(T.MathUtils.lerp(depth[j*w+i],depth[j*w+i+1],u-i),T.MathUtils.lerp(depth[(j+1)*w+i],depth[(j+1)*w+i+1],u-i),v-j);
-}
-export function scalpPoint(angle:number,theta:number,out:T.Vector3){
-  const u=((angle/(Math.PI*2)%1)+1)%1*96,v=T.MathUtils.clamp(theta/2.7,0,1)*48,i=Math.min(95,Math.floor(u)),j=Math.min(47,Math.floor(v));
-  for(let axis=0;axis<3;axis++)out.setComponent(axis,T.MathUtils.lerp(T.MathUtils.lerp(anatomy.scalp[(j*97+i)*3+axis],anatomy.scalp[(j*97+i+1)*3+axis],u-i),T.MathUtils.lerp(anatomy.scalp[((j+1)*97+i)*3+axis],anatomy.scalp[((j+1)*97+i+1)*3+axis],u-i),v-j));
-  return out;
-}
 function lipPoint(a:number,open:number){
   const s=Math.sin(a),c=Math.cos(a),width=.056+open*.008;
   return new T.Vector3(c*width*(1+open*.22*s)+open*.018*s, -.006+s*.0025-open*.111*(1-s)+open*.016*c, .164-Math.abs(c)*.011+open*.006*(1-s));
@@ -99,22 +80,10 @@ function grid(mesh:T.Mesh,rows:number,cols:number,positions:number[],uvs?:number
   g.computeVertexNormals();g.computeBoundingSphere();
 }
 export function poseFace(r:FaceRig,open:number){
-  if(r.lastOpen===open)return;r.lastOpen=open;
+  if(r.lastOpen===open)return;r.lastOpen=open;r.face.userData.openness=open;
   const cavity=r.cavity,lips=r.lipPositions,positions=r.face.geometry.getAttribute('position');
   for(let i=0;i<r.base.length;i++)(positions.array as Float32Array)[i]=r.base[i]+r.delta[i]*open+r.curve[i]*open*open;
   positions.needsUpdate=true;r.face.geometry.computeVertexNormals();r.face.geometry.computeBoundingSphere();
-  // Rasterize the current skin into this rig's reusable hair envelope. This is
-  // one triangle pass only when opening changes, with no raycaster or allocation.
-  const depth=r.hairDepth,ids=anatomy.index,p=positions.array;depth.fill(0);
-  for(let k=0;k<ids.length;k+=3){
-    const a=ids[k]*3,b=ids[k+1]*3,c=ids[k+2]*3,ax=p[a],ay=p[a+1],bx=p[b],by=p[b+1],cx=p[c],cy=p[c+1],den=(by-cy)*(ax-cx)+(cx-bx)*(ay-cy);
-    if(Math.abs(den)<1e-12)continue;
-    const left=Math.max(0,Math.ceil((Math.min(ax,bx,cx)+.18)/.0025)),right=Math.min(144,Math.floor((Math.max(ax,bx,cx)+.18)/.0025)),bottom=Math.max(0,Math.ceil((Math.min(ay,by,cy)+.4)/.0025)),top=Math.min(308,Math.floor((Math.max(ay,by,cy)+.4)/.0025));
-    for(let row=bottom;row<=top;row++)for(let col=left;col<=right;col++){
-      const x=-.18+col*.0025,y=-.4+row*.0025,u=((by-cy)*(x-cx)+(cx-bx)*(y-cy))/den,v=((cy-ay)*(x-cx)+(ax-cx)*(y-cy))/den;
-      if(u>=0&&v>=0&&u+v<=1){const n=row*145+col;depth[n]=Math.max(depth[n],u*p[a+2]+v*p[b+2]+(1-u-v)*p[c+2]);}
-    }
-  }
   // The deep tissue clears the fixed anterior neck by 10 mm; the lip and
   // front half of the cavity retain their original dental/tongue fit.
   for(let row=0;row<=16;row++)for(let i=0;i<=N;i++){

@@ -97,6 +97,18 @@ function cabinTriangles(car){
  };
 }
 
+test('the replaced passenger hair clears the actual closed cabin through the visible scare',()=>{
+ const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160);
+ for(const [stage,time] of [['car_voice',3.5],...Array.from({length:55},(_,i)=>['car_crash',Math.min(i*.025,1.349)])]){
+  road.pose(stage,time,camera,false);road.root.updateMatrixWorld(true);
+  const car=road.root.getObjectByName('hero-sedan'),hair=road.root.getObjectByName('finale-passenger').getObjectByName('ghost-authored-long-hair'),p=hair.geometry.attributes.position,ix=hair.geometry.index;
+  const hit=cabinTriangles(car),matrix=car.matrixWorld.clone().invert().multiply(hair.matrixWorld);
+  for(let i=0;i<ix.count;i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix.getX(i+j)).applyMatrix4(matrix))),crossing=hit(tri);
+   assert.equal(crossing,null,`hair crosses ${crossing?.name} at ${stage} ${time}s, triangle ${i/3}, point ${crossing?.point}`);
+  }
+ }
+});
+
 test('the visible hero hood and steering wheel receive the fatal impact and reset',()=>{
  const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(),car=road.root.getObjectByName('hero-sedan');
  function hoodHeight(){road.root.updateMatrixWorld(true);const inverse=car.matrixWorld.clone().invert(),v=new T.Vector3();let top=0;car.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.getAttribute('position'),m=inverse.clone().multiply(o.matrixWorld);for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(m);if(v.z< -1.05&&v.z> -2.19)top=Math.max(top,v.y);}});return top;}

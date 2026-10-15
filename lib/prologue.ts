@@ -211,7 +211,6 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     passenger!.visible=!driving&&hit<.8;
     animateGhostPassenger(passenger!,clock,crashing?T.MathUtils.smoothstep(t,0,.25):0,reduced,true);
     const passengerHead=passenger!.getObjectByName('ghost-head')!;
-    passengerHead.rotation.y*=-1; // The shared sedan has an unmirrored passenger side.
     camera.position.set(1.27,1.22-T.MathUtils.smoothstep(hit,.22,2.9)*.42,z-.24-T.MathUtils.smoothstep(hit,0,.15)*.14+jolt*.035);
     car.updateMatrixWorld(true);
     const face=passengerHead.localToWorld(facePosition.set(0,.13,.16));root.worldToLocal(face);face.sub(camera.position);
