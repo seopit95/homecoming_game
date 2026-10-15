@@ -481,7 +481,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
         if(story.stage==='drive'&&stageTime>=memory.duration-.2&&scriptBeat===2){scriptBeat=3;audio.recorded('female-collision-scream',.9,.35);}
         if(story.stage==='impact'){
           if(stageTime>2.2&&scriptBeat===0){scriptBeat=1;audio.sound('breath',0,.55);}
-          if(stageTime>=beats.lock&&scriptBeat===1){scriptBeat=2;audio.sound('click',.7,.7);}
+          for(const [at,kind,pan,level] of [[beats.doorOpen,'click',-.7,.6],[beats.doorShut,'slam',.5,.28],[beats.reopen,'click',.5,.6],[beats.lock-.2,'slam',-.7,.3]] as const)if(stageTime>=at&&stageTime-dt<at)audio.sound(kind,pan,level);
+          for(const [from,to] of [[beats.walk,beats.inspect],[beats.return,beats.atDoor]])for(let at=from+.2,n=0;at<to;at+=.5,n++)if(stageTime>=at&&stageTime-dt<at)audio.footstep('wet',n%2?.12:-.12,.55);
+          if(stageTime>=beats.lock&&scriptBeat===1){scriptBeat=2;audio.sound('click',-.7,.45);}
         }
       }
       if(stageTime>=memory.duration)advance(memory.action);return;

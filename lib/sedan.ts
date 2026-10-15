@@ -8,12 +8,18 @@ export function sedanSolids(x:number,z:number):Solid[]{
   return [{x,z,w:1.91,d:4.57,y:.76,h:1.52},...[-1,1].map(side=>({x:x+side*1.008,z:z+.65,w:.213,d:.263,y:1.01,h:.17}))];
 }
 
+// Shared by the physical pane and its rain/crack surface layers (+Z forward).
+export function sedanWindshieldPoint(u:number,v:number){
+ const x=(u*2-1)*T.MathUtils.lerp(.815,.658,v),bow=1-(u*2-1)**2;
+ return [x,.923+v*.48+.047*bow*v+.025*bow*Math.sin(v*Math.PI),.968-v*.592+.033*bow*Math.sin(v*Math.PI)];
+}
+
 // Generic late-1990s compact sedan, in metres. The front points along +Z.
 export function createSedan(color:string,damaged=false,driving=false){
   const root=new T.Group();root.name=damaged?'hit-and-run-car':'parked-sedan';
   const door=new T.Group();door.name='hero-driver-door';door.position.set(.86,0,.94);if(driving)root.add(door);let onDoor=false,onHood=false;
   const hood=new T.Group();hood.name='hero-hood';hood.position.set(0,.9,.968);if(driving)root.add(hood);
-  const steering=new T.Group();steering.position.set(.39,1.004,.555);steering.rotation.x=-.57;
+  const steering=new T.Group();steering.position.set(.39,1.004,.555);steering.rotation.x=.57;
   const steeringWheel=new T.Group();steeringWheel.name='hero-steering-wheel';steering.add(steeringWheel);if(driving)root.add(steering);
   const paint=new T.MeshPhysicalMaterial({color,metalness:.58,roughness:.38,clearcoat:.45,clearcoatRoughness:.3,vertexColors:true,side:driving?T.DoubleSide:T.FrontSide});
   const trim=new T.MeshStandardMaterial({color:'#202623',roughness:.8});
@@ -83,10 +89,7 @@ export function createSedan(color:string,damaged=false,driving=false){
   box([0,driving?.21:.337,0],[1.46,.065,3.55],trim);
 
   // Gently crowned roof and four fitted panes; no floating rectangular roof slab.
-  const windshield=(u:number,v:number)=>{
-    const x=(u*2-1)*T.MathUtils.lerp(.815,.658,v),bow=1-(u*2-1)**2;
-    return [x,.923+v*.48+.047*bow*v+.025*bow*Math.sin(v*Math.PI),.968-v*.592+.033*bow*Math.sin(v*Math.PI)];
-  };
+  const windshield=sedanWindshieldPoint;
   patch(windshield,18,9,glass);
   const rearGlass=(u:number,v:number)=>{const x=(u*2-1)*T.MathUtils.lerp(.81,.663,v);return [x,.915+v*.488+.047*(1-(u*2-1)**2)*v,-1.255+v*.501-.02*(1-(u*2-1)**2)*Math.sin(v*Math.PI)];};
   patch(rearGlass,18,8,glass,true);
@@ -141,6 +144,7 @@ export function createSedan(color:string,damaged=false,driving=false){
     }
   }
   if(driving){
+    pipe([[.39,.9,.72],[.39,1.004,.555]],.027,trim,4);
     const rim=new T.Mesh(new T.TorusGeometry(.137,.015,6,24),trim);steeringWheel.add(rim);
     for(const x of [-1,1]){const spoke=new T.Mesh(new T.CylinderGeometry(.012,.012,.137,8),trim);spoke.rotation.z=Math.PI/2;spoke.position.x=x*.0685;steeringWheel.add(spoke);}
   }else{add(new T.TorusGeometry(.137,.015,6,24),trim,[-.39,1.004,.555],[-.57,0,0]);pipe([[-.53,.98,.56],[-.39,1.004,.555],[-.25,.98,.56]],.012,trim);}

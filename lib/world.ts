@@ -56,6 +56,7 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
 }
 export function disposeWorld(root:T.Object3D){
   root.traverse(o=>o.userData.surveillance?.dispose());
+  root.traverse(o=>{if(o instanceof T.InstancedMesh)o.dispose();});
   const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>(),textures=new Set<T.Texture>();
   root.traverse(o=>{if(o instanceof T.SpotLight||o instanceof T.PointLight||o instanceof T.DirectionalLight)o.shadow.map?.dispose();});
   root.traverse(o=>{if(o instanceof T.Mesh||o instanceof T.Line){geometries.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material])){materials.add(m);for(const v of Object.values(m))if(v instanceof T.Texture&&!v.isRenderTargetTexture)textures.add(v);}}});

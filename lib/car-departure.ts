@@ -51,12 +51,13 @@ export function buildCarDeparture(root:T.Group,solids:Solid[]):CarDeparture{
     car.position.set(x,(rampHeight(z-1.35)+rampHeight(z+1.35))/2,z);car.rotation.set(Math.atan(slope),-Math.atan(dx),0,'YXZ');
     // Turn into the first half of the lateral curve, then counter-turn to the ramp.
     const steer=distance>0&&distance<8?.55*Math.sin(distance*Math.PI/4):0;
-    const open=1.08*T.MathUtils.smoothstep(t,1.5,2.5)*(1-T.MathUtils.smoothstep(t,4.8,5.5));rig.pose(Math.max(0,t-6),open,t>=6,steer);
+    const speed=t>8&&t<carDepartureDuration?26*6*((t-8)/16)*(1-(t-8)/16)/16:0;
+    const open=1.08*T.MathUtils.smoothstep(t,1.5,2.5)*(1-T.MathUtils.smoothstep(t,4.8,5.5));rig.pose(Math.max(0,t-6),open,t>=6,steer,0,speed);
     const lift=T.MathUtils.smoothstep(t,6,8);shutter.position.y=1.3+1.3*lift;shutter.scale.y=1-.995*lift;shutterBlock.y=shutter.position.y;shutterBlock.h=2.6*shutter.scale.y;sync();
     const board=T.MathUtils.smoothstep(t,2.5,4.8);temp.copy(eye);car.localToWorld(temp);camera.position.copy(approach).lerp(temp,board);
     seatEuler.y=(reduced?.45:.7)*T.MathUtils.smoothstep(t,4.6,5)*(1-T.MathUtils.smoothstep(t,5.5,6.2));seatRotation.setFromEuler(seatEuler).premultiply(car.quaternion);camera.quaternion.copy(startRotation).slerp(seatRotation,board);
     if(!reduced&&t>6)camera.position.y+=Math.sin(t*23)*.0015*T.MathUtils.smoothstep(t,6,7)*(1-T.MathUtils.smoothstep(t,23,24));
-    camera.updateMatrixWorld();return t>8&&t<carDepartureDuration?26*6*((t-8)/16)*(1-(t-8)/16)/16:0;
+    camera.updateMatrixWorld();return speed;
   }
   reset();return {car,duration:carDepartureDuration,pose,roadFrame:departureFrame.clone(),reset};
 }

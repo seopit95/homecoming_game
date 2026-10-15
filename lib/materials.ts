@@ -2,13 +2,13 @@ import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 // Decode each source once; floor changes own disposable texture clones.
-const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'cockpit'|'hair'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair',T.Texture>>={};
+const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'hair'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair',T.Texture>>={};
 const physicalSources:Partial<Record<`${'plaster'|'concrete'|'wood'|'wood-floor'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
     const loader=new T.TextureLoader();
-    const jobs=(['surfaces','remains','face','hand','hand-view','cockpit','hair','cloth'] as const).map(async key=>{
+    const jobs=(['surfaces','remains','face','hand','hand-view','hair','cloth'] as const).map(async key=>{
       const file=key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
       const texture=await loader.loadAsync(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     });
@@ -95,4 +95,4 @@ export function softBox(w:number,h:number,d:number,radius=Math.min(.045,Math.min
   const small=Math.min(w,h,d);return small>=.04?new RoundedBoxGeometry(w,h,d,radius>.045?3:1,Math.min(radius,small*.22)):new T.BoxGeometry(w,h,d);
 }
 
-export function cutoutMaterial(key:'hand-view'|'cockpit'){const map=sources[key]?.clone();if(map)map.needsUpdate=true;return map?new T.MeshBasicMaterial({map,transparent:true,alphaTest:.06,depthWrite:false,toneMapped:false}):null;}
+export function cutoutMaterial(key:'hand-view'){const map=sources[key]?.clone();if(map)map.needsUpdate=true;return map?new T.MeshBasicMaterial({map,transparent:true,alphaTest:.06,depthWrite:false,toneMapped:false}):null;}

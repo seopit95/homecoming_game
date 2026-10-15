@@ -51,6 +51,7 @@ export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='vi
  const clothes=appearance==='victim'?createLivingShirt(torso,pants):null;
  function pose(clock:number,hit:number|null,speed=1.37){
   const phase=clock/.92,beat=phase*Math.PI*2,impact=hit!==null,wrap=impact?T.MathUtils.smoothstep(hit,0,.44):0,slide=impact?T.MathUtils.smoothstep(hit,.45,1.55):0;
+  const rest=impact?T.MathUtils.smoothstep(hit,1.6,3):0;
   // Solve feet in the body's frame: a supporting foot travels backwards by
   // exactly the root's advance. Swing is lifted, with matching takeoff/landing velocity.
   const stance=.6,travel=speed*.92*stance,feet=[0,.5].map(offset=>{
@@ -71,7 +72,14 @@ export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='vi
    ankles[i].rotation.x=-legs[i].rotation.x-knees[i].rotation.x;
    const swing=Math.sin(beat+i*Math.PI);
    arms[i].rotation.set(T.MathUtils.lerp(-swing*(i?.24:.07),-.8+(i?.35:-.1)*slide,wrap),(i?.3:-.3)*wrap*(1-slide),(i?.55:-.55)*wrap*(1-slide));
-   elbows[i].rotation.x=T.MathUtils.lerp(-.18,-1.3,wrap);wrists[i].rotation.x=-.25*wrap;
+   arms[i].position.z=i===1?.04*rest:0;
+   elbows[i].rotation.set(T.MathUtils.lerp(-.18,-1.3,wrap),0,0);wrists[i].rotation.x=-.25*wrap;
+   if(i===1&&rest>0){
+    // Roll the shoulder forward before lowering the elbow across the front of
+    // the chest, keeping the upper sleeve outside the torso as the palm settles.
+    arms[i].rotation.x=T.MathUtils.lerp(arms[i].rotation.x,-1.3,rest);arms[i].rotation.z=T.MathUtils.lerp(arms[i].rotation.z,-.8,rest);elbows[i].rotation.x=T.MathUtils.lerp(elbows[i].rotation.x,-.3,rest);elbows[i].rotation.z=-.8*rest;
+    const flat=new T.Quaternion().setFromEuler(new T.Euler(0,-Math.PI/2,0)),wrist=arms[i].quaternion.clone().multiply(elbows[i].quaternion).invert().multiply(flat);wrists[i].quaternion.slerp(wrist,rest);
+   }
    if(sleeves[i])poseSkinArm(sleeves[i],arms[i],elbows[i],wrists[i]);poseSkinArm(trousers[i],legs[i],knees[i],ankles[i]);
   }
   if(clothes)poseLivingShirt(clothes,torso,arms,elbows,head);

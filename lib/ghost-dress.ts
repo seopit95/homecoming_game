@@ -30,14 +30,17 @@ export function poseDress(gown:T.Mesh,rest:Float32Array,torso:T.Group,knees:T.Gr
   const levels=[.41,.29,.055,-.23,-.68,-1.055];
   // The skirt follows the same hips and knees as the skin. Separate side guides
   // let fabric bridge a stride instead of letting a thigh emerge through it.
+  const seatedKnees:T.Vector3[]=[];
   const spines=knees.map(knee=>{
     const hip=knee.parent!,joint=knee.position.clone().applyQuaternion(hip.quaternion).add(hip.position),ankle=new T.Vector3(0,-.42,0).applyQuaternion(knee.quaternion).add(knee.position).applyQuaternion(hip.quaternion).add(hip.position);
+    seatedKnees.push(joint);
     const hem=ankle.clone();hem.y=seated?.29:.055;hem.z=seated?Math.max(ankle.z,joint.z+.06):ankle.z-crawl*.13*(1-tuck);
     return new T.CatmullRomCurve3([
       new T.Vector3(0,.41,0).applyQuaternion(q).add(torso.position),new T.Vector3(0,.29,0).applyQuaternion(q).add(torso.position),
       new T.Vector3(0,.055,0).applyQuaternion(q).add(torso.position),hip.position.clone().add(new T.Vector3(0,.025,-crawl*tuck*.06)),joint,hem
     ]);
   });
+  if(seated){gown.userData.kneeFront=Math.max(...seatedKnees.map(p=>p.z));gown.userData.kneeTop=Math.max(...seatedKnees.map(p=>p.y));}
   for(let i=0;i<p.count;i++){
     const x=rest[i*3],y=rest[i*3+1],z=rest[i*3+2],lower=T.MathUtils.smoothstep(-y,.1,1.055);
     let row=0;while(row<levels.length-2&&y<levels[row+1])row++;
@@ -75,6 +78,12 @@ export function poseDressArms(gown:T.Mesh,rest:Float32Array,arms:T.Group[]){
       // frame, including during the car's crash roll. Loose hem hangs forward.
       const side=T.MathUtils.smoothstep(Math.abs(v.x),.12,.18);v.z=Math.max(v.z,.036+side*.059-.15*v.y);
       if(rest[i*3+1]<-.18)v.y=Math.max(v.y,T.MathUtils.lerp(.605,.25,T.MathUtils.smoothstep(v.z,.315,.39)));
+      // Gather loose knee fabric into the footwell instead of letting its
+      // inflated standing silhouette enter the dashboard/glove compartment.
+      if(rest[i*3+1]<-.18&&asset.armWeight[i]<.1){
+        v.z=Math.min(v.z,gown.userData.kneeFront+.05+Math.max(0,gown.userData.kneeTop-v.y)*.8);
+        const width=Math.abs(v.x);if(width>.21)v.x=Math.sign(v.x)*(.21+.03*Math.tanh((width-.21)/.03));
+      }
       v.sub(torso.position).applyQuaternion(inverse);p.setXYZ(i,v.x,v.y,v.z);
     }
   }

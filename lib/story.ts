@@ -12,11 +12,13 @@ export const opening:Partial<Record<Stage,{duration:number;action:Action;label:s
     {at:15.9,text:'휴대전화가 진동했다.'},
     {at:18.6,text:''},
   ]},
-  impact:{duration:13,action:'fled',label:'03:17 · 백로아파트 앞 횡단보도',text:'',cues:[
+  impact:{duration:23.5,action:'fled',label:'03:17 · 백로아파트 앞 횡단보도',text:'',cues:[
     {at:2.2,text:'…사람이었다.'},
-    {at:4.7,text:'와이퍼가 계속 움직였다.\n손이 떨려 비상등도 바로 누르지 못했다.'},
-    {at:8,text:'내려야 했다. 신고해야 했다.'},
-    {at:10.8,text:'그런데 나는 문을 잠갔다.'},
+    {at:5.9,text:'차에서 내렸다.\n비가 얼굴에 쏟아졌다.'},
+    {at:10.5,text:'쓰러진 몸 옆에 가방이 떨어져 있었다.\n움직임이 없었다.'},
+    {at:12.7,text:'신고해야 했다.'},
+    {at:15.2,text:'그런데 나는 차로 돌아갔다.'},
+    {at:22.7,text:'문을 잠갔다.'},
   ]},
   flee:{duration:8,action:'home',label:'03:17 · 현장을 떠났다',text:'브레이크에서 발을 뗐다.',cues:[
     {at:2.6,text:'백미러 속 횡단보도가 멀어졌다.'},
@@ -28,7 +30,7 @@ export const opening:Partial<Record<Stage,{duration:number;action:Action;label:s
   ]},
 };
 // These beats also drive the camera, phone props and sound; they share simulation time.
-export const openingTiming={phoneBuzz:15.9,lookUp:17.6,brake:19.1,lock:10.8} as const;
+export const openingTiming={phoneBuzz:15.9,lookUp:17.6,brake:19.1,doorOpen:2.8,exit:3.6,outside:5.8,doorShut:6.5,walk:6.8,inspect:10.5,return:14.8,atDoor:18.5,reopen:18.7,board:19.4,seated:21.6,close:21.8,lock:22.7} as const;
 export function hasFlashlight(s:Pick<Story,'stage'>){return !['drive','impact','flee','sleep','tv','wake_ring','light_switch','find_torch'].includes(s.stage);}
 export const carDepartureDuration=24;
 export const finale:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={

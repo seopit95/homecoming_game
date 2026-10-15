@@ -1,9 +1,11 @@
 import * as T from 'three';
 import {configureShadow} from './lighting.ts';
 import {createDrivingCar} from './driving-car.ts';
+import {sedanWindshieldPoint} from './sedan.ts';
+import {extremity} from './ghost-anatomy.ts';
 import {createPedestrian} from './pedestrian.ts';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {surface,boxUV,softBox,handSkinMaterial,upholstery,cutoutMaterial} from './materials.ts';
+import {surface,boxUV,softBox,handSkinMaterial,upholstery} from './materials.ts';
 import {createLeatherShoe} from './entry-props.ts';
 import {createGhost,animateGhostPassenger} from './ghost.ts';
 import {opening,openingTiming as beats,finale,finaleTiming as endingBeats,type Stage} from './story.ts';
@@ -21,7 +23,6 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const red=new T.MeshBasicMaterial({color:'#c44424'}),darkGlass=new T.MeshPhysicalMaterial({color:'#13232e',metalness:.4,roughness:.12});
   function mesh(g:T.BufferGeometry,m:T.Material,p:number[],parent:T.Object3D=root){const o=new T.Mesh(g,m);o.position.set(...p as [number,number,number]);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,parent:T.Object3D=root){return mesh(boxUV(softBox(w,h,d),x,y,z),m,[x,y,z],parent);}
-  function sphere(p:number[],scale:number[],m:T.Material,parent:T.Object3D=root){const o=mesh(new T.SphereGeometry(1,20,16),m,p,parent);o.scale.set(...scale as [number,number,number]);return o;}
   function rod(a:number[],b:number[],r:number,m:T.Material,parent:T.Object3D=root,r2=r){const av=new T.Vector3(...a as [number,number,number]),bv=new T.Vector3(...b as [number,number,number]);const o=mesh(new T.CylinderGeometry(r2,r,av.distanceTo(bv),12),m,av.clone().add(bv).multiplyScalar(.5).toArray(),parent);o.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),bv.sub(av).normalize());return o;}
   function tube(points:number[][],r:number,m:T.Material,parent:T.Object3D=root){return mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p as [number,number,number]))),20,r,6,false),m,[0,0,0],parent);}
   function label(text:string,w:number,h:number,p:number[],parent:T.Object3D=root,background='#111c22',ink='#c6d0c4'){
@@ -71,63 +72,37 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   // Volumetric rain wraps around the camera; individual drops on the glass are a separate layer.
   const rainPoints=[];for(let i=0;i<600;i++){const x=Math.sin(i*73.1)*8,y=(i*.173)%7,z=escapeDrive?-150+(i*7.31)%267:-42+(i*7.31)%53;rainPoints.push(x,y,z,x-.025,y-.22,z);}
   const rain=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(rainPoints,3)),new T.LineBasicMaterial({color:'#a4bcc9',transparent:true,opacity:.2,depthWrite:false}));root.add(rain);
-  const car=new T.Group();car.name='memory-car';car.scale.x=-1;root.add(car);
-  const dash=upholstery('#22292d');dash.bumpScale=.0006;
-  box(0,.65,-1.1,1.91,.25,.71,dash,car);box(0,.51,-.78,1.89,.3,.34,rubber,car);
-  const hood=box(0,.58,-2.16,1.83,.12,1.49,body,car);hood.name='memory-hood';hood.rotation.x=-.035;
-  for(const x of [-.68,.68])box(x,.631,-2.18,.025,.018,1.25,steel,car);
-  for(const side of [-1,1]){
-    rod([side*.98,.63,-1.12],[side*.79,1.8,-1.83],.043,dash,car);
-    box(side*.99,.49,-.02,.075,.77,2.4,dash,car);box(side*.92,.73,-.05,.12,.065,1.35,rubber,car);
-    box(side*.918,.6,-.27,.018,.04,.21,steel,car);
-    sphere([side*1.06,.87,-1.26],[.19,.1,.12],body,car);
-    box(side*1.06,.88,-1.13,.29,.14,.018,darkGlass,car);
+  const car=new T.Group();car.name='memory-car';root.add(car);
+  const drivingCar=createDrivingCar(escapeDrive);car.add(drivingCar.root);
+  const wheel=drivingCar.root.getObjectByName('hero-steering-wheel')!;
+  let memoryHands:T.Group|undefined;
+  if(!escapeDrive){
+    // Real adult hand surfaces curl around the existing rim; the cabin remains 3D when leaning.
+    const hands=new T.Group();memoryHands=hands;hands.rotation.y=Math.PI;wheel.add(hands);
+    const skin=handSkinMaterial(),sleeve=upholstery('#292f32');
+    for(const side of [-1,1]){
+      const grip=new T.Group();grip.position.set(side*.08,.015,.07);hands.add(grip);
+      const hand=extremity('hand',side,skin,false);hand.name=side<0?'memory-driver-hand-left':'memory-driver-hand-right';
+      const position=hand.geometry.attributes.position;
+      for(let i=0;i<position.count;i++){const y=position.getY(i),angle=T.MathUtils.clamp((-y-.055)/.024,0,3.9);if(y<-.055)position.setXYZ(i,position.getX(i),-.055-.024*Math.sin(angle),position.getZ(i)-.024*(1-Math.cos(angle)));}
+      hand.geometry.computeVertexNormals();hand.rotation.z=side*Math.PI/2;grip.add(hand);
+      rod([0,0,.005],[side*.02,-.13,.18],.027,skin,grip,.041);
+      rod([side*.018,-.115,.16],[side*.13,-.36,.42],.047,sleeve,grip,.073);
+    }
   }
-  box(0,1.79,-1.74,1.65,.13,.28,dash,car);
-  box(0,1.84,.04,2.06,.12,3.64,dash,car);
-  // Analogue instrument faces, lit needles and centre clock are geometry / readable dashboard text.
-  const steering=new T.Group();steering.position.set(.35,.86,-.59);steering.rotation.x=-.23;car.add(steering);
-  const wheel=new T.Group();steering.add(wheel);
-  mesh(new T.TorusGeometry(.222,.023,12,56),rubber,[0,0,0],wheel);
-  mesh(new T.TorusGeometry(.206,.004,6,56),steel,[0,0,-.007],wheel);
-  box(0,-.025,0,.145,.108,.068,dash,wheel);
-  for(const x of [-.1,.1])rod([x*.5,-.01,0],[x*2.02,.02,0],.015,steel,wheel);
-  rod([0,-.07,0],[0,-.21,0],.021,rubber,wheel);
-  const needles:T.Group[]=[];
-  box(.35,.74,-.998,.59,.24,.11,rubber,car);
-  for(const x of [.2,.49]){
-    const gauge=new T.Group();gauge.position.set(x,.782,-.927);car.add(gauge);
-    mesh(new T.CircleGeometry(.114,36),new T.MeshBasicMaterial({color:'#0a1013'}),[0,0,0],gauge);
-    mesh(new T.TorusGeometry(.117,.006,6,36),steel,[0,0,.003],gauge);
-    for(let i=0;i<19;i++){const a=-2.3+i*4.6/18;rod([Math.sin(a)*.086,Math.cos(a)*.086,.005],[Math.sin(a)*.103,Math.cos(a)*.103,.005],i%3===0?.002:.001,new T.MeshBasicMaterial({color:'#95b4ad'}),gauge);}
-    const needle=new T.Group();gauge.add(needle);rod([0,0,.01],[0,.085,.01],.002,red,needle);needles.push(needle);
+  const mirrorTarget=new T.WebGLRenderTarget(384,112),mirrorCamera=new T.PerspectiveCamera(32,384/112,.1,75);
+  let mirrorFace:T.Mesh|undefined;
+  if(!escapeDrive){
+    rod([0,1.425,-.41],[0,1.315,-.45],.009,rubber,car);
+    box(0,1.315,-.445,.32,.105,.025,rubber,car);
+    mirrorFace=mesh(new T.PlaneGeometry(.298,.085),new T.MeshBasicMaterial({map:mirrorTarget.texture,color:'#a5b4c1'}),[0,1.315,-.429],car);
+    const uv=mirrorFace.geometry.attributes.uv;for(let i=0;i<uv.count;i++)uv.setX(i,1-uv.getX(i));
   }
-  label('03:17',.24,.063,[-.15,.696,-.875],car,'#101b20','#7fa9a4');
-  for(const x of [-.71,-.38,.78]){box(x,.718,-.872,.24,.083,.026,rubber,car);for(let i=0;i<4;i++)box(x,.687+i*.017,-.855,.22,.005,.008,steel,car);}
-  for(const x of [-.29,-.06]){const dial=mesh(new T.CylinderGeometry(.028,.028,.022,20),rubber,[x,.52,-.59],car);dial.rotation.x=Math.PI/2;}
-  box(-.17,.53,-.6,.4,.12,.025,dash,car);
-  // Both sleeves and articulated fingers share the in-game player's skin material.
-  const skin=handSkinMaterial(),sleeve=upholstery('#292f32');
-  for(const side of [-1,1]){
-    const grip=new T.Group();grip.position.set(side*.205,.055,.009);wheel.add(grip);
-    sphere([0,0,.026],[.039,.062,.027],skin,grip);
-    rod([side*.005,-.027,.027],[side*.02,-.18,.23],.035,skin,grip,.053);
-    rod([side*.02,-.17,.22],[side*.13,-.43,.55],.057,sleeve,grip,.086);
-    for(let finger=0;finger<4;finger++){const y=.033-finger*.021;tube([[side*.025,y,.035],[side*.033,y,.001],[side*.007,y,-.029],[-side*.018,y,-.012]],.011-finger*.0005,skin,grip);}
-    tube([[-side*.014,-.04,.03],[-side*.041,-.01,.045],[-side*.028,.018,.026]],.014,skin,grip);
-  }
-  // A small render target shows the actual road behind the car, including the crossing during departure.
-  rod([-.24,1.7,-1.56],[-.24,1.52,-1.43],.014,rubber,car);
-  box(-.24,1.51,-1.425,.42,.145,.035,rubber,car);
-  const mirrorTarget=new T.WebGLRenderTarget(384,112);
-  const mirrorCamera=new T.PerspectiveCamera(32,384/112,.1,75);
-  const mirrorFace=mesh(new T.PlaneGeometry(.387,.115),new T.MeshBasicMaterial({map:mirrorTarget.texture,color:'#a5b4c1'}),[-.24,1.51,-1.403],car);
-  const mirrorUv=mirrorFace.geometry.getAttribute('uv');for(let i=0;i<mirrorUv.count;i++)mirrorUv.setX(i,1-mirrorUv.getX(i));
-
   function renderMirror(renderer:T.WebGLRenderer){
+    if(!mirrorFace)return;
     const previous=renderer.getRenderTarget(),shadows=renderer.shadowMap.autoUpdate;
     car.visible=false;renderer.shadowMap.autoUpdate=false;
-    mirrorCamera.position.set(car.position.x-.35,1.35,car.position.z+.75);mirrorCamera.rotation.y=Math.PI;mirrorCamera.position.applyMatrix4(root.matrix);mirrorCamera.quaternion.premultiply(root.quaternion);
+    mirrorCamera.position.set(car.position.x-.35,1.29,car.position.z+.75);mirrorCamera.rotation.y=Math.PI;mirrorCamera.position.applyMatrix4(root.matrix);mirrorCamera.quaternion.premultiply(root.quaternion);
     try{renderer.setRenderTarget(mirrorTarget);renderer.render(scene,mirrorCamera);}
     finally{renderer.setRenderTarget(previous);renderer.shadowMap.autoUpdate=shadows;car.visible=true;}
   }
@@ -140,35 +115,23 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
       vec2 p2=vec2((v.x-.7)*1.98,v.y+.08);cleared=max(cleared,step(length(p2),1.12)*step(abs(atan(p2.x,p2.y)-(sweep*1.65-.79)),.16));
       float a=(drop*.055+rim*.12)*step(.65,h)*(1.-cleared*.95);float edge=smoothstep(.28,.5,abs(v.x-.5));gl_FragColor=vec4(.38,.48,.55,a+edge*.055);
     }`});
-  const windshield=mesh(new T.PlaneGeometry(1.94,1.16),windshieldMat,[0,1.215,-1.5],car);windshield.rotation.x=-.49;windshield.castShadow=false;windshield.name='memory-rain-glass';
-  const wipers:T.Group[]=[];
-  for(const x of [-.38,.38]){const pivot=new T.Group();pivot.position.set(x,.712,-1.222);pivot.rotation.x=-.49;car.add(pivot);const arm=new T.Group();pivot.add(arm);rod([0,0,0],[0,.45,0],.007,steel,arm);rod([0,.25,.005],[0,.86,.005],.012,rubber,arm);wipers.push(arm);}
-  for(const x of [-.65,.65]){const lamp=new T.SpotLight('#e8dfc8',145,58,.47,.65,1.6);lamp.position.set(x,.61,-2.92);lamp.target.position.set(x,.15,-34);car.add(lamp,lamp.target);}
-  const cabinLight=new T.PointLight('#9abbbb',.42,1.8,2);cabinLight.position.set(.35,.9,-.92);car.add(cabinLight);
+
+  const glassPosition:number[]=[],glassUv:number[]=[],glassIndex:number[]=[];
+  const pane=(u:number,v:number)=>{const [x,y,z]=sedanWindshieldPoint(u,v);return [-x,y+.001,-z-.002];};
+  for(let j=0;j<=9;j++)for(let i=0;i<=18;i++){glassPosition.push(...pane(i/18,j/9));glassUv.push(i/18,j/9);}
+  for(let j=0;j<9;j++)for(let i=0;i<18;i++){const a=j*19+i;glassIndex.push(a,a+20,a+1,a,a+19,a+20);}
+  const glassGeometry=new T.BufferGeometry();glassGeometry.setAttribute('position',new T.Float32BufferAttribute(glassPosition,3));glassGeometry.setAttribute('uv',new T.Float32BufferAttribute(glassUv,2));glassGeometry.setIndex(glassIndex);windshieldMat.side=T.DoubleSide;
+  const windshield=mesh(glassGeometry,windshieldMat,[0,0,0],car);windshield.castShadow=windshield.receiveShadow=false;windshield.name='memory-rain-glass';windshield.visible=!escapeDrive;
   const fractures:number[]=[];
-  for(let i=0;i<13;i++){const a=i*2.399,r=.15+(i%5)*.055;let px=-.05,py=.86;for(let j=1;j<5;j++){const nx=-.05+Math.cos(a+j*.06)*r*j/4,ny=.86+Math.sin(a)*r*j/4;fractures.push(px,py,-1.25-(py-.7)*.53,nx,ny,-1.25-(ny-.7)*.53);px=nx;py=ny;}}
-  const cracks=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(fractures,3)),new T.LineBasicMaterial({color:'#b4c8cf',transparent:true,opacity:.66}));cracks.name='memory-cracked-glass';car.add(cracks);
-  const cockpitMaterial=cutoutMaterial('cockpit');
-  if(cockpitMaterial){
-    for(const child of car.children)if(!(child instanceof T.Light)&&child.position.y<1.15&&child.position.z> -1.15)child.visible=false;
-    cockpitMaterial.color.setScalar(.55);cockpitMaterial.depthWrite=true;
-    const photo=mesh(new T.PlaneGeometry(3.2,2.1333),cockpitMaterial,[.35,1.13,-1.03],car);photo.name='photographic-cockpit';photo.scale.x=-1;photo.castShadow=false;photo.receiveShadow=false;steering.visible=false;
-  }
-  // Complete the passenger-side cabin behind the photographic dashboard cutout.
-  // The glance must never reveal road markings through a missing floor or door.
-  box(0,.18,.05,1.94,.1,2.65,dash,car);
-  for(const side of [-1,1]){
-    box(side*.96,.32,-.04,.12,.3,2.3,dash,car);
-    box(side*.895,.44,-.1,.05,.07,.75,rubber,car);
-    box(side*.886,.39,-.25,.022,.045,.18,steel,car);
-  }
-  box(-.54,.4,.32,.7,.19,.83,surface('leather','#9caaa9'),car);
-  const seatBack=box(-.54,.89,.76,.7,.83,.19,surface('leather','#9caaa9'),car);seatBack.rotation.x=.13;
-  // A short dashboard mount supports the phone in the driver's brief glance.
-  mesh(new T.CylinderGeometry(.042,.048,.018,20),rubber,[-.26,.784,-1.08],car);
-  rod([-.26,.793,-1.08],[-.26,.89,-1.015],.014,rubber,car);
-  const distraction=box(-.26,.92,-1,.09,.016,.18,rubber,car);distraction.rotation.x=.85;
-  const message=label('새 메시지',.078,.15,[0,.02,0],distraction,'#1d343b','#a8c6c2');message.rotation.x=-Math.PI/2;
+  for(let i=0;i<11;i++){const angle=i*2.399;let u=.34,v=.34;for(let j=1;j<=5;j++){const n=j/5,nu=.34+Math.cos(angle)*(.09+(i%3)*.025)*n,nv=.34+Math.sin(angle)*(.13+(i%4)*.018)*n;fractures.push(...pane(u,v),...pane(nu,nv));u=nu;v=nv;}}
+  const cracks=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(fractures,3)),new T.LineBasicMaterial({color:'#b4c8cf',transparent:true,opacity:.55}));cracks.name='memory-cracked-glass';car.add(cracks);
+  // Suction mount contacts the actual dashboard; a small cradle supports the phone.
+  const phoneMount=new T.Group();phoneMount.visible=!escapeDrive;car.add(phoneMount);
+  mesh(new T.CylinderGeometry(.034,.038,.008,20),rubber,[.12,.966,-.785],phoneMount);
+  rod([.12,.969,-.785],[.12,1.025,-.75],.009,rubber,phoneMount);
+  const distraction=box(.12,1.04,-.735,.075,.012,.145,rubber,phoneMount);distraction.rotation.x=.8;
+  box(0,-.002,.058,.09,.022,.014,rubber,distraction);
+  const message=label('새 메시지',.065,.119,[0,.007,0],distraction,'#1d343b','#a8c6c2');message.rotation.x=-Math.PI/2;
   const pedestrian=createPedestrian(root),victim=pedestrian.root,carryHand=victim.getObjectByName('pedestrian-carry-hand')!;
   const pants=new T.MeshStandardMaterial({color:'#30383d',roughness:.93});
   const bag=new T.Group();bag.name='memory-bag';root.add(bag);const bagLeather=surface('leather','#342d29',{roughness:.68});
@@ -178,8 +141,6 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const driveDuration=opening.drive!.duration,impactDuration=opening.impact!.duration;
   const cruiseSpeed=8,braking=driveDuration-beats.brake,deceleration=1.8,impactSpeed=cruiseSpeed-braking*deceleration,stopZ=1.2-impactSpeed*.45;
   const looseShoe=createLeatherShoe();looseShoe.name='memory-lost-shoe';root.add(looseShoe);
-  const drivingCar=escapeDrive?createDrivingCar():null;
-  if(drivingCar){for(const child of car.children)child.visible=false;car.scale.x=1;car.add(drivingCar.root);}
   const passenger=escapeDrive?createGhost(car):null;
   const barrier=escapeDrive?new T.Group():null;
   let shattered:T.LineSegments|undefined,revealLight:T.PointLight|undefined;
@@ -200,6 +161,25 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     label('도로 통제',1.8,.26,[0,1.55,.1],barrier!);for(const x of [-.8,.8])rod([x,.5,0],[x,1.7,0],.025,steel,barrier!);
   }
   const facePosition=new T.Vector3(),carriedBag=new T.Vector3(),contactBounds=new T.Box3();
+  const exitPath=new T.CatmullRomCurve3([[-.38,1.22,-.24],[-.72,1.28,-.12],[-1.25,1.34,-.06],[-1.3,1.65,.43]].map(p=>new T.Vector3(...p as [number,number,number])));
+  const inspectPath=new T.CatmullRomCurve3([[-1.3,1.65,.43],[-1.36,1.65,-.6],[-1.36,1.65,-2.15],[-1.23,1.65,-2.6],[-.55,1.65,-2.7],[.65,1.65,-2.7],[1.3,1.65,-2.6]].map(p=>new T.Vector3(...p as [number,number,number])));
+  function aftermathView(t:number,camera:T.PerspectiveCamera,reduced:boolean){
+    if(t<beats.doorOpen)return;
+    const forward=camera.quaternion.clone(),leaving=T.MathUtils.smoothstep(t,beats.exit,beats.outside),walking=T.MathUtils.smoothstep(t,beats.walk,beats.inspect),returning=T.MathUtils.smoothstep(t,beats.return,beats.atDoor),boarding=T.MathUtils.smoothstep(t,beats.board,beats.seated);
+    const eye=t<beats.outside?exitPath.getPointAt(leaving):t<beats.walk?exitPath.getPointAt(1):t<beats.return?inspectPath.getPointAt(walking):t<beats.atDoor?inspectPath.getPointAt(1-returning):t<beats.board?exitPath.getPointAt(1):exitPath.getPointAt(1-boarding);
+    camera.position.copy(eye).add(car.position);
+    if(!reduced&&((t>beats.walk&&t<beats.inspect)||(t>beats.return&&t<beats.atDoor))){const phase=t<beats.return?t-beats.walk:t-beats.return;camera.position.y+=Math.sin(phase*Math.PI*4)*.009*Math.sin(Math.PI*(t<beats.return?walking:returning));}
+    const aim=(target:T.Vector3)=>new T.Quaternion().setFromRotationMatrix(new T.Matrix4().lookAt(camera.position,target.add(car.position),camera.up));
+    const door=aim(new T.Vector3(-.86,1.05,-.05)),face=victim.getObjectByName('pedestrian-anatomical-head')!.localToWorld(new T.Vector3(0,.09,.11)).sub(car.position),look=aim(face);
+    let rotation:T.Quaternion;
+    if(t<beats.exit)rotation=forward.slerp(door,T.MathUtils.smoothstep(t,beats.doorOpen,beats.exit));
+    else if(t<beats.walk)rotation=door;
+    else if(t<beats.inspect){const next=inspectPath.getPointAt(Math.min(1,walking+.08));next.y=1.5;rotation=door.slerp(aim(next),T.MathUtils.smoothstep(t,beats.walk,beats.walk+.5)).slerp(look,T.MathUtils.smoothstep(t,beats.inspect-.8,beats.inspect));}
+    else if(t<beats.return)rotation=look;
+    else if(t<beats.atDoor){const next=inspectPath.getPointAt(Math.max(0,1-returning-.08));next.y=1.5;rotation=look.slerp(aim(next),T.MathUtils.smoothstep(t,beats.return,beats.return+.5)).slerp(door,T.MathUtils.smoothstep(t,beats.atDoor-.7,beats.atDoor));}
+    else rotation=door.slerp(forward,T.MathUtils.smoothstep(t,beats.lock-.2,beats.lock+.5));
+    camera.quaternion.copy(rotation);
+  }
   function finalPose(stage:Stage,t:number,camera:T.PerspectiveCamera,reduced:boolean){
     const driving=stage==='car_escape',speaking=stage==='car_voice',crashing=stage==='car_crash';
     const beforeCrash=finale.car_escape!.duration+finale.car_voice!.duration;
@@ -220,11 +200,9 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     const collapse=T.MathUtils.smoothstep(hit,.04,.45);
     camera.rotation.set(T.MathUtils.lerp(T.MathUtils.lerp(-.055,Math.atan2(face.y,Math.hypot(face.x,face.z)),turn),-.7,collapse)+jolt*.08,T.MathUtils.lerp(Math.atan2(-face.x,-face.z)*turn,-.12,collapse),reduced?0:T.MathUtils.smoothstep(hit,.3,2.7)*.42+jolt*.09,'YXZ');
     const steer=crashing?-.9*T.MathUtils.smoothstep(t,.15,.55):Math.sin(clock*.6)*.025;
-    needles[0].rotation.z=2.3-speed/14*4.6;needles[1].rotation.z=2.3-(speed>0?.7+speed*.085:.1);
-    wipers.forEach(w=>{w.rotation.z=.79-(.5-.5*Math.cos(clock*3.69599))*1.65;});windshieldMat.uniforms.time.value=clock;
     shattered!.visible=crush>0;cracks.visible=false;revealLight!.intensity=driving?0:1.35;(cracks.material as T.LineBasicMaterial).opacity=.2+crush*.7;
     victim.visible=false;bag.visible=false;phone.visible=false;looseShoe.visible=false;message.visible=false;
-    drivingCar!.pose(clock+18,0,true,steer,crush);
+    drivingCar.pose(clock+18,0,true,steer,crush,speed);
     rain.position.set(0,-(clock*4.6)%6,0);
     streetLights.forEach((light,i)=>{const lampZ=-135+(Math.floor((z+135)/18)-2+i)*18;light.position.set(3.8,5.25,lampZ);light.target.position.set(1.7,0,lampZ);});
     return speed;
@@ -237,22 +215,21 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     const speed=driving?cruiseSpeed-brake*deceleration:impact?Math.max(0,impactSpeed*(1-t/.9)):Math.min(10,t*2.1);
     const z=driving?1.2+cruiseSpeed*(driveDuration-t)-.5*deceleration*braking**2+.5*deceleration*brake**2:impact?1.2-impactSpeed*Math.min(t,.9)+impactSpeed/(2*.9)*Math.min(t,.9)**2:stopZ-(t<10/2.1?1.05*t*t:10*t-100/4.2);
     const x=driving?1.65+(reduced?0:Math.sin(t*.7)*.045*Math.sin(Math.PI*t/driveDuration)): 1.65;
-    car.position.set(x,0,z);
+    car.position.set(x,0,z-.68);
     streetLights.forEach((light,i)=>{const lampZ=-135+(Math.floor((z+135)/18)-2+i)*18;light.position.set(3.8,5.25,lampZ);light.target.position.set(1.7,0,lampZ);});
     const jolt=impact&&!reduced?Math.exp(-t*6)*Math.sin(t*29):0;
-    camera.position.set(x-.35,1.23+(reduced?0:Math.sin(clock*15)*.003*speed/10)-jolt*.025,z+.06-jolt*.07);
+    camera.position.set(x-.38,1.22+(reduced?0:Math.sin(clock*15)*.003*speed/10)-jolt*.025,car.position.z-.24-jolt*.07);
     const glance=driving?T.MathUtils.smoothstep(t,beats.phoneBuzz,beats.phoneBuzz+.55)*(1-T.MathUtils.smoothstep(t,beats.lookUp,beats.lookUp+.65)):0;
-    const lookAtVictim=impact?T.MathUtils.smoothstep(t,2.4,4.2)*(1-T.MathUtils.smoothstep(t,10.3,12.4)):0;
     const lookAtMirror=stage==='flee'?T.MathUtils.smoothstep(t,.7,1.7)*(1-T.MathUtils.smoothstep(t,3,4.3)):0;
-    camera.rotation.set(-.055-jolt*.09-glance*.22-lookAtVictim*.12+lookAtMirror*.17,driving?-glance*.42:impact?-lookAtVictim*.43:lookAtMirror*-.25,reduced?0:jolt*.018,'YXZ');
+    camera.rotation.set(-.055-jolt*.09-glance*.22,driving?-glance*.42:0,reduced?0:jolt*.018,'YXZ');
     message.visible=driving&&t>=beats.phoneBuzz;
-    distraction.position.x=-.26+(driving&&t>=beats.phoneBuzz&&t<beats.phoneBuzz+.6?Math.sin(t*90)*.003:0);
+    distraction.position.x=.12+(driving&&t>=beats.phoneBuzz&&t<beats.phoneBuzz+.6?Math.sin(t*90)*.003:0);
 
-    wheel.rotation.z=driving?Math.sin(t*.7)*.027:impact?-.04*T.MathUtils.smoothstep(t,0,.35):-.04*(1-T.MathUtils.smoothstep(t,0,2));
-    needles[0].rotation.z=2.3-speed/14*4.6;needles[1].rotation.z=2.3-(speed>0?.7+speed*.085:.5);
-    wipers.forEach(w=>{w.rotation.z=.79-(.5-.5*Math.cos(clock*3.69599))*1.65;});
-    windshieldMat.uniforms.time.value=clock;
-    hood.rotation.x=-.035+(driving?0:.07*T.MathUtils.smoothstep(hitTime,0,.25));cracks.visible=!driving;
+    const steer=driving?Math.sin(t*.7)*.027:impact?-.04*T.MathUtils.smoothstep(t,0,.35):-.04*(1-T.MathUtils.smoothstep(t,0,2));
+    const door=impact?1.08*(T.MathUtils.smoothstep(t,beats.doorOpen,beats.exit)*(1-T.MathUtils.smoothstep(t,beats.outside+.1,beats.doorShut))+T.MathUtils.smoothstep(t,beats.reopen,beats.board-.1)*(1-T.MathUtils.smoothstep(t,beats.close,beats.lock-.2))):0;
+    drivingCar.pose(clock,door,true,steer,driving?0:.12*T.MathUtils.smoothstep(hitTime,0,.25),speed);
+    if(memoryHands)memoryHands.visible=!impact||t<beats.exit-.15||t>beats.lock-.2;
+    windshieldMat.uniforms.time.value=clock;cracks.visible=!driving;
     victim.visible=true;
     if(driving){victim.position.set(-4.7+T.MathUtils.clamp(t-(driveDuration-5),0,5)*1.37,0,-1.85);victim.rotation.set(0,Math.PI/2,0);}
     else{
@@ -264,7 +241,10 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     }
     pedestrian.pose(driving?clock:driveDuration,driving?null:hitTime);
     if(!driving){contactBounds.setFromObject(victim,true);victim.position.y+=Math.max(0,.002-contactBounds.min.y);}
-    victim.updateWorldMatrix(true,true);root.worldToLocal(carryHand.getWorldPosition(carriedBag));carriedBag.y-=.29;
+    victim.updateWorldMatrix(true,true);
+    if(impact)aftermathView(t,camera,reduced);
+    if(lookAtMirror>0&&mirrorFace){const forward=camera.quaternion.clone();car.updateMatrixWorld(true);camera.lookAt(mirrorFace.getWorldPosition(new T.Vector3()));const target=camera.quaternion.clone();camera.quaternion.copy(forward).slerp(target,lookAtMirror);}
+    root.worldToLocal(carryHand.getWorldPosition(carriedBag));carriedBag.y-=.29;
     const bagSway=Math.sin((driving?clock:driveDuration)/.92*Math.PI*2)*.035;
     if(driving){bag.position.copy(carriedBag);bag.rotation.set(0,0,bagSway);phone.visible=false;}
     else{const scatter=T.MathUtils.smoothstep(hitTime,.15,1.15);bag.position.copy(carriedBag).lerp(new T.Vector3(2.79,.11,-3.59),scatter);bag.rotation.set(scatter*Math.PI/2,0,T.MathUtils.lerp(bagSway,.7,scatter));phone.visible=hitTime>.35;phone.position.set(3.1,.009,-3.9);phone.rotation.y=.8;}

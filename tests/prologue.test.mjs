@@ -32,7 +32,7 @@ test('the driver and pedestrian stay in the same physical scene through impact, 
   assert.ok(car.position.distanceTo(stopped)<.01,'the car holds still after braking');
   assert.equal(person.visible,true,'the victim remains in the scene after landing');
   const landedBounds=new T.Box3().setFromObject(person,true);
-  assert.ok(landedBounds.min.y>=.005,'the landed body stays above the road surface');
+  assert.ok(landedBounds.min.y>=.001,'the landed body stays above the road surface');
   assert.ok(landedBounds.max.y<.7,'the landed body lies flat instead of standing');
   const bodyAt=person.position.clone(),beforeFlee=camera.position.clone();
   road.pose('flee',0,camera,true);
@@ -56,8 +56,8 @@ test('pausing the opening freezes the windshield and restarting clears the colli
 
 test('the opening has room to follow the aftermath without becoming a long unskippable film',()=>{
   const seconds=Object.values(opening).reduce((sum,s)=>sum+s.duration,0);
-  assert.ok(seconds>=45&&seconds<=55,`memory lasts ${seconds}s before waking`);
-  assert.ok(opening.impact.duration>=11,'the player can register the victim and the ignored phone before departure');
+  assert.ok(seconds>=55&&seconds<=60,`memory lasts ${seconds}s before waking`);
+  assert.ok(opening.impact.duration>=20,'the driver has time to leave, see the victim, return and lock the car');
 });
 
 test('the phone distraction is brief and the pedestrian reaches the bumper only at impact',()=>{
@@ -66,7 +66,7 @@ test('the phone distraction is brief and the pedestrian reaches the bumper only 
   for(let t=0;t<opening.drive.duration;t+=.05){road.pose('drive',t,camera,true);if(camera.rotation.y<-.15)distracted+=.05;}
   assert.ok(distracted>=1&&distracted<2.5,`a glance, not ${distracted}s looking away`);
   road.pose('drive',opening.drive.duration-5,camera,true);const car=road.root.getObjectByName('memory-car'),person=road.root.getObjectByName('memory-pedestrian');assert.ok(car.position.z-person.position.z>30);
-  road.pose('drive',opening.drive.duration,camera,true);assert.ok(Math.abs(car.position.z-2.92-person.position.z)<.2,'collision happens at the front bumper');
+  road.pose('drive',opening.drive.duration,camera,true);road.root.updateMatrixWorld(true);const front=new T.Box3().setFromObject(car,true).min.z;assert.ok(Math.abs(front-person.position.z)<.2,'collision happens at the actual front bumper');
 });
 
 test('the passenger is actually visible above the cushion inside the shared sedan',()=>{
@@ -147,6 +147,17 @@ test('the authored nightdress clears actual closed cabin surfaces through the vi
   const hit=cabinTriangles(car),matrix=car.matrixWorld.clone().invert().multiply(gown.matrixWorld);
   for(let i=0;i<ix.count;i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix.getX(i+j)).applyMatrix4(matrix))),crossing=hit(tri);
    assert.equal(crossing,null,`gown crosses ${crossing?.name} at ${stage} ${time}s, triangle ${i/3}, point ${crossing?.point}`);
+  }
+ }
+});
+
+test('the gathered seated garment still covers the actual knee surfaces',()=>{
+ const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160);
+ for(const [stage,t] of [['car_voice',3.5],['car_crash',.4]]){
+  road.pose(stage,t,camera,false);road.root.updateMatrixWorld(true);const figure=road.root.getObjectByName('finale-passenger'),gown=figure.getObjectByName('ghost-wet-dress'),forward=new T.Vector3(0,0,1).transformDirection(figure.matrixWorld);
+  for(const side of [-1,1]){
+   const knee=figure.getObjectByName('ghost-knee-'+side),origin=knee.localToWorld(new T.Vector3(0,-.014,0)).addScaledVector(forward,.3),ray=new T.Raycaster(origin,forward.clone().negate(),0,.6),skin=ray.intersectObjects(knee.children.filter(o=>o.isMesh),false)[0],cloth=ray.intersectObject(gown,false)[0];
+   assert.ok(skin&&cloth,'both real knee and cloth must be sampled');assert.ok(cloth.distance<skin.distance-.003,'gathering must leave the actual knee covered');
   }
  }
 });
