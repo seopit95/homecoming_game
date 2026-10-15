@@ -685,3 +685,22 @@ test('stopping an archive recording leaves a visible nearby pursuer moving',asyn
   aim([8.88,1.65,-18.45],[8.88,.94,-19.61]);game.interact();assert.match(game.snapshot().message,/일시정지/);const at=g.position.clone(),elapsed=game.snapshot().elapsed;tick(.35);assert.ok(g.position.distanceTo(at)>.2,'record pause must not pause the actual hunt');assert.ok(game.snapshot().elapsed>elapsed+.3);assert.equal(game.snapshot().paused,false);assert.equal(game.snapshot().story.stage,'archive_edit');
  }finally{game.dispose();win.localStorage=previous;}
 });
+
+test('an active follower still travelling offscreen is carried through the next investigation boundary',async()=>{
+ const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'archive_departure',notes:['archive_ledger','archive_road','archive_call','archive_gate','archive_play'],circuit:[],elapsed:480,pursuit:true,pursuitWait:24});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{
+  await game.ready;tick();game.continueGame();tick(.1);assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the follower is still in transit');
+  renderedCamera.position.set(1.55,1.65,-34);tick(.025);assert.equal(game.snapshot().story.stage,'plant_arrival');const saved=JSON.parse(raw);assert.equal(saved.pursuit,true,'invisibility cannot cancel an existing hunt at the next boundary');assert.ok(saved.pursuitWait>=24,'the remaining old travel time must be added, not erased');
+  tick(12);assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the player cannot be overtaken by teleporting the delayed pursuer');assert.equal(game.snapshot().story.stage,'plant_arrival');
+ }finally{game.dispose();win.localStorage=previous;}
+});
+
+test('continuing a distant incoming hunt respects its saved remaining travel time before approaching',async()=>{
+ const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'plant_arrival',notes:['archive_play'],circuit:[],elapsed:500,pursuit:true,pursuitWait:12});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{
+  await game.ready;tick();game.continueGame();tick(3);const g=renderedScene.getObjectByName('resident-remains'),at=g.position.clone();assert.equal(g.visible,false,'continue may not turn12sec of transit into a2sec arrival');assert.equal(game.snapshot().story.stage,'plant_arrival');
+  tick(10);assert.equal(g.visible,true,'the pending follower must eventually arrive');assert.ok(g.position.distanceTo(at)>.05,'the arrived follower resumes actual navigation');
+ }finally{game.dispose();win.localStorage=previous;}
+});

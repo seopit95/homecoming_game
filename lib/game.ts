@@ -114,7 +114,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function persist(){
     if(!storage||isMemory(story.stage)||story.stage==='tv'||story.stage==='wake_ring')return;
-    const ok=writeProgress(storage,story,elapsed,arrivalPursuit);if(ok)saved=readProgress(storage);
+    const ok=writeProgress(storage,story,elapsed,arrivalPursuit,Math.max(0,entranceDelay-areaTime));if(ok)saved=readProgress(storage);
     saveNotice=ok?'이 기기에 진행 상황 저장됨':'저장 공간을 사용할 수 없습니다';saveUntil=elapsed+3;
   }
   function advance(action:Action){
@@ -153,9 +153,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(preparing){void ready.then(()=>{if(!disposed)start(retry);});return;}
     try{audio.start();audio.setVolume(settings.volume);audio.mix(settings);}catch{onError('소리를 시작하지 못했습니다. 소리 없이도 플레이할 수 있습니다.');}
     const resumePursuit=retry?(retry==='continue'?saved?.pursuit:arrivalPursuit):false;
+    const resumeWait=retry==='continue'?saved?.pursuitWait??0:Math.max(0,entranceDelay-areaTime);
     if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&residentEvidence.every(id=>story.notes.includes(id)))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathRecovery=false;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
     lastStep=elapsed;lastEmit=elapsed-1;loadArea(areaFor(story));
-    if(resumePursuit&&(area==='archive'||area==='plant'))carryPursuit(5.2,true,expansionLayout[area].z);
+    if(resumePursuit&&(area==='archive'||area==='plant')){carryPursuit(5.2,true,expansionLayout[area].z);entranceDelay=Math.max(entranceDelay,resumeWait);persist();}
     audio.setTV(story.stage==='tv');
     if(isCinematic(story.stage)||story.stage==='tv'||story.stage==='wake_ring')openingScene();
     if(retry&&story.stage==='light_switch'){camera.position.set(...home.wakeStand);yaw=2.045;pitch=-.137;}
@@ -625,14 +626,14 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(display!==lastDisplay){world.setDisplay?.(display);lastDisplay=display;}
     }
   }
-  function carryPursuit(distance:number,visible:boolean,newZ:number,speed=2.15){
-    arrivalPursuit=visible;
+  function carryPursuit(distance:number,pursuing:boolean,newZ:number,speed=2.15,pendingWait=0){
+    arrivalPursuit=pursuing;
     if(area!=='parking')arrivalDoor=world.root.children.find(o=>o.name==='continuous-connection'&&o.position.z===newZ+6)?.getObjectByName('connection-fire-door');
-    entranceDelay=Math.max(0,(distance-1.6)/(speed*.85));
+    entranceDelay=pendingWait+Math.max(0,(distance-1.6)/(speed*.85));
     // Wait behind the fire-door sweep; standing on the landing traps both
     // the opening leaf and the pursuer against one another.
     world.figure.position.set(-2.95,0,newZ+5.55);world.figure.rotation.y=Math.PI;
-    world.figure.visible=visible&&entranceDelay===0;lastGhostPosition.copy(world.figure.position);persist();
+    world.figure.visible=pursuing&&entranceDelay===0;lastGhostPosition.copy(world.figure.position);
   }
   function crossThresholds(){
     if(story.hidden)return;
@@ -652,12 +653,12 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     if(story.stage==='service_open'&&doorOpen>.75&&camera.position.z<-1.6&&Math.abs(camera.position.x)<.48){const p=camera.position.clone(),ry=yaw,rx=pitch;advance('annex_enter');camera.position.set(p.x,p.y,expansionLayout.annex.z+p.z+1.35);yaw=ry;pitch=rx;chapterUntil=0;say('1층 공동시설. 유리문 너머 도로가 보이지만 셔터가 내려와 있다.\n안내판에서 다른 출구를 찾아보자.',8);return;}
     if(area==='courtyard'&&story.stage==='court_departure'&&camera.position.x>15.5&&camera.position.z<-52&&camera.position.z>-54){
-      const p=camera.position.clone(),ry=yaw,rx=pitch,distance=world.figure.position.distanceTo(p),visible=world.figure.visible;advance('archive_enter');camera.position.set(p.x-17,p.y+2.8,expansionLayout.archive.z+6+p.z+51);yaw=ry;pitch=rx;chapterUntil=0;carryPursuit(distance,visible,expansionLayout.archive.z);say(objectiveFor(story),7);return;
+      const p=camera.position.clone(),ry=yaw,rx=pitch,distance=world.figure.position.distanceTo(p),pursuing=world.figure.visible||arrivalPursuit,pendingWait=world.figure.visible?0:Math.max(0,entranceDelay-areaTime);advance('archive_enter');camera.position.set(p.x-17,p.y+2.8,expansionLayout.archive.z+6+p.z+51);yaw=ry;pitch=rx;chapterUntil=0;carryPursuit(distance,pursuing,expansionLayout.archive.z,2.15,pendingWait);persist();say(objectiveFor(story),7);return;
     }
     if((area==='annex'||area==='archive'||area==='plant')&&story.stage===`${area}_departure`&&camera.position.x>1.5&&camera.position.z<-expansionLayout[area].z-1&&camera.position.z>-expansionLayout[area].z-3){
-      const p=camera.position.clone(),ry=yaw,rx=pitch,bz=expansionLayout[area].z,distance=world.figure.position.distanceTo(p),visible=world.figure.visible,oldSpeed=area==='annex'?3.65:2.15;
+      const p=camera.position.clone(),ry=yaw,rx=pitch,bz=expansionLayout[area].z,distance=world.figure.position.distanceTo(p),pursuing=world.figure.visible||arrivalPursuit,pendingWait=world.figure.visible?0:Math.max(0,entranceDelay-areaTime),oldSpeed=area==='annex'?3.65:2.15;
       const next=area==='annex'?'court_enter':area==='archive'?'plant_enter':'parking_enter',nextZ=area==='annex'?48:area==='archive'?expansionLayout.plant.z:layout.parking.z;
-      advance(next);camera.position.set(p.x-3,p.y,nextZ+6+p.z+bz);yaw=ry;pitch=rx;chapterUntil=0;carryPursuit(distance,visible,nextZ,oldSpeed);say(objectiveFor(story),7);return;
+      advance(next);camera.position.set(p.x-3,p.y,nextZ+6+p.z+bz);yaw=ry;pitch=rx;chapterUntil=0;carryPursuit(distance,pursuing,nextZ,oldSpeed,pendingWait);persist();say(objectiveFor(story),7);return;
     }
     if(story.stage==='stairs_passage'&&camera.position.z< -25.35&&Math.abs(camera.position.x-3)<1.1&&Math.abs(world.root.getObjectByName('stairs-passage-door')!.rotation.y)<.015){
       const old=camera.position.clone(),oldYaw=yaw,oldPitch=pitch,ghost=world.figure;
