@@ -39,3 +39,9 @@ test('legacy road saves migrate to the car finale and new finale saves resume be
  assert.equal(prefs.readProgress(storage).stage,'car_escape');
  prefs.writeProgress(storage,{stage:'car_crash',notes:['phone']},140);assert.equal(prefs.readProgress(storage).stage,'car_escape');
 });
+
+test('car departure progress resumes safely in the garage and preserves earned notes',()=>{
+ const data=new Map(),storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)};
+ prefs.writeProgress(storage,{stage:'car_departure',notes:['plant_drained','car_search']},1000);
+ assert.equal(prefs.readProgress(storage).stage,'car_departure');assert.deepEqual(prefs.readProgress(storage).notes,['plant_drained','car_search']);
+});

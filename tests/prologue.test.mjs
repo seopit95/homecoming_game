@@ -12,7 +12,7 @@ test('the final drive reveals a seated passenger, collides at the barrier and fr
   road.pose('car_voice',0,camera,false);assert.ok(camera.position.distanceTo(arrival)<.01);assert.equal(passenger.visible,true);
   road.pose('car_voice',4.9,camera,false);assert.ok(camera.rotation.y<-.9,'the driver turns right to the passenger');
   const face=passenger.getObjectByName('ghost-head').localToWorld(new T.Vector3(0,.13,.16));camera.updateMatrixWorld();const screen=face.project(camera);assert.ok(Math.abs(screen.x)<.7&&Math.abs(screen.y)<.85,'the passenger face is actually in frame');
-  road.pose('car_crash',.55,camera,false);const car=road.root.getObjectByName('memory-car'),barrier=road.root.getObjectByName('finale-barrier');assert.ok(Math.abs(car.position.z-2.92-barrier.position.z)<.5,'the impact lands at the obstruction');
+  road.pose('car_crash',.55,camera,false);const car=road.root.getObjectByName('memory-car'),barrier=road.root.getObjectByName('finale-barrier');assert.ok(Math.abs(car.position.z-2.25-barrier.position.z)<.5,'the impact lands at the obstruction');
   road.pose('car_crash',3,camera,false);assert.equal(road.root.getObjectByName('finale-shattered-windshield').visible,true);const stopped=camera.position.clone();road.pose('car_crash',3,camera,false);assert.deepEqual(camera.position.toArray(),stopped.toArray());
   assert.equal(road.root.getObjectByName('memory-pedestrian').visible,false,'the ending is not another pedestrian collision');
 });
@@ -67,4 +67,62 @@ test('the phone distraction is brief and the pedestrian reaches the bumper only 
   assert.ok(distracted>=1&&distracted<2.5,`a glance, not ${distracted}s looking away`);
   road.pose('drive',opening.drive.duration-5,camera,true);const car=road.root.getObjectByName('memory-car'),person=road.root.getObjectByName('memory-pedestrian');assert.ok(car.position.z-person.position.z>30);
   road.pose('drive',opening.drive.duration,camera,true);assert.ok(Math.abs(car.position.z-2.92-person.position.z)<.2,'collision happens at the front bumper');
+});
+
+test('the passenger is actually visible above the cushion inside the shared sedan',()=>{
+ const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160);
+ road.pose('car_voice',3.5,camera,false);road.root.updateMatrixWorld(true);
+ const passenger=road.root.getObjectByName('finale-passenger'),head=passenger.getObjectByName('ghost-head'),face=head.localToWorld(new T.Vector3(0,.13,.16)),car=road.root.getObjectByName('hero-sedan');
+ const opaque=[];car.traverse(o=>{if(o.isMesh&&!o.material.transparent)opaque.push(o);});
+ const distance=camera.position.distanceTo(face),ray=new T.Raycaster(camera.position.clone(),face.clone().sub(camera.position).normalize(),.02,distance-.02);
+ assert.equal(ray.intersectObjects(opaque,false).length,0,'seat/back/headrest/body must not hide the passenger face');
+ assert.ok(new T.Vector3(0,0,1).transformDirection(head.matrixWorld).dot(camera.position.clone().sub(face).normalize())>.3,'passenger turns her face toward the driver in the unmirrored cabin');
+ const headBounds=new T.Box3().setFromObject(head,true);assert.ok(face.y>1.1,'face is above the cushion, unlike the long hanging hair');assert.ok(new T.Box3().setFromObject(passenger,true).min.y>.272,'feet stay above the actual cabin floor');assert.ok(headBounds.max.y<1.46,'head fits below the real roof');
+});
+
+// These are the rendered mesh surfaces, including transparent closed glass and
+// the deformed continuous arms, wrist seams, anatomical fingers and nail tips.
+function cabinTriangles(car){
+ const grid=new Map(),inverse=car.matrixWorld.clone().invert(),step=.12;
+ function cells(box,visit){for(let x=Math.floor(box.min.x/step);x<=Math.floor(box.max.x/step);x++)for(let y=Math.floor(box.min.y/step);y<=Math.floor(box.max.y/step);y++)for(let z=Math.floor(box.min.z/step);z<=Math.floor(box.max.z/step);z++)visit(`${x},${y},${z}`);}
+ car.traverse(o=>{if(!o.isMesh)return;const matrix=inverse.clone().multiply(o.matrixWorld),p=o.geometry.getAttribute('position'),ix=o.geometry.index;
+  for(let i=0;i<(ix?ix.count:p.count);i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix?ix.getX(i+j):i+j).applyMatrix4(matrix))),box=new T.Box3().setFromPoints([tri.a,tri.b,tri.c]);
+   const item={tri,box,name:o.name||o.material.name||o.material.type,glass:o.material.transparent===true,index:i/3};cells(box,key=>{const list=grid.get(key)||[];list.push(item);grid.set(key,list);});
+  }
+ });
+ const ray=new T.Ray(),direction=new T.Vector3(),point=new T.Vector3();
+ function edges(a,b){for(const [v,w] of [[a.a,a.b],[a.b,a.c],[a.c,a.a]]){direction.subVectors(w,v);const length=direction.length();if(length<1e-9)continue;ray.set(v,direction.divideScalar(length));if(ray.intersectTriangle(b.a,b.b,b.c,false,point)&&point.distanceTo(v)<=length+1e-7)return point.clone();}return null;}
+ return (tri)=>{const box=new T.Box3().setFromPoints([tri.a,tri.b,tri.c]),candidates=new Set();cells(box,key=>{for(const item of grid.get(key)||[])candidates.add(item);});
+  for(const item of candidates)if(box.intersectsBox(item.box)){const point=edges(tri,item.tri)||edges(item.tri,tri);if(point)return {...item,point:point.toArray()};}return null;
+ };
+}
+
+test('the visible hero hood and steering wheel receive the fatal impact and reset',()=>{
+ const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(),car=road.root.getObjectByName('hero-sedan');
+ function hoodHeight(){road.root.updateMatrixWorld(true);const inverse=car.matrixWorld.clone().invert(),v=new T.Vector3();let top=0;car.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.getAttribute('position'),m=inverse.clone().multiply(o.matrixWorld);for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(m);if(v.z< -1.05&&v.z> -2.19)top=Math.max(top,v.y);}});return top;}
+ road.pose('car_crash',0,camera,true);const rest=hoodHeight();road.pose('car_crash',.8,camera,true);assert.ok(hoodHeight()>rest+.1,'the actual visible front sheet metal must deform, not the hidden memory hood');
+ const wheel=car.getObjectByName('hero-steering-wheel');assert.ok(wheel);assert.ok(Math.abs(wheel.rotation.z)>.8);const after=hoodHeight();road.pose('car_crash',.8,camera,true);assert.equal(hoodHeight(),after);
+ road.pose('car_escape',0,camera,true);assert.ok(Math.abs(hoodHeight()-rest)<1e-6);assert.equal(wheel.rotation.z,0);
+ const hood=car.getObjectByName('hero-hood');assert.ok(hood);assert.ok(hood.children.some(o=>o.isMesh),'deformed hood owns the actual shell geometry');
+ const restMeshes=[];car.traverse(o=>{if(o.isMesh&&!hood.getObjectById(o.id))restMeshes.push(o);});road.root.updateMatrixWorld(true);
+ const origin=car.localToWorld(new T.Vector3(0,2,-1.5)),ray=new T.Raycaster(origin,new T.Vector3(0,-1,0),0,2);
+ assert.ok(ray.intersectObjects(restMeshes,false).every(hit=>car.worldToLocal(hit.point.clone()).y<.6),'no intact static hood remains beneath the movable actual sheet');
+});
+
+test('the full visible crash reach clears actual closed cabin glass and solid surfaces',()=>{
+ const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160),car=road.root.getObjectByName('hero-sedan'),passenger=road.root.getObjectByName('finale-passenger');
+ road.pose('car_crash',0,camera,false);road.root.updateMatrixWorld(true);const limbs=[];
+ passenger.traverse(o=>{if(o.isMesh&&/ghost-(continuous-arm|fitted-sleeve|wrist-skin|hand-|long-nail)/.test(o.name))limbs.push(o);});assert.equal(limbs.length,18,'both full arm/hand/nail chains are measured');
+ for(const t of [...Array.from({length:54},(_,i)=>i*.025),1.349]){road.pose('car_crash',t,camera,false);road.root.updateMatrixWorld(true);assert.equal(passenger.visible,true);
+  const collision=cabinTriangles(car),inverse=car.matrixWorld.clone().invert(),head=passenger.getObjectByName('ghost-head'),face=head.localToWorld(new T.Vector3(0,.13,.16)),opaque=[];car.traverse(o=>{if(o.isMesh&&!o.material.transparent)opaque.push(o);});
+  const ray=new T.Raycaster(camera.position.clone(),face.clone().sub(camera.position).normalize(),.02,camera.position.distanceTo(face)-.02);assert.equal(ray.intersectObjects(opaque,false).length,0,`face remains clear at ${t}`);
+  for(const side of [-1,1]){const foot=passenger.getObjectByName(`ghost-foot-${side}`),p=foot.geometry.getAttribute('position'),m=inverse.clone().multiply(foot.matrixWorld),v=new T.Vector3();for(let i=0;i<p.count;i++)assert.ok(v.fromBufferAttribute(p,i).applyMatrix4(m).y>.272,`foot stays above floor at ${t}`);
+   const hip=passenger.getObjectByName(`ghost-hip-${side}`),down=new T.Raycaster(hip.getWorldPosition(new T.Vector3()),new T.Vector3(0,-1,0).transformDirection(car.matrixWorld),0,.12);assert.ok(down.intersectObjects(opaque,false).length>0,`thigh has actual cushion support at ${t}`);
+  }
+  head.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.getAttribute('position'),m=inverse.clone().multiply(o.matrixWorld),v=new T.Vector3();for(let i=0;i<p.count;i++)assert.ok(v.fromBufferAttribute(p,i).applyMatrix4(m).y<1.46,`head remains below roof at ${t}`);});
+  if(t>=.25){const hand=passenger.getObjectByName('ghost-hand-1');assert.ok(hand.getWorldPosition(new T.Vector3()).applyMatrix4(inverse).x<-.15,'full scare still reaches across toward driver');}
+  for(const o of limbs){const p=o.geometry.getAttribute('position'),ix=o.geometry.index,m=inverse.clone().multiply(o.matrixWorld);
+   for(let i=0;i<(ix?ix.count:p.count);i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix?ix.getX(i+j):i+j).applyMatrix4(m))),hit=collision(tri);assert.ok(!hit,JSON.stringify({t,limb:o.name,triangle:i/3,cabin:hit?.name,glass:hit?.glass,point:hit?.point}));}
+  }
+ }
 });

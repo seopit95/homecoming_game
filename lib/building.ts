@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {buildCarDeparture,type CarDeparture} from './car-departure.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {tapeTimes} from './story.ts';
 import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
@@ -20,9 +21,9 @@ import {createGhost as makeFigure} from './ghost.ts';
 export const landing={halfWidth:1.3,halfLength:23,spawnZ:20.5,homeZ:20.5,homeX:1.3,liftZ:-22.75,boardZ:-23.25,fallTriggerZ:8,fallZ:1} as const;
 export const buildingLayout={corridor:{x:3.5,z:20,spawnZ:18},lift:{x:1.1,z:1.45,spawnZ:.7},stairs:{x:2,z:6,flightX:1,run:4,spawnZ:3.8},office:{x:5.8,z:7.8,spawnZ:6.5},parking:{x:12,z:22,spawnZ:20,alarm:{x:-10.8,z:16},alarmApproach:{x:-10.8,z:16.5},car:{x:5,z:-18}}} as const;
 export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
-  if(area==='courtyard')return buildCourtyard(root);
-  if(area==='annex'||area==='archive'||area==='plant')return buildExpansion(root,area);
-  if(area==='resident'||area==='aftermath')return buildStoryRoom(root,area);
+  if(area==='courtyard')return {...buildCourtyard(root),carDeparture:undefined};
+  if(area==='annex'||area==='archive'||area==='plant')return {...buildExpansion(root,area),carDeparture:undefined};
+  if(area==='resident'||area==='aftermath')return {...buildStoryRoom(root,area),carDeparture:undefined};
   const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
   const size=area==='landing'?{x:landing.halfWidth,z:landing.halfLength}:buildingLayout[area];
   const bx=size.x,bz=size.z,bounds:Bounds=area==='landing'?{x:4.2,z:25.45,minX:-1.17}:{x:bx-.13,z:bz-.13},ceiling=area==='parking'?2.7:2.8;
@@ -56,7 +57,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   function portal(z:number,half=.66){const w=bx-half;wall(-(bx+half)/2,z,w,.18);wall((bx+half)/2,z,w,.18);box(0,2.56,z,half*2,.48,.18,wallMat);}
   const spawn=new T.Vector3(0,1.65,('spawnZ' in size?size.spawnZ:landing.spawnZ));const heading=0;let heightAt:((x:number,z:number)=>number)=()=>0;
   let liftDoors:{left:T.Mesh;right:T.Mesh;blocks:Solid[]}|undefined,setDisplay:((text:string)=>void)|undefined,fallingFigure:T.Group|undefined;
-  let reset=()=>{};
+  let reset=()=>{};let carDeparture:CarDeparture|undefined;
   let updateStory:((stage:Stage,time:number,reduced:boolean,story?:Story,occupants?:Occupant[])=>void)|undefined;
   const figure=makeFigure(root),shoes=new T.Group(),phoneGlow=new T.PointLight(),radioLight=new T.PointLight();
   if(area!=='stairs'){
@@ -78,7 +79,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       label('2803',1.188,2.05,landing.homeZ+1,-Math.PI/2,.34,.14);
       box(2.95,.65,landing.homeZ+1.12,1.3,1.3,.5,wood,true);light(2.2,2.3,landing.homeZ,'#6c8c8a',.8,3);
     }if(area==='corridor'||area==='parking'||area==='office')portal(bz);else wall(0,bz,bx*2,.18);
-    if(area==='lift'||area==='landing'||area==='office'||area==='corridor')portal(-bz);else wall(0,-bz,bx*2,.18);
+    if(area==='lift'||area==='landing'||area==='office'||area==='corridor')portal(-bz);else if(area==='parking'){wall(-4.475,-bz,15.05,.18);wall(10.275,-bz,3.45,.18);box(5.8,2.75,-bz,5.5,.1,.18,wallMat);}else wall(0,-bz,bx*2,.18);
     for(let z=-bz+2;z<bz;z+=5){box(0,ceiling-.08,z,bx*2,.15,.25,concrete);pipe(bx-.21,ceiling-.18,z,4.9);}
   }
   if(area==='landing'||area==='lift'){
@@ -256,7 +257,10 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       return chassis;
     }
     for(const x of [-5.2,5.2])for(const z of [-10,-3,4,11])car(x,z,(Math.round(z)%3===0?'#8b8e87':x<0?'#354044':'#6c655d'));
-    const own=car(L.car.x,L.car.z,'#222c31',true);target('car_search','조수석 조사 · 배수 설비 열쇠',own,6.02,1.1,-17.8);target('car_board','운전석 문 열고 탑승',own,3.98,1.1,-17.8);
+    carDeparture=buildCarDeparture(root,solids);reset=()=>carDeparture!.reset();const own=carDeparture.car;
+    for(const dx of [-1.27,1.27])box(L.car.x+dx,.008,L.car.z,.055,.016,4.85,white);box(L.car.x,.008,L.car.z+2.45,2.59,.016,.055,white);
+    for(const dx of [-.55,.55])box(L.car.x+dx,.07,L.car.z+2.45,.55,.14,.16,dark);
+    target('car_search','조수석 조사 · 배수 설비 열쇠',own,6.02,1.1,-17.8);target('car_board','운전석 문 열고 탑승',own,3.98,1.1,-17.8);
     box(-11.3,1.35,15.82,1.4,2.7,.24,concrete,true);box(L.alarm.x,1.25,15.96,.55,1.85,.12,metal);
     const alarm=box(L.alarm.x,1.4,L.alarm.z,.3,.43,.17,red);target('alarm','화재경보기 작동',alarm,L.alarm.x,1.4,L.alarm.z+.18);label('발신기',L.alarm.x,1.92,16.027,0,.45,.16,'#d6bca4','#61281e');light(L.alarm.x,2.4,L.alarm.z+.2,'#a5523b',2);
     const push=new T.Mesh(new T.CylinderGeometry(.078,.078,.026,20),dark);push.rotation.x=Math.PI/2;push.position.set(L.alarm.x,1.38,16.094);root.add(push);label('누름',L.alarm.x,1.38,16.109,0,.105,.052,'#c8bdb1','#7d291f');for(let i=0;i<4;i++)box(L.alarm.x,1.52+i*.016,16.091,.18,.006,.008,dark);
@@ -276,10 +280,10 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const x of [-11.65,11.65])for(const z of [-12,0,12]){box(x,.001,z,.24,.002,2.6,metal);for(let dz=-1.2;dz<=1.2;dz+=.1)box(x,.0025,z+dz,.19,.001,.025,dark);}
     const extinguisher=new T.Mesh(new T.CylinderGeometry(.10,.10,.43,20),red);extinguisher.position.set(-11.25,.32,16.05);root.add(extinguisher);box(-11.25,.08,16.05,.26,.16,.26,metal);roundPipe(root,[-11.25,.54,16.05],[-11.25,.62,16.05],.024,metal);roundPipe(root,[-11.25,.59,16.05],[-11.37,.32,16.05],.012,dark);
     box(0,.025,-21.69,1.05,.05,.24,metal);const jam=box(.07,.06,-21.45,.79,.09,.16,wood);jam.rotation.y=.12;
-    const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,_time,_reduced,story)=>{const drained=story?.notes.includes('plant_drained')||['parking_alarm','parking_run'].includes(stage);flood.scale.y=drained?.35:2.6;const target=targets.find(t=>t.id==='car_search');if(target)target.label=story?.notes.includes('plant_drained')?'조수석 가방 · 차 열쇠':'조수석 조사 · 배수 설비 열쇠';};
+    const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,_time,_reduced,story)=>{const drained=story?.notes.includes('plant_drained')||['parking_alarm','parking_run','car_departure'].includes(stage);flood.scale.y=drained?.35:2.6;const target=targets.find(t=>t.id==='car_search');if(target)target.label=story?.notes.includes('plant_drained')?'조수석 가방 · 차 열쇠':'조수석 조사 · 배수 설비 열쇠';};
     for(const x of [-2.2,2.2])for(const z of [-18,-6,6,18])fixture(x,z,z!==6);for(const x of [-8,8])pipe(x,2.47,0,43);for(const z of [-12,0,12])pipe(0,2.35,z,23,'x');
     for(let z=-18;z<20;z+=4){box(0,.014,z,.07,.025,1.5,white);}for(const z of [-12,6])label('출구 ↑',-11.89,1.9,z,Math.PI/2,1.2,.3);
     figure.position.set(-7.8,0,-18);figure.visible=true;
   }
-  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,bounds,spawn,heading,heightAt,liftDoors,setDisplay,fallingFigure,updateStory,reset};
+  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,bounds,spawn,heading,heightAt,liftDoors,setDisplay,fallingFigure,updateStory,reset,carDeparture};
 }

@@ -215,10 +215,19 @@ function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearanc
   }
 }
 
-export function animateGhostPassenger(figure:T.Group,time:number,scare:number,reducedMotion:boolean){
+export function animateGhostPassenger(figure:T.Group,time:number,scare:number,reducedMotion:boolean,cabinReach=false){
   const rig=poseGhost(figure,time,0,1,reducedMotion,0);if(!rig)return;
   rig.torso.position.set(0,.83,.03);rig.torso.rotation.set(-.12,0,-.12);
-  for(let i=0;i<2;i++){rig.legs[i].position.set((i===0?-1:1)*.12,.61,.04);rig.legs[i].rotation.set(-1.75,0,0);rig.knees[i].rotation.set(2.28,0,0);rig.ankles[i].rotation.set(-.53,0,0);rig.arms[i].rotation.set(-.55-scare*.65,0,(i===0?-1:1)*.18);rig.forearms[i].rotation.set(-.85,0,0);}
+  for(let i=0;i<2;i++){rig.legs[i].position.set((i===0?-1:1)*.12,.61,.04);rig.legs[i].rotation.set(-1.75,0,0);rig.knees[i].rotation.set(2.28,0,0);rig.ankles[i].rotation.set(-.53,0,0);rig.arms[i].rotation.set(-.55-(cabinReach?0:scare*.65),0,(i===0?-1:1)*.18);rig.forearms[i].rotation.set(-.85,0,0);}
+  // The low sedan needs the resting hands ahead of the lap, then a reach across
+  // toward the driver. The existing solver retains the full arm/hand surfaces.
+  if(cabinReach)for(let i=0;i<2;i++){
+    const upper=rig.arms[i],lower=rig.forearms[i],palm=rig.palms[i];
+    const hand=new T.Vector3(i===0?-.13:.13,-.32,.50).lerp(new T.Vector3(i===0?.48:.65,i===0?.16:.20,.12),scare);
+    reach(upper,lower,hand,.46,.49,i===0?-1:1,new T.Vector3(.8,-1,.3).lerp(new T.Vector3(.2,-1,1.8),scare));
+    const orientation=new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2,0,0)).slerp(new T.Quaternion().setFromEuler(new T.Euler(0,0,Math.PI/2)),scare);
+    palm.quaternion.copy(upper.quaternion).multiply(lower.quaternion).invert().multiply(orientation);
+  }
   rig.head.rotation.set(.05,-.7,-.26+(reducedMotion?0:Math.sin(time*21)*.025*scare));
   rig.head.position.z+=scare*.055;poseFace(rig.face,scare);rig.tails.scale.y=.68;
   poseDress(rig.gown,rig.hem,rig.torso,rig.knees,0,true);

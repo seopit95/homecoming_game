@@ -38,7 +38,7 @@ export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:
 export type Target = { id: Action; point: T.Vector3; label: string; mesh: T.Object3D };
 export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
-  const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined}:{...buildBuilding(root,area),setTV:undefined};
+  const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,carDeparture:undefined}:{...buildBuilding(root,area),setTV:undefined};
   batchStaticGeometry(root,content.targets.map(t=>t.mesh));
   const updateStory:((stage:import('./story').Stage,time:number,reduced:boolean,story?:import('./story').Story,occupants?:Occupant[])=>void)|undefined=content.updateStory;
   const lightColors=content.lamps.map(light=>({light,color:light.color.clone()}));

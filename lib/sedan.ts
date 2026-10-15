@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {softBox} from './materials.ts';
+import {softBox,upholstery} from './materials.ts';
 import type {Solid} from './world.ts';
 
 // The body and mirrors have separate footprints: the side aisle must stay usable.
@@ -9,21 +9,25 @@ export function sedanSolids(x:number,z:number):Solid[]{
 }
 
 // Generic late-1990s compact sedan, in metres. The front points along +Z.
-export function createSedan(color:string,damaged=false){
+export function createSedan(color:string,damaged=false,driving=false){
   const root=new T.Group();root.name=damaged?'hit-and-run-car':'parked-sedan';
-  const paint=new T.MeshPhysicalMaterial({color,metalness:.58,roughness:.38,clearcoat:.45,clearcoatRoughness:.3,vertexColors:true});
+  const door=new T.Group();door.name='hero-driver-door';door.position.set(.86,0,.94);if(driving)root.add(door);let onDoor=false,onHood=false;
+  const hood=new T.Group();hood.name='hero-hood';hood.position.set(0,.9,.968);if(driving)root.add(hood);
+  const steering=new T.Group();steering.position.set(.39,1.004,.555);steering.rotation.x=-.57;
+  const steeringWheel=new T.Group();steeringWheel.name='hero-steering-wheel';steering.add(steeringWheel);if(driving)root.add(steering);
+  const paint=new T.MeshPhysicalMaterial({color,metalness:.58,roughness:.38,clearcoat:.45,clearcoatRoughness:.3,vertexColors:true,side:driving?T.DoubleSide:T.FrontSide});
   const trim=new T.MeshStandardMaterial({color:'#202623',roughness:.8});
   const rubber=new T.MeshStandardMaterial({color:'#202221',roughness:.96});
-  const interior=new T.MeshStandardMaterial({color:'#343837',roughness:.95});
+  const interior=driving?upholstery('#424b49'):new T.MeshStandardMaterial({color:'#343837',roughness:.95});
   const alloy=new T.MeshStandardMaterial({color:'#a2a8a7',metalness:.8,roughness:.35});
   const chrome=new T.MeshStandardMaterial({color:'#b5c0c0',metalness:.94,roughness:.19});
-  const glass=new T.MeshPhysicalMaterial({color:'#26322f',metalness:.22,roughness:.14,transparent:true,opacity:.8,depthWrite:false,side:T.DoubleSide,clearcoat:1});
+  const glass=new T.MeshPhysicalMaterial({color:'#26322f',metalness:.22,roughness:.14,transparent:true,opacity:driving?.12:.8,depthWrite:false,side:T.DoubleSide,clearcoat:1});
   const headlamp=new T.MeshPhysicalMaterial({color:'#87938a',metalness:.35,roughness:.26,clearcoat:1});
   const tail=new T.MeshPhysicalMaterial({color:'#721b17',roughness:.24,clearcoat:1});
   tail.name='sedan-tail-lamps';
   const amber=new T.MeshPhysicalMaterial({color:'#90602b',roughness:.26,clearcoat:1});
-  const scratch=new T.MeshStandardMaterial({color:'#8b9693',roughness:.8});
-  const batches=new Map<T.Material,T.BufferGeometry[]>();
+  const scratch=new T.MeshStandardMaterial({color:driving?'#52635f':'#8b9693',roughness:.8});
+  const batches=new Map<T.Material,T.BufferGeometry[]>(),doorBatches=new Map<T.Material,T.BufferGeometry[]>(),hoodBatches=new Map<T.Material,T.BufferGeometry[]>();
   const transform=new T.Object3D();
   function add(g:T.BufferGeometry,m:T.Material,p=[0,0,0],r=[0,0,0]){
     transform.position.set(...p as [number,number,number]);transform.rotation.set(...r as [number,number,number]);transform.updateMatrix();g.applyMatrix4(transform.matrix);
@@ -38,7 +42,7 @@ export function createSedan(color:string,damaged=false){
       }
       geometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));
     }
-    const list=batches.get(m)??[];list.push(geometry);batches.set(m,list);
+    const batch=onDoor?doorBatches:onHood?hoodBatches:batches;if(onDoor)geometry.translate(-.86,0,-.94);if(onHood)geometry.translate(0,-.9,-.968);const list=batch.get(m)??[];list.push(geometry);batch.set(m,list);
   }
   function box(p:number[],size:number[],m:T.Material,r=[0,0,0],radius=.025){add(softBox(...size as [number,number,number],radius),m,p,r);}
   function pipe(points:number[][],radius:number,m:T.Material,segments=12){
@@ -63,9 +67,9 @@ export function createSedan(color:string,damaged=false){
     const dent=damaged?.115*Math.exp(-((x-.28)**2/.064+(z-1.48)**2/.075)):0;
     return belt(z)+dome-dent;
   }
-  patch((u,v)=>{const z=-2.18+v*4.36,x=(u*2-1)*width(z);return [x,top(x,z),z];},16,48,paint,true);
+  for(const [lo,hi] of driving?[[-2.18,-1.255],[.968,2.18]]:[[-2.18,2.18]]){onHood=driving&&lo===.968;patch((u,v)=>{const z=lo+v*(hi-lo),x=(u*2-1)*width(z);return [x,top(x,z),z];},16,driving?24:48,paint,true);}onHood=false;
   for(const side of [-1,1]){
-    patch((u,v)=>{const z=-2.18+u*4.36,lo=arch(z);return [side*width(z)*(.956+.044*v+.025*Math.sin(v*Math.PI)),T.MathUtils.lerp(lo,belt(z),v),z];},100,5,paint,side>0);
+    for(const [a,b] of driving&&side===1?[[-2.18,-.23],[-.23,.94],[.94,2.18]]:[[-2.18,2.18]]){onDoor=driving&&side===1&&a===-.23;patch((u,v)=>{const z=a+u*(b-a),lo=arch(z);return [side*width(z)*(.956+.044*v+.025*Math.sin(v*Math.PI)),T.MathUtils.lerp(lo,belt(z),v),z];},driving?40:100,5,paint,side>0);}onDoor=false;
     // Rolled wheel-arch lips, with a dark inner liner behind the real opening.
     for(const z of [-1.35,1.35]){
       const lip:number[][]=[];
@@ -76,7 +80,7 @@ export function createSedan(color:string,damaged=false){
     pipe([[side*.846,.368,-.95],[side*.857,.359,0],[side*.846,.368,.95]],.024,trim);
   }
   for(const front of [-1,1])patch((u,v)=>{const z=front*2.18,x=(u*2-1)*width(z);return [x,T.MathUtils.lerp(.35,top(x,z),v),z];},16,4,paint,front<0);
-  box([0,.337,0],[1.46,.065,3.55],trim);
+  box([0,driving?.21:.337,0],[1.46,.065,3.55],trim);
 
   // Gently crowned roof and four fitted panes; no floating rectangular roof slab.
   const windshield=(u:number,v:number)=>{
@@ -93,37 +97,53 @@ export function createSedan(color:string,damaged=false){
   }
   for(const side of [-1,1]){
     const sideWindow=(u:number,v:number)=>[side*T.MathUtils.lerp(.814,.665,v),.923+.48*v,T.MathUtils.lerp(-1.24,-.76,v)+u*T.MathUtils.lerp(2.18,1.13,v)];
-    patch(sideWindow,18,8,glass,side>0);
-    for(const v of [0,1])pipe(Array.from({length:12},(_,i)=>sideWindow(i/11,v)),.02,trim,12);
+    if(driving&&side===1){
+      for(const front of [false,true]){onDoor=front;patch((u,v)=>{const a=sideWindow(0,v),b=sideWindow(1,v);return [a[0],a[1],front?T.MathUtils.lerp(-.23,b[2],u):T.MathUtils.lerp(a[2],-.23,u)];},12,8,glass,true);}onDoor=false;
+    }else patch(sideWindow,18,8,glass,side>0);
+    for(const v of [0,1]){if(driving&&side===1){const a=sideWindow(0,v),b=sideWindow(1,v);pipe([a,[a[0],a[1],-.23]],.02,trim,4);onDoor=true;pipe([[a[0],a[1],-.23],b],.02,trim,4);onDoor=false;}else pipe(Array.from({length:12},(_,i)=>sideWindow(i/11,v)),.02,trim,12);}
     // Painted sills and black B-pillar give the windows a believable thickness.
     pipe([[side*.81,.929,-1.235],[side*.68,1.385,-.75]],.041,paint);
     pipe([[side*.816,.925,.955],[side*.664,1.396,.384]],.035,paint);
     pipe([[side*.815,.925,-.23],[side*.665,1.403,-.23]],.041,trim);
-    pipe([[side*.816,.924,-1.21],[side*.831,.926,0],[side*.816,.924,.94]],.008,chrome);
-    for(const z of [-.25,.93,-1.19]){
+    if(!driving||side!==1)pipe([[side*.816,.924,-1.21],[side*.831,.926,0],[side*.816,.924,.94]],.008,chrome);
+    for(const z of [-.25,.93,-1.19]){onDoor=driving&&side===1&&z===.93;
       pipe([[side*(width(z)+.004),.889,z],[side*(width(z)+.009),.69,z-.035],[side*(width(z-.09)-.014),.404,z-.09]],.003,trim);
     }
-    for(const z of [-.38,.67]){
+    onDoor=false;for(const z of [-.38,.67]){onDoor=driving&&side===1&&z===.67;
       box([side*.893,.798,z-.075],[.013,.048,.19],trim,[0,0,0],.007);
       box([side*.91,.805,z-.08],[.025,.021,.145],paint,[0,0,0],.007);
     }
+    onDoor=driving&&side===1;
     // Mirror stem enters the A-pillar; the reflective face is recessed in its housing.
     pipe([[side*.803,.964,.73],[side*.949,1.008,.667]],.022,trim);
     box([side*1.008,1.014,.65],[.184,.104,.223],paint,[0,side*.12,0],.021);
     box([side*1.008,1.018,.54],[.144,.071,.006],chrome,[0,side*.12,0],.002);
   }
+  onDoor=false;
   // Inside the glass, seats and the dashboard supply depth rather than an empty shell.
-  box([0,.719,-.24],[1.36,.065,2.4],interior);
+  box([0,driving?.24:.719,-.24],[driving?1.7:1.36,.065,2.4],interior);
   box([0,.905,.775],[1.38,.115,.29],trim,[-.1,0,0]);
   for(const side of [-1,1]){
     for(const z of [.18,-.52]){
+      if(driving){
+        box([side*.38,.455,z],[.49,.14,.48],trim,[0,0,0],.055);
+        box([side*.38,.51,z+.025],[.36,.09,.41],interior,[.04,0,0],.044);
+        for(const edge of [-1,1]){box([side*.38+edge*.207,.525,z],[.075,.12,.43],interior,[0,0,edge*.12],.035);box([side*.38+edge*.197,.86,z-.174],[.085,.66,.15],interior,[-.15,0,-edge*.06],.04);}
+        box([side*.38,.86,z-.198],[.34,.60,.105],interior,[-.15,0,0],.048);
+        for(const dx of [-.068,.068])pipe([[side*.38+dx,1.17,z-.225],[side*.38+dx,1.258,z-.235]],.008,alloy,1);
+        box([side*.38,1.285,z-.245],[.25,.135,.115],interior,[-.15,0,0],.052);
+        for(const dx of [-.105,.105])pipe([[side*.38+dx,.558,z+.16],[side*.38+dx,.56,z-.13]],.0018,trim,3);
+      }else{
       box([side*.38,.79,z],[.49,.15,.47],interior,[0,0,0],.06);
       box([side*.38,1.035,z-.18],[.48,.49,.13],interior,[-.15,0,0],.065);
       box([side*.38,1.295,z-.21],[.26,.16,.1],interior,[-.15,0,0],.034);
+      }
     }
   }
-  add(new T.TorusGeometry(.137,.015,6,24),trim,[-.39,1.004,.555],[-.57,0,0]);
-  pipe([[-.53,.98,.56],[-.39,1.004,.555],[-.25,.98,.56]],.012,trim);
+  if(driving){
+    const rim=new T.Mesh(new T.TorusGeometry(.137,.015,6,24),trim);steeringWheel.add(rim);
+    for(const x of [-1,1]){const spoke=new T.Mesh(new T.CylinderGeometry(.012,.012,.137,8),trim);spoke.rotation.z=Math.PI/2;spoke.position.x=x*.0685;steeringWheel.add(spoke);}
+  }else{add(new T.TorusGeometry(.137,.015,6,24),trim,[-.39,1.004,.555],[-.57,0,0]);pipe([[-.53,.98,.56],[-.39,1.004,.555],[-.25,.98,.56]],.012,trim);}
 
   // A flattened tread meets the floor. Sidewalls, rim well, spokes and lugs are separate surfaces.
   for(const side of [-1,1])for(const axle of [-1.35,1.35]){
@@ -165,22 +185,23 @@ export function createSedan(color:string,damaged=false){
   for(const y of [.612,.642,.672])pipe([[-.309,y,2.204],[0,y,2.21],[.309,y,2.204]],.006,alloy,6);
   box([0,.641,2.215],[.043,.031,.007],chrome,[0,0,0],.004);
   for(const side of [-1,1]){
-    const line:number[][]=[];for(let i=0;i<=20;i++){const z=.982+i*.055,x=side*(.68-.05*i/20);line.push([x,top(x,z)+.002,z]);}pipe(line,.0025,trim,24);
+    onHood=driving;const line:number[][]=[];for(let i=0;i<=20;i++){const z=.982+i*.055,x=side*(.68-.05*i/20);line.push([x,top(x,z)+.002,z]);}pipe(line,.0025,trim,24);onHood=false;
     pipe([[side*.655,top(side*.655,-1.3)+.002,-1.3],[side*.63,top(side*.63,-1.78)+.002,-1.78],[side*.59,top(side*.59,-2.05)+.002,-2.05]],.0025,trim);
   }
   // Wipers and the impact crack lie on the actual curved windshield surface.
-  for(const offset of [.12,.53])pipe([windshield(offset,.04),windshield(offset+.14,.1),windshield(offset+.31,.13)].map(([x,y,z])=>[x,y+.008,z+.008]),.007,trim,5);
+  if(!driving)for(const offset of [.12,.53])pipe([windshield(offset,.04),windshield(offset+.14,.1),windshield(offset+.31,.13)].map(([x,y,z])=>[x,y+.008,z+.008]),.007,trim,5);
   if(damaged){
     for(let i=0;i<9;i++){
-      const a=i*2.399,r=.11+(i%3)*.028;
-      const points=Array.from({length:4},(_,j)=>{const u=.66+Math.cos(a)*r*j/3,v=.34+Math.sin(a)*r*1.7*j/3;const [x,y,z]=windshield(u,v);return [x,y+.001,z+.003];});
-      pipe(points,.0013,scratch,3);
+      const a=i*2.399,r=(driving?.052:.11)+(i%3)*(driving?.027:.028);
+      const points=Array.from({length:driving?6:4},(_,j)=>{const f=j/(driving?5:3),bend=driving&&j>0?Math.sin(i*7+j*4)*.16:0,u=.66+Math.cos(a+bend)*r*f,v=.34+Math.sin(a+bend)*r*1.7*f;const [x,y,z]=windshield(u,v);return [x,y+.001,z+.003];});
+      pipe(points,driving?.00065:.0013,scratch,driving?7:3);
+      if(driving&&i%2===0){const fork=points[3],tip=points[5];pipe([fork,[(fork[0]+tip[0])/2+.018,(fork[1]+tip[1])/2-.012,(fork[2]+tip[2])/2+.014],[tip[0]+.028,tip[1]-.018,tip[2]+.022]],.00045,scratch,3);}
     }
   }
   // Each material is submitted once per car; bolts and trim do not multiply draw calls.
-  for(const [material,parts] of batches){
+  for(const [parent,batch] of [[root,batches],[door,doorBatches],[hood,hoodBatches]] as const)for(const [material,parts] of batch){
     const geometry=mergeGeometries(parts)!;parts.forEach(g=>g.dispose());
-    const mesh=new T.Mesh(geometry,material);mesh.castShadow=material!==glass;mesh.receiveShadow=true;root.add(mesh);
+    const mesh=new T.Mesh(geometry,material);mesh.castShadow=material!==glass;mesh.receiveShadow=true;parent.add(mesh);
   }
   return root;
 }

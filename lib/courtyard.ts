@@ -17,7 +17,7 @@ export function buildCourtyard(root:T.Group){
  const dark=new T.MeshStandardMaterial({color:'#182322',roughness:.82}),white=new T.MeshStandardMaterial({color:'#b8b6a1',roughness:.9}),rust=new T.MeshStandardMaterial({color:'#795744',roughness:.9});
  root.name='courtyard-chapter';
  function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=root){const mesh=new T.Mesh(boxUV(m===wood&&h<.2?softBox(w,h,d,.018):new T.BoxGeometry(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
- function sign(text:string,x:number,y:number,z:number,w=1.5,h=.5,ry=0):T.Mesh{const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,lines=text.split('\n'),font=Math.min(c.height/(lines.length*1.6),680/Math.max(...lines.map(l=>l.length),1));ctx.fillStyle='#aab099';ctx.fillRect(0,0,768,c.height);ctx.fillStyle='#223a31';ctx.font=`${font}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';lines.forEach((l,i)=>ctx.fillText(l,384,c.height/2+(i-(lines.length-1)/2)*font*1.4));const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.8}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);return mesh;}
+ function sign(text:string,x:number,y:number,z:number,w=1.5,h=.5,ry=0,ink='#223a31'):T.Mesh{const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,lines=text.split('\n'),font=Math.min(c.height/(lines.length*1.6),680/Math.max(...lines.map(l=>l.length),1));ctx.fillStyle='#aab099';ctx.fillRect(0,0,768,c.height);ctx.fillStyle=ink;ctx.font=`${font}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';lines.forEach((l,i)=>ctx.fillText(l,384,c.height/2+(i-(lines.length-1)/2)*font*1.4));const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.8}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);return mesh;}
  function target(id:Action,label:string,mesh:T.Object3D,p:[number,number,number],at:[number,number]){mesh.userData.approach={x:at[0],z:at[1]};targets.push({id,label,mesh,point:new T.Vector3(...p)});}
  function light(x:number,z:number,power=9){const l=new T.PointLight('#b0baa1',power,17,2);l.position.set(x,3.3,z);l.userData.base=power;lamps.push(l);root.add(l);roundPipe(root,[x,0,z],[x,3.5,z],.05,steel);box(x,3.5,z,.55,.09,.32,steel);box(x,3.445,z,.43,.02,.24,white);box(x,.04,z,.24,.08,.24,steel,true);return l;}
  box(0,-.13,2,64,.26,92,concrete);for(const [x,w] of [[-9.75,44.5],[23.75,16.5]])box(x,-.13,-46,w,.26,4,concrete);for(const x of [-32,32]){box(x,1.45,0,.22,2.9,96,wall,true);box(x-Math.sign(x)*.08,.27,0,.28,.54,96,concrete);box(x-Math.sign(x)*.1,2.9,0,.32,.12,96,concrete);}
@@ -220,7 +220,16 @@ export function buildCourtyard(root:T.Group){
  // Main gate stays closed; the separate basement doorway becomes the actual exit.
  box(0,1.8,-47.8,8,3.6,.16,steel,true);for(let y=.2;y<3.6;y+=.16)box(0,y,-47.7,7.9,.025,.03,dark);
  box(0,1.5,-47.684,1.86,.96,.012,steel);
- const notice=sign('정문 셔터 고장\n지하문 열쇠: 동측 경비초소\n금고: 입차 분 + 당직 내선',0,1.5,-47.674,1.8,.9);target('court_gate','정문 공사 안내 확인',notice,[0,1.5,-47.5],[0,-46.3]);
+ sign('정문 폐쇄\n지하 통로 이용',0,1.5,-47.674,1.8,.9);
+ // Arrival instructions stand on weighted feet beside the entry, clear of its route.
+ for(const x of [-5.05,-2.95]){box(x,.04,42.5,.42,.08,.5,steel,true);box(x,1.03,42.5,.07,1.98,.07,steel,true);}
+ box(-4,1.65,42.5,2.6,1.2,.12,steel,true);
+ for(const x of [-5.23,-2.77])for(const y of [1.12,2.18])box(x,y,42.568,.045,.045,.02,dark);
+ const notice=sign('정문 폐쇄 · 지하 우회 통로\n기록보관실 → 배수 기계실 → 주차장\n지하문 열쇠: 동측 초소 금고\n입차 분 + 야간 당직 내선',-4,1.65,42.562,2.4,1.04,0,'#020202');
+ // Matte paper has no glossy highlight that washes out its close-range print.
+ const noticeMaterial=notice.material as T.MeshStandardMaterial;
+ notice.material=new T.MeshLambertMaterial({map:noticeMaterial.map});noticeMaterial.dispose();
+ target('court_gate','입구의 우회 통로 안내 확인',notice,[-4,1.65,42.57],[-4,44]);
  const doorZ=-44,doorX=14;
  for(const x of [doorX-1.5,doorX+1.5])box(x,-.2,-48,.18,6.4,8.4,wall,true);box(doorX,2.9,-48,3.1,.2,8.4,wall);
  for(const x of [doorX-1.15,doorX+1.15])box(x,1.4,doorZ,.7,2.8,.18,wall,true);box(doorX,2.6,doorZ,1.6,.4,.18,wall);
