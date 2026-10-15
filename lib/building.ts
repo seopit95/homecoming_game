@@ -257,14 +257,34 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       return chassis;
     }
     for(const x of [-5.2,5.2])for(const z of [-10,-3,4,11])car(x,z,(Math.round(z)%3===0?'#8b8e87':x<0?'#354044':'#6c655d'));
-    carDeparture=buildCarDeparture(root,solids);reset=()=>carDeparture!.reset();const own=carDeparture.car;
+    carDeparture=buildCarDeparture(root,solids);const own=carDeparture.car;
     for(const dx of [-1.27,1.27])box(L.car.x+dx,.008,L.car.z,.055,.016,4.85,white);box(L.car.x,.008,L.car.z+2.45,2.59,.016,.055,white);
     for(const dx of [-.55,.55])box(L.car.x+dx,.07,L.car.z+2.45,.55,.14,.16,dark);
     target('car_passenger','조수석 문 열기',carDeparture.passengerDoor,6.02,1.1,-17.8);carDeparture.passengerDoor.userData.approach={x:7.1,z:-17.8};
     target('car_search','가방에서 열쇠 꺼내기',carDeparture.key,5.415,.31,-17.83);carDeparture.key.userData.approach={x:7.1,z:-17.8};target('car_board','운전석 문 열고 탑승',own,3.98,1.1,-17.8);
-    box(-11.3,1.35,15.82,1.4,2.7,.24,concrete,true);box(L.alarm.x,1.25,15.96,.55,1.85,.12,metal);
-    const alarm=box(L.alarm.x,1.4,L.alarm.z,.3,.43,.17,red);target('alarm','화재경보기 작동',alarm,L.alarm.x,1.4,L.alarm.z+.18);label('발신기',L.alarm.x,1.92,16.027,0,.45,.16,'#d6bca4','#61281e');light(L.alarm.x,2.4,L.alarm.z+.2,'#a5523b',2);
-    const push=new T.Mesh(new T.CylinderGeometry(.078,.078,.026,20),dark);push.rotation.x=Math.PI/2;push.position.set(L.alarm.x,1.38,16.094);root.add(push);label('누름',L.alarm.x,1.38,16.109,0,.105,.052,'#c8bdb1','#7d291f');for(let i=0;i<4;i++)box(L.alarm.x,1.52+i*.016,16.091,.18,.006,.008,dark);
+    box(-11.3,1.35,15.82,1.4,2.7,.24,concrete,true);
+    const cabinet=box(L.alarm.x,1.25,15.96,.55,1.85,.12,metal);cabinet.name='fire-alarm-cabinet';
+    const enamel=surface('steel','#8e3c31',{roughness:.68});
+    box(L.alarm.x,1.25,16.032,.5,1.76,.024,enamel);
+    const hose=box(L.alarm.x,.81,16.052,.455,.79,.016,enamel);hose.name='fire-hose-cabinet-door';
+    for(const y of [.5,1.1]){box(L.alarm.x-.222,y,16.066,.025,.085,.024,metal);roundPipe(root,[L.alarm.x-.222,y-.047,16.076],[L.alarm.x-.222,y+.047,16.076],.009,metal);}
+    box(L.alarm.x+.17,.82,16.068,.028,.09,.018,metal);label('소\n화\n전',L.alarm.x,.82,16.062,0,.12,.43,'#c4c0ac','#813a31');
+    for(const x of [-.215,.215])for(const y of [.415,2.085]){const screw=new T.Mesh(new T.CylinderGeometry(.008,.008,.005,8),metal);screw.rotation.x=Math.PI/2;screw.position.set(L.alarm.x+x,y,16.047);root.add(screw);}
+    for(let i=0;i<4;i++)box(L.alarm.x,.49+i*.023,16.064,.22,.007,.003,dark);
+    const bell=new T.Mesh(new T.SphereGeometry(.145,28,16,0,Math.PI*2,0,Math.PI/2),enamel);bell.rotation.x=Math.PI/2;bell.position.set(L.alarm.x,1.92,16.046);bell.castShadow=true;root.add(bell);
+    const bellRim=new T.Mesh(new T.TorusGeometry(.143,.009,8,32),metal);bellRim.position.set(L.alarm.x,1.92,16.048);root.add(bellRim);
+    const bellBolt=new T.Mesh(new T.SphereGeometry(.009,12,8),metal);bellBolt.position.set(L.alarm.x,1.92,16.192);root.add(bellBolt);
+    const callBase=new T.Mesh(new T.CylinderGeometry(.108,.108,.06,28),dark);callBase.rotation.x=Math.PI/2;callBase.position.set(L.alarm.x,1.4,16.074);root.add(callBase);
+    const bezel=new T.Mesh(new T.TorusGeometry(.1,.012,8,32),metal);bezel.position.set(L.alarm.x,1.4,16.1);root.add(bezel);
+    const push=new T.Mesh(new T.CylinderGeometry(.086,.086,.026,28),enamel);push.rotation.x=Math.PI/2;push.position.set(L.alarm.x,1.4,16.117);push.name='fire-call-button';root.add(push);target('alarm','화재경보기 작동',push,L.alarm.x,1.4,16.18);
+    const pushLabel=label('누름',L.alarm.x,1.4,16.131,0,.11,.055,'#c8bdb1','#813a31').mesh;push.attach(pushLabel);
+    label('발신기',L.alarm.x,1.6,16.046,0,.25,.085,'#c8bdb1','#813a31');
+    const pilotMaterial=mat('#8e2520',{emissive:'#ec301e',emissiveIntensity:.08,roughness:.24});
+    const pilot=new T.Mesh(new T.SphereGeometry(.027,20,12),pilotMaterial);pilot.position.set(L.alarm.x,2.12,16.07);pilot.name='fire-alarm-pilot';root.add(pilot);
+    const pilotBezel=new T.Mesh(new T.TorusGeometry(.028,.006,6,20),metal);pilotBezel.position.set(L.alarm.x,2.12,16.047);root.add(pilotBezel);
+    const alarmLamp=light(L.alarm.x,2.12,16.13,'#c93d2a',.04,1.7);
+    function setAlarm(active:boolean){push.position.z=active?16.104:16.117;pilotMaterial.emissiveIntensity=active?.9:.08;alarmLamp.userData.base=active?.8:.04;}
+    reset=()=>{carDeparture!.reset();setAlarm(false);};
     for(const [x,z,id] of [[-10.8,1,'valve_a'],[10.8,-8,'valve_b']] as const){roundPipe(root,[x,0,z],[x,2.7,z],.0425,rust);box(x,1.2,z+.085,.055,.055,.17,metal);const wheel=new T.Mesh(new T.TorusGeometry(.19,.025,6,16),red);wheel.position.set(x,1.2,z+.14);root.add(wheel);box(x,1.2,z+.14,.36,.025,.025,red);target(id,id==='valve_a'?'서측 급수 밸브 잠그기':'동측 급수 밸브 잠그기',wheel,x,1.2,z+.2);box(x,1.85,z+.045,.66,.21,.035,metal);label(id==='valve_a'?'서측 급수':'동측 급수',x,1.85,z+.0665,0,.6,.16);for(const y of [.2,2.5]){box(x,y,z,.15,.1,.15,metal);box((x+Math.sign(x)*11.9)/2,y,z,11.9-Math.abs(x),.035,.035,metal);}}
     const pump=box(-10.5,.08,-17,.9,.16,1.1,metal,true);box(-10.5,.57,-17,.15,.78,.14,metal);box(-10.5,1.16,-17,.45,.4,.3,metal).name='parking-pump-control';target('pump','배수 펌프 가동',pump,-10.5,1.3,-16.65);label('배수 설비',-10.5,1.23,-16.843,0,.4,.11);
     const motor=new T.Mesh(new T.CylinderGeometry(.22,.22,.66,22),paint);motor.rotation.x=Math.PI/2;motor.position.set(-10.5,.38,-16.94);root.add(motor);
@@ -281,7 +301,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const x of [-11.65,11.65])for(const z of [-12,0,12]){box(x,.001,z,.24,.002,2.6,metal);for(let dz=-1.2;dz<=1.2;dz+=.1)box(x,.0025,z+dz,.19,.001,.025,dark);}
     const extinguisher=new T.Mesh(new T.CylinderGeometry(.10,.10,.43,20),red);extinguisher.position.set(-11.25,.32,16.05);root.add(extinguisher);box(-11.25,.08,16.05,.26,.16,.26,metal);roundPipe(root,[-11.25,.54,16.05],[-11.25,.62,16.05],.024,metal);roundPipe(root,[-11.25,.59,16.05],[-11.37,.32,16.05],.012,dark);
     box(0,.025,-21.69,1.05,.05,.24,metal);const jam=box(.07,.06,-21.45,.79,.09,.16,wood);jam.rotation.y=.12;
-    const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,time,_reduced,story,occupants)=>{const drained=story?.notes.includes('plant_drained')||['parking_alarm','parking_run','car_departure'].includes(stage);flood.scale.y=drained?.35:2.6;carDeparture!.inspect(stage,time,story,occupants);const target=targets.find(t=>t.id==='car_search');if(target)target.label=story?.notes.includes('plant_drained')?'조수석 가방 · 차 열쇠':'조수석 가방 · 설비 열쇠';};
+    const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,time,_reduced,story,occupants)=>{if(stage==='parking_run'||stage==='car_departure')setAlarm(true);const drained=story?.notes.includes('plant_drained')||['parking_alarm','parking_run','car_departure'].includes(stage);flood.scale.y=drained?.35:2.6;carDeparture!.inspect(stage,time,story,occupants);const target=targets.find(t=>t.id==='car_search');if(target)target.label=story?.notes.includes('plant_drained')?'조수석 가방 · 차 열쇠':'조수석 가방 · 설비 열쇠';};
     for(const x of [-2.2,2.2])for(const z of [-18,-6,6,18])fixture(x,z,z!==6);for(const x of [-8,8])pipe(x,2.47,0,43);for(const z of [-12,0,12])pipe(0,2.35,z,23,'x');
     for(let z=-18;z<20;z+=4){box(0,.014,z,.07,.025,1.5,white);}for(const z of [-12,6])label('출구 ↑',-11.89,1.9,z,Math.PI/2,1.2,.3);
     figure.position.set(-7.8,0,-18);figure.visible=true;

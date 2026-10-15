@@ -204,7 +204,8 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   runTo(-2.2,17.4);runTo(-2.2,-20);runTo(0,-20);
   aim([0,1.65,-20.3],[0,1.25,-21.68]);game.interact();assert.equal(game.snapshot().story.stage,'parking_run','the pedestrian door cannot trigger the new ending');
   runTo(3,-20);runTo(3,-17.8);
-  use([3,1.65,-17.8],[3.98,1.1,-17.8],'car_escape');
+  use([3,1.65,-17.8],[3.98,1.1,-17.8],'car_departure');
+  tick(finale.car_departure.duration+.05);assert.equal(game.snapshot().story.stage,'car_escape');
   assert.ok(renderedScene.getObjectByName('escape-drive'));
   game.key('KeyW',true);game.interact();game.skipMemory();assert.equal(game.snapshot().story.stage,'car_escape');
   const drivingFrom=renderedCamera.position.clone();tick(2);assert.ok(renderedCamera.position.distanceTo(drivingFrom)>2);
@@ -735,4 +736,58 @@ test('a boarding checkpoint never redisplays a key that has already been recover
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  try{await game.ready;tick();game.continueGame();tick(.1);assert.equal(game.snapshot().story.stage,'car_departure');const keys=[];renderedScene.traverse(o=>{if(o.name==='garage-car-key')keys.push(o);});assert.ok(keys.length);assert.ok(keys.every(k=>!k.visible),'the cinematic must reconcile recovered inventory before its early render return');}
  finally{game.dispose();win.localStorage=previous;}
+});
+
+// These scenarios exercise perception and timing through the real game loop;
+// only rendering/audio device boundaries use the existing file-level doubles.
+async function parkingAlarmFixture(wait=0){
+ const previous=win.localStorage,raw=JSON.stringify({version:2,stage:'parking_alarm',notes:['plant_drained','car_passenger','car_search'],circuit:[],elapsed:1400,pursuit:wait>0,pursuitWait:wait});
+ win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem(){},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ await game.ready;tick();game.continueGame();tick(.1);const ghost=renderedScene.getObjectByName('resident-remains');
+ if(!wait){ghost.position.set(-8,0,8);ghost.rotation.y=Math.PI;}
+ renderedCamera.position.set(-10.8,1.65,17.4);const d=new THREE.Vector3(-10.8,1.4,16.18).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));
+ event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
+ assert.match(game.snapshot().prompt,/경보/);game.interact();assert.equal(game.snapshot().story.stage,'parking_run');
+ return {game,ghost,close(){game.dispose();win.localStorage=previous;}};
+}
+test('a ringing garage alarm cannot blind the pursuer to a player in front of it',async()=>{
+ const f=await parkingAlarmFixture();try{
+  renderedCamera.position.set(10,1.65,-18);tick(3);f.ghost.position.set(-8,0,8);f.ghost.rotation.y=Math.PI;renderedCamera.position.set(-8,1.65,3.5);
+  const before=f.ghost.position.z;tick(.5);assert.ok(f.ghost.position.z<before-.3,'seeing the player must reverse the lure and pursue immediately');assert.ok(chaseLevel>.4,'the discovered player receives the actual pursuit music state');
+ }finally{f.close();}
+});
+test('a latched garage alarm keeps attracting an unseen pursuer after the former silent timeout',async()=>{
+ const f=await parkingAlarmFixture();try{
+  renderedCamera.position.set(10,1.65,-18);tick(34);assert.equal(f.game.snapshot().story.stage,'parking_run');assert.ok(Math.hypot(f.ghost.position.x+10.8,f.ghost.position.z-16.5)<.7,'the bell remains the distraction while no player has been perceived');assert.ok(deviceLevels.alarm>.05,'the actual game still requests the spatial ringing loop');
+ }finally{f.close();}
+});
+test('operating a garage alarm preserves a pending follower arrival',async()=>{
+ const f=await parkingAlarmFixture(14);try{
+  renderedCamera.position.set(10,1.65,-18);tick(13);assert.equal(f.ghost.visible,false,'pressing the bell must not teleport the carried follower into view');tick(1.5);assert.equal(f.ghost.visible,true,'the carried follower eventually arrives and can investigate the bell');
+ }finally{f.close();}
+});
+
+test('the garage bell masks distant footsteps while close running still reveals the player',async()=>{
+ const f=await parkingAlarmFixture();try{
+  renderedCamera.position.set(10,1.65,-18);tick(3);f.ghost.position.set(-8,0,8);f.ghost.rotation.y=0;renderedCamera.position.set(-8,1.65,0);
+  f.game.key('KeyW',true);f.game.key('ShiftLeft',true);tick(.5);f.game.key('KeyW',false);f.game.key('ShiftLeft',false);
+  assert.ok(f.ghost.position.z>8.3,'a distant runner behind the pursuer remains masked by the bell');
+  f.ghost.position.set(-8,0,8);f.ghost.rotation.y=0;renderedCamera.position.set(-8,1.65,5.5);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);tick(.2);f.game.key('KeyW',false);f.game.key('ShiftLeft',false);
+  assert.ok(f.ghost.position.z<7.8,'a runner within a few steps must still be heard even behind the pursuer');assert.ok(chaseLevel>.4);
+ }finally{f.close();}
+});
+
+test('after investigating a lost player the pursuer leaves the old sighting and returns to the bell',async()=>{
+ const f=await parkingAlarmFixture();try{
+  renderedCamera.position.set(10,1.65,-18);tick(3);f.ghost.position.set(-8,0,8);f.ghost.rotation.y=Math.PI;renderedCamera.position.set(-8,1.65,3.5);tick(.2);
+  assert.ok(chaseLevel>.4,'the old sighting was actually perceived before the player broke contact');renderedCamera.position.set(10,1.65,-18);tick(18);
+  assert.ok(f.ghost.position.z>13,`the search must be completed instead of oscillating around its remembered position: ${f.ghost.position.toArray()}`);
+ }finally{f.close();}
+});
+
+test('being caught leaves the latched bell ringing until the ended screen and retry resets it',async()=>{
+ const f=await parkingAlarmFixture();try{
+  tick(.1);assert.ok(deviceLevels.alarm>.1);f.ghost.position.copy(renderedCamera.position);f.ghost.position.y=0;tick(.1);assert.equal(f.game.snapshot().story.stage,'dying');assert.ok(deviceLevels.alarm>.1,'the physical bell does not switch off at the contact frame');tick(3.3);assert.equal(f.game.snapshot().story.stage,'ended');assert.equal(deviceLevels.alarm,0);f.game.start(true);tick(.1);assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.equal(deviceLevels.alarm,0);assert.equal(renderedScene.getObjectByName('fire-call-button').position.z,16.117);
+ }finally{f.close();}
 });

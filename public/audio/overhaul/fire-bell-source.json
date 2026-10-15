@@ -1,0 +1,13 @@
+{
+  "asset": "fire-bell.wav",
+  "origin": "Original procedural additive synthesis authored for this game; no sampled external recording",
+  "generator": "artifacts/quality-2026-10-16/garage-alarm-v63/make-fire-bell.py",
+  "license": "Project-authored asset",
+  "sampleRate": 44100,
+  "channels": 1,
+  "durationSeconds": 2.4,
+  "pcmPeak": 0.72,
+  "loopBoundaryDifference": 0.0014310211406933782,
+  "sha256": "2d6ee0da86cc759038b39d521a2be2348800a8f029135c48ed4bd0197b9e777f",
+  "bytes": 211724
+}
