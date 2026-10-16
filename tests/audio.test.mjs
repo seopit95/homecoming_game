@@ -44,6 +44,18 @@ test('V65 answering tape stays positional and independent of apparition voices, 
   finally{audio.stopRecording?.();audio.context=null;}
 });
 
+test('V83 two physical devices keep independent playback positions and one hangup cannot cut the other',()=>{
+ class Param{value=0;targets=[];setTargetAtTime(...args){this.targets.push(args);}}
+ class Node{gain=new Param();frequency=new Param();pan=new Param();connections=[];connect(n){this.connections.push(n);return n;}disconnect(){this.connections=[];this.disconnected=true;}start(){this.started=true;}stop(){this.stopped=true;}}
+ class Context{currentTime=3;state='running';nodes=[];make(){const n=new Node();this.nodes.push(n);return n;}createBufferSource(){return this.make();}createBiquadFilter(){return this.make();}createGain(){return this.make();}createStereoPanner(){return this.make();}}
+ const audio=new HorrorAudio(),ctx=new Context();audio.context=ctx;audio.voiceBus=new Node();audio.clips['archive-guard']={duration:7.706122};audio.voices.cry={duration:5.2};
+ try{audio.recording('archive-guard');const local=ctx.nodes.find(n=>n.buffer===audio.clips['archive-guard']);audio.recording('cry','intercom');const call=ctx.nodes.find(n=>n.buffer===audio.voices.cry);
+  assert.equal(local.stopped,undefined,'a telephone answer cannot switch off a separate cassette');
+  audio.setRecordingPosition(.2,-.7);audio.setRecordingPosition(.8,.6,'intercom');const localPan=local.connections[0].connections[0].connections[0],callPan=call.connections[0].connections[0].connections[0];assert.equal(localPan.pan.value,-.7);assert.equal(callPan.pan.value,.6);
+  audio.stopRecording('intercom');assert.equal(call.stopped,true);assert.equal(local.stopped,undefined);assert.equal(localPan.disconnected,undefined);audio.stopRecording();assert.equal(local.stopped,true);assert.ok(ctx.nodes.every(n=>n.disconnected));
+ }finally{audio.stopRecording();audio.context=null;}
+});
+
 test('V66 PBX tones have quiet intervals and bounded click-free audible bursts',async()=>{
  const {intercomTone}=await import('../lib/audio.ts');assert.equal(typeof intercomTone,'function');
  const ctx={sampleRate:8000,createBuffer(_channels,length){const data=new Float32Array(length);return {getChannelData:()=>data,duration:length/8000};}};

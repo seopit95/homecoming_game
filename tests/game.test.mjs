@@ -206,7 +206,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{findPath}=await import('../lib/navigation.ts'),{expansionLayout}=await import('../lib/expansion-world.ts');
   const expansionStart=game.snapshot().elapsed;
   for(const [area,actions,nextStage] of [
-   ['annex',[['annex_map','annex_fuse'],['annex_fuse','annex_restore'],['annex_restore','annex_search'],['annex_badge','annex_search'],['annex_notice','annex_search'],['annex_call','annex_search'],['annex_digit_2','annex_unlock'],['annex_digit_8','annex_unlock'],['annex_digit_0','annex_unlock'],['annex_digit_3','annex_unlock'],['annex_dial','annex_unlock'],['annex_exit','annex_departure']],'court_arrival'],
+   ['annex',[['annex_map','annex_fuse'],['annex_fuse','annex_restore'],['annex_restore','annex_unlock'],['annex_badge','annex_unlock'],['annex_notice','annex_unlock'],['annex_call','annex_unlock'],['annex_digit_2','annex_unlock'],['annex_digit_8','annex_unlock'],['annex_digit_0','annex_unlock'],['annex_digit_3','annex_unlock'],['annex_dial','annex_unlock'],['annex_exit','annex_departure']],'court_arrival'],
    ['courtyard',[['court_gate','court_search'],['court_log','court_search'],['court_evidence','court_search'],['court_phone','court_search'],...Array.from('2617').flatMap((n,i)=>Array.from({length:Number(n)},()=>[`court_digit_${i}`,'court_code'])),['court_confirm','court_safe_open'],['court_key','court_unlocked'],['court_exit','court_departure']],'archive_arrival'],
    ['archive',[['archive_ledger','archive_search'],['archive_road','archive_search'],['archive_call','archive_search'],['archive_gate','archive_edit'],['archive_sequence_road','archive_edit'],['archive_sequence_call','archive_edit'],['archive_sequence_gate','archive_reveal'],['archive_play','archive_playback'],['archive_exit','archive_departure']],'plant_arrival'],
    ['plant',[['plant_diagram','plant_isolate'],['plant_valve_west','plant_isolate'],['plant_valve_east','plant_power'],['plant_filter','plant_power'],['plant_route','plant_power'],['plant_route','plant_power'],['plant_circuit_pump','plant_power'],['plant_circuit_air','plant_power'],['plant_start','plant_drain'],['plant_exit','plant_departure']],'parking_gate'],
@@ -854,6 +854,38 @@ async function annexDialFixture(stage='annex_unlock',wait=0,earlyNotes){
  function use(id){const target=reference.targets.find(t=>t.id===id);assert.ok(target,`physical control ${id} exists`);const at=target.mesh.userData.approach;renderedCamera.position.set(at.x,1.65,at.z);const dx=target.point.x-at.x,dy=target.point.y-1.65,dz=target.point.z-at.z,yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
  return {game,use,reference,close(){game.dispose();disposeWorld(reference.root);win.localStorage=previous;}};
 }
+test('V83 physical power restoration enables direct home calling before any optional records',async()=>{
+ const f=await annexDialFixture('annex_restore',0,['annex_map','annex_fuse']);
+ try{f.use('annex_restore');assert.equal(f.game.snapshot().story.stage,'annex_unlock');assert.equal(f.game.snapshot().story.notes.includes('annex_badge'),false);
+  for(const n of '2803')f.use('annex_digit_'+n);f.use('annex_dial');assert.match(f.game.snapshot().objective,/2803호 호출 중/);tick(4.6);assert.equal(f.game.snapshot().story.stage,'annex_exit_ready');assert.ok(f.game.snapshot().story.notes.includes('annex_line_home'));
+ }finally{f.close();}
+});
+test('V83 a legacy search can call the victim and retains her answered cry without releasing the door',async()=>{
+ const f=await annexDialFixture('annex_search',0,['annex_map','annex_fuse']);
+ try{voiceCalls.length=0;for(const n of '1704')f.use('annex_digit_'+n);f.use('annex_dial');tick(3);assert.deepEqual(voiceCalls,['cry']);assert.match(f.game.snapshot().message,/흐느/);tick(5.1);assert.equal(f.game.snapshot().story.stage,'annex_search');assert.ok(f.game.snapshot().story.notes.includes('annex_line_victim'));assert.equal(f.game.snapshot().story.notes.includes('annex_line_home'),false);assert.match(f.game.snapshot().message,/응답|울음|수신/);
+ }finally{f.close();}
+});
+test('V83 the two-digit duty extension plays its recorded guidance and grants a note only after completion',async()=>{
+ const f=await annexDialFixture('annex_unlock',0,['annex_map','annex_fuse']);
+ try{voiceCalls.length=0;for(const n of '17')f.use('annex_digit_'+n);f.use('annex_dial');assert.match(f.game.snapshot().objective,/내선 17/);tick(3);assert.deepEqual(voiceCalls,['archive-guard']);assert.equal(f.game.snapshot().story.notes.includes('annex_line_office'),false);tick(7.8);assert.ok(f.game.snapshot().story.notes.includes('annex_line_office'));assert.equal(f.game.snapshot().story.stage,'annex_unlock');
+ }finally{f.close();}
+});
+test('V83 external emergency numbers explain the internal-only line without inventing a connected call',async()=>{
+ const f=await annexDialFixture('annex_unlock',0,['annex_map','annex_fuse']);
+ try{voiceCalls.length=0;for(const n of '112')f.use('annex_digit_'+n);f.use('annex_dial');tick(1);assert.match(f.game.snapshot().message,/구내|외부 발신/);assert.deepEqual(voiceCalls,[]);assert.equal(f.game.snapshot().story.stage,'annex_unlock');assert.equal(f.game.snapshot().story.notes.includes('annex_line_home'),false);
+ }finally{f.close();}
+});
+test('V83 restoring power awakens the local pursuer even when optional records were skipped',async()=>{
+ const f=await annexDialFixture('annex_restore',0,['annex_map','annex_fuse']);
+ try{f.use('annex_restore');renderedCamera.position.set(.7,1.65,-19.7);tick(11);const ghost=renderedScene.getObjectByName('resident-remains');assert.ok(ghost.visible);const point=ghost.position.clone();tick(.5);assert.ok(point.distanceTo(ghost.position)>.2,'using knowledge cannot disable pursuit');
+ }finally{f.close();}
+});
+test('V83 completed side calls survive save/continue and describe an unlocked but still closed exit accurately',async()=>{
+ const f=await annexDialFixture('annex_exit_ready',90,['annex_map','annex_fuse','annex_line_home']);
+ try{for(const n of '1704')f.use('annex_digit_'+n);f.use('annex_dial');tick(8.1);assert.equal(f.game.snapshot().story.stage,'annex_exit_ready');assert.ok(f.game.snapshot().story.notes.includes('annex_line_victim'));assert.equal(renderedScene.getObjectByName('expansion-exit-door').rotation.y,0,'the actual leaf still needs opening');assert.match(f.game.snapshot().message,/잠금/);
+  const {readProgress,writeProgress}=await import('../lib/preferences.ts');let raw;const storage={setItem:(_,v)=>raw=v,getItem:()=>raw};writeProgress(storage,f.game.snapshot().story,f.game.snapshot().elapsed,true,45);const restored=readProgress(storage);assert.equal(restored.stage,'annex_exit_ready');assert.ok(restored.notes.includes('annex_line_victim'));assert.ok(restored.notes.includes('annex_line_home'));
+ }finally{f.close();}
+});
 test('V72 early annex recorder evidence requires the actual completed playback in each pre-power phase',async()=>{
  for(const stage of ['annex_arrival','annex_fuse','annex_restore']){const notes=stage==='annex_arrival'?[]:['annex_map',...(stage==='annex_restore'?['annex_fuse']:[])],f=await annexDialFixture(stage,0,notes);try{voiceCalls.length=0;f.use('annex_call');assert.equal(f.game.snapshot().story.notes.includes('annex_call'),false,stage+' cannot grant an unheard clue');assert.deepEqual(voiceCalls,['archive-guard']);tick(3);assert.equal(f.game.snapshot().story.notes.includes('annex_call'),false);tick(4.9);assert.ok(f.game.snapshot().story.notes.includes('annex_call'));assert.equal(f.game.snapshot().story.stage,stage,'listening cannot bypass the map or fuse');}finally{f.close();}}
 });
@@ -869,7 +901,7 @@ test('V66 an unanswered call can be cancelled and corrected without completing t
  finally{f.close();}
 });
 test('V66 the annex auxiliary tape is heard before it becomes an earned clue',async()=>{
- const f=await annexDialFixture('annex_search');try{voiceCalls.length=0;f.use('annex_call');assert.equal(f.game.snapshot().story.notes.includes('annex_call'),false);assert.equal(f.game.snapshot().story.stage,'annex_search');assert.deepEqual(voiceCalls,['archive-guard']);tick(3);f.use('annex_call');assert.deepEqual(voiceCalls,['archive-guard']);tick(4.9);assert.equal(f.game.snapshot().story.stage,'annex_unlock');}
+ const f=await annexDialFixture('annex_search');try{voiceCalls.length=0;f.use('annex_call');assert.equal(f.game.snapshot().story.notes.includes('annex_call'),false);assert.equal(f.game.snapshot().story.stage,'annex_search');assert.deepEqual(voiceCalls,['archive-guard']);tick(3);f.use('annex_call');assert.deepEqual(voiceCalls,['archive-guard']);tick(4.9);assert.equal(f.game.snapshot().story.stage,'annex_search');}
  finally{f.close();}
 });
 

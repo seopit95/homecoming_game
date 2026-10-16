@@ -15,13 +15,18 @@ test('the management exit goes through a service lift before the communal facili
  s=act(s,'service_board');assert.equal(s.stage,'service_ride');assert.equal(areaFor(s),'lift');
  s=act(s,'service_arrive','annex_enter');assert.equal(s.stage,'annex_arrival');assert.equal(areaFor(s),'annex');
 });
-test('communal facilities require power and all caller evidence before the correct extension opens the exit',()=>{
+test('V83 a powered intercom accepts a known home number without an arbitrary reading checklist',()=>{
  let s=state('annex_arrival');assert.equal(transition(s,'annex_exit'),s);
- s=act(s,'annex_map','annex_fuse','annex_restore');assert.equal(s.stage,'annex_search');
- s=act(s,'annex_badge','annex_call');assert.equal(s.stage,'annex_search');assert.equal(transition(s,'annex_line_home'),s);
- s=act(s,'annex_notice');assert.equal(s.stage,'annex_unlock');assert.equal(transition(s,'annex_line_victim').stage,'annex_unlock');
- const repeated=transition(s,'annex_notice');assert.equal(repeated,s);
+ assert.equal(expansionTargetActive(s,'annex_dial'),false);assert.equal(transition(s,'annex_line_home'),s);
+ s=act(s,'annex_map','annex_fuse','annex_restore');assert.equal(s.stage,'annex_unlock');assert.equal(expansionTargetActive(s,'annex_dial'),true);
+ assert.deepEqual(s.notes,['annex_map','annex_fuse']);
  s=act(s,'annex_line_home','annex_exit','court_enter');assert.equal(s.stage,'court_arrival');
+});
+test('V83 legacy investigation saves and late optional calls preserve the released exit',()=>{
+ let s=state('annex_search');assert.equal(expansionTargetActive(s,'annex_digit_2'),true);s=act(s,'annex_line_victim');assert.equal(s.stage,'annex_search');assert.ok(s.notes.includes('annex_line_victim'));
+ s=act(s,'annex_line_home');assert.equal(s.stage,'annex_exit_ready');
+ s=act(s,'annex_notice','annex_badge','annex_call','annex_line_office');assert.equal(s.stage,'annex_exit_ready');assert.ok(s.notes.includes('annex_line_office'));assert.equal(expansionTargetActive(s,'annex_dial'),true);
+ assert.equal(transition(s,'annex_line_office'),s,'revisiting an earned response cannot restart anything');
 });
 test('archive conclusions are independent and the restored interval unlocks the onward exit',()=>{
  let s=act(state('archive_arrival'),'archive_ledger','archive_road','archive_gate','archive_call');assert.equal(s.stage,'archive_edit');

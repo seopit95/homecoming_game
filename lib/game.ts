@@ -1,6 +1,7 @@
 import * as T from 'three';
-import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive,plantProblem,plantRoute,annexTapeDuration,annexCallbackDuration,courtCallTimes,courtCallDuration} from './expansion-story.ts';
+import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive,plantProblem,plantRoute,annexTapeDuration,courtCallTimes,courtCallDuration} from './expansion-story.ts';
 import {expansionLayout} from './expansion-world.ts';
+import {annexCanCall,annexCallFor,annexCallLabel} from './annex-call.ts';
 import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,clampLightOrigin,type Target} from './world.ts';
 import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength} from './ghost.ts';
 export {prepareVisuals} from './materials.ts';
@@ -78,18 +79,17 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function snapshot():GameView{
     const chapter=story.stage.startsWith('service_')?{...chapters.lift,number:'05',title:'관리용 승강기'}:chapters[area];
     const retryLabels:Partial<Record<typeof story.stage,string>>={annex_arrival:'1층 공동시설부터 다시',archive_arrival:'지하 기록보관실부터 다시',plant_arrival:'기계실 입구부터 다시',service_ride:'관리용 승강기부터 다시',lift_call:'28층 외부 복도부터 다시',lift_exit:'24층 엘리베이터부터 다시',lift_button:'엘리베이터 안에서 다시',stairs_loop:'23층 비상계단부터 다시',resident_entry:'1704호 입구부터 다시',car_departure:'주차장 차량 탑승부터 다시',car_escape:'차량 탈출부터 다시',office_record:'17층 관리실부터 다시',parking_gate:'지하 주차장 입구부터 다시',parking_alarm:'주차장 경보기부터 다시'};
-    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='car_crash'?T.MathUtils.smoothstep(stageTime,2.5,5):story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,2.8,5.7):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:(opening[story.stage]??finale[story.stage])?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:(opening[story.stage]??finale[story.stage])?.cues?.findLast(cue=>stageTime>=cue.at)?.text??(opening[story.stage]??finale[story.stage])?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,notes:[...story.notes]},prompt:evidenceReaction?'':story.hidden?'장롱에서 나오기':hover?(area==='resident'&&story.notes.includes(hover.id)?'확인 완료 · ':'')+hover.label:'',message:controlText(message),objective:evidenceReaction?'':settings.hints?controlText(recordingAt>=0?(recordingClue==='answerphone'?'자동응답기':'통신실 녹음')+' 재생 중 · 주변을 계속 살펴볼 수 있습니다':annexCallAt>=0?annexCallTo+'호 호출 중 · 주변의 발소리를 살피세요':courtCallAt>=0?'비상전화 연결 중 · 움직이거나 옆의 종료 버튼으로 끊을 수 있습니다':objectiveFor(story)):'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:area==='stairs'&&['stairs_reverse','stairs_passage'].includes(story.stage)?'17F':chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holding:holding||keys.has('KeyE'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||(isExpansion(story.resume)?chapters[areaFor({...story,stage:story.resume})].floor+' · 조사 이어하기':'28층 라디오 장면부터 다시')};
+    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='car_crash'?T.MathUtils.smoothstep(stageTime,2.5,5):story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,2.8,5.7):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:(opening[story.stage]??finale[story.stage])?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:(opening[story.stage]??finale[story.stage])?.cues?.findLast(cue=>stageTime>=cue.at)?.text??(opening[story.stage]??finale[story.stage])?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,notes:[...story.notes]},prompt:evidenceReaction?'':story.hidden?'장롱에서 나오기':hover?(area==='resident'&&story.notes.includes(hover.id)?'확인 완료 · ':'')+hover.label:'',message:controlText(message),objective:evidenceReaction?'':settings.hints?controlText(recordingAt>=0?(recordingClue==='answerphone'?'자동응답기':'통신실 녹음')+' 재생 중 · 주변을 계속 살펴볼 수 있습니다':annexCallAt>=0?annexCallLabel(annexCallTo)+' 호출 중 · 주변의 발소리를 살피세요':courtCallAt>=0?'비상전화 연결 중 · 움직이거나 옆의 종료 버튼으로 끊을 수 있습니다':objectiveFor(story)):'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:area==='stairs'&&['stairs_reverse','stairs_passage'].includes(story.stage)?'17F':chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holding:holding||keys.has('KeyE'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||(isExpansion(story.resume)?chapters[areaFor({...story,stage:story.resume})].floor+' · 조사 이어하기':'28층 라디오 장면부터 다시')};
   }
   const emit=()=>onChange(snapshot());
   function controlText(text:string){return text.replace(/\b(?:E|Shift)\b/g,key=>keyLabel(settings.bindings[key==='E'?'interact':'run']));}
   function say(text:string,seconds=7){message=text;messageUntil=elapsed+seconds;emit();}
   function playRecording(clue:'answerphone'|'annex_call'='answerphone'){
     if(recordingAt>=0)return;
-    if(annexCallAt>=0){say('교환기의 CLEAR로 먼저 통화를 종료하자.',4);return;}
     recordingAt=elapsed;recordingClue=clue;recordingSpoken=false;audio.setDevice('phone',0);audio.recording(clue==='annex_call'?'archive-guard':'memory');lastVoice=elapsed;audio.sound('click',0,.25);say(clue==='annex_call'?'03:20 · 발신측 보조 녹음이 재생된다.':'03:16 · 남겨진 메시지가 재생된다.',2);
   }
-  function stopRecording(){recordingAt=-1;audio.stopRecording();world.answeringMachine?.setPlayback(null);}
-  function stopAnnexCall(){if(annexCallAt>=0)audio.stopRecording();annexCallAt=-1;annexCallBeat=0;audio.setDevice('ringback',0);audio.setDevice('busy',0);}
+  function stopRecording(){recordingAt=-1;audio.stopRecording('local');world.answeringMachine?.setPlayback(null);}
+  function stopAnnexCall(){if(annexCallAt>=0)audio.stopRecording('intercom');annexCallAt=-1;annexCallBeat=0;audio.setDevice('ringback',0);audio.setDevice('busy',0);}
   function stopCourtCall(){if(courtCallAt>=0){audio.stopRecording();audio.setDevice('ringback',0);}courtCallAt=-1;courtCallBeat=0;}
   function operateCourtPhone(action:Action){
     courtPressed=action;courtPressedUntil=elapsed+.16;audio.sound('click',0,.25);
@@ -100,12 +100,12 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function operateIntercom(action:Action){
     const key=hover?.id===action?hover.mesh:action==='annex_dial'?world.intercom?.playButton:action==='annex_clear'?world.intercom?.stopButton:world.intercom?.keys.find(k=>k.label===action.at(-1))?.mesh;
     annexPressed=key?.uuid??'';annexPressedUntil=elapsed+.16;audio.sound('click',0,.2);
-    if(action==='annex_clear'){stopAnnexCall();annexNumber='';annexCallResult='';say('번호를 지웠다. 세대 네 자리 → CALL.',3);return;}
+    if(action==='annex_clear'){stopAnnexCall();annexNumber='';annexCallResult='';say('번호를 지웠다. 세대 네 자리 / 내선 두 자리 → CALL.',3);return;}
     if(annexCallAt>=0){say('호출 중이다. CLEAR로 통화를 끊을 수 있다.',3);return;}
     annexCallResult='';
     if(action.startsWith('annex_digit_')){if(annexNumber.length<4)annexNumber+=action.at(-1);else say('네 자리를 입력했다. CALL 또는 CLEAR.',3);emit();return;}
-    if(annexNumber.length!==4){say('우편실과 통신실 기록에서 수신 세대 네 자리를 확인하자.',5);return;}
-    annexCallTo=annexNumber;annexCallAt=elapsed;annexCallBeat=0;lastVoice=elapsed;say(annexCallTo+'호로 전화를 건다. 교환기에서 호출음이 울린다.',4);
+    if(![2,4].includes(annexNumber.length)&&annexCallFor(annexNumber).kind!=='external'){say('세대는 네 자리, 당직 내선은 두 자리다. 기록이나 교환기 안내를 확인하자.',5);return;}
+    annexCallTo=annexNumber;annexCallAt=elapsed;annexCallBeat=0;lastVoice=elapsed;say(annexCallLabel(annexCallTo)+' 호출. '+(annexCallFor(annexCallTo).kind==='external'?'구내 전용 단말이다. 이 단말에서는 외부 번호로 발신할 수 없다.':'교환기에서 호출음이 울린다.'),4);
   }
   function ghostVoice(line:GhostLine,force=false){
     if(!force&&elapsed-lastVoice<12)return;
@@ -149,7 +149,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function advance(action:Action){
     const next=transition(story,action);if(next===story)return false;
     if(next.stage==='wait'&&story.stage!=='wait'){searchTime=-1;lastSeen=null;tracking=false;}
-    const keepInvestigationPhase=(area==='resident'||area==='office')&&next.stage===story.stage;
+    const keepInvestigationPhase=(area==='resident'||area==='office'||area==='annex')&&next.stage===story.stage;
     story=next;if(!keepInvestigationPhase){stageTime=0;scriptBeat=0;voiceBeat=0;enemyPath=[];repathAt=0;}holdProgress=0;
     if(story.stage==='ended'){stopRecording();stopAnnexCall();stopCourtCall();if(story.ending==='crashed'){try{storage?.removeItem(PROGRESS_KEY);}catch{}saved=null;}keys.clear();holding=false;hover=undefined;threat=0;audio.stopVoices();audio.setDrive(null);whisper='';if(document.pointerLockElement===canvas)document.exitPointerLock();audio.sound('dread');emit();return true;}
     if(story.stage==='dying'){
@@ -200,7 +200,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   const dialogue:Partial<Record<Action,string>>={
     ...Object.fromEntries(Object.entries(expansionJournal).map(([id,n])=>[id,n.text.split('\n\n')[0]+'\nJ키로 전체 기록을 다시 읽을 수 있다.'])),
-    annex_restore:'통신 전원을 연결했다.\n명찰·반송 안내문·비상벨 기록으로 마지막 호출의 수신처를 확인하자.',
+    annex_restore:'통신 전원을 연결했다.\n중앙 교환기에서 바로 호출할 수 있다. 모르는 번호는 당직 내선 17이나 우편실·통신실 기록으로 확인하자.',
     annex_exit:'방화문 너머로 빗소리가 들린다. 중정 정문으로 나가 보자.',
     court_exit:'지하 계단 문이 열렸다. 기록보관실로 내려가자.',
     archive_exit:'북쪽 기계실 연결문이 열렸다. 좁은 통로로 빠져나가자.',
@@ -261,7 +261,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     if(action==='answerphone'&&area==='resident'){playRecording();return;}
     if(action==='annex_call'&&area==='annex'){playRecording('annex_call');return;}
-    if(story.stage==='annex_unlock'&&(action.startsWith('annex_digit_')||action==='annex_dial'||action==='annex_clear')){operateIntercom(action);return;}
+    if(area==='annex'&&annexCanCall(story.stage)&&(action.startsWith('annex_digit_')||action==='annex_dial'||action==='annex_clear')){operateIntercom(action);return;}
     if(area==='courtyard'&&(action==='court_hangup'||action==='court_phone'&&!story.notes.includes('court_phone')&&['court_search','court_code','court_safe_open','court_unlocked','court_departure'].includes(story.stage))){operateCourtPhone(action);return;}
     if(action==='pry'){say('문을 바라본 채 E 또는 화면의 문 벌리기 버튼을 길게 누르세요.',4);return;}
     if(action==='lure'){
@@ -351,7 +351,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const code=mapping?defaultSettings.bindings[mapping]:['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Escape','KeyP'].includes(e.code)?e.code:'';
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyE','KeyF','KeyC','Escape','KeyP','ShiftLeft','ShiftRight'].includes(code))e.preventDefault();
     if(code==='Escape'||code==='KeyP'){if(!e.repeat)pause(!paused);return;}
-    if(!paused&&!mapping&&!e.repeat&&story.stage==='annex_unlock'&&hover&&(hover.id.startsWith('annex_digit_')||hover.id==='annex_dial'||hover.id==='annex_clear')){
+    if(!paused&&!mapping&&!e.repeat&&area==='annex'&&annexCanCall(story.stage)&&hover&&(hover.id.startsWith('annex_digit_')||hover.id==='annex_dial'||hover.id==='annex_clear')){
       const digit=/^(?:Digit|Numpad)([0-9])$/.exec(e.code)?.[1],action=digit?`annex_digit_${digit}`:e.code==='Enter'?'annex_dial':e.code==='Backspace'?'annex_clear':null;
       if(action){e.preventDefault();operateIntercom(action as Action);return;}
     }
@@ -499,7 +499,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     else if(area==='resident'){if(arrivalPursuit||story.stage==='resident_departure'||story.stage==='resident_return'&&stageTime>4){world.figure.visible=true;hunt(1.4,dt);}}
     else if(area==='office'){if(world.figure.visible&&['office_key','office_leave','office_departure'].includes(story.stage)){if(arrivalDoorRelease<0)arrivalDoorRelease=areaTime;hunt(1.8,dt);}}
     else if(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'){
-      const active=arrivalPursuit|| (area==='annex'?story.notes.includes('annex_badge')&&story.notes.includes('annex_notice'):area==='courtyard'?courtyardPursuitActive(story,arrivalPursuit):area==='archive'?['archive_escape','archive_departure'].includes(story.stage):story.notes.includes('plant_valve_west')||story.notes.includes('plant_valve_east'));
+      const active=arrivalPursuit|| (area==='annex'?annexCanCall(story.stage)||story.notes.includes('annex_badge')&&story.notes.includes('annex_notice'):area==='courtyard'?courtyardPursuitActive(story,arrivalPursuit):area==='archive'?['archive_escape','archive_departure'].includes(story.stage):story.notes.includes('plant_valve_west')||story.notes.includes('plant_valve_east'));
       if(active&&arrivalDoor&&arrivalDoorRelease<0){arrivalDoorRelease=areaTime;if(area==='courtyard'&&!arrivalPursuit)entranceDelay=areaTime+3;audio.sound('door-creak',0,.5);}
       if(active&&areaTime>(arrivalPursuit||area==='courtyard'?entranceDelay:10)){world.figure.visible=true;if(area==='annex'&&annexCallAt>=0&&annexHeardCall!==annexCallAt&&!tracking&&!lastSeen&&Math.hypot(world.figure.position.x-.7,world.figure.position.z+19.7)<16){annexHeardCall=annexCallAt;lastSeen={x:.7,z:-19.7};seenAt=elapsed;repathAt=0;}if(area==='courtyard'&&courtCallAt>=0&&courtHeardCall!==courtCallAt&&!tracking&&!lastSeen){const p=world.targets.find(t=>t.id==='court_phone')!.point;if(Math.hypot(world.figure.position.x-p.x,world.figure.position.z-p.z)<16){courtHeardCall=courtCallAt;lastSeen={x:p.x,z:p.z};seenAt=elapsed;repathAt=0;}}hunt(story.stage==='annex_departure'?3.65:area==='plant'&&story.stage==='plant_drain'?2.35:area==='archive'?2.15:1.85,dt);}
     }
@@ -525,11 +525,15 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       }
     }
     if(annexCallAt>=0){
-      const t=elapsed-annexCallAt,special=annexCallTo==='2803'||annexCallTo==='1704';
-      if(special&&t>=2.8&&annexCallBeat===0){annexCallBeat=1;audio.setDevice('ringback',0);audio.recording(annexCallTo==='2803'?'come':'cry');lastVoice=elapsed;say(annexCallTo==='2803'?'호출음이 끊겼다. 아무도 없어야 할 우리 집에서… 「나오렴…」':'1704호. 수화기 너머에서 여자가 흐느낀다.',4);}
-      if(t>=(annexCallTo==='2803'?annexCallbackDuration:annexCallTo==='1704'?8:2)){
-        const homeLine=annexCallTo==='2803';stopAnnexCall();annexCallResult=homeLine?'2803 · 응답 종료\n북쪽 문에서 잠금 해제음':'응답 없음 · CLEAR로 지우기\n기록의 수신 세대를 다시 확인';
-        if(homeLine){advance('annex_line_home');audio.sound('metal',0,.4);say(expansionJournal.annex_line_home.text,12);}else say('통화가 끊겼다. 문은 그대로 잠겨 있다. 마지막 호출의 수신 세대를 다시 확인하자.',6);
+      const t=elapsed-annexCallAt,line=annexCallFor(annexCallTo);
+      if(line.clip&&t>=line.answerAt&&annexCallBeat===0){annexCallBeat=1;audio.setDevice('ringback',0);audio.recording(line.clip,'intercom');lastVoice=elapsed;say(line.kind==='home'?'호출음이 끊겼다. 아무도 없어야 할 우리 집에서… 「나오렴…」':line.kind==='victim'?'1704호. 빈집에서 전화를 받았다. 스피커 너머에서 여자가 흐느낀다.':'당직 내선 17 · 03:20 발신측 보조 녹음.\n「차량 번호가 확인됐습니다. 내려와 주세요. 아직 현장에…」',line.kind==='office'?7.8:4);}
+      if(t>=line.duration){
+        stopAnnexCall();const changed=line.action?advance(line.action):false,unlocked=story.notes.includes('annex_line_home');
+        if(line.kind==='home'){annexCallResult='2803 · 응답 종료\n북쪽 문 잠금 해제';if(changed){audio.sound('metal',0,.4);say(expansionJournal.annex_line_home.text,12);}else say('우리 집에서 같은 목소리가 다시 들렸다. 북쪽 문의 잠금은 이미 풀려 있다.',6);}
+        else if(line.kind==='victim'){annexCallResult='1704 · 울음 응답 종료\n'+(unlocked?'북쪽 문 잠금 해제 유지':'그날의 수신 세대를 확인');say(unlocked?'1704호에서 울음이 들렸다. 잠금이 풀린 북쪽 문으로 나갈 수 있다.':expansionJournal.annex_line_victim.text,10);}
+        else if(line.kind==='office'){annexCallResult='내선 17 · 녹음 안내 종료\n'+(unlocked?'북쪽 문 잠금 해제 유지':'그날의 수신 세대는 2803');say(expansionJournal.annex_line_office.text,12);}
+        else if(line.kind==='external'){annexCallResult='구내 전용 · 외부 발신 불가\n세대 4자리 / 내선 2자리';say('구내 전용 단말이다. 여기서는 112·119 같은 외부 번호로 발신할 수 없다. 세대 번호나 당직 내선으로 걸어야 한다.',7);}
+        else{annexCallResult='등록되지 않은 번호\nCLEAR로 지우고 다시 입력';say('교환기에서 짧은 통화 불가음만 돌아온다. 등록된 세대나 당직 내선을 확인하자.',6);}
       }
     }
     if(courtCallAt>=0){
@@ -834,9 +838,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     world.answeringMachine?.setPlayback(recordingAt<0?null:elapsed-recordingAt);
     if(area==='annex'){
       const callDx=.7-camera.position.x,callDz=-20.86-camera.position.z,callDistance=Math.hypot(callDx,callDz),callPan=T.MathUtils.clamp((callDx*Math.cos(yaw)-callDz*Math.sin(yaw))/Math.max(1,callDistance),-1,1),callBlocked=area==='annex'&&!hasLineOfSight(camera.position,{x:.7,y:1,z:-20.86},world.solids),callLevel=Math.min(1,2.5/Math.max(1,callDistance))*(callBlocked?.4:1);
-      audio.setDevice('ringback',annexCallAt>=0&&annexCallBeat===0&&['2803','1704'].includes(annexCallTo)?callLevel:0,callPan);audio.setDevice('busy',annexCallAt>=0&&!['2803','1704'].includes(annexCallTo)?callLevel:0,callPan);
-      if(annexCallAt>=0&&annexCallBeat>0)audio.setRecordingPosition(callLevel,callPan);
-      world.updateIntercom?.(annexNumber,annexCallAt>=0?annexCallTo+'호 호출 중\n'+(annexCallBeat?'연결됨 · CLEAR로 통화 종료':'수신 응답 대기'):annexCallResult||(['annex_exit_ready','annex_departure'].includes(story.stage)?'2803 · 응답 종료\n북쪽 문 잠금 해제':'수신 세대 네 자리 → CALL\nCLEAR · 지우기 / 종료'),elapsed<annexPressedUntil?annexPressed:null);
+      audio.setDevice('ringback',annexCallAt>=0&&annexCallBeat===0&&!!annexCallFor(annexCallTo).clip?callLevel:0,callPan);audio.setDevice('busy',annexCallAt>=0&&!annexCallFor(annexCallTo).clip?callLevel:0,callPan);
+      if(annexCallAt>=0&&annexCallBeat>0)audio.setRecordingPosition(callLevel,callPan,'intercom');
+      world.updateIntercom?.(annexNumber,annexCallAt>=0?annexCallLabel(annexCallTo)+' 호출 중\n'+(annexCallBeat?(annexCallFor(annexCallTo).kind==='office'?'녹음 안내 · CLEAR 종료':'응답 중 · CLEAR로 종료'):'수신 응답 대기'):annexCallResult||(['annex_exit_ready','annex_departure'].includes(story.stage)?'2803 · 응답 종료\n북쪽 문 잠금 해제':annexCanCall(story.stage)?'세대 4자리 / 내선 2자리 → CALL\n당직 녹음 내선 17 · 구내 전용':'통신 전원 없음\n동측 통신실 전원함 확인'),elapsed<annexPressedUntil?annexPressed:null);
     }
     if(area==='courtyard'){
       const point=world.targets.find(t=>t.id==='court_phone')!.point,dx=point.x-camera.position.x,dz=point.z-camera.position.z,distance=Math.hypot(dx,dz),blocked=!hasLineOfSight(camera.position,point,world.solids),level=Math.min(1,3/Math.max(1,distance))*(blocked?.35:1),pan=T.MathUtils.clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,distance),-1,1);

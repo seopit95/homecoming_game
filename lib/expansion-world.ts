@@ -148,9 +148,9 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   display=label('통화 기록 확인',0,0,0,.72,.54,0,true,true);display.geometry.dispose();display.geometry=crtScreenGeometry(.72,.54);display.name='annex-crt-status';crt.screenMount.add(display);
   intercom=createAnsweringMachine('intercom');intercom.root.position.set(.7,.82,-20.86);intercom.root.rotation.y=Math.PI;intercom.root.scale.setScalar(1.35);root.add(intercom.root);
   function dialTarget(id:Action,title:string,mesh:T.Mesh){const p=mesh.getWorldPosition(new T.Vector3());target(id,title,mesh,[p.x,p.y,p.z],[.7,-19.7]);targets.at(-1)!.precise=true;}
-  for(const {mesh,label:key} of intercom.keys)dialTarget(key==='*'?'annex_clear':key==='#'?'annex_dial':`annex_digit_${key}` as Action,key==='*'?'지우기 / 통화 종료':key==='#'?'세대 호출':key+' 입력',mesh);
-  dialTarget('annex_dial','CALL · 세대 호출',intercom.playButton);dialTarget('annex_clear','CLEAR · 지우기 / 종료',intercom.stopButton);
-  label('스피커 호출 · 네 자리 → CALL\n숫자키 / Enter 호출\nCLEAR·Backspace 종료',-.65,.821,-20.75,.55,.27).rotation.x=-Math.PI/2;
+  for(const {mesh,label:key} of intercom.keys)dialTarget(key==='*'?'annex_clear':key==='#'?'annex_dial':`annex_digit_${key}` as Action,key==='*'?'지우기 / 통화 종료':key==='#'?'세대 / 내선 호출':key+' 입력',mesh);
+  dialTarget('annex_dial','CALL · 세대 / 내선 호출',intercom.playButton);dialTarget('annex_clear','CLEAR · 지우기 / 종료',intercom.stopButton);
+  label('구내 전용 · 외부 발신 불가\n세대 4자리 / 당직 내선 17\n숫자·Enter 호출 / CLEAR 종료',-.65,.821,-20.75,.58,.28).rotation.x=-Math.PI/2;
   const socket=createCrtSocket();socket.root.position.set(1.925,.27,-21.8);socket.root.rotation.y=-Math.PI/2;root.add(socket.root);root.updateMatrixWorld(true);const power=crt.powerPort.clone().applyMatrix4(crt.root.matrixWorld),lead=socket.lead.clone().applyMatrix4(socket.root.matrixWorld);
   crtCable(root,[power,new T.Vector3(power.x,.87,-21.55),new T.Vector3(power.x,.0035,-21.65),new T.Vector3(lead.x,.0035,lead.z),lead]);
   roundPipe(root,[2.12,1.89,-2],[2.12,2.8,-2],.019,metal);

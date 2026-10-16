@@ -13,7 +13,7 @@ export class HorrorAudio {
   voices:Partial<Record<GhostLine,AudioBuffer>>={};
   voiceSource:AudioBufferSourceNode|null=null;
   voiceNodes:AudioNode[]=[];
-  recordingSource:AudioBufferSourceNode|null=null;recordingGain:GainNode|null=null;recordingPan:StereoPannerNode|null=null;recordingNodes:AudioNode[]=[];recordingLevel=-1;
+  recordings=new Map<'local'|'intercom',{source:AudioBufferSourceNode;gain:GainNode;pan:StereoPannerNode;nodes:AudioNode[];level:number}>();
   cleanupTimer:ReturnType<typeof setTimeout>|undefined;
   haunt:GainNode|null=null;
   chase:GainNode|null=null;chasePulse:OscillatorNode|null=null;chaseFilter:BiquadFilterNode|null=null;chaseLevel=-1;
@@ -155,18 +155,17 @@ export class HorrorAudio {
     this.chase.gain.setTargetAtTime(level*.9,t,fade);this.chasePulse.frequency.setTargetAtTime(2.2+level*1.25,t,.45);this.chaseFilter.frequency.setTargetAtTime(650+level*1300,t,.6);
   }
   mix(levels:{music:number;effects:number;voice:number}){this.levels={music:levels.music,effects:levels.effects,voice:levels.voice};if(!this.context)return;for(const [key,bus] of [['music',this.musicBus],['effects',this.effectsBus],['voice',this.voiceBus]] as const)bus?.gain.setTargetAtTime(this.levels[key],this.context.currentTime,.12);}
-  recording(line:GhostLine|'archive-guard'|'archive-denial'='memory'){
-    this.stopRecording();const ctx=this.context,buffer=line==='archive-guard'||line==='archive-denial'?this.clips[line]:this.voices[line];if(!ctx||!buffer||!this.voiceBus||ctx.state!=='running')return;
-    const source=this.recordingSource=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=this.recordingGain=ctx.createGain(),pan=this.recordingPan=ctx.createStereoPanner();
-    source.buffer=buffer;filter.type='lowpass';filter.frequency.value=2800;gain.gain.value=.54;source.connect(filter);filter.connect(gain);gain.connect(pan);pan.connect(this.voiceBus);this.recordingNodes=[source,filter,gain,pan];source.onended=()=>this.stopRecording();source.start();
+  recording(line:GhostLine|'archive-guard'|'archive-denial'='memory',channel:'local'|'intercom'='local'){
+    this.stopRecording(channel);const ctx=this.context,buffer=line==='archive-guard'||line==='archive-denial'?this.clips[line]:this.voices[line];if(!ctx||!buffer||!this.voiceBus||ctx.state!=='running')return;
+    const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),pan=ctx.createStereoPanner();
+    source.buffer=buffer;filter.type='lowpass';filter.frequency.value=2800;gain.gain.value=.54;source.connect(filter);filter.connect(gain);gain.connect(pan);pan.connect(this.voiceBus);this.recordings.set(channel,{source,gain,pan,nodes:[source,filter,gain,pan],level:-1});source.onended=()=>{if(this.recordings.get(channel)?.source===source)this.stopRecording(channel);};source.start();
   }
-  setRecordingPosition(level:number,pan=0){
-    if(!this.context||!this.recordingGain||!this.recordingPan)return;
-    const value=Math.max(0,Math.min(1,level));if(Math.abs(value-this.recordingLevel)>.015){this.recordingLevel=value;this.recordingGain.gain.setTargetAtTime(value*.54,this.context.currentTime,.08);}this.recordingPan.pan.value=Math.max(-1,Math.min(1,pan));
+  setRecordingPosition(level:number,pan=0,channel:'local'|'intercom'='local'){
+    const playing=this.recordings.get(channel);if(!this.context||!playing)return;
+    const value=Math.max(0,Math.min(1,level));if(Math.abs(value-playing.level)>.015){playing.level=value;playing.gain.gain.setTargetAtTime(value*.54,this.context.currentTime,.08);}playing.pan.pan.value=Math.max(-1,Math.min(1,pan));
   }
-  stopRecording(){
-    if(this.recordingSource){this.recordingSource.onended=null;try{this.recordingSource.stop();}catch{}this.recordingSource=null;}
-    this.recordingNodes.forEach(n=>n.disconnect());this.recordingNodes=[];this.recordingGain=null;this.recordingPan=null;this.recordingLevel=-1;
+  stopRecording(channel?:'local'|'intercom'){
+    for(const key of channel?[channel]:[...this.recordings.keys()]){const playing=this.recordings.get(key);if(!playing)continue;playing.source.onended=null;try{playing.source.stop();}catch{}playing.nodes.forEach(n=>n.disconnect());this.recordings.delete(key);}
   }
   footstep(surface:'wood'|'tile'|'metal'|'wet',pan=0,level=1){
     const ctx=this.context;if(!ctx||!this.effectsBus||ctx.state!=='running')return;
