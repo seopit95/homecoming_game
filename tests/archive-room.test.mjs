@@ -34,7 +34,7 @@ test('the real crawling mesh clears the new booth sill, entrance jambs and desk 
 
 test('the recording keys fit a human-scale editing panel and physically meet their base',()=>{
  const w=buildWorld(new T.Scene(),'archive');w.root.updateMatrixWorld(true);const controls=w.targets.filter(t=>t.id.startsWith('archive_preview_')||t.id.startsWith('archive_record_')),all=new T.Box3();for(const t of controls)all.union(new T.Box3().setFromObject(t.mesh,true));assert.ok(all.max.x-all.min.x<=1.05,'the controls cannot be half-metre blocks across a three-metre console');
- const base=w.root.getObjectByName('archive-review-deck');assert.ok(base);const b=new T.Box3().setFromObject(base,true);for(const t of controls){const key=new T.Box3().setFromObject(t.mesh,true);assert.ok(Math.abs(key.min.y-b.max.y)<.002,'button floats above its panel');assert.ok(key.min.x>=b.min.x&&key.max.x<=b.max.x&&key.min.z>=b.min.z&&key.max.z<=b.max.z,'button overhangs its panel');}
+ const base=w.root.getObjectByName('archive-deck-top');assert.ok(base);const b=new T.Box3().setFromObject(base,true);for(const t of controls){const key=new T.Box3().setFromObject(t.mesh,true);assert.ok(Math.abs(key.min.y-b.max.y)<.002,'button floats above its panel');assert.ok(key.min.x>=b.min.x&&key.max.x<=b.max.x&&key.min.z>=b.min.z&&key.max.z<=b.max.z,'button overhangs its panel');}
 });
 
 test('the current-room optical camera starts outside its own physical housing and lens',()=>{

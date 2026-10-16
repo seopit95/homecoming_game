@@ -16,6 +16,7 @@ import {facilityTable,facilityChair,laundryMachine,dryingRail,waterTank,pumpSkid
 import {createAnsweringMachine} from './resident-props.ts';
 import {facilityModel} from './facility-models.ts';
 import {createArchiveReview,archiveClips,archiveCamera} from './archive-review.ts';
+import {createArchiveDeck} from './archive-deck.ts';
 
 export const expansionLayout={
  courtyard:courtyardLayout,
@@ -190,10 +191,11 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   crtCable(root,[new T.Vector3(X+1.3,.85,-20.199),new T.Vector3(X+1.3,.0035,-20.57),new T.Vector3(12.98,.0035,-20.6)]);
   box(12.95,2.71,-23.65,.035,.18,.035,metal);const cameraCase=new T.Group();cameraCase.name='archive-cctv-camera';cameraCase.position.set(...archiveCamera.position);cameraCase.lookAt(...archiveCamera.lookAt);root.add(cameraCase);
   box(0,0,0,.18,.12,.32,metal,false,cameraCase);const lens=new T.Mesh(new T.CylinderGeometry(.041,.041,.02,20),dark);lens.rotation.x=Math.PI/2;lens.position.z=.169;cameraCase.add(lens);
-  // A single physical review deck: source keys behind transport/mark controls.
-  box(X,.866,-19.69,1.05,.092,.33,metal).name='archive-review-deck';
-  for(const [i,id,title] of [[0,'archive_preview_road','A 도로'],[1,'archive_preview_call','B 통화'],[2,'archive_preview_gate','C 입차']] as const){const x=X+(i-1)*.3;const control=box(x,.925,-19.76,.16,.026,.065,dark);target(id,title+' 원본 재생',control,[x,.94,-19.76],[x,-18.6]);label(title,x,.939,-19.76,.14,.045).rotation.x=-Math.PI/2;}
-  for(const [i,id,title] of [[0,'archive_record_back','−1초'],[1,'archive_record_pause','정지/재생'],[2,'archive_record_forward','+1초'],[3,'archive_record_mark','증거 표시']] as const){const x=X+(i-1.5)*.24;const button=box(x,.925,-19.61,.19,.026,.075,i===3?red:dark);target(id,title,button,[x,.94,-19.61],[x,-18.45]);label(title,x,.939,-19.61,.165,.043).rotation.x=-Math.PI/2;}
+  const deck=createArchiveDeck();deck.root.position.set(X,.82,-19.7);root.add(deck.root);root.updateMatrixWorld(true);
+  for(const {id,label:title,mesh} of deck.controls){const p=mesh.getWorldPosition(new T.Vector3());p.y+=.007;target(id,title,mesh,[p.x,p.y,p.z],[X,-19.12]);targets.at(-1)!.precise=true;}
+  const deckPower=deck.power.clone().applyMatrix4(deck.root.matrixWorld),deckLink=deck.link.clone().applyMatrix4(deck.root.matrixWorld);
+  crtCable(root,[deckPower,new T.Vector3(deckPower.x,.885,-20.42),new T.Vector3(deckPower.x,.0035,-20.6),new T.Vector3(12.98,.0035,-20.6)]);
+  crtCable(root,[deckLink,new T.Vector3(X+.44,.885,deckLink.z),new T.Vector3(X+.44,.885,-20.42),new T.Vector3(X-1.2,.885,-20.42),new T.Vector3(X-1.2,.90,-20.199)]);
   for(const [id,x,z,title] of [['archive_road',-X,20,'A · 03:17 / 도로'],['archive_call',X,20,'B · 03:20 / 통화'],['archive_gate',-X,-3,'C · 03:26 / 입차']] as const){
    const recording=id==='archive_call'?facilityModel('cassette_tape'):videoCassette(dark,paper,glass);
    if(id==='archive_call'){recording.rotation.x=-Math.PI/2;recording.position.y=-.039985;}

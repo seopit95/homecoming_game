@@ -29,8 +29,10 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     for(let z=-14;z<9;z+=2.4){box(road,side*5.5,.65,z,.045,1.3,.045,dark);box(road,side*5.5,1.28,z,.045,.04,2.4,dark);}
   }
   for(let z=-1.9;z<2;z+=.7)box(road,0,.004,z,7.6,.008,.35,white);
-  box(road,-3.9,1.4,2.6,.065,2.8,.065,dark);box(road,-3.9,2.55,2.6,.26,.46,.18,dark);
-  const signal=new T.Mesh(new T.CircleGeometry(.065,16),new T.MeshBasicMaterial({color:'#70bd82'}));signal.position.set(-3.9,2.49,2.698);road.add(signal);
+  box(road,-3.9,1.4,2.6,.065,2.8,.065,dark);box(road,-3.9,2.55,2.6,.30,.60,.18,dark);
+  const lampCanvas=document.createElement('canvas');lampCanvas.width=lampCanvas.height=128;const lampInk=lampCanvas.getContext('2d')!;lampInk.fillStyle='#131b17';lampInk.fillRect(0,0,128,128);lampInk.fillStyle='#83d994';for(const [x,y,w,h] of [[56,15,15,15],[53,35,20,33],[37,44,21,10],[70,42,21,10],[28,49,15,10],[86,33,10,16],[47,66,13,22],[35,84,18,13],[29,95,14,10],[65,66,13,22],[74,84,13,21],[84,99,12,9]])lampInk.fillRect(x,y,w,h);const lampMap=new T.CanvasTexture(lampCanvas);lampMap.colorSpace=T.SRGBColorSpace;
+  const signal=new T.Mesh(new T.PlaneGeometry(.24,.24),new T.MeshBasicMaterial({map:lampMap,toneMapped:false}));signal.name='cctv-walk-signal';signal.position.set(-3.9,2.42,2.698);road.add(signal);
+  const stopped=new T.Mesh(new T.CircleGeometry(.10,24),new T.MeshStandardMaterial({color:'#252c25',roughness:.8}));stopped.position.set(-3.9,2.70,2.698);road.add(stopped);
   box(garage,0,-.06,-3,11,.12,23,concrete);box(garage,0,2.77,-3,11,.16,23,concrete);
   box(garage,-5.4,1.35,-3,.15,2.7,23,concrete);box(garage,0,1.35,-14,11,2.7,.15,concrete);
   for(const x of [-4.5,3.5])for(const z of [-9,-1,7]){box(garage,x,1.35,z,.42,2.7,.42,concrete);box(garage,x,.5,z,.425,.4,.425,dark);}
@@ -69,7 +71,7 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     if(mode==='gate'||mode==='office'){
       car.rotation.y=0;
       car.position.set(0,0,office?-2+1.6*T.MathUtils.smoothstep(clock,0,2):-.4);
-      camera.position.set(4.4,2.42,5.4);camera.lookAt(0,.9,.7);brake.emissiveIntensity=.8;
+      if(office){camera.position.set(4.4,2.42,5.4);camera.lookAt(0,.9,.7);}else{camera.position.set(3.2,2,2.1);camera.lookAt(.65,1.05,-.2);}brake.emissiveIntensity=.8;
       if(driver.root.visible){
         const walking=Math.min(4,clock-3);driver.root.position.set(-1.27,0,.7+walking*.4);driver.root.rotation.y=0;driver.pose(walking,null,.4);driver.root.updateMatrixWorld(true);
         let bottom=Infinity;for(const foot of feet)bottom=Math.min(bottom,footBox.setFromObject(foot).min.y);driver.root.position.y-=bottom;
@@ -81,8 +83,9 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
       intactBrake.emissiveIntensity=t>=3.8?.8:0;brake.emissiveIntensity=.8;
       if(t<4.2){victim.root.position.set(-3.604+1.37*t,0,-1.85);victim.root.rotation.y=Math.PI/2;victim.pose(t,null);}
       else{victim.root.position.set(2.15+.14*wrap+1.05*slide,-.12*wrap-.6*slide,-1.85-1.4*wrap-.55*slide);victim.root.rotation.y=Math.PI/2-.18*slide;victim.pose(4.2,hit);victim.root.updateMatrixWorld(true);victim.root.position.y+=Math.max(0,.002-new T.Box3().setFromObject(victim.root,true).min.y);}
-      camera.position.set(6,4.7,8);camera.lookAt(1.65,.65,-1.3);
+      camera.position.set(4.4,3.8,6.8);camera.lookAt(0,.8,-.6);
     }
+    const fov=mode==='road'?56:mode==='gate'?40:49;if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix();}
     ctx.globalCompositeOperation='copy';ctx.fillStyle=image.visible?'rgba(0,0,0,0)':'#0b1512';ctx.fillRect(0,0,640,480);ctx.globalCompositeOperation='source-over';
     ctx.fillStyle='rgba(4,14,10,.72)';ctx.fillRect(0,0,640,48);ctx.fillRect(0,398,640,82);
     ctx.fillStyle='#c0d2bd';ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='21px monospace';

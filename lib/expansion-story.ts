@@ -39,7 +39,10 @@ export const expansionJournal={
  archive_road:{title:'A실 · 도로 원본 회수',text:'CAM-01 / 03:17 / 정문 횡단보도. 봉인된 원본 VHS를 챙겼다.\n\n인계표에는 「보행 신호와 차량 후면이 한 화면에 들어옴」이라고 적혀 있다. 편집실에서 제동등이 언제 켜지는지 확인해야 한다. 내가 기억하는 것처럼 갑자기 뛰어든 사람이었을까.'},
  archive_call:{title:'B실 · 양방향 통화 회수',text:'AUDIO-17 / 03:20 / 정문 비상벨 → 2803 등록 휴대전화. 양쪽 목소리를 보존한 원본 테이프다.\n\n통신실 장치에는 발신측만 남아 있었다. 이 테이프라면 그때 내가 무슨 말을 했는지, 누가 먼저 끊었는지 확인할 수 있다. 라벨의 수신자 이름을 손가락으로 가렸다.'},
  archive_gate:{title:'C실 · 입차 원본 회수',text:'CAM-04 / 03:26 / 지하 차량 출입구. 관리실 열람본에서 빠졌던 구간에 「영상·소리 동시 보존」 스티커가 붙어 있다.\n\n차를 세운 다음 아홉 초. 원본에는 차량 안에서 난 소리까지 남아 있다. 편집실에서 조수석을 잘 봐야 한다.'},
- archive_play:{title:'복원된 기록 · 누락 구간',text:'세 원본에 증거 표시를 남겼다. 보행 신호, 내가 끝낸 통화, 잠겨 있던 문.\n\n마지막 아홉 초를 다시 연결했다. 이제 내가 내리지 않았던 차 안의 소리가 끊김 없이 재생된다. 모니터에 익숙한 방이 비치기 시작한다. 편집실이다. 방금까지는 사흘 전 영상이었는데.'},
+ archive_sequence_road:{title:'대조 A · 늦게 켜진 제동등',text:'03:17. 보행 신호는 녹색이다. 여자는 횡단보도를 건너고 있었다. 내 차의 제동등은 충돌 직전에야 켜진다.\n\n갑자기 뛰어들었다고 생각했다. 그런데 내가 화면을 보고도 그 말을 할 수는 없다. 휴대전화를 내려놓은 것은 너무 늦었다.'},
+ archive_sequence_call:{title:'대조 B · 내가 끝낸 통화',text:'03:20. 현장으로 돌아와 달라는 경비원의 말을 들었다. 「잘못 거셨어요.」 수신자 쪽 말이 끝나고 내가 먼저 통화를 끊었다.\n\n그때 돌아갔더라면 달라졌을까. 이 기록만으로는 알 수 없다. 다만 돌아가 달라는 말을 못 들었다고 할 수는 없다.'},
+ archive_sequence_gate:{title:'대조 C · 잠가 버린 문',text:'03:26. 차를 세웠다. 조수석 창문에 손이 닿고, 문을 열어 달라는 말 뒤로 잠금음이 난다. 운전석에서 내리는 사람은 없다.\n\n나는 그 소리를 들었다. 아홉 초를 지워 달라고 했던 이유도 이제 안다. 사고 뒤에도 내가 선택한 일이 있었다.'},
+ archive_play:{title:'복원된 기록 · 누락 구간',text:'세 원본에 증거 표시를 남겼다. 보행 신호, 내가 끝낸 통화, 잠겨 있던 문.\n\n입차 뒤 지워졌던 아홉 초를 다시 연결했다. 창문을 두드리는 소리와 내가 누른 잠금음이 끊김 없이 재생된다. 모니터에 익숙한 방이 비치기 시작한다. 편집실이다. 방금까지는 사흘 전 영상이었는데.'},
  plant_diagram:{title:'B1 · 배수 계통도',text:'주차장 경사로 아래까지 물이 차 있다. 유입을 막지 않으면 배수를 해도 수위가 다시 오른다. 서측 저장탱크와 동측 급수관의 차단 위치가 표시돼 있다.\n\n서측 펌프실: 집수정 → 흡입망 → 펌프 → 토출 선택기. 평소에는 물을 집수정으로 되돌린다. 외부 우수관은 서쪽 벽을 통해 나간다.\n\n동측 전기실: 모터와 환기 연동. 현장 압력과 흡입망을 확인한 뒤 기동할 것. 한서연의 점검란에 「천 조각 유입 반복. 원인 미확인」이라고 적혀 있다.'},
  plant_valve_west:{title:'기계실 · 서측 차단',text:'저장탱크 쪽 급수관을 잠갔다. 녹슨 손잡이 아래에서 검은 물이 흘렀다. 탱크 안쪽에서 세 번 두드리는 소리가 났다. 동측 급수관까지 잠가야 한다.'},
  plant_valve_east:{title:'기계실 · 동측 차단',text:'동측 급수관을 잠갔다. 배관 진동이 멎자 벽 너머의 손톱 소리가 들렸다. 서측 펌프실의 흡입망과 토출 선택기를 확인해야 한다.'},
@@ -96,7 +99,7 @@ export function expansionTransition(s:Story,action:Action):Story|undefined{
  if(s.stage==='archive_edit'&&action.startsWith('archive_sequence_')){
   const order=['archive_sequence_road','archive_sequence_call','archive_sequence_gate'];if(!order.includes(action)||s.circuit.includes(action))return s;
   const circuit=[...s.circuit,action];
-  return {...s,circuit,stage:circuit.length===3?'archive_reveal':s.stage};
+  return noted({...s,circuit},action,circuit.length===3?'archive_reveal':s.stage);
  }
  if(s.stage==='plant_power'){
   if(action==='plant_filter')return s.notes.includes(action)?s:noted(s,action);

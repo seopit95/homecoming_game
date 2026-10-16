@@ -227,7 +227,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     portrait:'「다음에는 맑은 날에.」\n내일도 살아 있을 거라 믿고 적은 약속이다.',
     answerphone:'03:16. 「거의 다 왔어. 먼저 자. 내일 전화할게.」\n테이프가 끝난 뒤에도, 젖은 발소리는 계속된다.',
     resident_leave:'연결문이 열렸다. 1703호, 외벽 공사 중 임시로 옮긴 관리실.\n봉투에 적힌 한서연의 근무 기록이 저 안에 있다.',
-    car_door:'문을 열었다. 차가운 비가 손등을 때린다.\n그날 나는 이 문을 열지 않았다.',
+    car_door:'문을 열었다. 차가운 비가 손등을 때린다.\n그날은 이 문을 열고도 다시 차로 돌아갔다. 이번에는 떠나지 않겠다.',
     road_bag:'1704호 열쇠. 가방 곁의 전화기는 화면에 금이 갔지만 아직 켜져 있다.\n「도착하면 연락할게.」',
     road_phone:'「제가 사람을 치었습니다. 술을 마셨고, 도망쳤습니다.」\n「이번에는 여기 있겠습니다.」',
     record:'03:26. 내 차가 멈춘 직후, 열람 영상에서 아홉 초가 빠져 있다.\n서고의 퓨즈를 찾은 뒤 B 접지 → A 입력 → C 감시 순서로 연결한다.\nCCTV에서 내 차가 입차한 03:26 기록을 확인하자.',
@@ -238,15 +238,20 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     exit:'보행자 출구는 바깥에서 봉쇄됐다. 내 차로 나가야 한다.\n차량 출구도 침수됐다. 조수석의 배수 설비 열쇠를 찾아 물부터 빼자.',
     alarm:'벨이 울린다. 차체와 기둥으로 몸을 가려야 한다.\n나를 보지 못하면 소리 쪽으로 갈 것이다. 운전석으로 돌아가자.',
   };
+  function reviewArchive(action:Action){
+    if(contact())return;
+    const result=world.archiveReview!.operate(action,elapsed);audio.sound('click',0,.3);
+    if(!result.mark)say(result.message,6);
+    else if(story.circuit.includes(result.mark))say('이미 기록한 장면이다. 다른 원본을 대조하자.',4);
+    else if(advance(result.mark)){audio.sound('metal',0,.25);say(result.message+(story.stage==='archive_reveal'?'\n\n사고, 통화, 입차. 세 기록이 이어졌다. 모니터에서 누락된 아홉 초를 재생하자.':''),10);}
+    emit();
+  }
   function interact(){
     if(!started||paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying'||story.stage==='tv'||story.stage==='wake_ring')return;
     if(contact())return;
     findTarget();let action:Action|undefined=story.hidden?'closet':hover?.id;if(!action)return;
     if(story.stage==='archive_edit'&&(action.startsWith('archive_preview_')||action.startsWith('archive_record_'))){
-      const result=world.archiveReview!.operate(action,elapsed);audio.sound('click',0,.3);
-      if(!result.mark){say(result.message,5);return;}
-      if(story.circuit.includes(result.mark)){say('이미 표시한 증거다. 다른 원본을 대조하자.',4);return;}
-      action=result.mark;say(result.message,7);
+      reviewArchive(action);return;
     }
     if(action==='answerphone'&&area==='resident'){playRecording();return;}
     if(action==='annex_call'&&area==='annex'&&['annex_search','annex_unlock','annex_exit_ready'].includes(story.stage)){playRecording('annex_call');return;}
@@ -287,7 +292,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(action==='court_confirm'){audio.sound('metal',0,.6);say('잠금쇠가 풀렸다. 문이 열릴 수 있도록 한 걸음 물러서자.\n금고 안쪽에 열쇠와 인계 쪽지가 보인다.',6);return;}
       if(action==='court_key'){audio.sound('metal',0,.3);say(expansionJournal.court_key.text,12);return;}
       if(action==='court_evidence'&&!story.notes.includes('court_phone')){whisper='수첩을 펴자, 건너편 비상전화가 울리기 시작한다.';whisperUntil=elapsed+7;}
-      if(action.startsWith('archive_sequence_')){audio.sound('metal',0,.25);if(story.stage==='archive_reveal')say('세 원본이 같은 순간을 가리킨다.\n모니터에서 지워진 아홉 초를 재생하자.',7);return;}
+      if(action.startsWith('archive_sequence_')){audio.sound('metal',0,.25);if(story.stage==='archive_reveal')say('사고, 통화, 입차. 세 기록이 이어졌다.\n모니터에서 지워진 아홉 초를 재생하자.',7);return;}
       if(action.startsWith('plant_circuit_')){audio.sound('click');say(objectiveFor(story),4);return;}
     }
     if(action==='shoes'){
@@ -341,6 +346,11 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(!paused&&!mapping&&!e.repeat&&story.stage==='annex_unlock'&&hover&&(hover.id.startsWith('annex_digit_')||hover.id==='annex_dial'||hover.id==='annex_clear')){
       const digit=/^(?:Digit|Numpad)([0-9])$/.exec(e.code)?.[1],action=digit?`annex_digit_${digit}`:e.code==='Enter'?'annex_dial':e.code==='Backspace'?'annex_clear':null;
       if(action){e.preventDefault();operateIntercom(action as Action);return;}
+    }
+    if(!paused&&!mapping&&!e.repeat&&story.stage==='archive_edit'&&hover&&(hover.id.startsWith('archive_preview_')||hover.id.startsWith('archive_record_'))){
+      const digit=/^(?:Digit|Numpad)([123])$/.exec(e.code)?.[1],source=digit?(['road','call','gate'] as const)[Number(digit)-1]:undefined;
+      const action=source?`archive_preview_${source}`:e.code==='ArrowLeft'?'archive_record_back':e.code==='ArrowRight'?'archive_record_forward':e.code==='Space'?'archive_record_pause':e.code==='Enter'?'archive_record_mark':null;
+      if(action){e.preventDefault();reviewArchive(action as Action);return;}
     }
     if(paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying')return;keys.add(code);if(e.repeat)return;
     if(code==='KeyE'||code==='Space'){if(story.stage!=='pry')interact();}
