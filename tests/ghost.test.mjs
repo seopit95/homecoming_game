@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
 import {makeFigure} from '../lib/building.ts';
+import armAsset from '../lib/assets/ghost-arms.json' with {type:'json'};
 
 test('the elongated arms retain connected shoulders, elbows and wrists',()=>{
   const figure=makeFigure(new T.Group());
@@ -167,15 +168,18 @@ test('attack and passenger arm surfaces do not reverse their cross-sections at a
   figure.traverse(o=>{if(o.name==='ghost-continuous-arm')arms.push(o);});
   for(const pose of ['attack','passenger'])for(const time of [0,.2,.4,.65,1,1.7,2.8]){
     if(pose==='attack')animateGhostAttack(figure,time,false);else animateGhostPassenger(figure,time,1,false);
-    for(const arm of arms){
-      const p=arm.geometry.getAttribute('position'),{radialSegments:cols,heightSegments:rows}=arm.geometry.parameters;
-      let previous;
-      for(let row=0;row<=rows;row++){
-        const center=new T.Vector3();for(let col=0;col<cols;col++)center.add(new T.Vector3().fromBufferAttribute(p,row*(cols+1)+col));center.divideScalar(cols);
-        const radial=new T.Vector3().fromBufferAttribute(p,row*(cols+1)).sub(center).normalize();
-        if(previous)assert.ok(previous.dot(radial)>.5,`${pose} ${time}s: adjacent arm rings fold back across each other at row ${row}`);
-        previous=radial;
+    figure.updateMatrixWorld(true);
+    for(const [side,arm] of arms.entries()){
+      const p=arm.geometry.getAttribute('position'),ix=arm.geometry.index,rest=armAsset[side===0?'r':'l'].position,hand=figure.getObjectByName(`ghost-hand-${side===0?-1:1}`),elbow=hand.parent.parent,shoulder=elbow.parent;
+      const joints=[shoulder,elbow,hand.parent].map(o=>o.getWorldPosition(new T.Vector3())),segments=[new T.Line3(joints[0],joints[1]),new T.Line3(joints[1],joints[2])];
+      const triangle=new T.Triangle(),center=new T.Vector3(),normal=new T.Vector3(),near=new T.Vector3();let checked=0;
+      for(let i=0;i<ix.count;i+=3){
+        const ids=[ix.getX(i),ix.getX(i+1),ix.getX(i+2)],y=ids.reduce((s,j)=>s+rest[j*3+1],0)/3;if(y>-.39||y<-.55)continue;
+        triangle.a.fromBufferAttribute(p,ids[0]).applyMatrix4(arm.matrixWorld);triangle.b.fromBufferAttribute(p,ids[1]).applyMatrix4(arm.matrixWorld);triangle.c.fromBufferAttribute(p,ids[2]).applyMatrix4(arm.matrixWorld);
+        triangle.getMidpoint(center);triangle.getNormal(normal);const a=segments[0].closestPointToPoint(center,true,new T.Vector3()),b=segments[1].closestPointToPoint(center,true,new T.Vector3());near.copy(a.distanceToSquared(center)<b.distanceToSquared(center)?a:b);
+        assert.ok(normal.dot(center.clone().sub(near).normalize())>-.2,`${pose} ${time}s: elbow triangle ${i/3} turns inward`);checked++;
       }
+      assert.ok(checked>20,'inspect the actual skin around the elbow, without assuming cylinder rows');
     }
   }
 });

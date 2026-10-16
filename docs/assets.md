@@ -90,3 +90,27 @@ against the new skin using the existing pinned sources. Original face/hair
 bitmaps and the V49 garment remain in use. No new external asset, raster or
 runtime dependency is introduced. Representative geometry and art checks do
 not establish commercial character quality or whole-game completion.
+
+### V82 — anatomical exposed arms
+
+`lib/assets/ghost-arms.json` contains adult female elbow and forearm surfaces
+from the same pinned CC0 MakeHuman base and Asian female shape as the existing
+head. Source hashes, commit and credits are embedded. Rebuild with
+`node scripts/author-ghost-arms.mjs <pinned-base-and-target-directory>`.
+No source torso, new texture, remote dependency or application code is shipped.
+
+The source radial shape is retained while the bone axes fit the deliberately
+long 46cm upper arm and 49cm forearm. Hidden skin starts about29cm below the
+shoulder, beneath the existing opaque sleeve. The exposed skin uses361vertices
+and678triangles per arm, plus a22vertex boundary stitched to the existing hand.
+This replaces the ghost's spline tubes; the living pedestrian's clothing is
+unchanged. Skin UVs continue the hand's local projection into the existing
+generated skin atlas.
+
+Runtime blends rotation around the shared elbow over a broad anatomical bend,
+preserving radial volume instead of linearly crushing the inner elbow. The
+distal skin turns into the palm frame and its actual boundary is joined without
+an open seam. Normals are smoothed across both stitch boundaries. Existing long
+fingers, nails, skeletal poses, wall-avoidance IK, navigation and story remain.
+Changed-surface checks and native crawl/capture images are bounded character
+evidence, not whole-game completion or a commercial-art certificate.
