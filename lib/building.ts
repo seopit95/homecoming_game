@@ -1,3 +1,4 @@
+import {buildGarageStructure,garageMarking} from './garage-structure.ts';
 import * as T from 'three';
 import {buildCarDeparture,type CarDeparture} from './car-departure.ts';
 import {createCRT,crtCable,createCrtSocket} from './crt-monitor.ts';
@@ -30,8 +31,10 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   const bx=size.x,bz=size.z,bounds:Bounds=area==='landing'?{x:4.2,z:25.45,minX:-1.17}:{x:bx-.13,z:bz-.13},ceiling=area==='parking'?2.7:2.8;
   const mat=(color:string,extra:object={})=>new T.MeshStandardMaterial({color,roughness:.85,...extra});
   const plaster=surface('decayWall','#b5b6a6'),concrete=surface('garage','#a2a9a3'),floorMat=surface(area==='parking'?'garage':'oldTile','#b0b1a4',{roughness:.62}),metal=surface('steel','#878d8b',{metalness:.55,roughness:.48}),dark=mat('#141b1c'),rust=mat('#523b29'),wood=surface('wood','#807668'),paint=surface('decayWall','#a7b0a0',{roughness:.79}),white=mat('#a7ab94'),red=mat('#802b20'),wallMat=area==='parking'?concrete:area==='lift'?metal:plaster;
+  const parkingLower=area==='parking'?surface('wall','#84968b',{roughness:.86}):paint;
+  if(area==='parking'){floorMat.normalScale.setScalar(.28);floorMat.roughness=.72;}
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false){const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
-  function wall(x:number,z:number,w:number,d:number,y=ceiling/2,h=ceiling){const mesh=box(x,y,z,w,h,d,wallMat,true);box(x,y-h/2+.46,z,w+.012,.9,d+.012,area==='lift'?metal:paint);return mesh;}
+  function wall(x:number,z:number,w:number,d:number,y=ceiling/2,h=ceiling){const mesh=box(x,y,z,w,h,d,wallMat,true);box(x,y-h/2+.46,z,w+.012,.9,d+.012,area==='lift'?metal:parkingLower);return mesh;}
   function label(text:string,x:number,y:number,z:number,ry=0,w=1.1,h=.26,color='#c9ceaf',background='#25372f',lit=false){
     const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;
     const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map:texture}):new T.MeshStandardMaterial({map:texture,roughness:.9}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);
@@ -81,7 +84,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       box(2.95,.65,landing.homeZ+1.12,1.3,1.3,.5,wood,true);light(2.2,2.3,landing.homeZ,'#6c8c8a',.8,3);
     }if(area==='corridor'||area==='parking'||area==='office')portal(bz);else wall(0,bz,bx*2,.18);
     if(area==='lift'||area==='landing'||area==='office'||area==='corridor')portal(-bz);else if(area==='parking'){wall(-4.475,-bz,15.05,.18);wall(10.275,-bz,3.45,.18);box(5.8,2.75,-bz,5.5,.1,.18,wallMat);}else wall(0,-bz,bx*2,.18);
-    for(let z=-bz+2;z<bz;z+=5){box(0,ceiling-.08,z,bx*2,.15,.25,concrete);pipe(bx-.21,ceiling-.18,z,4.9);}
+    if(area!=='parking')for(let z=-bz+2;z<bz;z+=5){box(0,ceiling-.08,z,bx*2,.15,.25,concrete);pipe(bx-.21,ceiling-.18,z,4.9);}
   }
   if(area==='landing'||area==='lift'){
     const dz=area==='landing'?landing.liftZ:-1.35;
@@ -247,18 +250,18 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   }
   if(area==='parking'){
     bounds.z=bz+6.8;connectionPassage(root,solids,lamps,-3,bz+6,0,.9);
-    const L=buildingLayout.parking;
+    const L=buildingLayout.parking;const garage=buildGarageStructure(root);
     door('exit','보행자 출구',0,-bz+.12);label('백로아파트  B1',0,2.57,bz-.094,Math.PI,2,.3);light(0,2.4,-21,'#74af8b',4);
-    for(const x of [-9,0,9])for(const z of [-12,0,12]){box(x,1.35,z,.55,2.7,.55,concrete);solids.push({x,z,w:.66,d:.66,y:1.35,h:2.7});box(x,.055,z,.66,.11,.66,concrete);for(const dx of [-.3,.3])for(const dz of [-.3,.3])box(x+dx,.6,z+dz,.045,1.05,.045,metal);box(x,.66,z,.58,.85,.58,mat('#aa8f3f'));for(const y of [.35,.65,.95])box(x,y,z,.59,.11,.59,dark);label('B1',x,1.75,z+.294,0,.4,.18);box(x,2.42,z,.9,.22,.9,concrete);}
+    for(const x of [-9,0,9])for(const z of [-12,0,12]){box(x,1.35,z,.55,2.7,.55,concrete);solids.push({x,z,w:.66,d:.66,y:1.35,h:2.7});box(x,.055,z,.66,.11,.66,concrete);for(const dx of [-.3,.3])for(const dz of [-.3,.3])box(x+dx,.6,z+dz,.045,1.05,.045,metal);box(x,.66,z,.58,.85,.58,mat('#aa8f3f'));for(const y of [.35,.65,.95])box(x,y,z,.59,.11,.59,dark);label('B1',x,1.75,z+.2755,0,.4,.18);box(x,2.42,z,.9,.22,.9,concrete);}
     function car(x:number,z:number,color:string,own=false){
       const chassis=createSedan(color,own);chassis.position.set(x,0,z);root.add(chassis);solids.push(...sedanSolids(x,z));
       for(const end of [-1,1])label(own?'28 가 0317':`${37+Math.round(x)} 나 ${4200+Math.round(z*13)}`,x,.548,z+end*2.263,end>0?0:Math.PI,.47,.11,'#2b3027','#a6ad9a');
-      for(const dx of [-1.27,1.27])box(x+dx,.008,z,.055,.016,4.85,white);box(x,.008,z-2.45,2.59,.016,.055,white);for(const dx of [-.55,.55]){box(x+dx,.07,z-1.7,.55,.14,.16,dark);for(const ox of [-.17,.17]){box(x+dx+ox,.141,z-1.7,.055,.002,.12,white);const anchor=new T.Mesh(new T.CylinderGeometry(.012,.012,.009,8),metal);anchor.position.set(x+dx+ox,.145,z-1.7);root.add(anchor);}}
+      for(const dx of [-1.27,1.27])garageMarking(root,x+dx,z,.055,4.85,garage.floorPaint);garageMarking(root,x,z-2.45,2.59,.055,garage.floorPaint);for(const dx of [-.55,.55]){box(x+dx,.07,z-1.7,.55,.14,.16,dark);for(const ox of [-.17,.17]){box(x+dx+ox,.141,z-1.7,.055,.002,.12,white);const anchor=new T.Mesh(new T.CylinderGeometry(.012,.012,.009,8),metal);anchor.position.set(x+dx+ox,.145,z-1.7);root.add(anchor);}}
       return chassis;
     }
     for(const x of [-5.2,5.2])for(const z of [-10,-3,4,11])car(x,z,(Math.round(z)%3===0?'#8b8e87':x<0?'#354044':'#6c655d'));
     carDeparture=buildCarDeparture(root,solids);const own=carDeparture.car;
-    for(const dx of [-1.27,1.27])box(L.car.x+dx,.008,L.car.z,.055,.016,4.85,white);box(L.car.x,.008,L.car.z+2.45,2.59,.016,.055,white);
+    for(const dx of [-1.27,1.27])garageMarking(root,L.car.x+dx,L.car.z,.055,4.85,garage.floorPaint);garageMarking(root,L.car.x,L.car.z+2.45,2.59,.055,garage.floorPaint);
     for(const dx of [-.55,.55])box(L.car.x+dx,.07,L.car.z+2.45,.55,.14,.16,dark);
     target('car_passenger','조수석 문 열기',carDeparture.passengerDoor,6.02,1.1,-17.8);carDeparture.passengerDoor.userData.approach={x:7.1,z:-17.8};
     target('car_search','가방에서 열쇠 꺼내기',carDeparture.key,5.415,.31,-17.83);carDeparture.key.userData.approach={x:7.1,z:-17.8};target('car_board','운전석 문 열고 탑승',own,3.98,1.1,-17.8);
@@ -302,8 +305,8 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const extinguisher=new T.Mesh(new T.CylinderGeometry(.10,.10,.43,20),red);extinguisher.position.set(-11.25,.32,16.05);root.add(extinguisher);box(-11.25,.08,16.05,.26,.16,.26,metal);roundPipe(root,[-11.25,.54,16.05],[-11.25,.62,16.05],.024,metal);roundPipe(root,[-11.25,.59,16.05],[-11.37,.32,16.05],.012,dark);
     box(0,.025,-21.69,1.05,.05,.24,metal);const jam=box(.07,.06,-21.45,.79,.09,.16,wood);jam.rotation.y=.12;
     const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,time,_reduced,story,occupants)=>{if(stage==='parking_run'||stage==='car_departure')setAlarm(true);const drained=story?.notes.includes('plant_drained')||['parking_alarm','parking_run','car_departure'].includes(stage);flood.scale.y=drained?.35:2.6;carDeparture!.inspect(stage,time,story,occupants);const target=targets.find(t=>t.id==='car_search');if(target)target.label=story?.notes.includes('plant_drained')?'조수석 가방 · 차 열쇠':'조수석 가방 · 설비 열쇠';};
-    for(const x of [-2.2,2.2])for(const z of [-18,-6,6,18])fixture(x,z,z!==6);for(const x of [-8,8])pipe(x,2.47,0,43);for(const z of [-12,0,12])pipe(0,2.35,z,23,'x');
-    for(let z=-18;z<20;z+=4){box(0,.014,z,.07,.025,1.5,white);}for(const z of [-12,6])label('출구 ↑',-11.89,1.9,z,Math.PI/2,1.2,.3);
+    for(const x of [-2.2,2.2])for(const z of [-18,-6,6,18])fixture(x,z,z!==6);
+    for(const z of [-12,6])label('보행자 출구 →',-11.9095,1.9,z,Math.PI/2,1.2,.3);
     figure.position.set(-7.8,0,-18);figure.visible=true;
   }
   return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,bounds,spawn,heading,heightAt,liftDoors,setDisplay,fallingFigure,updateStory,reset,carDeparture};
