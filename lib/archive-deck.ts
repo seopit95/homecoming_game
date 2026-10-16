@@ -15,15 +15,14 @@ export function createArchiveDeck(){
  for(const x of [-.308,.308])for(const z of [-.142,.142]){const screw=new T.Mesh(new T.CylinderGeometry(.004,.004,.002,10),rubber);screw.position.set(x,.115,z);root.add(screw);}
  function key(id:Action,title:string,caption:string,x:number,z:number,material:T.Material=ivory){box('control-recess',x,.115,z,.098,.002,.061,rubber);const mesh=box(id,x,.122,z,.086,.014,.05,material);print(mesh,caption,.07,.027,0,.0074,0,material===red?'#7a3a32':'#a7aa95',material===red?'#c9c5ab':'#28332c');controls.push({id,label:title,mesh});return mesh;}
  for(const [i,source,title] of [[0,'road','A 도로 · 1'],[1,'call','B 통화 · 2'],[2,'gate','C 입차 · 3']] as const)key(`archive_preview_${source}`,title+' 원본 재생',String(i+1)+' / '+source.toUpperCase(),-.23+i*.115,-.075);
- key('archive_record_back','1초 되감기 · ←','−1',-.23,.067);key('archive_record_pause','정지 / 재생 · Space','Ⅱ / ▶',-.115,.067);key('archive_record_forward','1초 앞으로 · →','+1',0,.067);key('archive_record_mark','증거 표시 · Enter','MARK',.22,.095,red);
- const jog=new T.Mesh(new T.CylinderGeometry(.057,.057,.018,48),rubber);jog.position.set(.22,.124,-.047);root.add(jog);
- const dial=new T.Mesh(new T.CylinderGeometry(.049,.049,.012,48),steel);dial.position.set(.22,.136,-.047);root.add(dial);
- for(let i=0;i<16;i++){const a=i*Math.PI/8,mark=box('jog-grip',.22+Math.sin(a)*.046,.1423,-.047+Math.cos(a)*.046,.002,.001,.006,rubber);mark.rotation.y=a;}
- print(root,'JOG / FRAME',.11,.016,.22,.1144,-.128,'#81867c','#27322c');
+ key('archive_record_back','1초 되감기 · ←','−1',-.23,.067);key('archive_record_pause','정지 / 재생 · Space','Ⅱ / ▶',-.115,.067);key('archive_record_forward','1초 앞으로 · →','+1',0,.067);key('archive_record_mark','판단할 장면 표시 · Enter','MARK',.22,.095,red);
+ key('archive_record_choice_0','4 · 첫 번째 사실 대조','4',.12,-.075);
+ key('archive_record_choice_1','5 · 두 번째 사실 대조','5',.235,-.075);
+ print(root,'CHECK 4 / 5',.16,.016,.19,.1144,-.128,'#81867c','#27322c');
  for(let i=0;i<9;i++)box('deck-front-vent',-.26+i*.032,.057,.1702,.018,.004,.001,rubber);
  const power=new T.Mesh(new T.CylinderGeometry(.006,.006,.014,12),rubber);power.rotation.x=Math.PI/2;power.position.set(-.26,.065,-.174);root.add(power);
  const link=new T.Mesh(new T.CylinderGeometry(.009,.009,.014,12),steel);link.rotation.x=Math.PI/2;link.position.set(.15,.065,-.174);root.add(link);
  const guide=box('archive-deck-guide',-.62,.001,0,.46,.002,.16,ivory);
- for(const [line,z] of [['1 · 2 · 3  원본 선택',-.047],['Space  정지 / 재생',-.016],['← · →  1초     Enter  표시',.016],['사건이 드러난 순간에 표시할 것',.048]] as const)print(guide,line,.43,.022,0,.0013,z,'#a7aa95','#28332c');
+ for(const [line,z] of [['1 · 2 · 3 원본 / 4 · 5 사실 대조',-.047],['Space  원본만 정지 / 재생',-.016],['← · →  1초     Enter  장면 표시',.016],['회수한 원본부터 검토할 수 있음',.048]] as const)print(guide,line,.43,.022,0,.0013,z,'#a7aa95','#28332c');
  return {root,controls,top,power:new T.Vector3(-.26,.065,-.181),link:new T.Vector3(.15,.065,-.181)};
 }

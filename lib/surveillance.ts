@@ -6,7 +6,7 @@ import {extremity} from './ghost-anatomy.ts';
 import {surface,boxUV} from './materials.ts';
 import {disposeWorld} from './world.ts';
 import {officeReplayDuration,type Stage} from './story.ts';
-import {archiveCamera,type ArchiveFrame} from './archive-review.ts';
+import {archiveCamera,archiveClips,archiveReviewing,type ArchiveFrame} from './archive-review.ts';
 
 // The small monitor has its own 10 fps recording, then switches to the real room.
 export function createSurveillance(kind:'archive'|'office'='archive'){
@@ -58,12 +58,12 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
   let mode='idle',lastKey='',pending=true,clock=0,disposed=false;
   function update(stage:Stage,time:number,text:string,review?:ArchiveFrame){
     const office=kind==='office',warning=stage==='archive_escape'||stage==='archive_departure';
-    const preview=!office&&stage==='archive_edit'&&!!review?.source;
+    const preview=!office&&archiveReviewing(stage)&&!!review?.source;
     const active=office?['office_playback','office_key','office_leave','office_departure'].includes(stage):preview||stage==='archive_playback'||warning;
     clock=office?Math.min(officeReplayDuration,Math.max(0,time)):preview?(review!.source==='road'?review!.time:review!.source==='call'?5+review!.time:12+review!.time):stage==='archive_playback'?12+time:Math.max(warning?27:0,time);
     mode=!active?'idle':office?'office':preview?review!.source!:clock<5?'road':clock<12?'call':clock<21?'gate':'live';
     image.visible=active&&mode!=='call';
-    const frame=Math.floor(clock*10),next=`${mode}:${active?frame:text}:${preview?review!.playing:''}`;if(next===lastKey)return;lastKey=next;pending=true;
+    const frame=Math.floor(clock*10),next=`${mode}:${active?frame:text}:${preview?review!.playing:''}:${review?.question??false}`;if(next===lastKey)return;lastKey=next;pending=true;
     road.visible=!office&&(mode==='road'||mode==='idle');garage.visible=mode==='gate'||mode==='office';car.visible=active&&mode!=='call'&&mode!=='live';
     intactCar.visible=false;
     hand.visible=mode==='office'?clock>=3:mode==='gate'&&clock>=14;
@@ -102,6 +102,10 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
      mode==='idle'||mode==='road'?text:mode==='office'?(clock<3?'2803 등록 차량 · 입차':clock<7?'03:26:03–11 / 기록 9초 누락':'귀가자 2명 / 2803호'):mode==='call'?'「잘못 거셨어요.」':mode==='gate'?`복원 구간 ${Math.min(9,Math.floor(clock-12)+1)} / 9초 · 동시 녹음` :clock<27?'현재 영상 · 기록 작성 중':'네 뒤에 있어';
     const lines=caption.split('\n');lines.forEach((line,i)=>ctx.fillText(line,320,(mode==='idle'?220:425)+i*29));
     if(preview){ctx.textAlign='right';ctx.font='17px monospace';ctx.fillText(`${review!.playing?'▶':'Ⅱ'} ${review!.time.toFixed(1)}s`,621,70);}
+    if(preview&&review?.question&&review.source){
+      const clip=archiveClips[review.source];ctx.fillStyle='rgba(5,13,10,.94)';ctx.fillRect(14,102,612,279);ctx.fillStyle='#d5d9c5';ctx.textAlign='center';ctx.font='25px sans-serif';ctx.fillText(clip.question,320,143);
+      ctx.font='24px sans-serif';clip.choices.forEach((choice,i)=>ctx.fillText(`${i+4} · ${choice}`,320,207+i*56));ctx.fillStyle='#9faf9c';ctx.font='19px sans-serif';ctx.fillText('4·5 사실 대조 / ←·→ 원본 다시 보기',320,337);
+    }
     ctx.fillStyle='rgba(0,8,4,.14)';for(let y=51;y<398;y+=4)ctx.fillRect(0,y,640,1);
     overlayMap.needsUpdate=true;
   }
@@ -118,6 +122,6 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     try{await renderer.compileAsync?.(recording,camera);render(renderer,liveScene,true);if(kind==='archive'){mode='live';await renderer.compileAsync?.(liveScene,liveCamera);render(renderer,liveScene,true);}}
     finally{road.visible=a;garage.visible=b;car.visible=c;hand.visible=h;driver.root.visible=d;intactCar.visible=intact;mode=saved;pending=true;}
   },dispose(){if(disposed)return;disposed=true;target.dispose();disposeWorld(recording);}};
-  root.userData.surveillance=feed;update(kind==='office'?'office_record':'archive_reveal',0,kind==='office'?'신호 없음':'복원 대기\n원본 기록 3개가 필요합니다');return root;
+  root.userData.surveillance=feed;update(kind==='office'?'office_record':'archive_reveal',0,kind==='office'?'신호 없음':'회수한 원본부터 검토하세요\n장면 표시 → 4·5 사실 대조');return root;
 }
 export type Surveillance={update:(stage:Stage,time:number,text:string,review?:ArchiveFrame)=>void;render:(renderer:T.WebGLRenderer,scene:T.Scene,force?:boolean)=>void;prepare:(renderer:T.WebGLRenderer,scene:T.Scene)=>Promise<void>;dispose:()=>void};

@@ -15,7 +15,7 @@ import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {facilityTable,facilityChair,waterTank,pumpSkid,cartridgeFuse,videoCassette} from './facility-props.ts';
 import {createAnsweringMachine} from './resident-props.ts';
 import {facilityModel} from './facility-models.ts';
-import {createArchiveReview,archiveClips,archiveCamera} from './archive-review.ts';
+import {createArchiveReview,archiveClips,archiveCamera,archiveReviewing} from './archive-review.ts';
 import {createArchiveDeck} from './archive-deck.ts';
 import {buildAnnexLobby} from './annex-lobby.ts';
 import {buildAnnexWestWing} from './annex-west-wing.ts';
@@ -324,10 +324,10 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   if(stage==='archive_playback'&&replayAt<0)replayAt=time;
   const replayTime=time-replayAt;
   const replayText=archiveReplay.findLast(cue=>replayTime>=cue.at)?.screen??archiveReplay[0].screen;
-  const text=area==='archive'?(stage==='archive_playback'?replayText:(stage==='archive_edit'?`증거 표시 ${story?.circuit.length??0}/3\n원본 선택 · 정지 · ±1초 · 표시`:stage==='archive_reveal'?'기록 연결 완료\n재생 버튼을 누르세요':['archive_escape','archive_departure'].includes(stage)?'현재 03:17 / 편집실\n네 뒤에 있어':'원본 기록 3개를 회수하세요')):
+  const text=area==='archive'?(stage==='archive_playback'?replayText:(archiveReviewing(stage)?'회수한 원본을 선택하세요\n장면 표시 → 4·5 사실 대조':stage==='archive_reveal'?'기록 연결 완료\n재생 버튼을 누르세요':['archive_escape','archive_departure'].includes(stage)?'현재 03:17 / 편집실\n네 뒤에 있어':'회수한 원본부터 검토할 수 있습니다')):
    area==='annex'?intercomStatus||(['annex_exit_ready','annex_departure'].includes(stage)?'2803 연결됨\n북쪽 방화문 잠금 해제':'통화 기록 · 수신 세대 확인\n네 자리 입력 → CALL'):drained?'수위 LOW\n주차장 통행 가능':drainAt>=0?'배수 가동 중\n젖은 통로에 접근 금지':story&&stage==='plant_power'?`수위 HIGH / 토출 ${plantRoute(story)==='drain'?'외부':plantRoute(story)==='closed'?'차단':'환수'}\n${plantProblem(story)?'현장 확인 후 시험 기동':'배수 준비 완료'}`:'수위 HIGH\n유입 · 펌프실 점검';
   if(text!==lastDisplay){lastDisplay=text;faceText(text);}
-  const review=stage==='archive_edit'?archiveReview?.read(time):undefined;
+  const review=archiveReviewing(stage)?archiveReview?.read(time):undefined;
   const reviewText=review?.source?`${archiveClips[review.source].title}\n${review.playing?'재생':'정지'} ${review.time.toFixed(1)}초 / ${archiveClips[review.source].duration}초`:text;
   surveillance?.update(stage,review?.source?review.time:replayTime,reviewText,review);
  }

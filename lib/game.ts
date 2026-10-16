@@ -2,6 +2,7 @@ import * as T from 'three';
 import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive,plantProblem,plantRoute,annexTapeDuration,courtCallTimes,courtCallDuration} from './expansion-story.ts';
 import {expansionLayout} from './expansion-world.ts';
 import {annexCanCall,annexCallFor,annexCallLabel} from './annex-call.ts';
+import {archiveClips,archiveReviewing,type ArchiveSource} from './archive-review.ts';
 import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,clampLightOrigin,type Target} from './world.ts';
 import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength} from './ghost.ts';
 export {prepareVisuals} from './materials.ts';
@@ -246,6 +247,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   };
   function reviewArchive(action:Action){
     if(contact())return;
+    if(action.startsWith('archive_preview_')){
+      const source=action.slice('archive_preview_'.length) as ArchiveSource;
+      if(!story.notes.includes('archive_'+source)){audio.sound('click',0,.25);say(({road:'서측 A실에서 도로 원본을 먼저 회수하자.',call:'동측 B실에서 통화 원본을 먼저 회수하자.',gate:'서측 C실에서 입차 원본을 먼저 회수하자.'})[source],5);return;}
+    }
     const result=world.archiveReview!.operate(action,elapsed);audio.sound('click',0,.3);
     if(!result.mark)say(result.message,6);
     else if(story.circuit.includes(result.mark))say('이미 기록한 장면이다. 다른 원본을 대조하자.',4);
@@ -256,7 +261,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(!started||paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying'||story.stage==='tv'||story.stage==='wake_ring')return;
     if(contact())return;
     findTarget();let action:Action|undefined=story.hidden?'closet':hover?.id;if(!action)return;
-    if(story.stage==='archive_edit'&&(action.startsWith('archive_preview_')||action.startsWith('archive_record_'))){
+    if(archiveReviewing(story.stage)&&(action.startsWith('archive_preview_')||action.startsWith('archive_record_'))){
       reviewArchive(action);return;
     }
     if(action==='answerphone'&&area==='resident'){playRecording();return;}
@@ -355,9 +360,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       const digit=/^(?:Digit|Numpad)([0-9])$/.exec(e.code)?.[1],action=digit?`annex_digit_${digit}`:e.code==='Enter'?'annex_dial':e.code==='Backspace'?'annex_clear':null;
       if(action){e.preventDefault();operateIntercom(action as Action);return;}
     }
-    if(!paused&&!mapping&&!e.repeat&&story.stage==='archive_edit'&&hover&&(hover.id.startsWith('archive_preview_')||hover.id.startsWith('archive_record_'))){
+    if(!paused&&!mapping&&!e.repeat&&archiveReviewing(story.stage)&&archiveControlsInReach()){
       const digit=/^(?:Digit|Numpad)([123])$/.exec(e.code)?.[1],source=digit?(['road','call','gate'] as const)[Number(digit)-1]:undefined;
-      const action=source?`archive_preview_${source}`:e.code==='ArrowLeft'?'archive_record_back':e.code==='ArrowRight'?'archive_record_forward':e.code==='Space'?'archive_record_pause':e.code==='Enter'?'archive_record_mark':null;
+      const action=source?`archive_preview_${source}`:e.code==='Digit4'||e.code==='Numpad4'?'archive_record_choice_0':e.code==='Digit5'||e.code==='Numpad5'?'archive_record_choice_1':e.code==='ArrowLeft'?'archive_record_back':e.code==='ArrowRight'?'archive_record_forward':e.code==='Space'?'archive_record_pause':e.code==='Enter'?'archive_record_mark':null;
       if(action){e.preventDefault();reviewArchive(action as Action);return;}
     }
     if(paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying')return;keys.add(code);if(e.repeat)return;
@@ -377,11 +382,21 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function hidden(){blur();if(document.hidden)audio.pause();else if(started&&!paused)audio.resume();}
   function blur(){keys.clear();holding=false;dragging=false;}
   document.addEventListener('keydown',keydown);document.addEventListener('keyup',keyup);document.addEventListener('pointermove',pointermove);document.addEventListener('pointerup',pointerup);document.addEventListener('pointerlockchange',lockchange);document.addEventListener('visibilitychange',hidden);window.addEventListener('blur',blur);canvas.addEventListener('pointerdown',pointerdown);
+  function archiveControlsInReach(){
+    if(area!=='archive')return false;camera.getWorldDirection(direction);
+    return ['archive_record_mark','archive_play'].some(id=>{
+      const target=world.targets.find(t=>t.id===id);if(!target)return false;
+      const toward=target.point.clone().sub(camera.position);return toward.length()<2.3&&toward.normalize().dot(direction)>.65&&hasLineOfSight(camera.position,target.point,world.solids);
+    });
+  }
   function findTarget(){
     hover=undefined;if(evidenceReaction||story.hidden||isCinematic(story.stage)||story.stage==='tv'||story.stage==='dying'||story.stage==='ended')return;camera.getWorldDirection(direction);
     let best=Infinity;
     for(const t of world.targets){
       if(!expansionTargetActive(story,t.id))continue;
+      const choice=t.id==='archive_record_choice_0'?0:t.id==='archive_record_choice_1'?1:null;
+      const review=choice!==null?world.archiveReview?.read(elapsed):null;
+      if(choice!==null&&!review?.question)continue;
       if(t.id==='resident_key'&&(story.notes.includes('resident_key')||!world.residentStudy?.keyVisibleFrom(camera.position)))continue;
       if(t.id==='court_hangup'&&courtCallAt<0)continue;
       if(t.id==='court_key'&&((world.courtSafe?.hinge.rotation.y??0)>-1.1||!world.courtSafe?.keyVisibleFrom(camera.position)))continue;
@@ -413,7 +428,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       delta.copy(t.point).sub(camera.position);const distance=delta.length();if(distance>2.3||delta.normalize().dot(direction)<.81)continue;
       if(t.precise){t.mesh.updateWorldMatrix(true,false);interactionRay.set(camera.position,direction);if(!interactionRay.intersectObject(t.mesh,false).length)continue;}
       const score=t.precise?distance*.00001:1-delta.dot(direction)+distance*.005;
-      if(score<best&&hasLineOfSight(camera.position,t.point,world.solids)){hover=t;best=score;}
+      if(score<best&&hasLineOfSight(camera.position,t.point,world.solids)){hover=choice!==null&&review?.source?{...t,label:`${choice+4} · ${archiveClips[review.source].choices[choice]}`}:t;best=score;}
     }
   }
   function followEnemy(target:Point,speed:number,dt:number){
@@ -828,7 +843,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(message&&elapsed>messageUntil)message='';if(whisper&&elapsed>whisperUntil)whisper='';
     }
     if(stamina.exhausted)breathRecovery=true;else if(stamina.value>.9)breathRecovery=false;
-    const archiveFrame=started&&story.stage==='archive_edit'?world.archiveReview?.read(elapsed):started&&story.stage==='archive_playback'&&stageTime<9?{source:'gate' as const,time:stageTime,playing:true}:null;
+    const archiveFrame=started&&archiveReviewing(story.stage)?world.archiveReview?.read(elapsed):started&&story.stage==='archive_playback'&&stageTime<9?{source:'gate' as const,time:stageTime,playing:true}:null;
     const recordDx=9-camera.position.x,recordDz=-20-camera.position.z,recordDistance=Math.hypot(recordDx,recordDz);
     audio.setArchiveRecord(archiveFrame??null,recordDistance<14?Math.min(1,2.5/Math.max(1,recordDistance)):0,T.MathUtils.clamp((recordDx*Math.cos(yaw)-recordDz*Math.sin(yaw))/Math.max(1,recordDistance),-1,1));
     audio.setExertion(started&&!isCinematic(story.stage)&&!['ended','dying'].includes(story.stage)&&breathRecovery?Math.min(1,(1-stamina.value)/.75):0);

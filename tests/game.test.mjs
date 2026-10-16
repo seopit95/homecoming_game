@@ -219,7 +219,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
      const path=findPath(renderedCamera.position,at,reference.solids,reference.bounds,.26);assert.ok(path.length,`route to ${id} from ${renderedCamera.position.toArray()} to ${JSON.stringify(at)}`);for(const p of path)runTo(p.x,p.z);
      if(id==='plant_exit'&&game.snapshot().story.stage==='plant_drain'){game.key('KeyW',true);tick(.05);game.key('KeyW',false);tick(12);}
      aim(renderedCamera.position.toArray(),t.point.toArray());game.interact();
-     if(source){event(doc,'keydown',{code:'Space',repeat:false});for(let i=0;i<({road:4,call:10,gate:6}[source]);i++)event(doc,'keydown',{code:'ArrowRight',repeat:false});event(doc,'keydown',{code:'Enter',repeat:false});}
+     if(source){event(doc,'keydown',{code:'Space',repeat:false});for(let i=0;i<({road:4,call:10,gate:6}[source]);i++)event(doc,'keydown',{code:'ArrowRight',repeat:false});event(doc,'keydown',{code:'Enter',repeat:false});event(doc,'keydown',{code:source==='call'?'Digit4':'Digit5',repeat:false});}
      assert.equal(game.snapshot().story.stage,want,id);tick();
      if(id==='court_confirm')tick(1.1);
      if(id==='court_phone'){tick(10.7);assert.equal(game.snapshot().story.stage,'court_code');}
@@ -977,11 +977,33 @@ test('V69 review: an opened safe rejects rear and side key pickup through its op
  finally{f.close();}
 });
 
-test('V70 nearby archive transport keys jog to evidence, retain findings and do not pause the world',async()=>{
+test('all three supported archive conclusions through physical controls unlock the restored record',async()=>{
  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'archive_edit',notes:['archive_ledger','archive_road','archive_call','archive_gate'],circuit:[],elapsed:900,pursuit:false}):null,setItem(){},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));const {buildWorld,disposeWorld}=await import('../lib/world.ts'),reference=buildWorld(new THREE.Scene(),'archive');
  const press=code=>event(doc,'keydown',{code,repeat:false});
  function aim(id='archive_record_pause'){const t=reference.targets.find(t=>t.id===id),a=t.mesh.userData.approach;renderedCamera.position.set(a.x,1.65,a.z);const d=t.point.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
- try{await game.ready;tick();game.continueGame();tick(.1);press('Digit1');tick(6.1);press('Enter');assert.equal(game.snapshot().story.circuit.length,0,'remote keys cannot operate from the entry corridor');aim('archive_preview_road');game.interact();tick(6.1);aim('archive_record_mark');game.interact();assert.equal(game.snapshot().story.circuit.length,0,'the aftermath does not establish brake timing');for(let i=0;i<2;i++){aim('archive_record_back');game.interact();}aim('archive_record_mark');game.interact();assert.ok(game.snapshot().story.notes.includes('archive_sequence_road'),'the visible braking frame earns a readable finding through physical E controls');aim();press('Digit2');tick(10);press('Space');const at=game.snapshot().elapsed;tick(.5);assert.equal(game.snapshot().paused,false);assert.ok(game.snapshot().elapsed>at,'tape pause does not pause the game');press('Enter');assert.ok(game.snapshot().story.notes.includes('archive_sequence_call'));game.pause();press('Digit3');tick(6);press('Enter');assert.equal(game.snapshot().story.circuit.length,2,'paused controls cannot collect evidence');game.pause(false);aim();press('Digit3');tick(6);press('Enter');assert.equal(game.snapshot().story.stage,'archive_reveal');assert.ok(game.snapshot().story.notes.includes('archive_sequence_gate'));}
+ try{await game.ready;tick();game.continueGame();tick(.1);
+  for(const [source,key,time,choice] of [['road','Digit1',6.1,1],['call','Digit2',12.1,0],['gate','Digit3',9.1,1]]){
+   aim('archive_preview_'+source);press(key);tick(time);aim('archive_record_mark');game.interact();const count=game.snapshot().story.circuit.length;
+   assert.match(game.snapshot().message,/확인한 사실|끊은 쪽|확인한 행동/);assert.equal(game.snapshot().paused,false);
+   aim('archive_record_choice_'+choice);game.interact();assert.ok(game.snapshot().story.notes.includes('archive_sequence_'+source));assert.equal(game.snapshot().story.circuit.length,count+1);
+  }
+  assert.equal(game.snapshot().story.stage,'archive_reveal');
+ }
  finally{game.dispose();disposeWorld(reference.root);win.localStorage=previous;}
+});
+
+test('V86 partial archive investigation works from the nearby monitor, checks a conclusion and keeps searching',async()=>{
+ const previous=win.localStorage;let saved;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'archive_search',notes:['archive_gate'],circuit:[],elapsed:900,pursuit:false}):null,setItem:(_k,v)=>saved=v,removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));const {buildWorld,disposeWorld}=await import('../lib/world.ts'),reference=buildWorld(new THREE.Scene(),'archive');
+ const press=code=>event(doc,'keydown',{code,repeat:false});
+ function aim(id){const t=reference.targets.find(t=>t.id===id);assert.ok(t,'real physical target '+id);const a=t.mesh.userData.approach;renderedCamera.position.set(a.x,1.65,a.z);const d=t.point.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
+ try{
+  await game.ready;tick();game.continueGame();tick(.1);press('Digit3');tick(9.1);press('Enter');assert.equal(game.snapshot().story.circuit.length,0,'entry corridor cannot operate a distant recorder');
+  aim('archive_play');press('Digit1');assert.match(game.snapshot().message,/A실|도로.*회수/,'unrecovered sources explain where to find them');
+  press('Digit3');tick(9.1);press('Enter');assert.match(game.snapshot().message,/확인한 행동/);assert.equal(game.snapshot().story.circuit.length,0,'a marked frame alone is not a conclusion');
+  const at=game.snapshot().elapsed;press('Digit4');assert.match(game.snapshot().message,/맞지 않는다/);tick(3);assert.ok(game.snapshot().elapsed>at+2.9);assert.equal(game.snapshot().paused,false);
+  press('Enter');aim('archive_record_choice_1');game.interact();assert.ok(game.snapshot().story.notes.includes('archive_sequence_gate'));assert.equal(game.snapshot().story.stage,'archive_search');assert.equal(game.snapshot().story.notes.includes('archive_road'),false);assert.ok(JSON.parse(saved).circuit.includes('archive_sequence_gate'));
+  game.pause();press('Digit1');press('Enter');press('Digit5');assert.equal(game.snapshot().story.circuit.length,1,'paused transport/claim controls do nothing');
+ }finally{game.dispose();disposeWorld(reference.root);win.localStorage=previous;}
 });

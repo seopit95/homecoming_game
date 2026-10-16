@@ -1,5 +1,6 @@
 import type {Action,Story,Stage} from './story.ts';
 import {annexCanCall} from './annex-call.ts';
+import {archiveReviewing} from './archive-review.ts';
 
 export const expansionObjectives={
  office_departure:'열린 관리용 승강기에 걸어 들어가세요',
@@ -11,8 +12,8 @@ export const expansionObjectives={
  annex_unlock:'중앙 교환기로 마지막 호출의 수신 세대에 다시 전화하세요 · 단서가 필요하면 우편실과 통신실을 조사하세요',
  annex_exit_ready:'북쪽 방화문을 열고 외부 중정으로 나가세요',annex_departure:'열린 방화문을 지나 중정으로 나가세요',
  court_arrival:'입구 왼쪽 안내판에서 지하 우회 통로를 확인하세요',court_search:'경비일지와 비상전화 안내에서 금고 번호를 찾으세요 · 번호를 알면 바로 입력할 수 있습니다',court_code:'동측 경비초소 금고 · 기록에서 찾은 네 자리 번호를 맞추고 확인하세요',court_safe_open:'열린 금고 안에 걸린 지하문 열쇠를 챙기세요',court_unlocked:'금고에서 챙긴 열쇠로 북쪽 지하 기록보관실 문을 여세요',court_departure:'열린 계단을 따라 기록보관실로 내려가세요',
- archive_arrival:'기록보관실 입구의 인계 대장을 읽으세요',archive_search:'세 곳의 보관실에서 사고 당일 기록을 회수하세요',
- archive_edit:'북동쪽 편집실에서 원본을 재생하고 결정적인 순간에 증거 표시를 남기세요',
+ archive_arrival:'인계 대장에서 원본 위치를 확인하세요 · 찾은 원본은 북동쪽 편집실에서 바로 검토할 수 있습니다',archive_search:'사고 당일 원본을 찾고 편집실에서 각 기록의 사실을 대조하세요',
+ archive_edit:'북동쪽 편집실에서 원본의 장면을 표시하고, 영상·소리에 맞는 사실을 대조하세요',
  archive_playback:'복원된 영상에서 지워진 아홉 초를 확인하세요',
  archive_reveal:'북동쪽 편집실 모니터에서 원본의 아홉 초를 재생하세요',
  archive_escape:'문밖에서 손톱 소리가 들린다. 북쪽 기계실 연결문으로 빠져나가세요',archive_departure:'열린 연결문을 지나 기계실로 이동하세요',
@@ -39,14 +40,14 @@ export const expansionJournal={
  annex_line_home:{title:'교환기 · 2803호',text:'내 세대 번호를 입력하고 전화를 걸었다. 수화기에서 들리던 신호음이 끊겼다. 아무도 없어야 할 우리 집에서 전화를 받았다.\n「나오렴…」\n\n응답이 끝나자 북쪽 문에서 잠금쇠가 풀리는 소리가 났다. 이 교환기에는 그 문을 여는 버튼이 없는데. 바닥의 젖은 자국은 중정으로 이어진다. 통신실에 없는 수신자 쪽 목소리는 지하 기록보관실의 통화 원본에 남아 있다.'},
  annex_line_victim:{title:'교환기 · 돌아올 수 없는 1704호',text:'1704호로 전화를 걸었다. 빈집에서 신호음이 끊기고, 말을 알아들을 수 없는 여자의 울음이 들렸다. 응답이 없었던 것이 아니다. 누군가 받았다.\n\n그날 경비원의 호출을 받은 곳은 그녀의 집이 아니었다. 통신실의 보조 녹음에는 발신자 쪽 말이, 우편실의 반송 안내문에는 호출을 받았던 차량 소유 세대가 남아 있다.'},
  annex_line_office:{title:'교환기 · 당직 내선 17의 녹음',text:'당직 내선은 17. 사람이 받는 대신 「03:20 / 비상벨 발신측 보조 녹음」이라는 표시와 함께 녹음이 재생됐다.\n「차량 번호가 확인됐습니다. 내려와 주세요. 아직 현장에…」\n\n녹음은 발신자 쪽 말뿐이다. 전화를 받았던 세대에서 내려오지 않았다. 나는 그 호출을 차 안에서 받았고, 세대의 부재중 전화를 휴대전화로 넘기도록 등록해 뒀다. 이 단말에서는 세대와 당직 내선만 호출할 수 있다. 그날 전화를 받은 내 집에 다시 걸어야 한다.'},
- archive_ledger:{title:'B1 · 보관 인계 대장',text:'서측 A실: 도로 카메라. 동측 B실: 양방향 비상 통화. 서측 C실: 지하 입차 원본. 실물 테이프를 북동쪽 편집실로 가져갈 것.\n\n편집 장치: A·B·C를 눌러 원본 선택. 정지/재생, ±1초 버튼으로 대조한 뒤 중요한 순간에 「증거 표시」. 검토 순서는 상관없다. 녹화를 멈춰도 보관실은 계속 움직인다.\n\n열람본의 누락 구간은 세 원본의 내용이 확인되어야 복원할 수 있다. 봉투 겉면에 내 이름으로 쓴 폐기 요청서가 붙어 있다.'},
+ archive_ledger:{title:'B1 · 보관 인계 대장',text:'서측 A실: 도로 카메라. 동측 B실: 양방향 비상 통화. 서측 C실: 지하 입차 원본. 찾은 실물 테이프부터 북동쪽 편집실에서 검토할 수 있다. 회수와 검토 순서는 상관없다.\n\n편집 장치: 1·2·3으로 원본 선택. 정지/재생과 ±1초로 대조한 뒤 「증거 표시」. 장면을 놓쳤어도 원본이 끝난 뒤 표시할 수 있다. 화면에 제시된 두 진술 중 영상·소리로 확인한 사실을 4·5번 대조 키로 기록한다. 원본만 멈추며 보관실의 시간은 계속 흐른다.\n\n세 기록을 확인하면 관리실 열람본에서 지워졌던 아홉 초를 이어 볼 수 있다. 봉투 겉면에 내 이름으로 쓴 폐기 요청서가 붙어 있다.'},
  archive_road:{title:'A실 · 도로 원본 회수',text:'CAM-01 / 03:17 / 정문 횡단보도. 봉인된 원본 VHS를 챙겼다.\n\n인계표에는 「보행 신호와 차량 후면이 한 화면에 들어옴」이라고 적혀 있다. 편집실에서 제동등이 언제 켜지는지 확인해야 한다. 내가 기억하는 것처럼 갑자기 뛰어든 사람이었을까.'},
  archive_call:{title:'B실 · 양방향 통화 회수',text:'AUDIO-17 / 03:20 / 정문 비상벨 → 2803 등록 휴대전화. 양쪽 목소리를 보존한 원본 테이프다.\n\n통신실 장치에는 발신측만 남아 있었다. 이 테이프라면 그때 내가 무슨 말을 했는지, 누가 먼저 끊었는지 확인할 수 있다. 라벨의 수신자 이름을 손가락으로 가렸다.'},
  archive_gate:{title:'C실 · 입차 원본 회수',text:'CAM-04 / 03:26 / 지하 차량 출입구. 관리실 열람본에서 빠졌던 구간에 「영상·소리 동시 보존」 스티커가 붙어 있다.\n\n차를 세운 다음 아홉 초. 원본에는 차량 안에서 난 소리까지 남아 있다. 편집실에서 조수석을 잘 봐야 한다.'},
  archive_sequence_road:{title:'대조 A · 늦게 켜진 제동등',text:'03:17. 보행 신호는 녹색이다. 여자는 횡단보도를 건너고 있었다. 내 차의 제동등은 충돌 직전에야 켜진다.\n\n갑자기 뛰어들었다고 생각했다. 그런데 내가 화면을 보고도 그 말을 할 수는 없다. 휴대전화를 내려놓은 것은 너무 늦었다.'},
  archive_sequence_call:{title:'대조 B · 내가 끝낸 통화',text:'03:20. 현장으로 돌아와 달라는 경비원의 말을 들었다. 「잘못 거셨어요.」 수신자 쪽 말이 끝나고 내가 먼저 통화를 끊었다.\n\n그때 돌아갔더라면 달라졌을까. 이 기록만으로는 알 수 없다. 다만 돌아가 달라는 말을 못 들었다고 할 수는 없다.'},
  archive_sequence_gate:{title:'대조 C · 잠가 버린 문',text:'03:26. 차를 세웠다. 조수석 창문에 손이 닿고, 문을 열어 달라는 말 뒤로 잠금음이 난다. 운전석에서 내리는 사람은 없다.\n\n나는 그 소리를 들었다. 아홉 초를 지워 달라고 했던 이유도 이제 안다. 사고 뒤에도 내가 선택한 일이 있었다.'},
- archive_play:{title:'복원된 기록 · 누락 구간',text:'세 원본에 증거 표시를 남겼다. 보행 신호, 내가 끝낸 통화, 잠겨 있던 문.\n\n입차 뒤 지워졌던 아홉 초를 다시 연결했다. 창문을 두드리는 소리와 내가 누른 잠금음이 끊김 없이 재생된다. 모니터에 익숙한 방이 비치기 시작한다. 편집실이다. 방금까지는 사흘 전 영상이었는데.'},
+ archive_play:{title:'복원된 기록 · 누락 구간',text:'세 원본의 사실을 대조해 기록했다. 보행 신호, 내가 끝낸 통화, 잠겨 있던 문.\n\n입차 뒤 지워졌던 아홉 초를 다시 연결했다. 창문을 두드리는 소리와 내가 누른 잠금음이 끊김 없이 재생된다. 모니터에 익숙한 방이 비치기 시작한다. 편집실이다. 방금까지는 사흘 전 영상이었는데.'},
  plant_diagram:{title:'B1 · 배수 계통도',text:'주차장 경사로 아래까지 물이 차 있다. 유입을 막지 않으면 배수를 해도 수위가 다시 오른다. 서측 저장탱크와 동측 급수관의 차단 위치가 표시돼 있다.\n\n서측 펌프실: 집수정 → 흡입망 → 펌프 → 토출 선택기. 평소에는 물을 집수정으로 되돌린다. 외부 우수관은 서쪽 벽을 통해 나간다.\n\n동측 전기실: 모터와 환기 연동. 현장 압력과 흡입망을 확인한 뒤 기동할 것. 한서연의 점검란에 「천 조각 유입 반복. 원인 미확인」이라고 적혀 있다.'},
  plant_valve_west:{title:'기계실 · 서측 차단',text:'저장탱크 쪽 급수관을 잠갔다. 녹슨 손잡이 아래에서 검은 물이 흘렀다. 탱크 안쪽에서 세 번 두드리는 소리가 났다. 동측 급수관까지 잠가야 한다.'},
  plant_valve_east:{title:'기계실 · 동측 차단',text:'동측 급수관을 잠갔다. 배관 진동이 멎자 벽 너머의 손톱 소리가 들렸다. 서측 펌프실의 흡입망과 토출 선택기를 확인해야 한다.'},
@@ -54,9 +55,10 @@ export const expansionJournal={
  plant_start:{title:'기계실 · 물이 내려간다',text:'배수 펌프와 환기 장치가 돌아간다. 수면 아래에 있던 주차장 방향 표지가 드러났다.\n\n펌프의 울림 사이로 젖은 손이 콘크리트를 치는 소리가 섞인다. 북쪽 방화문까지 우회할 길을 기억해 둬야 한다. 멈춰 있으면 금방 따라잡힌다.'},
  plant_drained:{title:'주차장으로 · 다시 차에 탄다',text:'차량 진입로의 물이 빠졌다. 보행자 출구는 공사 셔터 때문에 여전히 막혀 있다.\n\n내 차는 사고 다음 날부터 같은 자리에 세워 두었다. 열쇠를 조수석 가방에 넣었던 기억이 난다. 경보로 그것을 다른 쪽에 유인하면 운전석까지 갈 수 있다.\n\n밖으로 나가기만 하면 끝날 거라고, 또 그렇게 생각했다.'},
 } as const;
-export type ExpansionAction=keyof typeof expansionJournal|'archive_preview_road'|'archive_preview_call'|'archive_preview_gate'|'archive_record_pause'|'archive_record_back'|'archive_record_forward'|'archive_record_mark'|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|`annex_digit_${0|1|2|3|4|5|6|7|8|9}`|'annex_clear'|'annex_dial'|'annex_exit'|'court_enter'|'court_hangup'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_route'|'plant_route_closed'|'plant_route_drain'|'plant_exit'|'parking_enter';
+export type ExpansionAction=keyof typeof expansionJournal|'archive_preview_road'|'archive_preview_call'|'archive_preview_gate'|'archive_record_pause'|'archive_record_back'|'archive_record_forward'|'archive_record_mark'|'archive_record_choice_0'|'archive_record_choice_1'|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|`annex_digit_${0|1|2|3|4|5|6|7|8|9}`|'annex_clear'|'annex_dial'|'annex_exit'|'court_enter'|'court_hangup'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_route'|'plant_route_closed'|'plant_route_drain'|'plant_exit'|'parking_enter';
 export const annexEvidence:Action[]=['annex_badge','annex_notice','annex_call'];
 export const archiveEvidence:Action[]=['archive_road','archive_call','archive_gate'];
+export const archiveFindings:Action[]=['archive_sequence_road','archive_sequence_call','archive_sequence_gate'];
 export const courtCallTimes=[2.8,5.4,8] as const;
 export const courtCallDuration=10.6;
 export const courtEvidence:Action[]=['court_log','court_phone'];
@@ -98,20 +100,22 @@ export function expansionTransition(s:Story,action:Action):Story|undefined{
   if(s.stage==='court_search'&&courtEvidence.every(a=>next.notes.includes(a)))next.stage='court_code';
   return next;
  }
- const collection=s.stage==='archive_search'?archiveEvidence:s.stage==='plant_isolate'?['plant_valve_west','plant_valve_east'] as Action[]:undefined;
+ if(archiveReviewing(s.stage)&&action==='archive_ledger')return s.notes.includes(action)?s:noted(s,action,s.stage==='archive_arrival'?'archive_search':s.stage);
+ const collection=archiveReviewing(s.stage)?archiveEvidence:s.stage==='plant_isolate'?['plant_valve_west','plant_valve_east'] as Action[]:undefined;
  if(collection?.includes(action)){
   if(s.notes.includes(action))return s;const next=noted(s,action);
-  if(collection.every(a=>next.notes.includes(a)))next.stage=s.stage==='archive_search'?'archive_edit':'plant_power';
+  if(collection===archiveEvidence)next.stage=collection.every(a=>next.notes.includes(a))?'archive_edit':'archive_search';
+  else if(collection.every(a=>next.notes.includes(a)))next.stage='plant_power';
   return next;
  }
  if(s.stage==='court_search'||s.stage==='court_code'){
   if(action.startsWith('court_digit_')){const index=Number(action.at(-1)),digits=(s.code??'0000').split('');digits[index]=String((Number(digits[index])+1)%10);return {...s,stage:'court_code',code:digits.join('')};}
   if(action==='court_confirm'&&s.code==='2617')return noted(s,action,'court_safe_open');
  }
- if(s.stage==='archive_edit'&&action.startsWith('archive_sequence_')){
-  const order=['archive_sequence_road','archive_sequence_call','archive_sequence_gate'];if(!order.includes(action)||s.circuit.includes(action))return s;
+ if(archiveReviewing(s.stage)&&action.startsWith('archive_sequence_')){
+  if(!archiveFindings.includes(action)||s.circuit.includes(action)||!s.notes.includes(action.replace('archive_sequence_','archive_')))return s;
   const circuit=[...s.circuit,action];
-  return noted({...s,circuit},action,circuit.length===3?'archive_reveal':s.stage);
+  return noted({...s,circuit},action,archiveFindings.every(a=>circuit.includes(a))?'archive_reveal':s.stage);
  }
  if(s.stage==='plant_power'){
   if(action==='plant_filter')return s.notes.includes(action)?s:noted(s,action);
@@ -136,8 +140,8 @@ export function expansionObjective(s:Story){
  if(s.stage==='court_search')return `금고 단서 ${courtEvidence.filter(a=>s.notes.includes(a)).length}/2 · 서측 경비일지 / 동측 비상전화 · 번호를 알면 금고에 입력하세요`;
  if(s.stage==='court_code')return `경비초소 금고 ${s.code??'0000'} · 입차한 분 두 자리 + 야간 당직 내선 두 자리`;
  const ids=s.stage==='archive_search'?archiveEvidence:undefined;
- if(ids){const missing=ids.filter(a=>!s.notes.includes(a));const places:Partial<Record<Action,string>>={annex_badge:'동측 경비 휴게실 · 당직 책상',annex_notice:'서측 우편실 · 반송 접수대',annex_call:'동측 통신실 · 녹음기',archive_road:'서측 A실 · 도로 기록',archive_call:'동측 B실 · 통화 기록',archive_gate:'서측 C실 · 입차 기록'};return `기록 ${ids.length-missing.length}/${ids.length} · ${missing.map(a=>places[a]).join(' / ')}`;}
- if(s.stage==='archive_edit')return `${expansionObjectives.archive_edit} (${s.circuit.length}/3)`;
+ if(ids){const missing=ids.filter(a=>!s.notes.includes(a));const places:Partial<Record<Action,string>>={archive_road:'서측 A실 · 도로',archive_call:'동측 B실 · 통화',archive_gate:'서측 C실 · 입차'};return `원본 ${ids.length-missing.length}/${ids.length} · 대조 ${archiveFindings.filter(a=>s.circuit.includes(a)).length}/3 · ${missing.map(a=>places[a]).join(' / ')} · 찾은 원본은 북동쪽 편집실에서 검토하세요`;}
+ if(s.stage==='archive_edit')return `${expansionObjectives.archive_edit} · 대조 ${archiveFindings.filter(a=>s.circuit.includes(a)).length}/3`;
  if(s.stage==='plant_isolate')return `${expansionObjectives.plant_isolate} (${['plant_valve_west','plant_valve_east'].filter(a=>s.notes.includes(a)).length}/2)`;
  if(s.stage==='plant_power')return `흡입망 ${plantFilterCleared(s)?'확인':'막힘'} · 토출 ${plantRoute(s)==='drain'?'외부배수':plantRoute(s)==='closed'?'차단':'집수정 환수'} · 서측 설비 확인 후 동측 전기실에서 기동하세요`;
  return expansionObjectives[s.stage as ExpansionStage];
@@ -147,14 +151,14 @@ export function expansionTargetActive(s:Story,id:Action){
  if(['annex_fuse','annex_badge',...archiveEvidence].includes(id)&&s.notes.includes(id))return false;
  if(id==='annex_restore')return s.stage==='annex_restore';
  if(id==='archive_play')return s.stage==='archive_reveal';
- if(id.startsWith('archive_preview_')||id.startsWith('archive_record_'))return s.stage==='archive_edit';
+ if(id.startsWith('archive_preview_')||id.startsWith('archive_record_'))return archiveReviewing(s.stage);
  if(id.startsWith('court_digit_')||id==='court_confirm')return s.stage==='court_search'||s.stage==='court_code';
  if(id==='court_key')return s.stage==='court_safe_open';
  if(id==='court_exit')return s.stage==='court_unlocked';
  if(id==='court_hangup')return ['court_search','court_code','court_safe_open','court_unlocked','court_departure'].includes(s.stage);
  if(id.startsWith('annex_line_'))return false;
  if(id.startsWith('annex_digit_')||id==='annex_clear'||id==='annex_dial')return annexCanCall(s.stage);
- if(id.startsWith('archive_sequence_'))return s.stage==='archive_edit';
+ if(id.startsWith('archive_sequence_'))return archiveReviewing(s.stage);
  if(id==='plant_filter')return s.stage==='plant_power'&&!plantFilterCleared(s);
  if(id==='plant_route'||id.startsWith('plant_circuit_')||id==='plant_start')return s.stage==='plant_power';
  if(id==='annex_exit')return s.stage==='annex_exit_ready';
