@@ -1,6 +1,6 @@
 # Hair tangent calculation
 
-The reusable tangent calculation in `lib/ghost-hair.ts` follows the installed Three.js r180 `BufferGeometry.computeTangents` convention, with persistent Float64 work arrays and one final write per referenced vertex. Geometry, UVs, normals and tangent handedness are retained.
+The reusable tangent calculation in `lib/ghost-hair.ts` follows the installed Three.js r180 `BufferGeometry.computeTangents` convention, with one synchronous Float64 workspace shared by the prepared models and one final write per referenced vertex. Geometry, UVs, normals and tangent handedness are retained.
 
 The MIT License
 

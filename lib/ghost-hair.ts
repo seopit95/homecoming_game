@@ -9,12 +9,13 @@ const seams=[...copies.values()].filter(group=>group.length>1);
 
 // Match Three.js per-vertex tangent accumulation (MIT; docs/third-party-tangent-work.md) without allocating two
 // Vector3 objects per vertex on every animation frame. Float64 keeps its math.
-const tangentWork=new WeakMap<T.BufferGeometry,{a:Float64Array;b:Float64Array;seen:Uint8Array}>();
+// Calls are synchronous, so prepared models share one largest-mesh workspace.
+let tangentWork={a:new Float64Array(0),b:new Float64Array(0),seen:new Uint8Array(0)};
 const v0=new T.Vector3(),e1=new T.Vector3(),e2=new T.Vector3(),uv0=new T.Vector2(),uv1=new T.Vector2(),uv2=new T.Vector2(),sdir=new T.Vector3(),tdir=new T.Vector3(),n=new T.Vector3(),n2=new T.Vector3(),t=new T.Vector3(),orthogonal=new T.Vector3(),cross=new T.Vector3();
 export function updateHairTangents(geometry:T.BufferGeometry){
   const index=geometry.index!,p=geometry.getAttribute('position'),normal=geometry.getAttribute('normal'),uv=geometry.getAttribute('uv') as T.BufferAttribute;
-  let work=tangentWork.get(geometry);if(!work||work.seen.length!==p.count){work={a:new Float64Array(p.count*3),b:new Float64Array(p.count*3),seen:new Uint8Array(p.count)};tangentWork.set(geometry,work);}
-  const {a,b,seen}=work;a.fill(0);b.fill(0);seen.fill(0);
+  if(tangentWork.seen.length<p.count)tangentWork={a:new Float64Array(p.count*3),b:new Float64Array(p.count*3),seen:new Uint8Array(p.count)};
+  const {a,b,seen}=tangentWork;a.fill(0);b.fill(0);seen.fill(0);
   if(!geometry.hasAttribute('tangent'))geometry.setAttribute('tangent',new T.BufferAttribute(new Float32Array(p.count*4),4));
   const tangent=geometry.getAttribute('tangent'),groups=geometry.groups.length?geometry.groups:[{start:0,count:index.count}];
   function add(i:number){const o=i*3;a[o]+=sdir.x;a[o+1]+=sdir.y;a[o+2]+=sdir.z;b[o]+=tdir.x;b[o+1]+=tdir.y;b[o+2]+=tdir.z;}
