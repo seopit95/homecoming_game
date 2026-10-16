@@ -250,7 +250,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   runTo(-2.2,17.4);runTo(-2.2,-20);runTo(0,-20);
   aim([0,1.65,-20.3],[0,1.25,-21.68]);game.interact();assert.equal(game.snapshot().story.stage,'parking_run','the pedestrian door cannot trigger the new ending');
   runTo(3,-20);runTo(3,-17.8);
-  use([3,1.65,-17.8],[3.98,1.1,-17.8],'car_departure');
+  aim([3,1.65,-17.8],[3.98,1.1,-17.8]);game.key('KeyE',true);tick(.95);game.key('KeyE',false);assert.equal(game.snapshot().story.stage,'car_departure');
   tick(finale.car_departure.duration+.05);assert.equal(game.snapshot().story.stage,'car_escape');
   assert.ok(renderedScene.getObjectByName('escape-drive'));
   game.key('KeyW',true);game.interact();game.skipMemory();assert.equal(game.snapshot().story.stage,'car_escape');
@@ -1006,4 +1006,53 @@ test('V86 partial archive investigation works from the nearby monitor, checks a 
   press('Enter');aim('archive_record_choice_1');game.interact();assert.ok(game.snapshot().story.notes.includes('archive_sequence_gate'));assert.equal(game.snapshot().story.stage,'archive_search');assert.equal(game.snapshot().story.notes.includes('archive_road'),false);assert.ok(JSON.parse(saved).circuit.includes('archive_sequence_gate'));
   game.pause();press('Digit1');press('Enter');press('Digit5');assert.equal(game.snapshot().story.circuit.length,1,'paused transport/claim controls do nothing');
  }finally{game.dispose();disposeWorld(reference.root);win.localStorage=previous;}
+});
+
+async function v88Garage(stage,notes){
+ const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage,notes,elapsed:1400,pursuit:false})]]);
+ win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};deviceLevels.alarm=0;deviceStarts.alarm=0;
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick();
+ function aim(pos,target){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...target).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
+ return {game,data,aim,dispose(){game.dispose();win.localStorage=previous;}};
+}
+test('V88 real garage input finds the car first, cancels boarding and escapes without a mandatory alarm',async()=>{
+ const f=await v88Garage('parking_gate',['plant_drained']),{game,aim,data}=f;
+ try{
+  aim([3.2,1.65,-17.8],[3.98,1.1,-17.8]);assert.ok(game.snapshot().prompt,'the player can inspect their driver door before the pedestrian exit');game.interact();assert.equal(game.snapshot().story.stage,'parking_gate');
+  aim([7.1,1.65,-17.8],[6.02,1.1,-17.8]);game.interact();tick(1.1);assert.equal(game.snapshot().story.stage,'parking_key');
+  aim([7.1,1.65,-17.8],[5.415,.31,-17.83]);game.interact();tick();assert.equal(game.snapshot().story.stage,'parking_alarm');assert.ok(!game.snapshot().story.notes.includes('exit'));
+  aim([3.2,1.65,-17.8],[3.98,1.1,-17.8]);assert.equal(game.snapshot().holdAction,'car_board');
+  game.interact();assert.equal(game.snapshot().story.stage,'parking_alarm','a tap cannot jump to cinematic immunity');
+  game.key('KeyE',true);const before=game.snapshot().elapsed;tick(.25);assert.ok(game.snapshot().holdProgress>0&&game.snapshot().holdProgress<1);assert.ok(game.snapshot().elapsed>before,'preparing to board cannot pause the game');
+  game.key('KeyE',false);tick();assert.equal(game.snapshot().holdProgress,0);
+  game.hold(true);tick(.25);game.pause(true);assert.equal(game.snapshot().holdProgress,0);const pausedAt=game.snapshot().elapsed;tick(.2);assert.equal(game.snapshot().elapsed,pausedAt);game.pause(false);
+  game.configure({bindings:{...game.getSettings().bindings,interact:'KeyQ'}});event(doc,'keydown',{code:'KeyQ',repeat:false,preventDefault(){}});tick(.95);event(doc,'keyup',{code:'KeyQ'});assert.equal(game.snapshot().story.stage,'car_departure');assert.equal(deviceStarts.alarm,0,'quiet departure must not start an unpressed bell');
+  assert.ok(!game.snapshot().story.notes.includes('alarm'));assert.equal(JSON.parse(data.get('homecoming.progress.v2')).stage,'car_departure');
+ }finally{f.dispose();}
+});
+test('V88 the player remains vulnerable during a held car boarding attempt',async()=>{
+ const f=await v88Garage('parking_alarm',['plant_drained','car_search']),{game,aim}=f;
+ try{
+  aim([-10.8,1.65,17.4],[-10.8,1.4,16.18]);game.interact();tick();assert.equal(game.snapshot().story.stage,'parking_run');assert.ok(deviceLevels.alarm>0);
+  aim([3.2,1.65,-17.8],[3.98,1.1,-17.8]);game.interact();assert.equal(game.snapshot().story.stage,'parking_run','a tap cannot jump to cinematic immunity');
+  game.hold(true);tick(.25);assert.ok(game.snapshot().holdProgress>0);
+  const ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.set(3.2,0,-17.8);tick();assert.equal(game.snapshot().story.stage,'dying');assert.equal(game.snapshot().holdProgress,0);
+ }finally{f.dispose();}
+});
+test('V88 a latched optional alarm restores its actual ringing and mechanism before another attempt',async()=>{
+ const f=await v88Garage('parking_alarm',['plant_drained','car_search','alarm']);
+ try{
+  assert.ok(deviceLevels.alarm>0,'a continued latched alarm must remain audible');assert.ok(renderedScene.getObjectByName('fire-call-button').position.z<16.11);
+  assert.ok(renderedScene.getObjectByName('fire-alarm-pilot').material.emissiveIntensity>.5);assert.equal(f.game.snapshot().story.stage,'parking_alarm');
+ }finally{f.dispose();}
+});
+test('V88 real older drainage guidance does not repeat key or pump work and keeps the alarm optional',async()=>{
+ const f=await v88Garage('parking_gate',['pump','car_passenger']);
+ try{
+  assert.equal(f.game.snapshot().story.stage,'parking_key');
+  tick(1.1);f.aim([7.1,1.65,-17.8],[5.415,.31,-17.83]);f.game.interact();tick();assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.match(f.game.snapshot().message,/배수는 끝났다/);
+  f.aim([0,1.65,-20.4],[0,1.2,-21.6]);f.game.interact();assert.match(f.game.snapshot().message,/열쇠는 챙겼다/);assert.equal(f.game.snapshot().story.stage,'parking_alarm');
+ }finally{f.dispose();}
+ const pumped=await v88Garage('parking_gate',['car_search','valve_a','valve_b']);
+ try{assert.equal(pumped.game.snapshot().story.stage,'parking_pump');pumped.aim([-10.5,1.65,-15.5],[-10.5,1.3,-16.65]);pumped.game.interact();assert.equal(pumped.game.snapshot().story.stage,'parking_alarm');assert.match(pumped.game.snapshot().message,/필요하면.*경보/);}finally{pumped.dispose();}
 });

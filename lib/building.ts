@@ -3,7 +3,7 @@ import * as T from 'three';
 import {buildCarDeparture,type CarDeparture} from './car-departure.ts';
 import {createCRT,crtCable,createCrtSocket} from './crt-monitor.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
-import {tapeTimes,officePowerLoad} from './story.ts';
+import {tapeTimes,officePowerLoad,parkingDrained,parkingAlarmActive} from './story.ts';
 import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import {buildCourtyard} from './courtyard.ts';
@@ -331,7 +331,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const x of [-11.65,11.65])for(const z of [-12,0,12]){box(x,.001,z,.24,.002,2.6,metal);for(let dz=-1.2;dz<=1.2;dz+=.1)box(x,.0025,z+dz,.19,.001,.025,dark);}
     const extinguisher=new T.Mesh(new T.CylinderGeometry(.10,.10,.43,20),red);extinguisher.position.set(-11.25,.32,16.05);root.add(extinguisher);box(-11.25,.08,16.05,.26,.16,.26,metal);roundPipe(root,[-11.25,.54,16.05],[-11.25,.62,16.05],.024,metal);roundPipe(root,[-11.25,.59,16.05],[-11.37,.32,16.05],.012,dark);
     box(0,.025,-21.69,1.05,.05,.24,metal);const jam=box(.07,.06,-21.45,.79,.09,.16,wood);jam.rotation.y=.12;
-    const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,time,_reduced,story,occupants)=>{if(stage==='parking_run'||stage==='car_departure')setAlarm(true);const drained=story?.notes.includes('plant_drained')||['parking_alarm','parking_run','car_departure'].includes(stage);flood.scale.y=drained?.35:2.6;carDeparture!.inspect(stage,time,story,occupants);const target=targets.find(t=>t.id==='car_search');if(target)target.label=story?.notes.includes('plant_drained')?'조수석 가방 · 차 열쇠':'조수석 가방 · 설비 열쇠';};
+    const flood=puddle(0,-19,2.3,2.6);flood.name='parking-flood';updateStory=(stage,time,_reduced,story,occupants)=>{if(parkingAlarmActive(story??{stage,notes:[]}))setAlarm(true);const drained=parkingDrained(story??{notes:[]})||['parking_alarm','parking_run','car_departure'].includes(stage);flood.scale.y=drained?.35:2.6;carDeparture!.inspect(stage,time,story,occupants);const target=targets.find(t=>t.id==='car_search');if(target)target.label=parkingDrained(story??{notes:[]})?'조수석 가방 · 차 열쇠':'조수석 가방 · 설비 열쇠';};
     for(const x of [-2.2,2.2])for(const z of [-18,-6,6,18])fixture(x,z,z!==6);
     for(const z of [-12,6])label('보행자 출구 →',-11.9095,1.9,z,Math.PI/2,1.2,.3);
     figure.position.set(-7.8,0,-18);figure.visible=true;
