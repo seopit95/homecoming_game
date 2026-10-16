@@ -75,14 +75,14 @@ export function cottonUpholstery(color:string){
  const material=new T.MeshStandardMaterial({color,map:copy('color'),normalMap:copy('normal'),normalScale:new T.Vector2(.22,.22),roughness:.94,roughnessMap:arm,aoMap:arm,aoMapIntensity:.35});material.name='domestic-cotton';return material;
 }
 export function ghostHairMaterials(){
-  const scalp=surface('hair','#828b8e',{roughness:.42,bumpScale:.00025,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide}) as T.MeshPhysicalMaterial;
-  scalp.specularIntensity=.65;scalp.anisotropy=.6;scalp.clearcoat=.08;scalp.clearcoatRoughness=.4;
+  const scalp=new T.MeshPhysicalMaterial({color:'#14191a',roughness:.56,bumpScale:.00025,anisotropyRotation:Math.PI/2,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide});
+  scalp.specularIntensity=.4;scalp.anisotropy=.7;scalp.clearcoat=.035;scalp.clearcoatRoughness=.4;
   const loose=scalp.clone(),map=sources['hair-locks']?.clone()??null;if(map)map.needsUpdate=true;
   // A separate UV channel fades the clipped cap into the loose roots. Native
   // alphaMap handling applies the same cutout to the visible and shadow passes.
   const fade=new T.DataTexture(new Uint8Array([0,0,0,255,255,255,255,255]),1,2);fade.channel=1;
   fade.magFilter=fade.minFilter=T.LinearFilter;fade.needsUpdate=true;scalp.alphaMap=loose.alphaMap=fade;
-  loose.name='surface-wet-hair-locks';loose.map=loose.bumpMap=map;loose.color.set('#a9afb0');return [scalp,loose];
+  loose.name='surface-wet-hair-locks';loose.map=loose.bumpMap=map;loose.color.set('#929c9e');return [scalp,loose];
 }
 export function livingMaterial(part:'skin'|'shirt'|'hair'){
   const copy=(key:keyof typeof sources)=>{const t=sources[key]?.clone();if(t)t.needsUpdate=true;return t??null;},hair=part==='hair',shirt=part==='shirt';
