@@ -7,6 +7,32 @@ const copies=new Map<string,number[]>();
 for(let i=0;i<authored.position.length;i+=3){const key=authored.position.slice(i,i+3).join(',');if(!copies.has(key))copies.set(key,[]);copies.get(key)!.push(i/3);}
 const seams=[...copies.values()].filter(group=>group.length>1);
 
+// Match Three.js per-vertex tangent accumulation (MIT; docs/third-party-tangent-work.md) without allocating two
+// Vector3 objects per vertex on every animation frame. Float64 keeps its math.
+const tangentWork=new WeakMap<T.BufferGeometry,{a:Float64Array;b:Float64Array;seen:Uint8Array}>();
+const v0=new T.Vector3(),e1=new T.Vector3(),e2=new T.Vector3(),uv0=new T.Vector2(),uv1=new T.Vector2(),uv2=new T.Vector2(),sdir=new T.Vector3(),tdir=new T.Vector3(),n=new T.Vector3(),n2=new T.Vector3(),t=new T.Vector3(),orthogonal=new T.Vector3(),cross=new T.Vector3();
+export function updateHairTangents(geometry:T.BufferGeometry){
+  const index=geometry.index!,p=geometry.getAttribute('position'),normal=geometry.getAttribute('normal'),uv=geometry.getAttribute('uv') as T.BufferAttribute;
+  let work=tangentWork.get(geometry);if(!work||work.seen.length!==p.count){work={a:new Float64Array(p.count*3),b:new Float64Array(p.count*3),seen:new Uint8Array(p.count)};tangentWork.set(geometry,work);}
+  const {a,b,seen}=work;a.fill(0);b.fill(0);seen.fill(0);
+  if(!geometry.hasAttribute('tangent'))geometry.setAttribute('tangent',new T.BufferAttribute(new Float32Array(p.count*4),4));
+  const tangent=geometry.getAttribute('tangent'),groups=geometry.groups.length?geometry.groups:[{start:0,count:index.count}];
+  function add(i:number){const o=i*3;a[o]+=sdir.x;a[o+1]+=sdir.y;a[o+2]+=sdir.z;b[o]+=tdir.x;b[o+1]+=tdir.y;b[o+2]+=tdir.z;}
+  for(const group of groups)for(let j=group.start;j<group.start+group.count;j+=3){
+    const i0=index.getX(j),i1=index.getX(j+1),i2=index.getX(j+2);
+    v0.fromBufferAttribute(p,i0);e1.fromBufferAttribute(p,i1).sub(v0);e2.fromBufferAttribute(p,i2).sub(v0);
+    uv0.fromBufferAttribute(uv,i0);uv1.fromBufferAttribute(uv,i1).sub(uv0);uv2.fromBufferAttribute(uv,i2).sub(uv0);
+    const r=1/(uv1.x*uv2.y-uv2.x*uv1.y);if(!Number.isFinite(r))continue;
+    sdir.copy(e1).multiplyScalar(uv2.y).addScaledVector(e2,-uv1.y).multiplyScalar(r);tdir.copy(e2).multiplyScalar(uv1.x).addScaledVector(e1,-uv2.x).multiplyScalar(r);
+    add(i0);add(i1);add(i2);
+  }
+  for(const group of groups)for(let j=group.start;j<group.start+group.count;j++){
+    const i=index.getX(j);if(seen[i])continue;seen[i]=1;n.fromBufferAttribute(normal,i);n2.copy(n);t.fromArray(a,i*3);
+    orthogonal.copy(t).sub(n.multiplyScalar(n.dot(t))).normalize();cross.crossVectors(n2,t);tdir.fromArray(b,i*3);
+    tangent.setXYZW(i,orthogonal.x,orthogonal.y,orthogonal.z,cross.dot(tdir)<0?-1:1);
+  }
+}
+
 export function createHair(head:T.Group){
   const hair=new T.Group();hair.name='ghost-scalp-hair';head.add(hair);
   const tails=new T.Group();tails.name='ghost-long-hair';head.add(tails);
@@ -58,5 +84,5 @@ export function settleHair(tails:T.Group,figure:T.Group,time:number,floor:number
   normals.needsUpdate=true;
   // Without vertex tangents the anisotropic highlight changes direction at
   // every triangle, making this smooth hair read as reflective metal plates.
-  mesh.geometry.computeTangents();mesh.geometry.getAttribute('tangent').needsUpdate=true;mesh.geometry.computeBoundingSphere();
+  updateHairTangents(mesh.geometry);mesh.geometry.getAttribute('tangent').needsUpdate=true;mesh.geometry.computeBoundingSphere();
 }
