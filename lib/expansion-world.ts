@@ -10,6 +10,7 @@ import type {Solid,Target} from './world.ts';
 import type {Action,Stage,Story} from './story.ts';
 import {archiveReplay,plantRoute,plantFilterCleared,plantProblem,type ExpansionArea} from './expansion-story.ts';
 import {storageMaterials,storageShelf} from './storage.ts';
+import {createCRT,crtScreenGeometry,crtCable,createCrtSocket} from './crt-monitor.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {facilityTable,facilityChair,laundryMachine,dryingRail,waterTank,pumpSkid,cartridgeFuse,videoCassette} from './facility-props.ts';
 import {createAnsweringMachine} from './resident-props.ts';
@@ -144,13 +145,15 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const recorder=facilityModel('cassette_player');recorder.name='annex-call-recorder';recorder.rotation.x=-Math.PI/2;recorder.position.set(X+.57,.8205,-5);root.add(recorder);
   const callTarget=targets.find(t=>t.id==='annex_call')!;callTarget.mesh=recorder;callTarget.point.set(X+.57,.86,-5);recorder.userData.approach={x:X+.57,z:-4};
   roundPipe(root,[X+.629,.854,-5.08],[X+.8,.854,-5.08],.0025,dark);roundPipe(root,[X+.8,.854,-5.08],[X+.8,.824,-5.36],.0025,dark);
-  table(0,-21,2.4,1);box(0,1.22,-21.2,1.42,.8,.14,dark);display=label('마지막 호출 수신처\n연결 회선을 선택하세요',0,1.25,-21.119,1.3,.6,0,true);
+  table(0,-21,2.4,1);const crt=createCRT();crt.root.name='annex-crt-monitor';crt.root.position.set(-.35,.82,-20.9);root.add(crt.root);
+  display=label('통화 기록 확인',0,0,0,.72,.54,0,true);display.geometry.dispose();display.geometry=crtScreenGeometry(.72,.54);display.name='annex-crt-status';crt.screenMount.add(display);
   intercom=createAnsweringMachine('intercom');intercom.root.position.set(.7,.82,-20.86);intercom.root.rotation.y=Math.PI;intercom.root.scale.setScalar(1.35);root.add(intercom.root);
   function dialTarget(id:Action,title:string,mesh:T.Mesh){const p=mesh.getWorldPosition(new T.Vector3());target(id,title,mesh,[p.x,p.y,p.z],[.7,-19.7]);targets.at(-1)!.precise=true;}
   for(const {mesh,label:key} of intercom.keys)dialTarget(key==='*'?'annex_clear':key==='#'?'annex_dial':`annex_digit_${key}` as Action,key==='*'?'지우기 / 통화 종료':key==='#'?'세대 호출':key+' 입력',mesh);
   dialTarget('annex_dial','CALL · 세대 호출',intercom.playButton);dialTarget('annex_clear','CLEAR · 지우기 / 종료',intercom.stopButton);
   label('스피커 호출 · 네 자리 → CALL\n숫자키 / Enter 호출\nCLEAR·Backspace 종료',-.65,.821,-20.75,.55,.27).rotation.x=-Math.PI/2;
-  for(const x of [-.48,.48])roundPipe(root,[x,1,-21.28],[x,.82,-21.4],.012,dark);
+  const socket=createCrtSocket();socket.root.position.set(1.925,.27,-21.8);socket.root.rotation.y=-Math.PI/2;root.add(socket.root);root.updateMatrixWorld(true);const power=crt.powerPort.clone().applyMatrix4(crt.root.matrixWorld),lead=socket.lead.clone().applyMatrix4(socket.root.matrixWorld);
+  crtCable(root,[power,new T.Vector3(power.x,.87,-21.55),new T.Vector3(power.x,.0035,-21.65),new T.Vector3(lead.x,.0035,lead.z),lead]);
   roundPipe(root,[2.12,1.89,-2],[2.12,2.8,-2],.019,metal);
   const restChair=facilityChair(wood,metal);restChair.position.set(X+2,0,20);restChair.rotation.y=-.4;root.add(restChair);solids.push({x:X+2,z:20,w:.65,d:.65,y:.44,h:.88});
   rack(-X,-18,4,.65);table(X,-18,2.5);for(const x of [X-1,X+.2])box(x,.87,-18,.75,.1,.45,paper);
@@ -176,16 +179,15 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   // Wall trunking and drops terminate on the equipment, rather than hanging in air.
   roundPipe(root,[12.98,2.49,-23.7],[12.98,2.49,-20.6],.012,metal);
   roundPipe(root,[12.98,2.49,-20.6],[12.98,.08,-20.6],.012,metal);
-  roundPipe(root,[12.98,.08,-20.6],[X+1.3,.08,-20.6],.008,dark);
-  table(X,-20,3.6,1);box(X,.835,-20.15,.5,.03,.36,dark);box(X,.905,-20.15,.16,.11,.17,metal);
-  const monitor=box(X,1.30,-20.15,.88,.68,.57,dark);target('archive_play','복원된 기록 재생',monitor,[X,1.31,-19.84],[X,-18.9]);
-  const screen=createSurveillance();screen.position.set(X,1.31,-19.864);root.add(screen);surveillance=screen.userData.surveillance;
-  for(const y of [1.015,1.605])box(X,y,-19.849,.8,.035,.03,metal);
-  for(const x of [X-.383,X+.383])box(x,1.31,-19.849,.035,.56,.03,metal);
-  for(let i=0;i<4;i++)box(X-.19+i*.08,.99,-19.855,.035,.014,.026,metal);
-  roundPipe(root,[X,.99,-20.43],[X,.86,-20.52],.006,dark);roundPipe(root,[X,.86,-20.52],[X,.07,-20.52],.006,dark);
+  roundPipe(root,[12.98,.08,-20.6],[12.98,.0035,-20.6],.004,dark);
+  table(X,-20,3.6,1);
+  const crt=createCRT(true);crt.root.name='archive-crt-monitor';crt.root.position.set(X,.82,-19.93);root.add(crt.root);target('archive_play','복원된 기록 재생',crt.root,[X,1.157,-19.88],[X,-18.9]);
+  const screen=createSurveillance();crt.screenMount.add(screen);surveillance=screen.userData.surveillance;root.updateMatrixWorld(true);
+  const power=crt.powerPort.clone().applyMatrix4(crt.root.matrixWorld),video=crt.videoPort.clone().applyMatrix4(crt.root.matrixWorld);
+  crtCable(root,[power,new T.Vector3(power.x,.88,-20.57),new T.Vector3(power.x,.0035,-20.6),new T.Vector3(12.98,.0035,-20.6)]);
+  crtCable(root,[video,new T.Vector3(video.x,.98,-20.34),new T.Vector3(X-1.2,.98,-20.34),new T.Vector3(X-1.2,.90,-20.199)]);
   for(const dx of [-1.2,1.2]){box(X+dx,.89,-20,.55,.14,.4,metal);box(X+dx,.89,-19.793,.48,.09,.018,dark);for(const ox of [-.14,.14])box(X+dx+ox,.89,-19.778,.045,.045,.025,metal);}
-  roundPipe(root,[X,.07,-20.52],[X+1.3,.07,-20.52],.006,dark);roundPipe(root,[X+1.3,.07,-20.52],[X+1.3,.85,-20.18],.006,dark);
+  crtCable(root,[new T.Vector3(X+1.3,.85,-20.199),new T.Vector3(X+1.3,.0035,-20.57),new T.Vector3(12.98,.0035,-20.6)]);
   box(12.95,2.71,-23.65,.035,.18,.035,metal);const cameraCase=new T.Group();cameraCase.name='archive-cctv-camera';cameraCase.position.set(...archiveCamera.position);cameraCase.lookAt(...archiveCamera.lookAt);root.add(cameraCase);
   box(0,0,0,.18,.12,.32,metal,false,cameraCase);const lens=new T.Mesh(new T.CylinderGeometry(.041,.041,.02,20),dark);lens.rotation.x=Math.PI/2;lens.position.z=.169;cameraCase.add(lens);
   // A single physical review deck: source keys behind transport/mark controls.

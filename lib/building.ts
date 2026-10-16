@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {buildCarDeparture,type CarDeparture} from './car-departure.ts';
+import {createCRT,crtCable,createCrtSocket} from './crt-monitor.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {tapeTimes} from './story.ts';
 import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
@@ -213,12 +214,11 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     box(-2.65,.43,1.11,1.76,.47,.045,wood);for(const y of [.17,.39,.61]){box(-3.85,y,1.938,.52,.2,.023,wood);box(-3.85,y,1.96,.16,.025,.035,metal);}
     box(-3.7,.809,1.58,.42,.018,.31,white);
     const log=label('백로아파트 · 야간 근무 인계\n\n당직: 한서연 / 사고 다음 날 임시 관리실 폐쇄\n03:17  정문 횡단보도 보행자 사망 / 검은 차량 이탈\n03:26  파손 차량 입차 / 정차 직후 영상 9초 누락\n누락 구간은 지하 기록보관실 원본과 대조할 것.\n\n감시 설비 정전 시: 서고 예비 퓨즈 사용\n회로 복구: B 접지 → A 입력 → C 감시\n입차 시각으로 CCTV 열람 기록을 선택할 것.\n승강기 열쇠 보관: CCTV 오른쪽 책상',-3.7,.8182,1.58,0,.4,.28,'#292b27','#c6bfa6');log.mesh.rotation.x=-Math.PI/2;log.mesh.name='office-duty-log';target('record','야간 근무일지 읽기',desk,-3.7,.86,1.8);
-    const monitor=box(-2.65,1.15,1.45,.65,.51,.4,surface('leather','#7d8580',{roughness:.67}));
-    const casing=monitor.geometry.getAttribute('position');for(let i=0;i<casing.count;i++){const rear=T.MathUtils.smoothstep(-casing.getZ(i),0,.2);casing.setX(i,casing.getX(i)*(1-rear*.18));casing.setY(i,casing.getY(i)*(1-rear*.16));}monitor.geometry.computeVertexNormals();
-    for(const x of [-2.97,-2.33])box(x,1.15,1.672,.035,.48,.035,dark);for(const y of [.923,1.39])box(-2.65,y,1.67,.65,.045,.035,dark);for(let i=0;i<5;i++)box(-2.83+i*.065,.936,1.694,.04,.006,.005,metal);
-    for(const z of [1.31,1.37,1.43,1.49])for(const x of [-2.969,-2.331])box(x,1.24,z,.006,.115,.015,dark);
-    const monitorCable=new T.CatmullRomCurve3([new T.Vector3(-2.65,.95,1.27),new T.Vector3(-2.65,.82,1.04),new T.Vector3(-2.72,.45,1.01),new T.Vector3(-3,.08,1.01)]);root.add(new T.Mesh(new T.TubeGeometry(monitorCable,20,.006,6,false),dark));box(-2.65,.813,1.45,.39,.026,.29,dark);box(-2.65,.8605,1.45,.16,.069,.14,dark);
-    const screen=createSurveillance('office');screen.position.set(-2.65,1.17,1.655);screen.scale.set(.56/.72,.38/.54,1);root.add(screen);const surveillance=screen.userData.surveillance as Surveillance;target('monitor','선택한 CCTV 기록 재생',monitor,-2.65,1.17,1.79);
+    const crt=createCRT();crt.root.name='office-crt-monitor';crt.root.position.set(-2.65,.8,1.76);root.add(crt.root);
+    const screen=createSurveillance('office');crt.screenMount.add(screen);const surveillance=screen.userData.surveillance as Surveillance;target('monitor','선택한 CCTV 기록 재생',crt.root,-2.65,1.137,1.80);
+    const socket=createCrtSocket();socket.root.position.set(-bx+.09,.27,1.05);socket.root.rotation.y=Math.PI/2;root.add(socket.root);root.updateMatrixWorld(true);
+    const power=crt.powerPort.clone().applyMatrix4(crt.root.matrixWorld),lead=socket.lead.clone().applyMatrix4(socket.root.matrixWorld);
+    crtCable(root,[power,new T.Vector3(power.x,.85,1),new T.Vector3(power.x,.0035,1),new T.Vector3(lead.x,.0035,lead.z),lead]);
     const dial=box(-1.95,.8375,1.68,.2,.075,.18,metal);const selector=new T.Mesh(new T.CylinderGeometry(.048,.05,.025,24),dark);selector.position.set(-1.95,.8875,1.63);root.add(selector);box(-1.95,.901,1.608,.005,.002,.022,white);target('tape_next','CCTV 시간 선택',dial,-1.95,.9,1.8);const dialLabel=label('시간 선택',-1.95,.877,1.74,0,.18,.08,'#292b27','#bcb79b');dialLabel.mesh.rotation.x=-Math.PI/2;
     const exitKey=new T.Group();exitKey.name='office-exit-key';root.add(exitKey);
     const keyRing=new T.Mesh(new T.TorusGeometry(.035,.006,6,14),metal);keyRing.rotation.x=-Math.PI/2;keyRing.position.set(-2.13,.807,1.16);exitKey.add(keyRing);

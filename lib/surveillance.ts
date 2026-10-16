@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {crtScreenGeometry} from './crt-monitor.ts';
 import {createSedan} from './sedan.ts';
 import {createPedestrian} from './pedestrian.ts';
 import {extremity} from './ghost-anatomy.ts';
@@ -48,10 +49,10 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
   // Move the intact hand behind the sloped pane; do not flatten anatomical surfaces.
   const palm=hand.geometry.getAttribute('position');let protrusion=-Infinity;for(let i=0;i<palm.count;i++)protrusion=Math.max(protrusion,palm.getX(i)-(.814-(palm.getY(i)-.923)*(.149/.48)));
   hand.geometry.translate(-protrusion-.008,0,0);hand.position.set(0,0,0);hand.rotation.set(0,0,0);car.add(hand);
-  const image=new T.Mesh(new T.PlaneGeometry(.72,.54),new T.MeshBasicMaterial({map:target.texture,color:'#a2b3a8'}));root.add(image);
+  const image=new T.Mesh(crtScreenGeometry(.72,.54),new T.MeshBasicMaterial({map:target.texture,color:'#a2b3a8'}));root.add(image);
   const canvas=document.createElement('canvas');canvas.width=640;canvas.height=480;const ctx=canvas.getContext('2d')!;
   const overlayMap=new T.CanvasTexture(canvas);overlayMap.colorSpace=T.SRGBColorSpace;
-  const overlay=new T.Mesh(new T.PlaneGeometry(.72,.54),new T.MeshBasicMaterial({map:overlayMap,transparent:true,toneMapped:false,depthWrite:false}));overlay.position.z=.0006;root.add(overlay);
+  const overlay=new T.Mesh(crtScreenGeometry(.72,.54),new T.MeshBasicMaterial({map:overlayMap,transparent:true,toneMapped:false,depthWrite:false}));overlay.position.z=.0006;root.add(overlay);
   let mode='idle',lastKey='',pending=true,clock=0,disposed=false;
   function update(stage:Stage,time:number,text:string,review?:ArchiveFrame){
     const office=kind==='office',warning=stage==='archive_escape'||stage==='archive_departure';
