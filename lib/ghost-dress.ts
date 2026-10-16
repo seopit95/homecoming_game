@@ -1,10 +1,24 @@
 import * as T from 'three';
 import asset from './assets/ghost-dress.json' with {type:'json'};
+// UV copies remain one physical cloth surface. Accumulate triangle areas on
+// their original vertex owner, then copy the result back to the texture seams.
+const owners:number[]=[],copies=new Map<string,number[]>();
+for(let i=0;i<asset.position.length/3;i++){
+  const key=asset.position.slice(i*3,i*3+3).join('/')+'/'+asset.armWeight[i];
+  let group=copies.get(key);if(!group){group=[];copies.set(key,group);}owners.push(group[0]??i);group.push(i);
+}
+const normalIndex=new T.Uint16BufferAttribute(asset.index.map(i=>owners[i]),1);
+const normalSeams=[...copies.values()].filter(g=>g.length>1);
+function updateDressNormals(g:T.BufferGeometry){
+  const rendered=g.index;g.setIndex(normalIndex);
+  try{g.computeVertexNormals();}finally{g.setIndex(rendered);}
+  const n=g.getAttribute('normal');for(const group of normalSeams)for(let j=1;j<group.length;j++){const owner=group[0],i=group[j];n.setXYZ(i,n.getX(owner),n.getY(owner),n.getZ(owner));}
+}
 // The neckline, bodice and sleeves are one authored surface. UV seams are
 // duplicated only for sampling; their positions and skin weights are identical.
 export function createDress(torso:T.Group,cloth:T.Material){
   const g=new T.BufferGeometry(),colors=asset.position.flatMap((_,i)=>i%3?[]:[.94,.96,1]);
-  g.setAttribute('position',new T.Float32BufferAttribute(asset.position,3));g.setAttribute('uv',new T.Float32BufferAttribute(asset.uv,2));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.setIndex(asset.index);g.computeVertexNormals();
+  g.setAttribute('position',new T.Float32BufferAttribute(asset.position,3));g.setAttribute('uv',new T.Float32BufferAttribute(asset.uv,2));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.setIndex(asset.index);updateDressNormals(g);
   const gown=new T.Mesh(g,cloth);gown.name='ghost-wet-dress';gown.castShadow=true;gown.receiveShadow=true;torso.add(gown);return {gown,hem:new Float32Array(asset.position)};
 }
 export function createClavicle(torso:T.Group,skin:T.Material){
@@ -54,7 +68,7 @@ export function poseDress(gown:T.Mesh,rest:Float32Array,torso:T.Group,knees:T.Gr
     v.copy(center);v.x+=x*(1+lower*(.25-tuck*.6)-gather+.18*hipAllowance);v.y+=shift.y+z*tangent.z*thickness;v.z+=shift.z-z*tangent.y*thickness;
     v.y=Math.max(seated?.25:.022,v.y);v.sub(torso.position).applyQuaternion(inverse);p.setXYZ(i,v.x,v.y,v.z);
   }
-  p.needsUpdate=true;gown.geometry.computeVertexNormals();gown.geometry.boundingSphere??=new T.Sphere(new T.Vector3(0,-.4,0),1.8);
+  p.needsUpdate=true;updateDressNormals(gown.geometry);gown.geometry.boundingSphere??=new T.Sphere(new T.Vector3(0,-.4,0),1.8);
 }
 
 export function poseDressArms(gown:T.Mesh,rest:Float32Array,arms:T.Group[]){
@@ -87,5 +101,5 @@ export function poseDressArms(gown:T.Mesh,rest:Float32Array,arms:T.Group[]){
       v.sub(torso.position).applyQuaternion(inverse);p.setXYZ(i,v.x,v.y,v.z);
     }
   }
-  p.needsUpdate=true;gown.geometry.computeVertexNormals();
+  p.needsUpdate=true;updateDressNormals(gown.geometry);
 }

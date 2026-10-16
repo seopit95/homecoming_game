@@ -56,7 +56,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   let entranceDelay=0,arrivalPursuit=false;let arrivalDoor:T.Object3D|undefined,arrivalDoorRelease=-1;let lureUsed=false;let noiseRadius=0,saveUntil=0,noiseUntil=0;let saveNotice='';
   let storage:Storage|undefined;try{storage=window.localStorage;}catch{}
   let saved=storage?readProgress(storage):null;
-  const deathOrigin=new T.Vector3(),deathGhostOrigin=new T.Vector3(),deathWanted=new T.Vector3(),deathDirection=new T.Vector3(),deathFace=new T.Vector3();let deathFloor=0,deathEye=1.65;
+  const deathOrigin=new T.Vector3(),deathGhostOrigin=new T.Vector3(),deathLightOrigin=new T.Vector3(),deathLightAim=new T.Vector3(),deathWanted=new T.Vector3(),deathDirection=new T.Vector3(),deathFace=new T.Vector3();let deathFloor=0,deathEye=1.65;
   const interactionRay=new T.Raycaster();
   const hiddenPosition=new T.Vector3(),direction=new T.Vector3(),delta=new T.Vector3();
   let settings:Settings=storage?readSettings(storage):normalizeSettings(defaultSettings);renderer.toneMappingExposure=settings.brightness;camera.fov=settings.fov;camera.updateProjectionMatrix();
@@ -155,7 +155,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='dying'){
       stopRecording();stopAnnexCall();stopCourtCall();keys.clear();holding=false;dragging=false;hover=undefined;message='';whisper='';threat=1;deathOrigin.copy(camera.position);deathFloor=world.heightAt(camera.position.x,camera.position.z);deathEye=camera.position.y-deathFloor;
       deathDirection.copy(world.figure.position).sub(camera.position);deathDirection.y=0;if(deathDirection.lengthSq()<.001)deathDirection.set(-Math.sin(yaw),0,-Math.cos(yaw));deathDirection.normalize();
-      deathGhostOrigin.copy(world.figure.position);
+      deathGhostOrigin.copy(world.figure.position);deathLightOrigin.copy(flashlight.position);deathLightAim.copy(flashlight.target.position);
       world.figure.visible=true;audio.stopVoices();audio.voice('scream',0,1);audio.sound('slam',0,.8);emit();return true;
     }
     const nextArea=areaFor(story);if(nextArea!==area){const wasCrouched=crouched;loadArea(nextArea);crouched=wasCrouched;}
@@ -689,8 +689,19 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     camera.rotation.set(pitch,yaw,story.stage==='dying'?deathRoll:story.stage==='pry'&&stageTime<.7?Math.sin(stageTime*48)*.022:0,'YXZ');camera.updateMatrixWorld();
     fireAlarmSound();
     flashlight.position.copy(hands.beamOrigin).applyQuaternion(camera.quaternion).add(camera.position);
-    if(clampLightOrigin(camera.position,flashlight.position,world.solids)){hands.update({...handPose,obstructed:true});flashlight.position.copy(hands.beamOrigin).applyQuaternion(camera.quaternion).add(camera.position);clampLightOrigin(camera.position,flashlight.position,world.solids);}
-    camera.getWorldDirection(direction);flashlight.target.position.copy(camera.position).addScaledVector(direction,6);flashlight.intensity=torch&&!story.hidden&&story.stage!=='road_exit'?42:0;fill.position.copy(camera.position);fill.intensity=story.stage==='dying'?1.1:story.hidden||story.stage==='road_exit'?.2:.35;
+    if(story.stage==='dying'){
+      // Pull the held torch back as the player is grabbed, before its lens can
+      // enter the approaching shoulder. Its beam swings aside with the wrist.
+      delta.set(.12,-.16,-.08).applyQuaternion(camera.quaternion).add(camera.position);
+      flashlight.position.copy(deathLightOrigin).lerp(delta,T.MathUtils.smoothstep(stageTime,0,.18));
+      clampLightOrigin(camera.position,flashlight.position,world.solids);
+    }else if(clampLightOrigin(camera.position,flashlight.position,world.solids)){hands.update({...handPose,obstructed:true});flashlight.position.copy(hands.beamOrigin).applyQuaternion(camera.quaternion).add(camera.position);clampLightOrigin(camera.position,flashlight.position,world.solids);}
+    camera.getWorldDirection(direction);flashlight.target.position.copy(camera.position).addScaledVector(direction,6);
+    if(story.stage==='dying'){
+      delta.set(-deathDirection.z,0,deathDirection.x).multiplyScalar(2.2).addScaledVector(deathDirection,.5).add(deathOrigin);delta.y=deathFloor+.05;
+      flashlight.target.position.copy(deathLightAim).lerp(delta,T.MathUtils.smoothstep(stageTime,0,.18));
+    }
+    flashlight.intensity=torch&&!story.hidden&&story.stage!=='road_exit'?42:0;fill.position.copy(camera.position);fill.intensity=story.stage==='dying'?1.1:story.hidden||story.stage==='road_exit'?.2:.35;
     const powered=story.stage==='tv';world.shoes.visible=area==='apartment'&&!['drive','impact','flee','sleep','tv','wake_ring','light_switch','find_torch','phone','power'].includes(story.stage);
     if(area==='apartment'){ambient.intensity=powered?.7:.2;world.setTV?.(started&&story.stage==='tv',time);}
     for(let i=0;i<world.lamps.length;i++){
