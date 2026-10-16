@@ -11,7 +11,7 @@ export function garageMarking(root:T.Group,x:number,z:number,w:number,d:number,m
 
 export function buildGarageStructure(root:T.Group){
  const structure=new T.Group();structure.name='garage-structure';root.add(structure);
- const concrete=surface('concrete','#99a69b'),steel=surface('paintedMetal','#8a9690',{roughness:.68,metalness:.3}),pipePaint=new T.MeshStandardMaterial({color:'#60413c',roughness:.74,metalness:.24}),dark=new T.MeshStandardMaterial({color:'#33423d',roughness:.86});
+ const concrete=surface('castConcrete','#99a69b'),steel=surface('paintedMetal','#8a9690',{roughness:.68,metalness:.3}),pipePaint=new T.MeshStandardMaterial({color:'#60413c',roughness:.74,metalness:.24}),dark=new T.MeshStandardMaterial({color:'#33423d',roughness:.86});
  concrete.normalScale.setScalar(.35);steel.map?.dispose();steel.map=null;steel.metalnessMap=null;steel.metalness=.3;steel.normalScale.setScalar(.18);
  const box=(parent:T.Group,x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material)=>{const p=new T.Mesh(boxUV(softBox(w,h,d,Math.min(.009,h/4,w/4,d/4)),x,y,z),m);p.position.set(x,y,z);p.castShadow=p.receiveShadow=true;parent.add(p);return p;};
  const transverse=new T.Group();transverse.name='garage-transverse-beams';structure.add(transverse);

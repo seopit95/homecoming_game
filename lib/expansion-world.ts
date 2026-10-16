@@ -30,7 +30,7 @@ export const expansionLayout={
 export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyard'>){
  const L=expansionLayout[area],bx=L.x,bz=L.z,solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
  root.name=`${area}-chapter`;
- const wall=surface('decayWall',area==='annex'?'#b2b09b':'#86968c'),floor=surface(area==='annex'?'oldTile':'garage',area==='annex'?'#aaa897':'#858e86',{roughness:.63});
+ const wall=surface(area==='plant'?'castConcrete':'decayWall',area==='annex'?'#b2b09b':'#86968c'),floor=surface(area==='annex'?'oldTile':'wornConcrete',area==='annex'?'#aaa897':'#858e86',{roughness:.63});
  const lower=surface('wall','#4b6054'),metal=surface('steel','#757c73',{roughness:.5,metalness:.48}),wood=surface('wood','#736553');
  const dark=new T.MeshStandardMaterial({color:'#161e1c',roughness:.78}),paper=new T.MeshStandardMaterial({color:'#c7bda3',roughness:.91}),rust=new T.MeshStandardMaterial({color:'#664b35',roughness:.83}),red=new T.MeshStandardMaterial({color:'#7e302b',roughness:.68});
  const blue=new T.MeshStandardMaterial({color:'#374e53',roughness:.67}),glass=new T.MeshPhysicalMaterial({color:'#637770',roughness:.24,transparent:true,opacity:.35});
@@ -68,7 +68,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  }
  function puddle(x:number,z:number,w:number,d:number,opacity=.28){const mesh=new T.Mesh(new T.PlaneGeometry(w,d),new T.MeshPhysicalMaterial({map:wetTexture(false,Math.round(x*7+z*13)),color:'#233630',roughness:.06,transparent:true,opacity,depthWrite:false}));mesh.rotation.x=-Math.PI/2;mesh.position.set(x,.009,z);root.add(mesh);return mesh;}
  // Broad footprint, human-scale 4 m spine and outer loop aisles around real rooms.
- box(0,-.12,0,bx*2,.24,bz*2,floor);box(0,2.91,0,bx*2,.22,bz*2,wall);
+ box(0,-.12,0,bx*2,.24,bz*2,floor);box(0,2.91,0,bx*2,.22,bz*2,area==='annex'?wall:surface('castConcrete','#929c94'));
  for(const x of [-bx,bx]){
   if(area==='annex'&&x===bx){wallAt(x,(-bz+27.6)/2,.18,bz+27.6);wallAt(x,(31.4+bz)/2,.18,bz-31.4);box(x,2.625,29.5,.18,.35,3.8,wall,true);}
   else wallAt(x,0,.18,bz*2);

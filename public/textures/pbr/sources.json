@@ -5,7 +5,9 @@
     "https://polyhaven.com/a/painted_plaster_wall",
     "https://polyhaven.com/a/concrete_floor_02",
     "https://polyhaven.com/a/dark_wood",
-    "https://polyhaven.com/a/old_wooden_floor_02"
+    "https://polyhaven.com/a/old_wooden_floor_02",
+    "https://polyhaven.com/a/concrete_wall_006",
+    "https://polyhaven.com/a/concrete_floor_worn_001"
   ],
   "maps": [
     {
@@ -91,6 +93,54 @@
       "bytes": 472555,
       "sha256": "7804fc7c5c5f5591492854d49234df43ba94345c5821452caf32a1514eff4aff",
       "asset": "old_wooden_floor_02"
+    },
+    {
+      "file": "cast-concrete-color.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_006/concrete_wall_006_diff_1k.jpg",
+      "md5": "62ac61307a3321ecec26e1abd045f2ab",
+      "bytes": 769415,
+      "sha256": "fea247dd085cd05d8deb335234c834764d622029da351f8bcc8913935316bacd",
+      "asset": "concrete_wall_006"
+    },
+    {
+      "file": "cast-concrete-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_006/concrete_wall_006_nor_gl_1k.jpg",
+      "md5": "337cf8d33598e1ecd036ef3727a4b36d",
+      "bytes": 1195078,
+      "sha256": "4ff16bb96fc2df3ef71d22007151aff1d8bf7cb10a493d3f8e973213a99dd428",
+      "asset": "concrete_wall_006"
+    },
+    {
+      "file": "cast-concrete-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_006/concrete_wall_006_arm_1k.jpg",
+      "md5": "171452c48704f7fa7f55d5cbaf17c85c",
+      "bytes": 963446,
+      "sha256": "b5ab58c363e1802611c30bc456066d32b3f9b9697fb73d6acc983b8390a662ac",
+      "asset": "concrete_wall_006"
+    },
+    {
+      "file": "worn-concrete-color.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_worn_001/concrete_floor_worn_001_diff_1k.jpg",
+      "md5": "e35597cca586150b1ab2aa9a331a39c5",
+      "bytes": 118806,
+      "sha256": "6e40c0fc908f4d66431836f5abe203f3a4eb064e88824378a91a46a26e2f464c",
+      "asset": "concrete_floor_worn_001"
+    },
+    {
+      "file": "worn-concrete-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_worn_001/concrete_floor_worn_001_nor_gl_1k.jpg",
+      "md5": "9de6626758f8793b71182b892c110827",
+      "bytes": 110906,
+      "sha256": "523bd94a1be5dd2f11c2ae2b7d7c77445cf5bd9e41604db515a7c8364dcba067",
+      "asset": "concrete_floor_worn_001"
+    },
+    {
+      "file": "worn-concrete-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_worn_001/concrete_floor_worn_001_arm_1k.jpg",
+      "md5": "8174fe8a5c982edef079c3c3775e5377",
+      "bytes": 152919,
+      "sha256": "b21e63637d04b969894bd40a45df185d77671ed74b8955cd6e403c34ed465043",
+      "asset": "concrete_floor_worn_001"
     }
   ],
   "asset_metadata": [
@@ -114,6 +164,26 @@
       },
       "physical_width_meters": 2.03,
       "physical_height_meters": 2.03
+    },
+    {
+      "asset": "concrete_wall_006",
+      "url": "https://polyhaven.com/a/concrete_wall_006",
+      "authors": {
+        "Dario Barresi": "Processing",
+        "Charlotte Baglioni": "Photography"
+      },
+      "physical_width_meters": 2.0,
+      "physical_height_meters": 2.0
+    },
+    {
+      "asset": "concrete_floor_worn_001",
+      "url": "https://polyhaven.com/a/concrete_floor_worn_001",
+      "authors": {
+        "Dimitrios Savva": "Photography",
+        "Rico Cilliers": "Processing"
+      },
+      "physical_width_meters": 3.0,
+      "physical_height_meters": 3.000000238418579
     }
   ],
   "wood_payload_bytes": 3562562

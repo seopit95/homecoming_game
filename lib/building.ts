@@ -30,8 +30,9 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   const size=area==='landing'?{x:landing.halfWidth,z:landing.halfLength}:buildingLayout[area];
   const bx=size.x,bz=size.z,bounds:Bounds=area==='landing'?{x:4.2,z:25.45,minX:-1.17}:{x:bx-.13,z:bz-.13},ceiling=area==='parking'?2.7:2.8;
   const mat=(color:string,extra:object={})=>new T.MeshStandardMaterial({color,roughness:.85,...extra});
-  const plaster=surface('decayWall','#b5b6a6'),concrete=surface('garage','#a2a9a3'),floorMat=surface(area==='parking'?'garage':'oldTile','#b0b1a4',{roughness:.62}),metal=surface('steel','#878d8b',{metalness:.55,roughness:.48}),dark=mat('#141b1c'),rust=mat('#523b29'),wood=surface('wood','#807668'),paint=surface('decayWall','#a7b0a0',{roughness:.79}),white=mat('#a7ab94'),red=mat('#802b20'),wallMat=area==='parking'?concrete:area==='lift'?metal:plaster;
+  const plaster=surface('decayWall','#b5b6a6'),concrete=surface('castConcrete','#a2a9a3'),floorMat=surface(area==='parking'?'wornConcrete':'oldTile','#b0b1a4',{roughness:.62}),metal=surface(area==='lift'?'paintedMetal':'steel','#878d8b',{metalness:.55,roughness:.48}),dark=mat('#141b1c'),rust=mat('#523b29'),wood=surface('wood','#807668'),paint=surface('decayWall','#a7b0a0',{roughness:.79}),white=mat('#a7ab94'),red=mat('#802b20'),wallMat=area==='parking'?concrete:area==='lift'?metal:plaster;
   const parkingLower=area==='parking'?surface('wall','#84968b',{roughness:.86}):paint;
+  if(area==='lift'){metal.map?.dispose();metal.map=null;metal.metalnessMap=null;metal.metalness=.68;metal.normalScale.setScalar(.12);}
   if(area==='parking'){floorMat.normalScale.setScalar(.28);floorMat.roughness=.72;}
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false){const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
   function wall(x:number,z:number,w:number,d:number,y=ceiling/2,h=ceiling){const mesh=box(x,y,z,w,h,d,wallMat,true);box(x,y-h/2+.46,z,w+.012,.9,d+.012,area==='lift'?metal:parkingLower);return mesh;}
@@ -65,7 +66,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   let updateStory:((stage:Stage,time:number,reduced:boolean,story?:Story,occupants?:Occupant[])=>void)|undefined;
   const figure=makeFigure(root),shoes=new T.Group(),phoneGlow=new T.PointLight(),radioLight=new T.PointLight();
   if(area!=='stairs'){
-    box(0,-.1,0,bx*2,.2,bz*2,floorMat);box(0,ceiling+.08,0,bx*2,.16,bz*2,concrete);
+    box(0,-.1,0,bx*2,.2,bz*2,floorMat);box(0,ceiling+.08,0,bx*2,.16,bz*2,area==='lift'?metal:concrete);
     if(area!=='landing'){wall(-bx,0,.18,bz*2);wall(bx,0,.18,bz*2);}else{
       // The 2803 opening is cut out of the right-hand wall; the pursuer walks through it.
       const lo=landing.homeZ-.75,hi=landing.homeZ+.75;
@@ -84,7 +85,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       box(2.95,.65,landing.homeZ+1.12,1.3,1.3,.5,wood,true);light(2.2,2.3,landing.homeZ,'#6c8c8a',.8,3);
     }if(area==='corridor'||area==='parking'||area==='office')portal(bz);else wall(0,bz,bx*2,.18);
     if(area==='lift'||area==='landing'||area==='office'||area==='corridor')portal(-bz);else if(area==='parking'){wall(-4.475,-bz,15.05,.18);wall(10.275,-bz,3.45,.18);box(5.8,2.75,-bz,5.5,.1,.18,wallMat);}else wall(0,-bz,bx*2,.18);
-    if(area!=='parking')for(let z=-bz+2;z<bz;z+=5){box(0,ceiling-.08,z,bx*2,.15,.25,concrete);pipe(bx-.21,ceiling-.18,z,4.9);}
+    if(area!=='parking')for(let z=-bz+2;z<bz;z+=5){box(0,ceiling-.08,z,bx*2,.15,.25,area==='lift'?metal:concrete);pipe(bx-.21,ceiling-.18,z,4.9);}
   }
   if(area==='landing'||area==='lift'){
     const dz=area==='landing'?landing.liftZ:-1.35;
@@ -299,7 +300,6 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const y of [.42,2.35]){roundPipe(root,[-11.31,y,-17.42],[-11.9,y,-17.42],.012,metal);box(-11.9,y,-17.42,.025,.14,.14,metal);}
     solids.push({x:-11.2,z:-17.42,w:1.4,d:.16,y:.275,h:.55},{x:-11.31,z:-17.42,w:.11,d:.11,y:1.35,h:2.7});
     roundPipe(root,[-10.5,1.36,-17],[-10.5,2.7,-17],.015,metal);
-    for(const z of [-12,0,12])for(const x of [-8,8])roundPipe(root,[x,2.35,z],[x,2.47,z],.0325,rust);
     // Flush channel drains follow the outer service aisles.
     for(const x of [-11.65,11.65])for(const z of [-12,0,12]){box(x,.001,z,.24,.002,2.6,metal);for(let dz=-1.2;dz<=1.2;dz+=.1)box(x,.0025,z+dz,.19,.001,.025,dark);}
     const extinguisher=new T.Mesh(new T.CylinderGeometry(.10,.10,.43,20),red);extinguisher.position.set(-11.25,.32,16.05);root.add(extinguisher);box(-11.25,.08,16.05,.26,.16,.26,metal);roundPipe(root,[-11.25,.54,16.05],[-11.25,.62,16.05],.024,metal);roundPipe(root,[-11.25,.59,16.05],[-11.37,.32,16.05],.012,dark);
