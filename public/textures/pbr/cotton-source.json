@@ -1,0 +1,29 @@
+{
+  "asset": "Cotton Jersey",
+  "source": "https://polyhaven.com/a/cotton_jersey",
+  "license": "CC0",
+  "license_url": "https://polyhaven.com/license",
+  "authors": "colormass photography / Rico Cilliers processing",
+  "source_scale_m": 0.3,
+  "processing": "Original unmodified 1K JPEG color, OpenGL normal and ARM channels. Color decoded sRGB; normal/ARM linear.",
+  "files": [
+    {
+      "file": "cotton-color.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cotton_jersey/cotton_jersey_diff_1k.jpg",
+      "bytes": 581360,
+      "sha256": "0f1b790e4087223275aaa6fdffdd46a556a26d2af72cd811acf72ba9c21ec1f6"
+    },
+    {
+      "file": "cotton-normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cotton_jersey/cotton_jersey_nor_gl_1k.jpg",
+      "bytes": 678670,
+      "sha256": "9b79709806511b62567fb007ff61009c3b194bb0d0821fbaee3faf1b2bff0318"
+    },
+    {
+      "file": "cotton-arm.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cotton_jersey/cotton_jersey_arm_1k.jpg",
+      "bytes": 976674,
+      "sha256": "c3d38c2d862df80f0133f895bb7142978f097d69b4507374d5a8eafd6e088d71"
+    }
+  ]
+}

@@ -17,7 +17,8 @@ export function dressLivingSpace(root:T.Group,solids:Solid[],area:'apartment'|'r
     add(anchor,new T.LatheGeometry(profile,28),[x,top,z],color);
   }
   function clothing(anchor:T.Object3D,x:number,z:number,top:number,color:string,jacket=false){
-    const w=jacket?.50:.46,d=jacket?.52:.50,h=jacket?.050:.036;
+    // A compact folded jacket fits wholly on the cushion's compressed crown.
+    const w=jacket?.44:.46,d=jacket?.44:.50,h=jacket?.035:.036;
     const height=(px:number,pz:number)=>h+.012*Math.sin(px*19+pz*13)+.012*Math.cos(px*24-pz*9);
     const cloth=new T.PlaneGeometry(w,d,24,24);cloth.rotateX(-Math.PI/2);const p=cloth.getAttribute('position');
     for(let i=0;i<p.count;i++){
@@ -52,7 +53,7 @@ export function dressLivingSpace(root:T.Group,solids:Solid[],area:'apartment'|'r
       add(table,softBox(.014,.007,.075),[.355+i*.03,.5385,-.38],'#969e98',[0,a,0]);
       add(table,softBox(.024,.007,.01),[.365+i*.03,.5385,-.348],'#969e98',[0,a,0]);
     }
-    clothing(sofa,0,0,.50,'#414b4b',true);
+    clothing(sofa,0,.07,.50,'#414b4b',true);
   }else{
     const bed=root.getObjectByName('resident-bed')!,desk=root.getObjectByName('resident-study-desk')!;
     // The shirt is laid on the uncovered head half, with no duplicate work badge.

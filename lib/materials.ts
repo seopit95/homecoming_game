@@ -5,7 +5,7 @@ import {loadTexture} from './texture-loader.ts';
 
 // Decode each source once; floor changes own disposable texture clones.
 const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair'|'resident-photo',T.Texture>>={};
-const physicalSources:Partial<Record<`${'plaster'|'concrete'|'cast-concrete'|'worn-concrete'|'wood'|'wood-floor'|'painted-metal'|'bag-leather'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
+const physicalSources:Partial<Record<`${'plaster'|'concrete'|'cast-concrete'|'worn-concrete'|'wood'|'wood-floor'|'painted-metal'|'bag-leather'|'cotton'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
@@ -16,7 +16,7 @@ export function prepareVisuals(){
     const livingJobs=(['pedestrian-skin','pedestrian-shirt','pedestrian-shirt-normal','pedestrian-hair'] as const).map(async key=>{
       const texture=await loadTexture('/textures/'+key+'-v1.webp');texture.colorSpace=key.endsWith('-normal')?T.NoColorSpace:T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     });
-    const physicalJobs=(['plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm','cast-concrete-color','cast-concrete-normal','cast-concrete-arm','worn-concrete-color','worn-concrete-normal','worn-concrete-arm','wood-color','wood-normal','wood-arm','wood-floor-color','wood-floor-normal','wood-floor-arm','painted-metal-color','painted-metal-normal','painted-metal-arm','bag-leather-color','bag-leather-normal','bag-leather-arm'] as const).map(async key=>{
+    const physicalJobs=(['plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm','cast-concrete-color','cast-concrete-normal','cast-concrete-arm','worn-concrete-color','worn-concrete-normal','worn-concrete-arm','wood-color','wood-normal','wood-arm','wood-floor-color','wood-floor-normal','wood-floor-arm','painted-metal-color','painted-metal-normal','painted-metal-arm','bag-leather-color','bag-leather-normal','bag-leather-arm','cotton-color','cotton-normal','cotton-arm'] as const).map(async key=>{
       const texture=await loadTexture(`/textures/pbr/${key}.${key.startsWith('painted-metal')||key.startsWith('bag-leather')?'webp':'jpg'}`);texture.colorSpace=key.endsWith('color')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.setScalar(.9);return {key,texture};
     });
     const [results,physical,facility]=await Promise.all([Promise.allSettled([...jobs,...livingJobs]),Promise.allSettled(physicalJobs),Promise.allSettled([prepareFacilityModels()])]);
@@ -59,6 +59,12 @@ export function surface(kind:Surface,color='#ffffff',options:T.MeshStandardMater
   return material;
 }
 export function upholstery(color:string){return surface('fabric',color,{roughness:.94,bumpScale:.0007});}
+// Only domestic assemblies with 1.8 metres per UV unit opt into this material.
+export function cottonUpholstery(color:string){
+ if(!physicalSources['cotton-color'])return surface('fabric',color,{roughness:.94,bumpScale:.0007});
+ const copy=(channel:'color'|'normal'|'arm')=>{const t=physicalSources[`cotton-${channel}`]!.clone();t.repeat.setScalar(6);t.needsUpdate=true;return t;},arm=copy('arm');
+ const material=new T.MeshStandardMaterial({color,map:copy('color'),normalMap:copy('normal'),normalScale:new T.Vector2(.22,.22),roughness:.94,roughnessMap:arm,aoMap:arm,aoMapIntensity:.35});material.name='domestic-cotton';return material;
+}
 export function ghostHairMaterials(){
   const scalp=surface('hair','#828b8e',{roughness:.42,bumpScale:.00025,alphaTest:.32,alphaToCoverage:true,side:T.DoubleSide}) as T.MeshPhysicalMaterial;
   scalp.specularIntensity=.65;scalp.anisotropy=.6;scalp.clearcoat=.08;scalp.clearcoatRoughness=.4;

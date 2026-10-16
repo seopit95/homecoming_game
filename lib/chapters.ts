@@ -1,7 +1,7 @@
 import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import * as T from 'three';
-import {surface,boxUV,softBox,upholstery} from './materials.ts';
+import {surface,boxUV,softBox,upholstery,cottonUpholstery} from './materials.ts';
 import {basin,sinkCounter,cabinet,roundPipe,drawerUnit,writingTable,bed,bookcase} from './props.ts';
 import {createGhost} from './ghost.ts';
 import {nightWindow} from './japan.ts';
@@ -90,7 +90,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     const photo=createResidentPhoto();photo.rotation.y=Math.PI;photo.position.set(3.78,1.63,3.9607);root.add(photo);
     const note=label('다음에는 맑은 날에.\n내일 오후 두 시',3.8,1.32,3.9613,.43,.17,Math.PI);note.name='resident-photo-note';target('portrait','냉장고 사진과 손글씨 쪽지',photo,3.8,1.5,3.94);
     box(3.92,1.408,3.956,.045,.021,.011,dark);
-    const residentBed=bed(2,3.1,.505,wood,upholstery('#b0a68c'),upholstery('#727a69'));residentBed.name='resident-bed';residentBed.rotation.y=Math.PI;residentBed.position.set(-2.9,0,-3.4);root.add(residentBed);solids.push({x:-2.9,z:-3.4,w:2,d:3.1,y:.2525,h:.505},{x:-2.9,z:-5.01,w:2.1,d:.12,y:.72,h:1.2});
+    const residentBed=bed(2,3.1,.505,wood,cottonUpholstery('#b0a68c'),cottonUpholstery('#727a69'));residentBed.name='resident-bed';residentBed.rotation.y=Math.PI;residentBed.position.set(-2.9,0,-3.4);root.add(residentBed);solids.push({x:-2.9,z:-3.4,w:2,d:3.1,y:.2525,h:.505},{x:-2.9,z:-5.01,w:2.1,d:.12,y:.72,h:1.2});
     const residentShelf=bookcase(1.8,2,.3,wood);residentShelf.name='resident-bookcase';residentShelf.rotation.y=Math.PI/2;residentShelf.position.set(-4.45,0,-3.9);root.add(residentShelf);solids.push({x:-4.45,z:-3.9,w:.3,d:1.8,y:1,h:2});
     residentStudy=createResidentStudy(wood);root.add(residentStudy.root);solids.push(...residentStudy.solids);targets.push(...residentStudy.targets);
     const receipt=label('관리비 납부 확인\n1704 · 한서연',-2.25,.455,1.98,.28,.17);receipt.rotation.x=-Math.PI/2;

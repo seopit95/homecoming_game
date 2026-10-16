@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {surface,softBox,boxUV} from './materials.ts';
 import {batchStaticGeometry} from './static-geometry.ts';
+import {cushionGeometry,quiltGeometry,pillowSeam} from './domestic-cloth.ts';
 export function roundPipe(parent:T.Object3D,a:number[],b:number[],radius:number,material:T.Material){
   const start=new T.Vector3(...a as [number,number,number]),end=new T.Vector3(...b as [number,number,number]);
   const pipe=new T.Mesh(new T.CylinderGeometry(radius,radius,start.distanceTo(end),12),material);pipe.position.copy(start).add(end).multiplyScalar(.5);pipe.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),end.sub(start).normalize());pipe.castShadow=true;pipe.receiveShadow=true;parent.add(pipe);return pipe;
@@ -94,9 +95,9 @@ export function sofa(width:number,depth:number,wood:T.Material,fabric:T.Material
   box(root,[0,.67,-depth/2+.12],[width,.78,.24],fabric);
   for(const x of [-width/2+.12,width/2-.12])box(root,[x,.515,0],[.24,.57,depth],fabric);
   const seatW=(width-.5)/3;
-  for(let i=0;i<3;i++){const cushion=box(root,[(i-1)*(seatW+.015),.42,.07],[seatW,.16,depth-.37],fabric);cushion.geometry.dispose();cushion.geometry=boxUV(softBox(seatW,.16,depth-.37,.07));}
+  for(let i=0;i<3;i++){const cushion=new T.Mesh(cushionGeometry(seatW,.16,depth-.37,true),fabric);cushion.position.set((i-1)*(seatW+.015),.34,.07);cushion.castShadow=cushion.receiveShadow=true;root.add(cushion);}
   for(const [i,x] of [-width*.29,width*.29].entries()){
-    const pillow=box(root,[x,.59,-.10],[.5,.18,.34],fabric);pillow.name=i?'sofa-pillow-right':'sofa-pillow-left';pillow.geometry.dispose();pillow.geometry=boxUV(softBox(.5,.18,.34,.08));
+    const pillow=new T.Mesh(cushionGeometry(.5,.12,.34),fabric);pillow.position.set(x,.50,-.10);pillow.name=i?'sofa-pillow-right':'sofa-pillow-left';pillow.castShadow=pillow.receiveShadow=true;root.add(pillow);const seam=new T.Mesh(pillowSeam(.5,.12,.34),fabric);pillow.add(seam);seam.castShadow=seam.receiveShadow=true;
   }
   return finishFurniture(root);
 }
@@ -109,11 +110,9 @@ export function bed(width:number,depth:number,mattressTop:number,wood:T.Material
   box(root,[0,.72,depth/2+.06],[width+.1,1.2,.12],wood);
   const mattress=box(root,[0,mattressTop-mattressH/2,0],[width-.1,mattressH,depth-.1],linen);mattress.geometry.dispose();mattress.geometry=boxUV(softBox(width-.1,mattressH,depth-.1,.075));
   for(const [i,x] of [-width*.23,width*.23].entries()){
-    const pillow=box(root,[x,mattressTop+.1,depth/2-.43],[width*.37,.2,.46],linen);pillow.name=i?'bed-pillow-right':'bed-pillow-left';pillow.geometry.dispose();pillow.geometry=boxUV(softBox(width*.37,.2,.46,.085));
+    const pillow=new T.Mesh(cushionGeometry(width*.37,.12,.46),linen);pillow.position.set(x,mattressTop,depth/2-.43);pillow.name=i?'bed-pillow-right':'bed-pillow-left';pillow.castShadow=pillow.receiveShadow=true;root.add(pillow);const seam=new T.Mesh(pillowSeam(width*.37,.12,.46),linen);pillow.add(seam);seam.castShadow=seam.receiveShadow=true;
   }
-  const cloth=box(root,[0,mattressTop+.018,-depth*.17],[width+.04,.036,depth*.58],blanket);cloth.name='bed-blanket';cloth.geometry.dispose();cloth.geometry=boxUV(softBox(width+.04,.036,depth*.58,.015));
-  // A thin hanging hem overlaps the top cloth at each side; its bottom remains above the floor.
-  for(const x of [-1,1])box(root,[x*(width/2+.008),mattressTop-.12,-depth*.17],[.025,.275,depth*.58],blanket);
+  const cloth=new T.Mesh(quiltGeometry(width,depth,mattressTop),blanket);cloth.name='bed-blanket';cloth.castShadow=cloth.receiveShadow=true;root.add(cloth);
   return finishFurniture(root);
 }
 export function bookcase(width:number,height:number,depth:number,wood:T.Material):T.Group{

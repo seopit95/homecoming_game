@@ -3,7 +3,7 @@ import {configureShadow} from './lighting.ts';
 import {apartment as home,apartmentScale as S,spaceFurniture} from './apartment-layout.ts';
 import type { Action, Area } from './story';
 import {buildBuilding,makeFigure} from './building.ts';
-import {surface,boxUV,softBox,upholstery} from './materials.ts';
+import {surface,boxUV,softBox,upholstery,cottonUpholstery} from './materials.ts';
 import {createEntryEvidence} from './entry-props.ts';
 import {basin,bathtub,sinkCounter,cabinet,roundPipe,sofa,drawerUnit,writingTable,bed,bookcase} from './props.ts';
 import {dressApartment} from './japan.ts';
@@ -74,7 +74,7 @@ function buildApartment(scene:T.Group) {
   const mat=(color:string, roughness=.86,extra:object={})=>new T.MeshStandardMaterial({color,roughness,...extra});
   const wallMat=surface('decayWall','#c6c4b6');
   const floorMat=surface('woodFloor','#cdc6b6',{roughness:.43}), wood=surface('wood','#b8ac98'), dark=mat('#111816'), trim=mat('#6d6051');
-  const fabric=upholstery('#676c62'), cream=surface('ceramic','#c4c3b8'), metal=mat('#66716d',.32,{metalness:.72});
+  const fabric=cottonUpholstery('#676c62'), cream=surface('ceramic','#c4c3b8'), metal=mat('#66716d',.32,{metalness:.72});
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=scene){
     const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);
     if(solid)solids.push({x,z,w,d,y,h});return mesh;
@@ -178,7 +178,7 @@ function buildApartment(scene:T.Group) {
   at(-4.8,-6.25);sign('백로아파트',-4.8,1.9,-6.146,0,.9,.3);
   // Bedroom wardrobe faces a generous clear floor, away from the bed.
   at(4.8,4.6);
-  const sleepingBed=bed(2.3,2.5,.715,wood,upholstery('#cac5b6'),upholstery('#596966'));sleepingBed.name='home-bed';sleepingBed.position.set(4.8,0,4.6);scene.add(sleepingBed);solids.push({x:4.8,z:4.6,w:2.3,d:2.5,y:.3575,h:.715},{x:4.8,z:5.91,w:2.4,d:.12,y:.72,h:1.2});
+  const sleepingBed=bed(2.3,2.5,.715,wood,cottonUpholstery('#cac5b6'),cottonUpholstery('#596966'));sleepingBed.name='home-bed';sleepingBed.position.set(4.8,0,4.6);scene.add(sleepingBed);solids.push({x:4.8,z:4.6,w:2.3,d:2.5,y:.3575,h:.715},{x:4.8,z:5.91,w:2.4,d:.12,y:.72,h:1.2});
   at(2.75,5.15);
   box(2.75,.47,5.15,.61,.94,.7,wood,true);const radio=box(2.75,1.07,5.15,.48,.28,.26,mat('#4d4638'));
   for(let i=0;i<8;i++)box(2.57+i*.035,1.07,5.007,.012,.19,.014,dark);

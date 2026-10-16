@@ -24,9 +24,10 @@ test('sofa seat is human-height and pillows touch its cushion',()=>{
  const seat=hit(root,[0,.55,0],[0,-1,0],.12);assert.ok(seat&&seat.point.y>=.48&&seat.point.y<=.52);
  for(const name of ['sofa-pillow-left','sofa-pillow-right']){const p=root.getObjectByName(name);assert.ok(p);const b=new T.Box3().setFromObject(p),c=b.getCenter(new T.Vector3());p.visible=false;const support=hit(root,[c.x,b.min.y+.001,c.z],[0,-1,0],.008);assert.ok(support&&support.object!==p);p.visible=true;}
 });
-test('bed pillows and thin blanket meet the mattress without duplicate floating stacks',()=>{
+test('bed pillows meet the mattress while its single quilt hangs over the sides',()=>{
  assert.equal(typeof props.bed,'function');const root=props.bed(2.3,2.5,.715,wood,fabric,fabric);
- for(const name of ['bed-pillow-left','bed-pillow-right','bed-blanket']){const p=root.getObjectByName(name);assert.ok(p);const b=new T.Box3().setFromObject(p);assert.ok(b.min.y>=.714&&b.min.y<=.72,`${name} bottom ${b.min.y}`);}
+ for(const name of ['bed-pillow-left','bed-pillow-right']){const p=root.getObjectByName(name);assert.ok(p);const b=new T.Box3().setFromObject(p);assert.ok(b.min.y>=.714&&b.min.y<=.72,`${name} bottom ${b.min.y}`);}
+ const quilt=root.getObjectByName('bed-blanket');assert.ok(quilt);const b=new T.Box3().setFromObject(quilt);assert.ok(b.min.y>.15&&b.min.y<.51);
  assert.ok(Math.abs(hit(root,[0,.717,.3]).point.y-.715)<.003);
 });
 test('bookcase has thin covered page blocks resting on shelves and closed back/sides',()=>{
@@ -47,7 +48,7 @@ for(const [area,rows] of [['apartment',[['home-phone-table',-3.15*S,2.4*S,.535],
 });
 test('blanket hem hangs outside the mattress and frame instead of being buried inside them',()=>{
  const cloth=new T.MeshStandardMaterial(),root=props.bed(2.3,2.5,.715,wood,fabric,cloth);
- for(const side of [-1,1]){const surface=hit(root,[side*1.20,.565,-.425],[-side,0,0],.15);assert.ok(surface&&surface.object.material===cloth,'the visible side is thin blanket cloth');}
+ for(const side of [-1,1]){const surface=hit(root,[side*1.30,.565,-.425],[-side,0,0],.15);assert.ok(surface&&surface.object.material===cloth,'the visible side is thin blanket cloth');}
 });
 
 for(const [id,name,point] of [['phone','home-phone-table',[-3.15*S,.58,2.4*S]],['flashlight','home-nightstand',[3.75*S,.75,5.43*S]]])test(`${id} base contacts its exact supporting top while interaction point stays fixed`,()=>{
