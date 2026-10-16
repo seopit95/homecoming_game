@@ -25,8 +25,8 @@ export const expansionObjectives={
 export type ExpansionStage=keyof typeof expansionObjectives;
 export type ExpansionArea='annex'|'courtyard'|'archive'|'plant';
 export const expansionJournal={
- court_gate:{title:'중정 입구 · 우회 통로 안내',text:'입구 안내판: 정문 폐쇄. 지하 기록보관실 → 배수 기계실 → 주차장 차량 출구. 북쪽 지하문 열쇠는 동측 경비초소의 금고에 있다.\n\n금고 비밀번호 지침: 사고 차량의 입차 분 두 자리, 야간 당직 내선 두 자리. 서측 경비일지와 동측 비상전화의 안내를 확인할 것.\n\n중정 너머 정문에는 셔터가 내려와 있다. 그 뒤로 차가 지날 때마다 같은 경적이 들린다.'},
- court_log:{title:'서측 초소 · 돌아온 차량',text:'입차 기록 03:26. 앞범퍼 파손. 운전자 2803호.\n\n당직 대체 근무자가 남긴 메모. 「차를 세우고 물어보려 했으나 운전자가 창문을 열지 않음. 검은 물이 차량 우측 문 아래로 흐름.」\n\n그날도, 오늘도 내 차가 이 건물 안으로 들어온다.'},
+ court_gate:{title:'중정 입구 · 우회 통로 안내',text:'입구 안내판: 정문 폐쇄. 지하 기록보관실 → 배수 기계실 → 주차장 차량 출구. 북쪽 지하문 열쇠는 동측 경비초소의 금고에 있다.\n\n열쇠 인계 기록은 서측 경비초소, 열쇠함은 동측 초소로 옮겼다는 안내가 붙어 있다. 근무일지의 인계 메모와 비상전화의 당직 안내를 확인해야 한다.\n\n중정 너머 정문에는 셔터가 내려와 있다. 중앙 보수공사 울타리를 돌아 양옆 통로로 초소와 지하문에 갈 수 있다.'},
+ court_log:{title:'서측 초소 · 인계판에 남은 입차 기록',text:'인계판의 점검 메모. 「열쇠함: 점검일 + 당직 내선. 정기점검 완료 26일.」 비상전화의 당직 안내와 대조하면 된다.\n\n그 아래에는 「03:26 / 2803호 입차」라는 한 줄이 남아 있다. 사고 당일 내 차가 지하로 들어온 시각이다.\n\n차를 세우고 집으로 올라갔다는 것은 기억한다. 그 뒤로도 평소처럼 지냈다. 이 숫자를 지우면 없던 일이 될 거라고 생각했던 걸까.'},
  court_phone:{title:'비상전화 · 돌아오는 대답',text:'비상통화 버튼을 눌렀다. 「여보세요. 누구 없어요?」\n\n연결음이 끊기자 스피커에서 내 목소리가 들렸다. 「잘못 거셨어요.」 나는 입을 다물고 있었는데, 같은 말이 세 번 반복됐다.\n\n단말의 안내와 통화 기록: 야간 당직 내선 17. 한서연. 내 목소리는 지금의 질문에 대답하고 있는 게 아니었다. 지하 통화 원본에 그때 누가 전화를 받았는지 남아 있을 것이다.'},
  court_evidence:{title:'놀이터 옆 · 주운 반사판',text:'놀이터 옆 점검대 위에 내 차의 깨진 전조등 조각이 있다. 빗물로 씻어도 홈 사이의 어두운 자국은 지워지지 않는다.\n\n곁에 떨어진 당직 수첩. 「아이들 등교 전에 정문 횡단보도 전등 점검. 우천 시 비상벨 확인.」\n\n그녀는 그날도 누군가 다치지 않도록 길을 확인하러 나갔다. 나는 휴대전화를 보느라 그 사람을 보지 않았다.'},
  court_confirm:{title:'경비초소 · 열린 금고',text:'번호를 맞추고 손잡이를 돌렸다. 무거운 철문이 열린다. 안쪽 고리에 지하문 열쇠가 걸려 있다.\n\n뒤판의 인계 쪽지. 「사고 신고 녹음 원본 보존. 차량 소유자 삭제 요청. 접수 거절.」'},
@@ -138,7 +138,7 @@ export function expansionTransition(s:Story,action:Action):Story|undefined{
 }
 export function expansionObjective(s:Story){
  if(s.stage==='court_search')return `금고 단서 ${courtEvidence.filter(a=>s.notes.includes(a)).length}/2 · 서측 경비일지 / 동측 비상전화 · 번호를 알면 금고에 입력하세요`;
- if(s.stage==='court_code')return `경비초소 금고 ${s.code??'0000'} · 입차한 분 두 자리 + 야간 당직 내선 두 자리`;
+ if(s.stage==='court_code')return `경비초소 금고 ${s.code??'0000'} · 정기점검 완료일 두 자리 + 야간 당직 내선 두 자리`;
  const ids=s.stage==='archive_search'?archiveEvidence:undefined;
  if(ids){const missing=ids.filter(a=>!s.notes.includes(a));const places:Partial<Record<Action,string>>={archive_road:'서측 A실 · 도로',archive_call:'동측 B실 · 통화',archive_gate:'서측 C실 · 입차'};return `원본 ${ids.length-missing.length}/${ids.length} · 대조 ${archiveFindings.filter(a=>s.circuit.includes(a)).length}/3 · ${missing.map(a=>places[a]).join(' / ')} · 찾은 원본은 북동쪽 편집실에서 검토하세요`;}
  if(s.stage==='archive_edit')return `${expansionObjectives.archive_edit} · 대조 ${archiveFindings.filter(a=>s.circuit.includes(a)).length}/3`;

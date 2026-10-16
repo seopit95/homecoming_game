@@ -7,7 +7,7 @@ globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>context
 
 // Moving either clue above its actual worktop breaks this regression, even if
 // the target point or support metadata still claims the old contact height.
-for(const id of ['court_log','court_evidence'])test(`${id}: actual sheet vertices meet the worktop within 1 mm`,()=>{
+for(const id of ['court_log','court_evidence'])test(`${id}: actual sheet vertices meet their backing within 1 mm`,()=>{
  const w=buildWorld(new T.Scene(),'courtyard');
  try{
   w.root.updateMatrixWorld(true);
@@ -16,7 +16,7 @@ for(const id of ['court_log','court_evidence'])test(`${id}: actual sheet vertice
   const positions=sheet.geometry.getAttribute('position');
   for(let i=0;i<positions.count;i++){
    const p=new T.Vector3().fromBufferAttribute(positions,i).applyMatrix4(sheet.matrixWorld);
-   const hit=new T.Raycaster(p,new T.Vector3(0,-1,0),.000001,.1).intersectObjects(meshes,false)[0];
+   const hit=new T.Raycaster(p,id==='court_log'?new T.Vector3(0,0,-1):new T.Vector3(0,-1,0),.000001,.1).intersectObjects(meshes,false)[0];
    assert.ok(hit&&hit.distance<=.001,`${id} vertex ${i}: support gap ${hit?.distance??'missing'} m`);
   }
  }finally{disposeWorld(w.root);}

@@ -278,7 +278,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(!advance(action)){
       if(action==='security_power'&&area==='office'){audio.sound('click',.5,.3);const faults={fuse:'빈 퓨즈 홀더에 예비 퓨즈를 먼저 설치하자.',monitor:'CCTV 기록장치 전원이 선택되지 않았다. B 회로를 확인하자.',lift:'승강기 제어 전원이 빠졌다. 필요한 회로와 6A 공급 한도를 살펴보자.',overload:'선택한 부하가 6A를 넘는다.'};say(officeFault?faults[officeFault]:'이미 전원을 연결했다.',6);return;}
       if(action==='office_install'){say('서고에서 예비 퓨즈를 먼저 챙겨야 한다.',5);return;}
-      if(action==='court_confirm'){audio.sound('slam',0,.4);noiseRadius=24;noiseUntil=elapsed+4;say('금고가 열리지 않는다. 경비일지의 입차 분과 비상전화의 당직 내선을 대조하자.',6);return;}
+      if(action==='court_confirm'){audio.sound('slam',0,.4);noiseRadius=24;noiseUntil=elapsed+4;say('금고가 열리지 않는다. 경비일지의 정기점검 완료일과 비상전화의 당직 내선을 대조하자.',6);return;}
       if(action==='plant_start'){
         const powered=story.circuit.includes('plant_circuit_pump')&&story.circuit.includes('plant_circuit_air');
         if(powered){world.plantAttempt?.(elapsed,story);noiseRadius=18;noiseUntil=elapsed+3;}

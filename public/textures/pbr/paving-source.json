@@ -1,0 +1,64 @@
+{
+  "asset": "PavingStones036",
+  "source": "https://ambientcg.com/view?id=PavingStones036",
+  "license": "CC0-1.0",
+  "license_url": "https://docs.ambientcg.com/license/",
+  "author": "ambientCG / Lennart Demes",
+  "technique": "Surface photogrammetry",
+  "source_dimensions": "Not supplied by official legacy asset page; no measured source-scale claim.",
+  "authored_tile_width_m": 1.8,
+  "authored_tile_height_m": 1.8,
+  "download": "https://ambientcg.com/get?file=PavingStones036_1K-JPG.zip",
+  "archive_sha256": "91223aa46aa4275bb30df310fba788d8bfb740f2b1e9796ac0eb9a14f367e9ce",
+  "processing": "Original1K JPEG color/OpenGL normal decoded then WebP color quality90, normal quality95, method6. ARM = Pillow RGB merge(AO L, roughness L, constant zero metalness), WebP quality95 method6. No resize, generated art, color retouch or baked lighting. Color sRGB; normal/ARM linear. Source archive and original hashes pinned.",
+  "files": [
+    {
+      "file": "paving-color.webp",
+      "original": "PavingStones036_1K-JPG_Color.jpg",
+      "original_sha256": "065dad4ad95ee74992a6d3cbeb0efb107d3b18a0a3425487bf41452dce12c533",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "bytes": 418216,
+      "sha256": "dc948ea2a1195f5fe6fb0998753151b724c7caf6ccb37454698fc1cfdad3fba5",
+      "decoded_channel_mean_absolute_error": [
+        2.7539939880371094,
+        2.1287899017333984,
+        5.7298736572265625
+      ]
+    },
+    {
+      "file": "paving-normal.webp",
+      "original": "PavingStones036_1K-JPG_NormalGL.jpg",
+      "original_sha256": "7e86034b299d5628bb072c74ed30364dbab5da21f55e17c675ccbef15b209543",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "bytes": 540918,
+      "sha256": "6bfcdf530ce217d35358c0d2f5fc1f25e719eceaefe7cddb757f02a389f366f0",
+      "decoded_channel_mean_absolute_error": [
+        9.965948104858398,
+        5.756107330322266,
+        7.972749710083008
+      ]
+    },
+    {
+      "file": "paving-arm.webp",
+      "original": "AmbientOcclusion L -> R; Roughness L -> G; nonmetal=0 -> B",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "bytes": 404276,
+      "sha256": "22099becb639866a123441cdc58ffc50bd25efb8496631b6b8b6852ea9e2d956",
+      "decoded_channel_mean_absolute_error": [
+        5.362927436828613,
+        3.699648857116699,
+        2.00156307220459
+      ]
+    }
+  ],
+  "payload_bytes": 1363410
+}

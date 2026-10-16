@@ -6,6 +6,7 @@ import {surface,boxUV,softBox} from './materials.ts';
 import {roundPipe,createSedan,sedanSolids} from './props.ts';
 import {wetTexture} from './entry-props.ts';
 import {createGhost} from './ghost.ts';
+import {buildCourtyardGround} from './courtyard-ground.ts';
 import {createCourtyardSafe} from './courtyard-safe.ts';
 import {createEmergencyPhone} from './emergency-phone.ts';
 import type {Solid,Target} from './world.ts';
@@ -14,7 +15,7 @@ import type {Action,Stage,Story} from './story.ts';
 export const courtyardLayout={x:32,z:48,name:'1F · 외부 중정',exit:'B1 기록보관실',rooms:['서측 경비초소','놀이터','금고 보관 초소','비상전화'],patrol:[{x:-25,z:34},{x:-25,z:-34},{x:25,z:-34},{x:25,z:34}]};
 export function buildCourtyard(root:T.Group){
  const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
- const concrete=surface('garage','#818b82'),wall=surface('decayWall','#9ca491'),steel=surface('steel','#929a89',{metalness:.28,roughness:.68}),wood=surface('wood','#76654d');
+ const concrete=surface('castConcrete','#818b82'),wall=surface('decayWall','#9ca491'),steel=surface('steel','#929a89',{metalness:.28,roughness:.68}),wood=surface('wood','#76654d');
  const foliage=new T.MeshStandardMaterial({color:'#263c2c',roughness:1,flatShading:true}),leafGeometry=new T.IcosahedronGeometry(.22,1);
  const dark=new T.MeshStandardMaterial({color:'#182322',roughness:.82}),white=new T.MeshStandardMaterial({color:'#b8b6a1',roughness:.9}),rust=new T.MeshStandardMaterial({color:'#795744',roughness:.9});
  root.name='courtyard-chapter';
@@ -22,7 +23,7 @@ export function buildCourtyard(root:T.Group){
  function sign(text:string,x:number,y:number,z:number,w=1.5,h=.5,ry=0,ink='#223a31'):T.Mesh{const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,lines=text.split('\n'),font=Math.min(c.height/(lines.length*1.6),680/Math.max(...lines.map(l=>l.length),1));ctx.fillStyle='#aab099';ctx.fillRect(0,0,768,c.height);ctx.fillStyle=ink;ctx.font=`${font}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';lines.forEach((l,i)=>ctx.fillText(l,384,c.height/2+(i-(lines.length-1)/2)*font*1.4));const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.8}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);return mesh;}
  function target(id:Action,label:string,mesh:T.Object3D,p:[number,number,number],at:[number,number]){mesh.userData.approach={x:at[0],z:at[1]};targets.push({id,label,mesh,point:new T.Vector3(...p)});}
  function light(x:number,z:number,power=9){const l=new T.PointLight('#b0baa1',power,17,2);l.position.set(x,3.3,z);l.userData.base=power;lamps.push(l);root.add(l);roundPipe(root,[x,0,z],[x,3.5,z],.05,steel);box(x,3.5,z,.55,.09,.32,steel);box(x,3.445,z,.43,.02,.24,white);box(x,.04,z,.24,.08,.24,steel,true);return l;}
- box(0,-.13,2,64,.26,92,concrete);for(const [x,w] of [[-9.75,44.5],[23.75,16.5]])box(x,-.13,-46,w,.26,4,concrete);for(const x of [-32,32]){box(x,1.45,0,.22,2.9,96,wall,true);box(x-Math.sign(x)*.08,.27,0,.28,.54,96,concrete);box(x-Math.sign(x)*.1,2.9,0,.32,.12,96,concrete);}
+ buildCourtyardGround(root);for(const x of [-32,32]){box(x,1.45,0,.22,2.9,96,wall,true);box(x-Math.sign(x)*.08,.27,0,.28,.54,96,concrete);box(x-Math.sign(x)*.1,2.9,0,.32,.12,96,concrete);}
  for(const x of [-16.36,16.36])box(x,2.7,48,31.28,5.4,.22,wall,true);box(0,3.98,48,1.44,2.84,.22,wall);connectionPassage(root,solids,lamps,-3,54,0,.9);for(const [x,w] of [[-18,28],[8.25,8.5],[23.75,16.5]])box(x,2.7,-48,w,5.4,.22,wall,true);
  // Closed perimeter, visible towers, and sheeted construction enclose a believable service yard.
  const windowGlass=new T.MeshStandardMaterial({color:'#182a30',metalness:.35,roughness:.25}),windowLit=new T.MeshStandardMaterial({color:'#9c9a75',emissive:'#746d43',emissiveIntensity:.22,roughness:.5});
@@ -128,7 +129,6 @@ export function buildCourtyard(root:T.Group){
  box(0,1.04,23.055,4,.48,.05,white);box(0,1.36,23.055,5,.28,.05,white);
  sign('외벽 보수공사 · 중앙 진입 금지',0,1.04,23.081,4,.48);sign('← 서측 초소       동측 비상전화 →',0,1.36,23.081,5,.28);
  for(const x of [-25,25])for(const z of [-38,0,37])light(x,z);
- for(let z=-42;z<=42;z+=7)for(const x of [-21.5,21.5])box(x,.01,z,.12,.018,1.8,white);
  for(const x of [-27,27])for(const z of [-8,8]){
   const bench=new T.Group();bench.position.set(x,0,z);bench.name='grounded-courtyard-bench';bench.userData.floorProp=true;root.add(bench);
   for(const dx of [-.85,.85])for(const dz of [-.21,.21])box(dx,.22,dz,.065,.44,.065,steel,false,bench);
@@ -180,12 +180,14 @@ export function buildCourtyard(root:T.Group){
   box(x+1.9,1.45,z-2.748,.77,.82,.025,dark);
   for(const dx of [-.24,0,.24])roundPipe(root,[x+1.9+dx,1.52,z-2.73],[x+1.9+dx,1.52,z-2.65],.012,steel);
   box(x-1.6,1.5,z-2.86,1.35,.94,.1,wood);
-  box(x-1.6,1.5,z-2.802,1.21,.8,.015,white);sign('야간 근무표\n순찰 · 열쇠 반납',x-1.6,1.5,z-2.794,1.15,.72);
+  box(x-1.6,1.5,z-2.802,1.21,.8,.015,white);
+  const board=sign(x<0?'정기점검 완료: 26일\n열쇠함: 점검일 + 당직 내선\n03:26 / 2803호 입차':'야간 근무표\n순찰 · 열쇠 반납',x-1.6,1.5,z-2.794,1.15,.72,0,'#020202');
   box(x,2.38,z,.8,.08,.22,white);
+  return board;
  }
- booth(-25,30,'서측 경비초소');booth(25,30,'동측 열쇠 보관 초소');
- box(-25,.81025,30,.65,.0005,.38,white);
- const log=sign('03:26 / 2803 입차\n금고: 입차 분 + 당직 내선',-25,.8105,30,.65,.38);log.rotation.x=-Math.PI/2;target('court_log','사흘 전 경비일지',log,[-25,.84,30.2],[-25,31.2]);
+ const log=booth(-25,30,'서측 경비초소');booth(25,30,'동측 열쇠 보관 초소');
+ target('court_log','인계판의 근무·입차 기록',log,[-26.6,1.5,27.206],[-26.6,28.4]);
+ const logMaterial=log.material as T.MeshStandardMaterial;log.material=new T.MeshLambertMaterial({map:logMaterial.map});logMaterial.dispose();
  const courtSafe=createCourtyardSafe();root.add(courtSafe.root);solids.push(courtSafe.block);root.updateMatrixWorld(true);
  for(let i=0;i<4;i++){const wheel=courtSafe.wheels[i],p=wheel.getWorldPosition(new T.Vector3());p.z+=.052;target(`court_digit_${i}` as Action,`${i+1}번째 숫자 올리기`,wheel,[p.x,p.y,p.z],[25,31.65]);targets.at(-1)!.precise=true;}
  const handle=courtSafe.handle.getWorldPosition(new T.Vector3());target('court_confirm','번호 확인 · 금고 손잡이 돌리기',courtSafe.handle,[handle.x,handle.y,handle.z+.02],[25,31.65]);
@@ -228,7 +230,7 @@ export function buildCourtyard(root:T.Group){
  for(const x of [-5.05,-2.95]){box(x,.04,42.5,.42,.08,.5,steel,true);box(x,1.03,42.5,.07,1.98,.07,steel,true);}
  box(-4,1.65,42.5,2.6,1.2,.12,steel,true);
  for(const x of [-5.23,-2.77])for(const y of [1.12,2.18])box(x,y,42.568,.045,.045,.02,dark);
- const notice=sign('정문 폐쇄 · 지하 우회 통로\n기록보관실 → 배수 기계실 → 주차장\n지하문 열쇠: 동측 초소 금고\n입차 분 + 야간 당직 내선',-4,1.65,42.562,2.4,1.04,0,'#020202');
+ const notice=sign('정문 폐쇄 · 지하 우회 통로\n기록보관실 → 배수 기계실 → 주차장\n지하문 열쇠: 동측 초소 금고\n열쇠 인계 기록: 서측 경비초소',-4,1.65,42.562,2.4,1.04,0,'#020202');
  // Matte paper has no glossy highlight that washes out its close-range print.
  const noticeMaterial=notice.material as T.MeshStandardMaterial;
  notice.material=new T.MeshLambertMaterial({map:noticeMaterial.map});noticeMaterial.dispose();
