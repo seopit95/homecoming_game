@@ -220,3 +220,13 @@ test('V65 resident phone has supported feet, a cord outside the cabinet, an expo
   const photo=w.root.getObjectByName('resident-memory-photo'),photoBox=new THREE.Box3().setFromObject(photo);assert.ok(Math.abs(photoBox.max.z-3.9615)<.001,'the photo backing touches the refrigerator door');
   const reels=machine.children.filter(o=>o instanceof THREE.Group);w.answeringMachine.setPlayback(2);assert.ok(reels.some(o=>Math.abs(o.rotation.y)>1));const angle=reels[0].rotation.y;w.answeringMachine.setPlayback(null);assert.equal(reels[0].rotation.y,angle,'stopping the tape must not snap the reels back');
 });
+
+test('V66 annex phone feet meet the desk and its dial targets coincide with physical keys',()=>{
+ const w=buildWorld(new THREE.Scene(),'annex');w.root.updateMatrixWorld(true);const phone=w.intercom.root;let feet=0;
+ phone.traverse(o=>{if(o.name==='answerphone-foot'){feet++;const b=new THREE.Box3().setFromObject(o);assert.ok(Math.abs(b.min.y-.82)<.001);assert.ok(b.max.x<1.2&&b.min.x> -1.2&&b.min.z> -21.5&&b.max.z< -20.5);}});assert.equal(feet,4);
+ const coil=new THREE.Box3().setFromObject(phone.getObjectByName('answerphone-coiled-cord'));assert.ok(coil.min.x>1.2,'the coil hangs beyond the desk rather than through its board');
+ const controls=w.targets.filter(t=>t.id.startsWith('annex_digit_')||t.id==='annex_clear'||t.id==='annex_dial');assert.equal(controls.length,14);
+ for(const t of controls){assert.equal(t.precise,true);assert.ok(t.point.distanceTo(t.mesh.getWorldPosition(new THREE.Vector3()))<.001);assert.ok(hasLineOfSight({x:.7,y:1.65,z:-19.7},t.point,w.solids));}
+ assert.equal(w.targets.some(t=>t.id.startsWith('annex_line_')),false,'legacy answer buttons cannot bypass the call');
+ w.updateIntercom('2803','呼出',w.intercom.playButton.uuid);assert.equal(w.intercom.playButton.position.y,.082);assert.equal(w.intercom.keys.find(k=>k.label==='#').mesh.position.y,.085,'an alias key cannot depress the separate CALL key mechanically');
+});

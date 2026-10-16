@@ -1,5 +1,5 @@
 import type {ArchiveFrame} from './archive-review.ts';
-export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock';
+export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
 const archiveCues={road:[['collision-impact',4.2]],call:[['archive-guard',.2],['archive-denial',8]],gate:[['archive-plea',.8],['archive-lock',5.8]]} as const;
 export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'memory'|'no';
 // Local voice clips and procedural effects share a bounded master volume.
@@ -28,7 +28,7 @@ export class HorrorAudio {
   archivePosition:{source:ArchiveFrame['source'];time:number;contextTime:number}|null=null;
   archiveGain:GainNode|null=null;archivePan:StereoPannerNode|null=null;
   deviceLoops=new Map<string,{source:AudioBufferSourceNode;gain:GainNode;pan:StereoPannerNode;level:number}>();
-  deviceWanted={phone:0,radio:0,alarm:0};
+  deviceWanted={phone:0,radio:0,alarm:0,ringback:0,busy:0};
   exertion:GainNode|null=null;exertionSource:AudioBufferSourceNode|null=null;exertionWanted=0;exertionLevel=-1;
   volume = .42;
   start() {
@@ -80,6 +80,7 @@ export class HorrorAudio {
     const lock=this.clips['archive-lock']=ctx.createBuffer(1,Math.round(ctx.sampleRate*.1),ctx.sampleRate),lockData=lock.getChannelData(0);
     for(let i=0;i<lockData.length;i++){const t=i/ctx.sampleRate;lockData[i]=Math.sin(t*2300)*Math.exp(-t*90)*.4;}
     for(const clip of ['fire-bell','player-breath','passenger-line','male-surprise','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast','archive-guard','archive-denial','archive-plea'] as RecordedClip[])void fetch(`/audio/overhaul/${clip}.${clip.startsWith('archive-')?'mp3':'wav'}`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setExertion(this.exertionWanted);this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);this.setDevice('alarm',this.deviceWanted.alarm);}}).catch(()=>{});
+    this.clips['intercom-ringback']=intercomTone(ctx,false);this.clips['intercom-busy']=intercomTone(ctx,true);
     for(const line of ['where','here','found','come','cry','scream','memory','no'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
   recorded(clip:RecordedClip,level=1,pan=0){
@@ -126,12 +127,12 @@ export class HorrorAudio {
     if(Math.abs(this.exertionLevel-this.exertionWanted)<.015)return;
     this.exertionLevel=this.exertionWanted;this.exertion.gain.setTargetAtTime(this.exertionWanted*.8,ctx.currentTime,.25);
   }
-  setDevice(device:'phone'|'radio'|'alarm',level:number,pan=0){
+  setDevice(device:'phone'|'radio'|'alarm'|'ringback'|'busy',level:number,pan=0){
     this.deviceWanted[device]=level;
     const ctx=this.context,old=this.deviceLoops.get(device);if(!ctx)return;
     if(level<=0){if(old){old.source.stop();old.source.disconnect();old.gain.disconnect();old.pan.disconnect();this.deviceLoops.delete(device);}return;}
     if(old){if(Math.abs(old.level-level)>.015){old.level=level;old.gain.gain.setTargetAtTime(level*.55,ctx.currentTime,.15);}old.pan.pan.value=pan;return;}
-    const buffer=this.clips[device==='phone'?'phone-ring':device==='alarm'?'fire-bell':'radio-tuning-broadcast'];if(!buffer)return;
+    const buffer=this.clips[device==='phone'?'phone-ring':device==='alarm'?'fire-bell':device==='ringback'?'intercom-ringback':device==='busy'?'intercom-busy':'radio-tuning-broadcast'];if(!buffer)return;
     const source=ctx.createBufferSource(),gain=ctx.createGain(),p=ctx.createStereoPanner();source.buffer=buffer;source.loop=true;gain.gain.value=level*.55;p.pan.value=pan;
     source.connect(gain);gain.connect(p);p.connect(this.effectsBus!);source.start();this.deviceLoops.set(device,{source,gain,pan:p,level});
   }
@@ -154,8 +155,8 @@ export class HorrorAudio {
     this.chase.gain.setTargetAtTime(level*.9,t,fade);this.chasePulse.frequency.setTargetAtTime(2.2+level*1.25,t,.45);this.chaseFilter.frequency.setTargetAtTime(650+level*1300,t,.6);
   }
   mix(levels:{music:number;effects:number;voice:number}){this.levels={music:levels.music,effects:levels.effects,voice:levels.voice};if(!this.context)return;for(const [key,bus] of [['music',this.musicBus],['effects',this.effectsBus],['voice',this.voiceBus]] as const)bus?.gain.setTargetAtTime(this.levels[key],this.context.currentTime,.12);}
-  recording(){
-    this.stopRecording();const ctx=this.context,buffer=this.voices.memory;if(!ctx||!buffer||!this.voiceBus||ctx.state!=='running')return;
+  recording(line:GhostLine|'archive-guard'='memory'){
+    this.stopRecording();const ctx=this.context,buffer=line==='archive-guard'?this.clips[line]:this.voices[line];if(!ctx||!buffer||!this.voiceBus||ctx.state!=='running')return;
     const source=this.recordingSource=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=this.recordingGain=ctx.createGain(),pan=this.recordingPan=ctx.createStereoPanner();
     source.buffer=buffer;filter.type='lowpass';filter.frequency.value=2800;gain.gain.value=.54;source.connect(filter);filter.connect(gain);gain.connect(pan);pan.connect(this.voiceBus);this.recordingNodes=[source,filter,gain,pan];source.onended=()=>this.stopRecording();source.start();
   }
@@ -224,5 +225,12 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+}
+
+// A local private exchange: one-second ringback bursts and a shorter busy cadence.
+export function intercomTone(ctx:BaseAudioContext,busy:boolean){
+  const period=busy?.5:3,on=busy?.25:1,buffer=ctx.createBuffer(1,Math.round(ctx.sampleRate*period),ctx.sampleRate),data=buffer.getChannelData(0);
+  for(let i=0;i<on*ctx.sampleRate;i++){const t=i/ctx.sampleRate,envelope=Math.min(1,t/.006,(on-t)/.006);data[i]=envelope*.12*(Math.sin(2*Math.PI*440*t)+Math.sin(2*Math.PI*(busy?620:480)*t));}
+  return buffer;
 }

@@ -2,8 +2,8 @@ import * as T from 'three';
 import {softBox,residentPhotoMaterial} from './materials.ts';
 
 // Dimensions are metres; the four rubber feet sit on the supplied cabinet top.
-export function createAnsweringMachine(){
-  const root=new T.Group();root.name='resident-answering-machine';
+export function createAnsweringMachine(purpose:'answerphone'|'intercom'='answerphone'){
+  const root=new T.Group();root.name=purpose==='intercom'?'annex-intercom-phone':'resident-answering-machine';
   const ivory=new T.MeshStandardMaterial({color:'#b9b299',roughness:.57}),edge=new T.MeshStandardMaterial({color:'#6b685d',roughness:.75}),black=new T.MeshStandardMaterial({color:'#171b1a',roughness:.7}),rubber=new T.MeshStandardMaterial({color:'#252825',roughness:.95});
   function box(name:string,x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material){const o=new T.Mesh(softBox(w,h,d),m);o.name=name;o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;root.add(o);return o;}
   function pipe(points:T.Vector3[],radius:number,m:T.Material,parent:T.Object3D=root){const o=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points),Math.max(12,points.length*2),radius,6,false),m);o.castShadow=true;parent.add(o);return o;}
@@ -48,7 +48,7 @@ export function createAnsweringMachine(){
   const face=document.createElement('canvas');face.width=768;face.height=576;const ink=face.getContext('2d')!;ink.fillStyle='#3c433c';ink.textAlign='center';ink.textBaseline='middle';ink.font='24px sans-serif';
   const px=(x:number)=>(.175-x)/.35*768,pz=(z:number)=>(.13-z)/.26*576;
   keypad.forEach((key,i)=>ink.fillText(keyLabels[i],px(key.position.x),pz(key.position.z)));
-  ink.font='16px sans-serif';ink.fillText('PLAY',px(.126),pz(-.09));ink.fillText('STOP',px(.126),pz(-.05));
+  ink.font='16px sans-serif';ink.fillText(purpose==='intercom'?'CALL':'PLAY',px(.126),pz(-.09));ink.fillText(purpose==='intercom'?'CLEAR':'STOP',px(.126),pz(-.05));
   const faceMap=new T.CanvasTexture(face);faceMap.colorSpace=T.SRGBColorSpace;
   const keyInk=new T.MeshStandardMaterial({map:faceMap,transparent:true,depthWrite:false,roughness:.85});
   for(const key of [...keypad,playButton,stopButton]){
@@ -60,12 +60,15 @@ export function createAnsweringMachine(){
   box('lcd-surround',.06,.084,.092,.134,.004,.039,edge);
   const display=new T.Mesh(new T.PlaneGeometry(.124,.03),new T.MeshStandardMaterial({map,roughness:.4}));display.rotation.set(-Math.PI/2,0,Math.PI);display.position.set(.06,.0865,.092);root.add(display);
   const ledMaterial=new T.MeshStandardMaterial({color:'#842f21',emissive:'#8e3523',emissiveIntensity:.5,roughness:.35});box('answerphone-message-led',.143,.086,.09,.006,.003,.006,ledMaterial);
-  let previous='';function setPlayback(seconds:number|null){
+  let previous='';function setScreen(counter:string){
+    if(counter===previous)return;ctx.fillStyle='#637361';ctx.fillRect(0,0,256,80);ctx.fillStyle='#1e2b21';ctx.font='42px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(counter,128,42);map.needsUpdate=true;previous=counter;
+  }
+  function setPlayback(seconds:number|null){
     const active=seconds!==null,counter=active?`PLAY ${String(Math.floor(seconds)).padStart(2,'0')}`:'MSG 01';
-    if(counter!==previous){ctx.fillStyle='#637361';ctx.fillRect(0,0,256,80);ctx.fillStyle='#1e2b21';ctx.font='42px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(counter,128,42);map.needsUpdate=true;previous=counter;}
+    setScreen(counter);
     if(active)reels.forEach((r,i)=>r.rotation.y=seconds*(i?2.2:1.7));playButton.position.y=active?.082:.085;ledMaterial.emissiveIntensity=active?1:.35;
   }
-  setPlayback(null);return {root,playButton,setPlayback};
+  setPlayback(null);return {root,playButton,stopButton,setPlayback,setScreen,keys:keypad.map((mesh,i)=>({mesh,label:keyLabels[i]}))};
 }
 
 export function createResidentPhoto(){

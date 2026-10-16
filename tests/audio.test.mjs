@@ -43,3 +43,9 @@ test('V65 answering tape stays positional and independent of apparition voices, 
   try{audio.recording();const source=ctx.nodes.find(n=>n.buffer===audio.voices.memory);assert.ok(source?.started);assert.equal(ghost.stopped,undefined,'playing a physical tape must not replace a ghost voice');audio.setRecordingPosition(.35,-.7);const p=ctx.nodes.find(n=>n.connections.includes(audio.voiceBus));assert.equal(p.pan.value,-.7);assert.ok(ctx.nodes.some(n=>n.gain.targets.at(-1)?.[0]>0));audio.stopVoices();assert.equal(source.stopped,undefined,'ghost chatter cleanup cannot cut the tape');audio.stopRecording();assert.equal(source.stopped,true);assert.ok(ctx.nodes.every(n=>n.disconnected),'all tape nodes are released');}
   finally{audio.stopRecording?.();audio.context=null;}
 });
+
+test('V66 PBX tones have quiet intervals and bounded click-free audible bursts',async()=>{
+ const {intercomTone}=await import('../lib/audio.ts');assert.equal(typeof intercomTone,'function');
+ const ctx={sampleRate:8000,createBuffer(_channels,length){const data=new Float32Array(length);return {getChannelData:()=>data,duration:length/8000};}};
+ for(const busy of [false,true]){const buffer=intercomTone(ctx,busy),data=buffer.getChannelData(0),on=busy?.25:1,period=busy?.5:3;assert.equal(buffer.duration,period);const power=(a,b)=>Math.sqrt(data.slice(a*8000,b*8000).reduce((sum,x)=>sum+x*x,0)/((b-a)*8000));assert.ok(power(.03,.13)>.05);assert.equal(power(on+.02,period-.02),0);assert.equal(data[0],0);assert.ok(Math.abs(data[Math.round(on*8000)-1])<.01);assert.ok(Math.max(...data.map(Math.abs))<.3);}
+});

@@ -7,7 +7,7 @@ export const expansionObjectives={
  annex_fuse:'서측 세탁실의 정비대에서 통신용 퓨즈를 찾으세요',
  annex_restore:'동측 통신실의 인터폰 전원함에 퓨즈를 연결하세요',
  annex_search:'공동시설에 남은 발신 기록을 조사하세요',
- annex_unlock:'중앙 경비실 교환기에서 사흘 전 마지막 호출의 수신 세대를 선택하세요',
+ annex_unlock:'중앙 교환기에서 마지막 호출을 받은 세대 네 자리를 입력하고 CALL을 누르세요',
  annex_exit_ready:'북쪽 방화문을 열고 외부 중정으로 나가세요',annex_departure:'열린 방화문을 지나 중정으로 나가세요',
  court_arrival:'입구 왼쪽 안내판에서 지하 우회 통로를 확인하세요',court_search:'경비일지와 비상전화 안내에서 금고 번호를 찾으세요 · 번호를 알면 바로 입력할 수 있습니다',court_code:'동측 경비초소 금고 · 기록에서 찾은 네 자리 번호를 맞추고 확인하세요',court_unlocked:'금고에서 챙긴 열쇠로 북쪽 지하 기록보관실 문을 여세요',court_departure:'열린 계단을 따라 기록보관실로 내려가세요',
  archive_arrival:'기록보관실 입구의 인계 대장을 읽으세요',archive_search:'세 곳의 보관실에서 사고 당일 기록을 회수하세요',
@@ -28,12 +28,12 @@ export const expansionJournal={
  court_phone:{title:'비상전화 · 돌아오는 대답',text:'수화기를 들었다. 「사람이 죽었어요. 여기서 나가게 해 주세요.」\n\n잠시 뒤 전화 너머에서 내 목소리가 들렸다. 「잘못 거셨어요.」 내가 말을 멈춰도 그 목소리는 세 번 더 반복됐다.\n\n전화기 안쪽의 오래된 안내판: 야간 당직 내선 17. 한서연. 그녀가 마지막으로 받으려 했던 전화는 지금 내가 걸고 있는 전화와 같았다.'},
  court_evidence:{title:'놀이터 옆 · 주운 반사판',text:'놀이터 옆 점검대 위에 내 차의 깨진 전조등 조각이 있다. 빗물로 씻어도 홈 사이의 어두운 자국은 지워지지 않는다.\n\n곁에 떨어진 당직 수첩. 「아이들 등교 전에 정문 횡단보도 전등 점검. 우천 시 비상벨 확인.」\n\n그녀는 그날도 누군가 다치지 않도록 길을 확인하러 나갔다. 나는 휴대전화를 보느라 그 사람을 보지 않았다.'},
  court_confirm:{title:'경비초소 · 지하문 열쇠',text:'금고 안에 지하 기록보관실 열쇠가 있다. 열쇠에는 마른 흙과 검은 머리카락이 감겨 있다.\n\n함께 놓인 인계 쪽지. 「사고 신고 녹음은 원본 보존. 수신자가 녹음 삭제를 요청했으나 거절함.」\n\n나는 다음 날에도 전화를 했다. 신고하려고 한 것이 아니었다. 그것까지 지우려고 했던 것이다. 중정 건너편에서 몸을 끄는 소리가 난다.'},
- annex_map:{title:'1층 · 나갈 수 없는 로비',text:'유리문 너머에 도로가 보인다. 출입문은 방범 셔터에 막혀 있고, 비상 해제 장치에는 물이 차 있다.\n\n안내도: 서측 세탁실·우편실 / 동측 경비 휴게실·통신실 / 중앙 경비실. 북쪽 방화문은 외부 중정으로 통한다. 정문 공사 중에는 중정의 지하 계단에서 기록보관실과 기계실을 거쳐 주차장으로 갈 수 있다.\n\n방화문 전자 잠금장치가 마지막 호출을 붙잡고 있다. 우선 세탁실 정비대의 퓨즈로 통신실 전원을 살려야 한다.'},
+ annex_map:{title:'1층 · 나갈 수 없는 로비',text:'유리문 너머에 도로가 보인다. 출입문은 방범 셔터에 막혀 있고, 비상 해제 장치에는 물이 차 있다.\n\n안내도: 서측 세탁실·우편실 / 동측 경비 휴게실·통신실 / 중앙 경비실. 북쪽 방화문은 외부 중정으로 통한다. 정문 공사 중에는 중정의 지하 계단에서 기록보관실과 기계실을 거쳐 주차장으로 갈 수 있다.\n\n북쪽 문은 손잡이를 당겨도 열리지 않는다. 문 안의 잠금쇠가 움직일 때마다 중앙 교환기에서 수신 표시가 깜박인다. 우선 세탁실 정비대의 퓨즈로 통신실 전원을 살려야 한다.'},
  annex_fuse:{title:'세탁실 · 마르지 않는 소매',text:'회전이 멈춘 세탁기 안에 흰 천이 뭉쳐 있다. 문에는 안쪽에서 긁은 자국이 있다.\n\n정비대에 놓인 예비 퓨즈를 챙겼다. 한서연이 붙인 점검표에는 「침수 시 외부조명 차단. 배수와 환기 전원은 유지」라고 쓰여 있다. 이 건물의 어두운 곳마다 그녀가 다녀간 흔적이 남아 있다.'},
  annex_badge:{title:'경비 휴게실 · 마지막 당직',text:'사물함 앞 책상에 한서연의 명찰과 당직표가 놓여 있다. 퇴근 시각은 03:10. 여백에 「오늘은 정문으로. 지하 통로 누수」.\n\n그녀가 그 시각 횡단보도를 건넌 이유가 있었다. 휴게실 사진에는 주민들의 화분을 옮기는 모습이 남아 있다. 나는 얼굴도 모르는 사람을 죽였다고 생각했다. 매일 보던 사람이었다.'},
  annex_notice:{title:'우편실 · 반송된 안내문',text:'2803호 앞유리 파손 차량 확인 요청. 입주민께서는 관리실로 연락 바랍니다.\n\n수령란에는 내 서명이 있다. 사흘 전 오후. 「주차 중 파손」이라고 내가 적었다. 기억이 없는 것이 아니었다. 기억할 때마다 다른 말로 덮어 놓았던 것이다.\n\n뒷면의 교환기 점검 기록: 마지막 발신은 정문 비상벨, 수신은 사고 차량 소유자의 세대.'},
- annex_call:{title:'통신실 · 발신측 보조 녹음',text:'03:20 / 정문 비상벨 → 2803 등록 휴대전화 / 통화 종료.\n\n경비원 쪽 마이크만 남은 보조 녹음이다. 「차량 번호가 확인됐습니다. 내려와 주세요. 아직 현장에…」\n\n잠깐의 침묵 뒤에 연결이 끊긴다. 수신자 쪽 소리는 이 장치에 저장되지 않는다. 세대에서 받지 않으면 등록된 휴대전화로 넘어가는 회선. 나는 차 안에서 그 전화를 받았다. 마지막 호출의 수신처는 내가 돌아간 2803호였다.'},
- annex_line_home:{title:'교환기 · 2803호',text:'2803을 누르자 로비 위쪽에서 내가 사는 집의 벨소리가 들렸다.\n「이번에는… 끊지 마.」\n\n방화문 잠금이 풀렸다. 바닥의 젖은 자국은 계단 아래로 이어진다. 통신실에 없는 수신자 쪽 목소리는 지하 기록보관실의 통화 원본에 남아 있다.'},
+ annex_call:{title:'통신실 · 발신측 보조 녹음',text:'03:20 / 정문 비상벨 → 수신 표시 훼손 / 통화 종료.\n\n경비원 쪽 마이크만 남은 보조 녹음이다. 「차량 번호가 확인됐습니다. 내려와 주세요. 아직 현장에…」\n\n잠깐의 침묵 뒤에 연결이 끊긴다. 수신자 쪽 소리는 이 장치에 저장되지 않는다. 세대에서 받지 않으면 등록된 휴대전화로 넘어가는 회선. 나는 차 안에서 그 전화를 받았다. 통화 목록의 수신란은 번져 있다. 우편실 반송 안내문의 차량 소유 세대를 대조하면 마지막 호출을 다시 걸 수 있다.'},
+ annex_line_home:{title:'교환기 · 2803호',text:'내 세대 번호를 입력하고 전화를 걸었다. 수화기에서 들리던 신호음이 끊겼다. 아무도 없어야 할 우리 집에서 전화를 받았다.\n「나오렴…」\n\n응답이 끝나자 북쪽 문에서 잠금쇠가 풀리는 소리가 났다. 이 교환기에는 그 문을 여는 버튼이 없는데. 바닥의 젖은 자국은 중정으로 이어진다. 통신실에 없는 수신자 쪽 목소리는 지하 기록보관실의 통화 원본에 남아 있다.'},
  archive_ledger:{title:'B1 · 보관 인계 대장',text:'서측 A실: 도로 카메라. 동측 B실: 양방향 비상 통화. 서측 C실: 지하 입차 원본. 실물 테이프를 북동쪽 편집실로 가져갈 것.\n\n편집 장치: A·B·C를 눌러 원본 선택. 정지/재생, ±1초 버튼으로 대조한 뒤 중요한 순간에 「증거 표시」. 검토 순서는 상관없다. 녹화를 멈춰도 보관실은 계속 움직인다.\n\n열람본의 누락 구간은 세 원본의 내용이 확인되어야 복원할 수 있다. 봉투 겉면에 내 이름으로 쓴 폐기 요청서가 붙어 있다.'},
  archive_road:{title:'A실 · 도로 원본 회수',text:'CAM-01 / 03:17 / 정문 횡단보도. 봉인된 원본 VHS를 챙겼다.\n\n인계표에는 「보행 신호와 차량 후면이 한 화면에 들어옴」이라고 적혀 있다. 편집실에서 제동등이 언제 켜지는지 확인해야 한다. 내가 기억하는 것처럼 갑자기 뛰어든 사람이었을까.'},
  archive_call:{title:'B실 · 양방향 통화 회수',text:'AUDIO-17 / 03:20 / 정문 비상벨 → 2803 등록 휴대전화. 양쪽 목소리를 보존한 원본 테이프다.\n\n통신실 장치에는 발신측만 남아 있었다. 이 테이프라면 그때 내가 무슨 말을 했는지, 누가 먼저 끊었는지 확인할 수 있다. 라벨의 수신자 이름을 손가락으로 가렸다.'},
@@ -46,7 +46,7 @@ export const expansionJournal={
  plant_start:{title:'기계실 · 물이 내려간다',text:'배수 펌프와 환기 장치가 돌아간다. 수면 아래에 있던 주차장 방향 표지가 드러났다.\n\n펌프의 울림 사이로 젖은 손이 콘크리트를 치는 소리가 섞인다. 북쪽 방화문까지 우회할 길을 기억해 둬야 한다. 멈춰 있으면 금방 따라잡힌다.'},
  plant_drained:{title:'주차장으로 · 다시 차에 탄다',text:'차량 진입로의 물이 빠졌다. 보행자 출구는 공사 셔터 때문에 여전히 막혀 있다.\n\n내 차는 사고 다음 날부터 같은 자리에 세워 두었다. 열쇠를 조수석 가방에 넣었던 기억이 난다. 경보로 그것을 다른 쪽에 유인하면 운전석까지 갈 수 있다.\n\n밖으로 나가기만 하면 끝날 거라고, 또 그렇게 생각했다.'},
 } as const;
-export type ExpansionAction=keyof typeof expansionJournal|'archive_preview_road'|'archive_preview_call'|'archive_preview_gate'|'archive_record_pause'|'archive_record_back'|'archive_record_forward'|'archive_record_mark'|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|'annex_exit'|'court_enter'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_route'|'plant_route_closed'|'plant_route_drain'|'plant_exit'|'parking_enter';
+export type ExpansionAction=keyof typeof expansionJournal|'archive_preview_road'|'archive_preview_call'|'archive_preview_gate'|'archive_record_pause'|'archive_record_back'|'archive_record_forward'|'archive_record_mark'|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|`annex_digit_${0|1|2|3|4|5|6|7|8|9}`|'annex_clear'|'annex_dial'|'annex_exit'|'court_enter'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_route'|'plant_route_closed'|'plant_route_drain'|'plant_exit'|'parking_enter';
 export const annexEvidence:Action[]=['annex_badge','annex_notice','annex_call'];
 export const archiveEvidence:Action[]=['archive_road','archive_call','archive_gate'];
 export const courtEvidence:Action[]=['court_log','court_phone'];
@@ -130,7 +130,8 @@ export function expansionTargetActive(s:Story,id:Action){
  if(id.startsWith('archive_preview_')||id.startsWith('archive_record_'))return s.stage==='archive_edit';
  if(id.startsWith('court_digit_')||id==='court_confirm')return s.stage==='court_search'||s.stage==='court_code';
  if(id==='court_exit')return s.stage==='court_unlocked';
- if(id.startsWith('annex_line_'))return s.stage==='annex_unlock';
+ if(id.startsWith('annex_line_'))return false;
+ if(id.startsWith('annex_digit_')||id==='annex_clear'||id==='annex_dial')return s.stage==='annex_unlock';
  if(id.startsWith('archive_sequence_'))return s.stage==='archive_edit';
  if(id==='plant_filter')return s.stage==='plant_power'&&!plantFilterCleared(s);
  if(id==='plant_route'||id.startsWith('plant_circuit_')||id==='plant_start')return s.stage==='plant_power';
@@ -152,3 +153,6 @@ export const archiveReplay=[
 export function courtyardPursuitActive(s:Story,carried:boolean){
  return carried||s.notes.some(id=>['court_gate','court_log','court_evidence','court_phone','court_confirm'].includes(id));
 }
+
+export const annexTapeDuration=7.706122;
+export const annexCallbackDuration=4.5;

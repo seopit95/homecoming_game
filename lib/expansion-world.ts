@@ -12,6 +12,7 @@ import {archiveReplay,plantRoute,plantFilterCleared,plantProblem,type ExpansionA
 import {storageMaterials,storageShelf} from './storage.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {facilityTable,facilityChair,laundryMachine,dryingRail,waterTank,pumpSkid,cartridgeFuse,videoCassette} from './facility-props.ts';
+import {createAnsweringMachine} from './resident-props.ts';
 import {facilityModel} from './facility-models.ts';
 import {createArchiveReview,archiveClips,archiveCamera} from './archive-review.ts';
 
@@ -90,7 +91,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  label(L.exit,0,2.55,-bz+.094,1.6,.25,0,true);
  connectionPassage(root,solids,lamps,0,-bz);
  const heightAt=(_x:number,_z:number)=>0;
- let display:T.Mesh|undefined;
+ let display:T.Mesh|undefined;let intercom:ReturnType<typeof createAnsweringMachine>|undefined,intercomStatus='';
  let surveillance:Surveillance|undefined;
  const archiveReview=area==='archive'?createArchiveReview():undefined;
  const faceText=(text:string)=>{if(!display)return;const map=(display.material as T.MeshStandardMaterial).map! as T.CanvasTexture;const c=map.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#101d18';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#b7cdae';ctx.font=`${Math.min(c.height*.26,650/Math.max(1,...text.split('\n').map(l=>l.length)))}px sans-serif`;ctx.textAlign='center';text.split('\n').forEach((l,i)=>ctx.fillText(l,c.width/2,c.height*(.34+i*.3)));map.needsUpdate=true;};
@@ -144,7 +145,11 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const callTarget=targets.find(t=>t.id==='annex_call')!;callTarget.mesh=recorder;callTarget.point.set(X+.57,.86,-5);recorder.userData.approach={x:X+.57,z:-4};
   roundPipe(root,[X+.629,.854,-5.08],[X+.8,.854,-5.08],.0025,dark);roundPipe(root,[X+.8,.854,-5.08],[X+.8,.824,-5.36],.0025,dark);
   table(0,-21,2.4,1);box(0,1.22,-21.2,1.42,.8,.14,dark);display=label('마지막 호출 수신처\n연결 회선을 선택하세요',0,1.25,-21.119,1.3,.6,0,true);
-  for(const [i,id,title] of [[0,'annex_line_victim','1704'],[1,'annex_line_home','2803'],[2,'annex_line_office','관리실']] as const){const x=(i-1)*.73;const button=box(x,.88,-20.75,.5,.12,.25,metal);target(id,title+' 회선 연결',button,[x,.97,-20.65],[x,-19.7]);label(title,x,.9402,-20.75,.43,.18).rotation.x=-Math.PI/2;}
+  intercom=createAnsweringMachine('intercom');intercom.root.position.set(.7,.82,-20.86);intercom.root.rotation.y=Math.PI;intercom.root.scale.setScalar(1.35);root.add(intercom.root);
+  function dialTarget(id:Action,title:string,mesh:T.Mesh){const p=mesh.getWorldPosition(new T.Vector3());target(id,title,mesh,[p.x,p.y,p.z],[.7,-19.7]);targets.at(-1)!.precise=true;}
+  for(const {mesh,label:key} of intercom.keys)dialTarget(key==='*'?'annex_clear':key==='#'?'annex_dial':`annex_digit_${key}` as Action,key==='*'?'지우기 / 통화 종료':key==='#'?'세대 호출':key+' 입력',mesh);
+  dialTarget('annex_dial','CALL · 세대 호출',intercom.playButton);dialTarget('annex_clear','CLEAR · 지우기 / 종료',intercom.stopButton);
+  label('스피커 호출 · 네 자리 → CALL\n숫자키 / Enter 호출\nCLEAR·Backspace 종료',-.65,.821,-20.75,.55,.27).rotation.x=-Math.PI/2;
   for(const x of [-.48,.48])roundPipe(root,[x,1,-21.28],[x,.82,-21.4],.012,dark);
   roundPipe(root,[2.12,1.89,-2],[2.12,2.8,-2],.019,metal);
   const restChair=facilityChair(wood,metal);restChair.position.set(X+2,0,20);restChair.rotation.y=-.4;root.add(restChair);solids.push({x:X+2,z:20,w:.65,d:.65,y:.44,h:.88});
@@ -318,11 +323,11 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const replayTime=time-replayAt;
   const replayText=archiveReplay.findLast(cue=>replayTime>=cue.at)?.screen??archiveReplay[0].screen;
   const text=area==='archive'?(stage==='archive_playback'?replayText:(stage==='archive_edit'?`증거 표시 ${story?.circuit.length??0}/3\n원본 선택 · 정지 · ±1초 · 표시`:stage==='archive_reveal'?'기록 연결 완료\n재생 버튼을 누르세요':['archive_escape','archive_departure'].includes(stage)?'현재 03:17 / 편집실\n네 뒤에 있어':'원본 기록 3개를 회수하세요')):
-   area==='annex'?['annex_exit_ready','annex_departure'].includes(stage)?'2803 연결됨\n북쪽 방화문 잠금 해제':'마지막 호출 수신처\n1704 / 2803 / 관리실':drained?'수위 LOW\n주차장 통행 가능':drainAt>=0?'배수 가동 중\n젖은 통로에 접근 금지':story&&stage==='plant_power'?`수위 HIGH / 토출 ${plantRoute(story)==='drain'?'외부':plantRoute(story)==='closed'?'차단':'환수'}\n${plantProblem(story)?'현장 확인 후 시험 기동':'배수 준비 완료'}`:'수위 HIGH\n유입 · 펌프실 점검';
+   area==='annex'?intercomStatus||(['annex_exit_ready','annex_departure'].includes(stage)?'2803 연결됨\n북쪽 방화문 잠금 해제':'통화 기록 · 수신 세대 확인\n네 자리 입력 → CALL'):drained?'수위 LOW\n주차장 통행 가능':drainAt>=0?'배수 가동 중\n젖은 통로에 접근 금지':story&&stage==='plant_power'?`수위 HIGH / 토출 ${plantRoute(story)==='drain'?'외부':plantRoute(story)==='closed'?'차단':'환수'}\n${plantProblem(story)?'현장 확인 후 시험 기동':'배수 준비 완료'}`:'수위 HIGH\n유입 · 펌프실 점검';
   if(text!==lastDisplay){lastDisplay=text;faceText(text);}
   const review=stage==='archive_edit'?archiveReview?.read(time):undefined;
   const reviewText=review?.source?`${archiveClips[review.source].title}\n${review.playing?'재생':'정지'} ${review.time.toFixed(1)}초 / ${archiveClips[review.source].duration}초`:text;
   surveillance?.update(stage,review?.source?review.time:replayTime,reviewText,review);
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,archiveReview,plantAttempt:area==='plant'?(time:number,story:Story)=>{plantAttemptAt=time;recordPlantTrial(story);}:undefined,updateStory,reset(){opened=-1;drainAt=-1;replayAt=-1;plantAttemptAt=-10;lastDisplay='';archiveReview?.reset();}};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,archiveReview,intercom,updateIntercom:area==='annex'?(digits:string,status:string,pressed:string|null)=>{intercomStatus=status;intercom!.setScreen(digits||'____');for(const {mesh} of intercom!.keys)mesh.position.y=pressed===mesh.uuid?.082:.085;intercom!.playButton.position.y=pressed===intercom!.playButton.uuid?.082:.085;intercom!.stopButton.position.y=pressed===intercom!.stopButton.uuid?.082:.085;}:undefined,plantAttempt:area==='plant'?(time:number,story:Story)=>{plantAttemptAt=time;recordPlantTrial(story);}:undefined,updateStory,reset(){intercomStatus='';opened=-1;drainAt=-1;replayAt=-1;plantAttemptAt=-10;lastDisplay='';archiveReview?.reset();}};
 }

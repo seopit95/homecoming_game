@@ -36,7 +36,7 @@ export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:
   }
   return true;
 }
-export type Target = { id: Action; point: T.Vector3; label: string; mesh: T.Object3D };
+export type Target = { precise?:boolean; id: Action; point: T.Vector3; label: string; mesh: T.Object3D };
 export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
   const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,carDeparture:undefined}:{...buildBuilding(root,area),setTV:undefined};
@@ -55,7 +55,8 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const archiveReview='archiveReview' in content?content.archiveReview:undefined;
   const plantAttempt='plantAttempt' in content?content.plantAttempt:undefined;
   const answeringMachine='answeringMachine' in content?content.answeringMachine:undefined;
-  return {...content,root,updateStory,reset,surveillance,archiveReview,plantAttempt,answeringMachine};
+  const intercom='intercom' in content?content.intercom:undefined,updateIntercom='updateIntercom' in content?content.updateIntercom:undefined;
+  return {...content,root,updateStory,reset,surveillance,archiveReview,plantAttempt,answeringMachine,intercom,updateIntercom};
 }
 export function disposeWorld(root:T.Object3D){
   root.traverse(o=>o.userData.surveillance?.dispose());
