@@ -25,6 +25,23 @@ const {createGame}=await import('../lib/game.ts');
 const event=(target,type,properties)=>{const e=new Event(type);Object.assign(e,properties);target.dispatchEvent(e);};
 function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.min(.025,left)*1000;nextFrame(clock);}}
 
+test('V77 real office input installs its fuse and chooses loads before operating the relay',async()=>{
+ const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'office_record',notes:[],elapsed:500,pursuit:false})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ function use(pos,target){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...target).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'real target prompt at '+target);game.interact();tick();}
+ try{await game.ready;tick();game.continueGame();tick();use([-3.7,1.65,2.6],[-3.7,.86,1.8]);assert.equal(game.snapshot().story.stage,'office_fuse');use([-2.1,1.65,-4.95],[-2.1,1.17,-5.7]);assert.equal(game.snapshot().story.stage,'office_power');
+  assert.ok(renderedScene.getObjectByName('office-fuse-installed'));use([4.55,1.65,-4.55],[5.39,1.02,-4.55]);assert.ok(game.snapshot().story.notes.includes('office_install'));
+  use([4.55,1.65,-4],[5.34,1.45,-4]);use([4.55,1.65,-4.55],[5.34,1.45,-4.55]);use([4.55,1.65,-3.45],[5.39,.95,-3.45]);assert.equal(game.snapshot().story.stage,'office_power');assert.match(game.snapshot().message,/승강기/);
+  use([4.55,1.65,-4.55],[5.34,1.45,-4.55]);use([4.55,1.65,-3.45],[5.34,1.45,-3.45]);const record=JSON.parse(data.get('homecoming.progress.v2'));assert.equal(record.stage,'office_power');assert.ok(record.notes.includes('office_install'));
+  voiceCalls.length=0;use([4.55,1.65,-3.45],[5.39,.95,-3.45]);assert.equal(game.snapshot().story.stage,'office_tape');assert.ok(renderedScene.getObjectByName('resident-remains').position.z>11,'a powered panel cannot move the incoming ghost indoors');assert.equal(voiceCalls.includes('cry'),false);
+ }finally{game.dispose();win.localStorage=previous;}
+});
+test('V77 continuing a completed office recording releases the real waiting pursuer',async()=>{
+ const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'office_record',notes:['record','monitor'],elapsed:520,pursuit:false}):null,setItem(){}};const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{await game.ready;tick();game.continueGame();tick();assert.equal(game.snapshot().story.stage,'office_key');renderedCamera.position.set(-3.7,1.65,2.6);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(8);assert.ok(renderedScene.getObjectByName('connection-fire-door').rotation.y<-1.2,'restoring after CCTV cannot leave the pursuer locked outside');assert.ok(ghost.position.distanceTo(before)>.5);assert.equal(renderedScene.getObjectByName('office-fuse-installed').visible,true);
+ }finally{game.dispose();win.localStorage=previous;}
+});
+
 test('V75 real resident input opens the physical drawer, earns its key and cannot postpone the returning pursuer with a late record',async()=>{
  const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'resident_entry',notes:['belongings','answerphone','portrait'],elapsed:100})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
@@ -169,10 +186,11 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   runTo(0,3.15);runTo(0,-4.65);use([0,1.65,-4.65],[0,1.25,-5.65],'resident_departure');tick(1);
   runTo(0,-7.95);aim(renderedCamera.position.toArray(),[3,1.65,-7.95],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='resident_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'office_record');runTo(0,11.8);runTo(0,6.5);
   use([-3.7,1.65,2.8],[-3.7,.86,1.8],'office_fuse');
-  use([-2.1,1.65,-4.5],[-2.1,1.38,-5.37],'office_power');
-  use([3.8,1.65,-4],[5.34,1.45,-4],'office_power');
-  use([3.8,1.65,-4.55],[5.34,1.45,-4.55],'office_power');
-  use([3.8,1.65,-3.45],[5.34,1.45,-3.45],'office_tape');
+  use([-2.1,1.65,-4.95],[-2.1,1.17,-5.7],'office_power');
+  use([4.55,1.65,-4.55],[5.39,1.02,-4.55],'office_power');
+  use([4.55,1.65,-4],[5.34,1.45,-4],'office_power');
+  use([4.55,1.65,-3.45],[5.34,1.45,-3.45],'office_power');
+  use([4.55,1.65,-3.45],[5.415,.95,-3.45],'office_tape');
   use([-1.95,1.65,2.6],[-1.95,.9,1.8],'office_tape');
   use([-2.65,1.65,2.6],[-2.65,1.17,1.79],'office_playback');
   assert.equal(game.snapshot().prompt,'');const playbackAt=game.snapshot().elapsed;game.pause();tick(5);assert.equal(game.snapshot().elapsed,playbackAt);game.pause(false);tick(5);assert.equal(game.snapshot().story.stage,'office_playback');tick(6.1);assert.equal(game.snapshot().story.stage,'office_key');assert.ok(game.snapshot().story.notes.includes('monitor'));
@@ -581,8 +599,8 @@ test('office pursuer is already physically waiting before the recording, rather 
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const game=createGame(canvas,()=>{},e=>assert.fail(e));
   try{tick();game.continueGame();tick();const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,true,'returning to the passage must reveal the existing pursuer');const waiting=ghost.position.clone();tick(4);assert.ok(ghost.position.distanceTo(waiting)<.001,'it waits behind the fire door while the records are investigated');assert.equal(game.snapshot().story.stage,'office_record');
-    function use(id,pos){renderedCamera.position.set(...pos);const points={record:[-3.7,.86,1.8],fuse:[-2.1,1.38,-5.37],circuit_b:[5.34,1.45,-4],circuit_a:[5.34,1.45,-4.55],circuit_c:[5.34,1.45,-3.45],tape_next:[-1.95,.9,1.8],monitor:[-2.65,1.17,1.79]},point=points[id],dx=point[0]-pos[0],dy=point[1]-pos[1],dz=point[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,id);game.interact();tick();}
-    for(const [id,pos] of [['record',[-3.7,1.65,2.8]],['fuse',[-2.1,1.65,-4.5]],['circuit_b',[3.8,1.65,-4]],['circuit_a',[3.8,1.65,-4.55]],['circuit_c',[3.8,1.65,-3.45]],['tape_next',[-1.95,1.65,2.6]],['monitor',[-2.65,1.65,2.6]]])use(id,pos);
+    function use(id,pos){renderedCamera.position.set(...pos);const points={record:[-3.7,.86,1.8],fuse:[-2.1,1.17,-5.7],office_install:[5.39,1.02,-4.55],security_power:[5.415,.95,-3.45],circuit_b:[5.34,1.45,-4],circuit_a:[5.34,1.45,-4.55],circuit_c:[5.34,1.45,-3.45],tape_next:[-1.95,.9,1.8],monitor:[-2.65,1.17,1.79]},point=points[id],dx=point[0]-pos[0],dy=point[1]-pos[1],dz=point[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,id);game.interact();tick();}
+    for(const [id,pos] of [['record',[-3.7,1.65,2.8]],['fuse',[-2.1,1.65,-4.95]],['office_install',[4.55,1.65,-4.55]],['circuit_b',[4.55,1.65,-4]],['circuit_c',[4.55,1.65,-3.45]],['security_power',[4.55,1.65,-3.45]],['tape_next',[-1.95,1.65,2.6]],['monitor',[-2.65,1.65,2.6]]])use(id,pos);
     tick(13);assert.equal(game.snapshot().story.stage,'office_key');assert.ok(ghost.position.distanceTo(waiting)>1,'the pursuer must leave its waiting point after playback');assert.ok(renderedScene.getObjectByName('connection-fire-door').rotation.y<-1.4,'the waiting body must not jam the opening door');
   }
   finally{game.dispose();win.localStorage=previous;}

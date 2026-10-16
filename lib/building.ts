@@ -3,7 +3,7 @@ import * as T from 'three';
 import {buildCarDeparture,type CarDeparture} from './car-departure.ts';
 import {createCRT,crtCable,createCrtSocket} from './crt-monitor.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
-import {tapeTimes} from './story.ts';
+import {tapeTimes,officePowerLoad} from './story.ts';
 import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import {buildCourtyard} from './courtyard.ts';
@@ -217,7 +217,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const x of [-4.12,-1.88])for(const z of [1.14,1.86])box(x,.35,z,.065,.7,.065,metal);
     box(-2.65,.43,1.11,1.76,.47,.045,wood);for(const y of [.17,.39,.61]){box(-3.85,y,1.938,.52,.2,.023,wood);box(-3.85,y,1.96,.16,.025,.035,metal);}
     box(-3.7,.809,1.58,.42,.018,.31,white);
-    const log=label('백로아파트 · 야간 근무 인계\n\n당직: 한서연 / 사고 다음 날 임시 관리실 폐쇄\n03:17  정문 횡단보도 보행자 사망 / 검은 차량 이탈\n03:26  파손 차량 입차 / 정차 직후 영상 9초 누락\n누락 구간은 지하 기록보관실 원본과 대조할 것.\n\n감시 설비 정전 시: 서고 예비 퓨즈 사용\n회로 복구: B 접지 → A 입력 → C 감시\n입차 시각으로 CCTV 열람 기록을 선택할 것.\n승강기 열쇠 보관: CCTV 오른쪽 책상',-3.7,.8182,1.58,0,.4,.28,'#292b27','#c6bfa6');log.mesh.rotation.x=-Math.PI/2;log.mesh.name='office-duty-log';target('record','야간 근무일지 읽기',desk,-3.7,.86,1.8);
+    const log=label('백로아파트 · 야간 근무 인계\n\n당직: 한서연 / 사고 다음 날 임시 관리실 폐쇄\n03:17  정문 횡단보도 보행자 사망 / 검은 차량 이탈\n03:26  파손 차량 입차 / 정차 직후 영상 9초 누락\n누락 구간은 지하 기록보관실 원본과 대조할 것.\n\n감시 설비 정전 시: 서고 예비 퓨즈 사용\n비상 공급 6A / 구역등 4A · CCTV 2A · 승강기 제어 4A\n퓨즈를 홀더에 설치하고 필요한 부하만 선택 후 전원 투입\n입차 시각으로 CCTV 열람 기록을 선택할 것.\n승강기 열쇠 보관: CCTV 오른쪽 책상',-3.7,.8182,1.58,0,.4,.28,'#292b27','#c6bfa6');log.mesh.rotation.x=-Math.PI/2;log.mesh.name='office-duty-log';target('record','야간 근무일지 읽기',desk,-3.7,.86,1.8);
     const crt=createCRT();crt.root.name='office-crt-monitor';crt.root.position.set(-2.65,.8,1.76);root.add(crt.root);
     const screen=createSurveillance('office');crt.screenMount.add(screen);const surveillance=screen.userData.surveillance as Surveillance;target('monitor','선택한 CCTV 기록 재생',crt.root,-2.65,1.137,1.80);
     const socket=createCrtSocket();socket.root.position.set(-bx+.09,.27,1.05);socket.root.rotation.y=Math.PI/2;root.add(socket.root);root.updateMatrixWorld(true);
@@ -227,27 +227,53 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const exitKey=new T.Group();exitKey.name='office-exit-key';root.add(exitKey);
     const keyRing=new T.Mesh(new T.TorusGeometry(.035,.006,6,14),metal);keyRing.rotation.x=-Math.PI/2;keyRing.position.set(-2.13,.807,1.16);exitKey.add(keyRing);
     const keyStem=box(-2.13,.806,1.24,.023,.012,.1,metal);exitKey.attach(keyStem);const keyTooth=box(-2.105,.806,1.28,.07,.012,.025,metal);exitKey.attach(keyTooth);target('service_key','관리용 승강기 열쇠 챙기기',exitKey,-2.13,.82,1.28);
-    const fuse=box(-2.1,1.31,-5.7,.15,.3,.12,white);box(-2.1,.58,-5.7,.8,1.16,.5,wood,true);target('fuse','예비 퓨즈 챙기기',fuse,-2.1,1.38,-5.37);
-    for(const y of [-.125,.125]){const cap=new T.Mesh(softBox(.152,.05,.124,.005),metal);cap.position.y=y;fuse.add(cap);}for(const x of [-.045,0,.045]){const seam=new T.Mesh(new T.BoxGeometry(.008,.14,.004),dark);seam.position.set(x,0,.062);fuse.add(seam);}
+    function fuseCartridge(name:string,x:number,y:number,z:number,horizontal=false){
+      const group=new T.Group();group.name=name;group.position.set(x,y,z);if(horizontal)group.rotation.z=Math.PI/2;root.add(group);
+      const body=new T.Mesh(new T.CylinderGeometry(.0055,.0055,.032,16),white);group.add(body);
+      for(const y of [-.016,.016]){const cap=new T.Mesh(new T.CylinderGeometry(.0065,.0065,.004,16),metal);cap.position.y=y;group.add(cap);}
+      group.traverse(o=>{if(o instanceof T.Mesh)o.castShadow=o.receiveShadow=true;});return group;
+    }
+    box(-2.1,.58,-5.7,.8,1.16,.5,wood,true);box(-2.1,1.161,-5.7,.08,.002,.055,white);
+    const fuse=fuseCartridge('office-fuse-pickup',-2.1,1.1685,-5.7,true);target('fuse','예비 제어 퓨즈 챙기기',fuse,-2.1,1.17,-5.7);fuse.userData.approach={x:-2.1,z:-4.95};
     const records=storageMaterials();for(const x of [-4.8,-3.6]){const shelf=storageShelf(3.1,.64,metal,records,Math.round(-x*10));shelf.rotation.y=Math.PI/2;shelf.position.set(x,0,-4.4);root.add(shelf);solids.push({x,z:-4.4,w:.64,d:3.1,y:1.1,h:2.2});}
     label('예비 퓨즈',-2.1,.91,-5.442,0,.65,.17,'#473e2d','#b2ab8b');
-    box(5.61,1.4,-4,.2,1.55,1.8,metal);label('감시 설비 / 복구 순서 확인',5.704,2.3,-4,-Math.PI/2,1.4,.18);
+    const cabinet=surface('paintedMetal','#8e9990',{roughness:.7,normalScale:new T.Vector2(.12,.12)});
+    cabinet.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',T.ShaderChunk.map_fragment.replace('diffuseColor *= sampledDiffuseColor;','diffuseColor *= mix(vec4(1.0), sampledDiffuseColor, .16);'));};cabinet.customProgramCacheKey=()=> 'office-enamel-v77';
+    const caseMesh=box(5.61,1.4,-4,.2,1.55,1.8,cabinet,true);caseMesh.name='office-backup-panel';
+    label('비상전원 6A · 필요한 부하만 선택',5.5097,2.05,-4,-Math.PI/2,1.58,.18);
     for(const z of [-4.65,-3.35])box(5.674,2.48,z,.055,.64,.055,metal);
-    for(const [i,id] of (['circuit_a','circuit_b','circuit_c'] as const).entries()){const z=-4.55+i*.55,m=box(5.48,1.45,z,.07,.3,.17,dark);box(5.43,1.45,z,.045,.14,.09,red);label(['A 입력','B 접지','C 감시'][i],5.503,1.8,z,-Math.PI/2,.38,.14);target(id,['A 입력 회로','B 접지 회로','C 감시 회로'][i],m,5.34,1.45,z);}
+    const branches:{id:Action;handle:T.Mesh;lamp:T.MeshStandardMaterial}[]=[];
+    for(const [i,id] of (['circuit_a','circuit_b','circuit_c'] as const).entries()){
+      const z=-4.55+i*.55;box(5.49,1.45,z,.04,.27,.19,dark);const axle=roundPipe(root,[5.435,1.45,z],[5.52,1.45,z],.014,metal);axle.name='office-lever-axle-'+id.at(-1);solids.push({x:5.46,z,w:.14,d:.19,y:1.45,h:.30});
+      const handle=box(5.445,1.45,z,.035,.14,.07,white);handle.name='office-branch-'+id.at(-1);handle.rotation.z=.55;
+      label(['A 구역등 4A','B CCTV 2A','C 승강기 4A'][i],5.5097,1.85,z,-Math.PI/2,.48,.16);
+      const lamp=new T.MeshStandardMaterial({color:'#333c31',emissive:'#b89447',emissiveIntensity:0});box(5.492,1.69,z,.025,.035,.06,lamp);
+      target(id,['구역 조명 회로 · 4A','CCTV 기록장치 · 2A','승강기 제어 회로 · 4A'][i],handle,5.34,1.45,z);targets.at(-1)!.precise=true;handle.userData.approach={x:4.55,z};branches.push({id,handle,lamp});
+    }
+    const holder=box(5.49,1.02,-4.55,.04,.15,.17,dark);holder.name='office-fuse-holder';
+    for(const y of [.997,1.043])box(5.475,y,-4.55,.05,.012,.045,metal);
+    const installedFuse=fuseCartridge('office-fuse-installed',5.45,1.02,-4.55);installedFuse.visible=false;solids.push({x:5.465,z:-4.55,w:.07,d:.17,y:1.02,h:.15});
+    label('퓨즈 홀더',5.5097,1.21,-4.55,-Math.PI/2,.38,.12);target('office_install','가져온 퓨즈 설치',holder,5.39,1.02,-4.55);targets.at(-1)!.precise=true;holder.userData.approach={x:4.55,z:-4.55};
+    box(5.49,.95,-3.45,.04,.19,.19,dark);
+    const relayMount=box(5.475,.95,-3.45,.035,.04,.04,metal);relayMount.name='office-relay-mount';solids.push({x:5.46,z:-3.45,w:.08,d:.19,y:.95,h:.19});
+    const mainRelay=new T.Mesh(new T.CylinderGeometry(.04,.04,.035,24),red);mainRelay.rotation.z=Math.PI/2;mainRelay.position.set(5.445,.95,-3.45);mainRelay.name='office-main-relay';root.add(mainRelay);
+    target('security_power','선택한 회로에 비상전원 투입',mainRelay,5.415,.95,-3.45);targets.at(-1)!.precise=true;mainRelay.userData.approach={x:4.55,z:-3.45};
+    label('전원 투입',5.5097,1.15,-3.45,-Math.PI/2,.4,.12);
+    const loadDisplay=label('퓨즈 없음',5.5097,.76,-4,-Math.PI/2,1.15,.15);let powerCaption='';
     label('서고',-3,2.3,-1.531,0,.65,.2);label('배전반',3,2.3,-1.531,0,.8,.2);
     box(3.8,.75,3.8,2.1,.1,1.25,wood,true);for(const x of [2.9,4.7])for(const z of [3.3,4.3])box(x,.35,z,.07,.7,.07,metal);box(3.8,.48,3.3,1.9,.4,.05,wood);
     for(let z=2.7;z<6;z+=.7){box(5.4,1.15,z,.45,2.3,.55,metal,true);for(const y of [.35,.9,1.45,2]){box(5.166,y,z,.02,.5,.5,metal);box(5.146,y,z,.035,.035,.18,dark);}}
     const dutyChair=facilityChair(wood,metal);dutyChair.position.set(-2.7,0,.45);root.add(dutyChair);solids.push({x:-2.7,z:.45,w:.5,d:.5,y:.44,h:.88});
     const breakChair=facilityChair(wood,metal);breakChair.position.set(3.8,0,2.65);breakChair.rotation.y=Math.PI;root.add(breakChair);solids.push({x:3.8,z:2.65,w:.5,d:.5,y:.44,h:.88});
     box(3.8,.801,3.8,.55,.002,.34,white);box(4.35,.86,3.8,.3,.12,.23,metal);for(const x of [4.26,4.44])box(x,.925,3.8,.09,.01,.14,dark);
-    box(5.68,.19,-4,.12,.38,1.65,metal);for(const z of [-4.6,-4,-3.4])roundPipe(root,[5.65,.63,z],[5.65,.01,z],.016,metal);
+    box(5.68,.3125,-4,.12,.625,1.65,cabinet,true);
     fixture(0,4);fixture(0,-4,false);light(-3,2.5,1,'#b49f7d',4);light(-3,2.5,-4,'#8b9b85',3);light(3.5,2.5,-4,'#839c96',3);
     const serviceHinge=new T.Group();serviceHinge.name='office-service-door';serviceHinge.position.set(-.6,0,-bz+.12);root.add(serviceHinge);
     const serviceLeaf=box(0,1.1,-bz+.12,1.18,2.2,.09,metal);serviceHinge.attach(serviceLeaf);doorHardware(serviceLeaf,1.18);target('service_exit','관리용 승강기 열기',serviceLeaf,0,1.25,-bz+.32);
     const serviceBlock={x:0,z:-bz+.12,w:1.2,d:.12,y:1.1,h:2.2};solids.push(serviceBlock);let serviceAt=-1,playAt=-1;reset=()=>{serviceAt=-1;playAt=-1;};bounds.z=bz+6.2;
     box(0,-.09,-bz-1.35,2.2,.18,2.7,floorMat);box(0,2.8,-bz-1.35,2.2,.12,2.7,metal);for(const x of [-1.1,1.1])box(x,1.4,-bz-1.35,.12,2.8,2.7,metal,true);box(0,1.4,-bz-2.7,2.2,2.8,.12,metal,true);light(0,2.5,-bz-1.3,'#98ad9b',3,4);label('관리용 승강기 · 1F',0,2.5,-bz+.094,0,1.8,.2);
     label('17층 · 구 관리사무소',0,2.57,bz-.094,Math.PI,1.65,.2);puddle(2.6,5,.45,1);
-    updateStory=(stage,time,_reduced,story,occupants)=>{if(stage==='office_playback'&&playAt<0)playAt=time;surveillance.update(stage,playAt<0?0:time-playAt,stage==='office_tape'?tapeTimes[story?.tapeIndex??0]:'신호 없음');fuse.visible=['office_record','office_fuse'].includes(stage);exitKey.visible=!['office_leave','office_departure'].includes(stage);if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0)setDoorAngle(serviceHinge,serviceBlock,1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85),.6,0,occupants);};
+    updateStory=(stage,time,_reduced,story,occupants)=>{if(stage==='office_playback'&&playAt<0)playAt=time;surveillance.update(stage,playAt<0?0:time-playAt,stage==='office_tape'?tapeTimes[story?.tapeIndex??0]:'신호 없음');fuse.visible=!story?.notes.includes('fuse')&&['office_record','office_fuse'].includes(stage);const powered=['office_tape','office_playback','office_key','office_leave','office_departure'].includes(stage),installed=powered||!!story?.notes.includes('office_install');installedFuse.visible=installed;for(const b of branches){const on=!!story?.circuit.includes(b.id);b.handle.rotation.z=on?-.55:.55;b.lamp.emissiveIntensity=installed&&on?.65:0;}const caption=installed?`선택 ${officePowerLoad(story??{circuit:[]})} / 6A · ${powered?'공급 중':'전원 대기'}`:'퓨즈 없음';if(caption!==powerCaption){loadDisplay.update(caption);powerCaption=caption;}exitKey.visible=!['office_leave','office_departure'].includes(stage);if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0)setDoorAngle(serviceHinge,serviceBlock,1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85),.6,0,occupants);};
   }
   if(area==='parking'){
     bounds.z=bz+6.8;connectionPassage(root,solids,lamps,-3,bz+6,0,.9);

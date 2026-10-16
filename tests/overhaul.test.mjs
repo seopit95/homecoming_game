@@ -7,10 +7,10 @@ test('wake-up requires a failed switch and physical flashlight pickup before esc
  for(const [a,next] of [['awake','light_switch'],['switch','find_torch'],['flashlight','power'],['breaker','phone']]){assert.equal(transition(s,'door'),s);s=transition(s,a);assert.equal(s.stage,next);}
  assert.equal(hasFlashlight(s),true);assert.equal(transition({...s,stage:'hide'},'door').stage,'lift_call');
 });
-test('office requires the documented circuit order and correct tape timestamp',()=>{
- let s={...initialStory(),stage:'office_power'};s=transition(s,'circuit_a');assert.deepEqual(s.circuit,[]);
- for(const a of ['circuit_b','circuit_a'])s=transition(s,a);assert.equal(s.stage,'office_power');
- s=transition(s,'circuit_c');assert.equal(s.stage,'office_tape');assert.equal(transition(s,'monitor'),s);
+test('office requires installed backup power and the correct tape timestamp',()=>{
+ let s={...initialStory(),stage:'office_fuse'};s=transition(s,'fuse');s=transition(s,'office_install');
+ for(const a of ['circuit_b','circuit_c'])s=transition(s,a);assert.equal(s.stage,'office_power');
+ s=transition(s,'security_power');assert.equal(s.stage,'office_tape');assert.equal(transition(s,'monitor'),s);
  s=transition(s,'tape_next');assert.equal(s.tapeIndex,1);s=transition(s,'monitor');assert.equal(s.stage,'office_playback');
  assert.equal(s.notes.includes('monitor'),false,'evidence is not awarded before it is played');assert.equal(transition(s,'service_exit'),s);assert.equal(transition(s,'tape_next'),s);
  s=transition(s,'office_finish');assert.equal(s.stage,'office_key');assert.ok(s.notes.includes('monitor'));assert.equal(transition(s,'service_exit'),s,'the physical key has not been picked up');
