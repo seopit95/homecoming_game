@@ -4,7 +4,7 @@ import {expansionLayout} from './expansion-world.ts';
 import {annexCanCall,annexCallFor,annexCallLabel} from './annex-call.ts';
 import {archiveClips,archiveReviewing,type ArchiveSource} from './archive-review.ts';
 import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,clampLightOrigin,type Target} from './world.ts';
-import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength} from './ghost.ts';
+import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength,ghostStep} from './ghost.ts';
 export {prepareVisuals} from './materials.ts';
 import {clearPrintedSources} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
@@ -442,11 +442,12 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     while(enemyPath.length&&Math.hypot(p.x-enemyPath[0].x,p.z-enemyPath[0].z)<.12)enemyPath.shift();
     if(enemyPath.length>1&&clearPath(p,enemyPath[1],world.solids,world.bounds,pursuerRadius))enemyPath.shift();
     const next=enemyPath[0];if(!next)return;
-    const dx=next.x-p.x,dz=next.z-p.z,distance=Math.hypot(dx,dz),stride=ghostStrideLength(world.figure,world.solids,crawling()),step=Math.min(Math.min(speed*.85,stride*3)*dt,distance);
+    const dx=next.x-p.x,dz=next.z-p.z,distance=Math.hypot(dx,dz);
+    const turn=T.MathUtils.euclideanModulo(Math.atan2(dx,dz)-world.figure.rotation.y+Math.PI,Math.PI*2)-Math.PI;
+    const stride=ghostStrideLength(world.figure,world.solids,crawling()),motion=ghostStep(turn,speed,dt,stride,crawling()),step=Math.min(motion.distance,distance);
+    world.figure.rotation.y+=motion.turn;
     if(free(p.x+dx/distance*step,p.z,pursuerRadius))p.x+=dx/distance*step;if(free(p.x,p.z+dz/distance*step,pursuerRadius))p.z+=dz/distance*step;
     p.y=world.heightAt(p.x,p.z);
-    const turn=T.MathUtils.euclideanModulo(Math.atan2(dx,dz)-world.figure.rotation.y+Math.PI,Math.PI*2)-Math.PI;
-    world.figure.rotation.y+=T.MathUtils.clamp(turn,-dt*2.4,dt*2.4);
   }
   function contact(){
     if(story.hidden||area==='corridor'&&areaTime<4.2||!world.figure.visible||!chaseStages.includes(story.stage))return false;
@@ -473,6 +474,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     threat=Math.max(threat,tracking?T.MathUtils.clamp(1-distance/24,.18,.9):.12);
   }
   function danger(dt:number){
+    const heading=world.figure.rotation.y,stride=ghostStrideLength(world.figure,world.solids,crawling());
     threat=0;if(contact())return;
     if(story.stage==='listen'){
       if(stageTime>1.2)followEnemy({x:0,z:-1.4*S},1.05,dt);
@@ -526,7 +528,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(contact())return;
     if(world.figure.visible&&story.stage!=='dying'){
       const p=world.figure.position,distance=Math.hypot(p.x-camera.position.x,p.z-camera.position.z),travel=Math.hypot(p.x-lastGhostPosition.x,p.z-lastGhostPosition.z);
-      const before=Math.floor(walkPhase/Math.PI);walkPhase+=Math.min(travel,.3)*Math.PI*2/ghostStrideLength(world.figure,world.solids,crawling());ghostMotion=T.MathUtils.clamp(travel/Math.max(dt,.001)/2.5,0,1);lastGhostPosition.copy(p);
+      const turn=world.figure.rotation.y-heading,stroke=Math.min(travel,.3)+Math.abs(Math.atan2(Math.sin(turn),Math.cos(turn)))*.25;
+      const before=Math.floor(walkPhase/Math.PI);walkPhase+=stroke*Math.PI*2/stride;ghostMotion=T.MathUtils.clamp(stroke/Math.max(dt,.001)/2.5,0,1);lastGhostPosition.copy(p);
       const pan=T.MathUtils.clamp(((p.x-camera.position.x)*Math.cos(yaw)-(p.z-camera.position.z)*Math.sin(yaw))/Math.max(1,distance),-1,1),level=Math.min(1,4/Math.max(1,distance));
       if(Math.floor(walkPhase/Math.PI)!==before){audio.footstep(crawling()?'wet':'wood',pan,level*.85);if(before%2===0)audio.sound('drag',pan,level*.6);}
       if(distance<8&&elapsed-lastBreath>4.1){audio.sound('breath',pan,level);lastBreath=elapsed;}
@@ -579,7 +582,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     const ending=finale[story.stage];
     if(ending){
-      if(story.stage==='car_departure'){if(world.figure.visible&&stageTime<8){const p=world.figure.position,x=p.x,z=p.z;followEnemy(departureOutside,2.7,dt);const travel=Math.hypot(p.x-x,p.z-z);walkPhase+=travel*Math.PI*2/ghostStrideLength(world.figure,world.solids,true);ghostMotion=T.MathUtils.clamp(travel/Math.max(dt,.001)/2.5,0,1);}else ghostMotion=0;if(stageTime>=5.5&&scriptBeat===0){scriptBeat=1;audio.sound('slam',-.5,.45);}if(stageTime>=6&&scriptBeat===1){scriptBeat=2;audio.sound('motor',0,.5);}if(stageTime>=6&&Math.floor((stageTime-6)/.85)!==Math.floor((stageTime-dt-6)/.85))audio.sound('wiper',-.12,.8);}
+      if(story.stage==='car_departure'){if(world.figure.visible&&stageTime<8){const p=world.figure.position,x=p.x,z=p.z,heading=world.figure.rotation.y,stride=ghostStrideLength(world.figure,world.solids,true);followEnemy(departureOutside,2.7,dt);const turn=world.figure.rotation.y-heading,stroke=Math.hypot(p.x-x,p.z-z)+Math.abs(Math.atan2(Math.sin(turn),Math.cos(turn)))*.25;walkPhase+=stroke*Math.PI*2/stride;ghostMotion=T.MathUtils.clamp(stroke/Math.max(dt,.001)/2.5,0,1);}else ghostMotion=0;if(stageTime>=5.5&&scriptBeat===0){scriptBeat=1;audio.sound('slam',-.5,.45);}if(stageTime>=6&&scriptBeat===1){scriptBeat=2;audio.sound('motor',0,.5);}if(stageTime>=6&&Math.floor((stageTime-6)/.85)!==Math.floor((stageTime-dt-6)/.85))audio.sound('wiper',-.12,.8);}
       else if(Math.floor(stageTime/.85)!==Math.floor((stageTime-dt)/.85)&&story.stage!=='car_crash')audio.sound('wiper',-.12,.8);
       if(story.stage==='car_voice'&&stageTime>=.15&&scriptBeat===0){scriptBeat=1;audio.recorded('passenger-line',1,.85);}
       if(story.stage==='car_crash'){

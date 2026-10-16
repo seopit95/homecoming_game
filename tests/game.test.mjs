@@ -1056,3 +1056,31 @@ test('V88 real older drainage guidance does not repeat key or pump work and keep
  const pumped=await v88Garage('parking_gate',['car_search','valve_a','valve_b']);
  try{assert.equal(pumped.game.snapshot().story.stage,'parking_pump');pumped.aim([-10.5,1.65,-15.5],[-10.5,1.3,-16.65]);pumped.game.interact();assert.equal(pumped.game.snapshot().story.stage,'parking_alarm');assert.match(pumped.game.snapshot().message,/필요하면.*경보/);}finally{pumped.dispose();}
 });
+test('V89 a pursuer turns toward a reversed route before moving through it backwards',async()=>{
+ const f=await v88Garage('parking_alarm',['plant_drained','car_search','alarm']);
+ try{
+  f.aim([8,1.65,-18],[8,1,-17]);tick(3);
+  const ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(0,0,15);ghost.rotation.y=Math.PI/2;const before=ghost.position.clone();tick(.025);
+  const delta=ghost.position.clone().sub(before),forward=new THREE.Vector3(Math.sin(ghost.rotation.y),0,Math.cos(ghost.rotation.y));
+  assert.ok(delta.length()<1e-6||delta.normalize().dot(forward)>.2,'a sharp route reversal must not translate the body backwards');
+  assert.ok(Math.abs(ghost.rotation.y-Math.PI/2)>.001,'a blocked forward heading still turns toward its route');
+ }finally{f.dispose();}
+});
+test('V89 turning in place transfers body weight into actual crawl strokes',async()=>{
+ const f=await v88Garage('parking_alarm',['plant_drained','car_search','alarm']);
+ try{
+  f.aim([8,1.65,-18],[8,1,-17]);tick(3);const ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(0,0,15);ghost.rotation.y=Math.PI/2;tick(.025);
+  const heights=[];for(let frame=0;frame<10;frame++){const before=ghost.position.clone();tick(.025);if(ghost.position.distanceTo(before)<1e-6)heights.push(ghost.getObjectByName('ghost-shoulder--1').parent.position.y);}
+  assert.ok(heights.length>=3,'the reversal includes a real stationary turning interval');
+  assert.ok(Math.max(...heights)-Math.min(...heights)>.0002,'the body shifts its weight while stationary feet/hands take turning steps');
+ }finally{f.dispose();}
+});
+test('V89 a real tight-wall route reversal leaves enough time for folded hands to replant',async()=>{
+ const {buildWorld,disposeWorld,canStandAt}=await import('../lib/world.ts'),{ghostStrideLength}=await import('../lib/ghost.ts'),reference=buildWorld(new THREE.Scene(),'parking');
+ const f=await v88Garage('parking_alarm',['plant_drained','car_search','alarm']);
+ try{
+  f.aim([8,1.65,10],[8,1,11]);tick(3);const ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(8.22,0,12);ghost.rotation.y=Math.PI/2;assert.ok(canStandAt(8.22,12,reference.solids,.43,reference.bounds),'the folded pose must be navigable beside the real column');
+  const stride=ghostStrideLength(ghost,reference.solids,true);assert.ok(stride<.14,'the real side wall fully folds the reach');const allowed=stride*3*.025/.25;tick(.025);const turned=Math.abs(ghost.rotation.y-Math.PI/2);
+  assert.ok(turned>.001,'the pursuer actually reverses toward the alarm route');assert.ok(turned<=allowed+1e-7,`folded-hand turn exceeds its stroke budget: ${turned} > ${allowed}`);
+ }finally{f.dispose();disposeWorld(reference.root);}
+});

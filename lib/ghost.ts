@@ -10,9 +10,11 @@ import {extremity} from './ghost-anatomy.ts';
 import type {Solid} from './world.ts';
 
 type Clearance={side:number;front:number;back:number};
+type Contact={point:T.Vector3;rotation:T.Quaternion;stance:boolean;withdrawing:boolean;from:T.Vector3;fromRotation:T.Quaternion};
+type Steps={position:T.Vector3;yaw:number;time:number;phase:number;crawl:number;tuck:Clearance;live:boolean;contacts:Contact[]};
 const openClearance:Clearance={side:0,front:0,back:0};
 const armTuck=(t:Clearance)=>T.MathUtils.smoothstep(Math.max(t.side,t.front),0,.65);
-type Rig={crawl:number;tuck:Clearance;drips:T.InstancedMesh;neck:T.Mesh;headOffset:T.Vector3;face:FaceRig;skinArms:T.Mesh[];skinLegs:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
+type Rig={steps?:Steps;crawl:number;tuck:Clearance;drips:T.InstancedMesh;neck:T.Mesh;headOffset:T.Vector3;face:FaceRig;skinArms:T.Mesh[];skinLegs:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
 const rigs=new WeakMap<T.Group,Rig>();
 export function createGhost(parent:T.Object3D){
   const figure=new T.Group();figure.name='resident-remains';figure.rotation.order='YXZ';parent.add(figure);figure.visible=false;
@@ -39,7 +41,7 @@ export function createGhost(parent:T.Object3D){
   const drips=new T.InstancedMesh(new T.SphereGeometry(.003,6,5),new T.MeshPhysicalMaterial({color:'#39090c',roughness:.25,clearcoat:.7}),6);drips.name='ghost-blood-drips';drips.frustumCulled=false;body.add(drips);
   rigs.set(figure,{crawl:0,tuck:openClearance,drips,neck,headOffset:new T.Vector3(),face,skinArms,skinLegs,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
 }
-function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,tuck:Clearance=openClearance){
+function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,tuck:Clearance=openClearance,walking=false){
   const rig=rigs.get(figure);if(!rig)return;
   rig.tuck=tuck;rig.crawl=crawl;
   rig.body.position.set(0,0,0);rig.body.quaternion.identity();
@@ -57,6 +59,18 @@ function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,red
     const distance=Math.min(.839,Math.hypot(y,z)),bend=Math.acos(distance/.84),hip=Math.atan2(-z,-y)-bend;
     rig.legs[i].rotation.set(hip,0,i===0?.035:-.035);rig.knees[i].rotation.set(bend*2,0,0);
     rig.ankles[i].rotation.set(-hip-bend*2+(swing?Math.sin(a)*(i===0?.17:.08):0)*moving,0,0);
+  }
+  if(walking&&crawl<1){
+    const stride=.39*(1-Math.max(tuck.front,tuck.back)*.65);
+    const feet=[0,1].map(i=>{const a=T.MathUtils.euclideanModulo(phase+i*Math.PI,Math.PI*2),swing=a<Math.PI;return {swing,a,z:(swing?-Math.cos(a)*stride:stride-(a-Math.PI)/Math.PI*stride*2)};});
+    const hip=Math.min(.87,.07+Math.sqrt(.83**2-Math.max(...feet.map(f=>f.z*f.z))));
+    rig.torso.position.y-=.87-hip;
+    for(let i=0;i<2;i++){
+      const side=i===0?-1:1,f=feet[i],lift=f.swing&&moving>.01?Math.sin(f.a):0;
+      rig.legs[i].position.y=hip;
+      reach(rig.legs[i],rig.knees[i],new T.Vector3(side*.105,.07+lift*(i===0?.075:.035),.015+f.z),.42,.42,side,new T.Vector3(0,0,1));
+      rig.ankles[i].quaternion.copy(rig.legs[i].quaternion).multiply(rig.knees[i].quaternion).invert().multiply(new T.Quaternion().setFromEuler(new T.Euler(lift*(i===0?.17:.08),0,0)));
+    }
   }
   rig.hair.rotation.set(0,0,0);
   rig.tails.scale.set(1,1,1);rig.tails.rotation.set(0,0,0);
@@ -81,11 +95,52 @@ function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,red
 }
 export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,heightAt?:(x:number,z:number)=>number,solids:Solid[]=[]){
   const tuck=crawlClearance(figure,solids);
-  const rig=poseGhost(figure,time,moving,proximity,reducedMotion,phase,crawl,tuck);if(!rig)return;
+  const previous=rigs.get(figure)?.steps,dt=previous?time-previous.time:0;
+  const turned=previous?Math.abs(Math.atan2(Math.sin(figure.rotation.y-previous.yaw),Math.cos(figure.rotation.y-previous.yaw))):0;
+  const continuous=!!previous&&dt>=0&&dt<=.12&&figure.position.distanceTo(previous.position)<.35&&turned<.5&&(crawl<.05&&previous.crawl<.05||crawl>.95&&previous.crawl>.95)&&(dt>0||phase===previous.phase);
+  const live=continuous&&(previous!.live||dt>0&&(figure.position.distanceToSquared(previous!.position)>1e-10||turned>1e-6));
+  const rig=poseGhost(figure,time,moving,proximity,reducedMotion,phase,crawl,tuck,moving>.01||live);if(!rig)return;
   poseFace(rig.face,0);rig.mouth.visible=false;
   if(heightAt)groundGhost(figure,heightAt,false);
+  plantContacts(figure,rig,time,phase,crawl,moving,live,continuous?previous:undefined);
   poseDress(rig.gown,rig.hem,rig.torso,rig.knees,crawl,false,tuck.back,tuck.side,tuck.front);
   settleHair(rig.tails,figure,time,crawlFloor(rig),heightAt);poseArms(rig);bloodDrops(rig,time);
+}
+
+// A support belongs to the floor, not the translating/turning animation root.
+// Teleports, a new scene and stand-to-crawl blends seed fresh contacts instead.
+function plantContacts(figure:T.Group,rig:Rig,time:number,phase:number,crawl:number,moving:number,live:boolean,previous?:Steps){
+  const arms=crawl>.95,stable=arms||crawl<.05,contacts:Contact[]=[];
+  const tightening=!!previous&&Math.max(rig.tuck.side-previous.tuck.side,rig.tuck.front-previous.tuck.front,rig.tuck.back-previous.tuck.back)>1e-5;
+  figure.updateMatrixWorld(true);
+  for(let i=0;i<2;i++){
+    const upper=arms?rig.arms[i]:rig.legs[i],lower=arms?rig.forearms[i]:rig.knees[i],end=arms?rig.palms[i]:rig.ankles[i];
+    const point=end.getWorldPosition(new T.Vector3()),rotation=end.getWorldQuaternion(new T.Quaternion()),u=T.MathUtils.euclideanModulo(phase+i*Math.PI,Math.PI*2)/(Math.PI*2),swing=arms?.36:.5,stance=u>=swing||moving<=.01;
+    const old=previous?.contacts[i],contact:Contact={point:point.clone(),rotation:rotation.clone(),stance,withdrawing:false,from:old?.from.clone()??point.clone(),fromRotation:old?.fromRotation.clone()??rotation.clone()};
+    if(live&&stable&&old){
+      // Withdraw before a moving leaf takes the old support, without snapping.
+      if(tightening||old.withdrawing&&(!stance||old.stance)){
+        const blend=1-Math.exp(-Math.max(0,time-previous!.time)*16);
+        contact.point.lerpVectors(old.point,point,blend);contact.rotation.slerpQuaternions(old.rotation,rotation,blend);
+        contact.point.sub(old.point).clampLength(0,Math.max(0,time-previous!.time)*1.5).add(old.point);
+        contact.withdrawing=contact.point.distanceToSquared(point)>.000004||contact.rotation.angleTo(rotation)>.01;
+        contact.from.copy(contact.point);contact.fromRotation.copy(contact.rotation);
+      }
+      // Once clearance is steady, the next touchdown ends withdrawal at the
+      // reached support rather than chasing a faster moving nominal target.
+      else if(stance&&(old.stance||old.withdrawing||moving<=.01)){contact.point.copy(old.point);contact.rotation.copy(old.rotation);if(moving<=.01)contact.point.y=Math.max(point.y,contact.point.y-Math.max(0,time-previous!.time)*.45);}
+      else if(!stance){
+        if(old.stance){contact.from.copy(old.point);contact.fromRotation.copy(old.rotation);}
+        const blend=T.MathUtils.smoothstep(u/swing,0,1);contact.point.lerpVectors(contact.from,point,blend);contact.rotation.slerpQuaternions(contact.fromRotation,rotation,blend);
+      }
+      const parent=upper.parent!,pole=parent.worldToLocal(lower.getWorldPosition(new T.Vector3())).sub(upper.position),target=parent.worldToLocal(contact.point.clone());
+      reach(upper,lower,target,arms?.46:.42,arms?.49:.42,i===0?-1:1,pole);
+      end.quaternion.copy(lower.getWorldQuaternion(new T.Quaternion()).invert().multiply(contact.rotation));
+      figure.updateMatrixWorld(true);
+    }
+    contacts.push(contact);
+  }
+  rig.steps={position:figure.position.clone(),yaw:figure.rotation.y,time,phase,crawl,tuck:rig.tuck,live:live&&stable,contacts};
 }
 
 // Match the planted-hand stroke to distance travelled. Tight frontal clearance
@@ -93,6 +148,10 @@ export function animateGhost(figure:T.Group,time:number,moving:number,proximity:
 export function ghostStrideLength(figure:T.Group,solids:Solid[],crawl:boolean){
   const tuck=crawlClearance(figure,solids);
   return crawl?.82*(1-tuck.front*.86):1.56*(1-Math.max(tuck.front,tuck.back)*.65);
+}
+export function ghostStep(turn:number,speed:number,dt:number,stride:number,crawl:boolean){
+  const budget=stride*(crawl?3:1.3)*dt,limit=Math.min(2.4*dt,budget/.25),rotation=T.MathUtils.clamp(turn,-limit,limit),facing=Math.max(0,Math.cos(turn));
+  return {turn:rotation,distance:Math.min(speed*.85*dt,Math.max(0,budget-Math.abs(rotation)*.25))*facing*facing};
 }
 
 // Reserve room for the full reaching pose, then gather the limbs toward the
