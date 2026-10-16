@@ -1,0 +1,16 @@
+import test from 'node:test';import assert from 'node:assert/strict';import * as T from 'three';
+import {buildWorld,disposeWorld,canStandAt,hasLineOfSight} from '../lib/world.ts';import {HorrorAudio} from '../lib/audio.ts';
+globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}})})};
+test('V68 mounted emergency phone has real backing and controls meet their body in both positions',()=>{
+ const w=buildWorld(new T.Scene(),'courtyard');try{
+  w.root.updateMatrixWorld(true);const phone=w.root.getObjectByName('courtyard-emergency-phone');assert.ok(phone);const plate=phone.getObjectByName('phone-mount-plate'),p=plate.geometry.getAttribute('position'),meshes=[];w.root.traverse(o=>{if(o.isMesh&&!phone.getObjectById(o.id)&&!w.figure.getObjectById(o.id))meshes.push(o);});
+  let tested=0;for(let i=0;i<p.count;i++){if(p.getZ(i)>-.0059)continue;const v=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(plate.matrixWorld);v.z+=.0001;const hit=new T.Raycaster(v,new T.Vector3(0,0,-1),0,.01).intersectObjects(meshes,false)[0];assert.ok(hit&&hit.distance<.001,'mounting plate is against actual booth backing');tested++;}assert.ok(tested>=4);
+  const controls=w.targets.filter(t=>['court_phone','court_hangup'].includes(t.id));assert.equal(controls.length,2);const body=[];phone.traverse(o=>{if(o.isMesh&&!controls.some(t=>t.mesh===o))body.push(o);});
+  for(const pressed of ['',...controls.map(t=>t.id)]){w.courtPhone.setState('ringing',pressed);w.root.updateMatrixWorld(true);for(const t of controls){const b=new T.Box3().setFromObject(t.mesh),v=b.getCenter(new T.Vector3());v.z=b.max.z+.0001;const hit=new T.Raycaster(v,new T.Vector3(0,0,-1),0,.1).intersectObjects(body,false)[0];assert.ok(hit&&hit.distance<=b.max.z-b.min.z+.001,'button needs a supporting collar/body without an air gap');const a=t.mesh.userData.approach;assert.ok(canStandAt(a.x,a.z,w.solids,.23,w.bounds));assert.ok(hasLineOfSight({x:a.x,y:1.65,z:a.z},t.point,w.solids));}}
+ }finally{disposeWorld(w.root);}
+});
+test('V68 own-voice denial uses the positional dialogue bus and can be cancelled independently',()=>{
+ class N{connections=[];gain={value:0,setTargetAtTime(){}};frequency={value:0};pan={value:0};connect(n){this.connections.push(n);return n;}disconnect(){this.connections=[];}start(){this.started=true;}stop(){this.stopped=true;}}
+ const nodes=[],ctx={state:'running',currentTime:0,createBufferSource(){const n=new N();nodes.push(n);return n;},createBiquadFilter(){return new N();},createGain(){return new N();},createStereoPanner(){return new N();}},audio=new HorrorAudio();audio.context=ctx;audio.voiceBus=new N();audio.clips['archive-denial']={duration:1.5};const ghost=new N();audio.voiceSource=ghost;
+ try{audio.recording('archive-denial');const source=nodes.find(n=>n.buffer===audio.clips['archive-denial']);assert.ok(source?.started,'the reply must use the real recorded clip rather than a missing GhostLine');assert.equal(source.connections[0].connections[0].connections[0].connections[0],audio.voiceBus);audio.setRecordingPosition(.4,-.6);assert.equal(audio.recordingPan.pan.value,-.6);assert.equal(ghost.stopped,undefined);audio.stopRecording();assert.equal(source.stopped,true);assert.equal(audio.recordingSource,null);}finally{audio.stopRecording();audio.context=null;}
+});

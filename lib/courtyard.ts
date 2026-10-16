@@ -6,6 +6,7 @@ import {surface,boxUV,softBox} from './materials.ts';
 import {roundPipe,createSedan,sedanSolids} from './props.ts';
 import {wetTexture} from './entry-props.ts';
 import {createGhost} from './ghost.ts';
+import {createEmergencyPhone} from './emergency-phone.ts';
 import type {Solid,Target} from './world.ts';
 import type {Action,Stage,Story} from './story.ts';
 
@@ -189,11 +190,13 @@ export function buildCourtyard(root:T.Group){
  for(let i=0;i<4;i++){const x=24.72+i*.185,dial=sign('0',x,1.27,30.322,.14,.2);dial.material=new T.MeshBasicMaterial({map:(dial.material as T.MeshStandardMaterial).map,toneMapped:false});dials.push(dial);for(const dx of [-.079,.079])box(x+dx,1.27,30.34,.018,.235,.02,steel);for(const y of [1.155,1.385])box(x,y,30.34,.175,.02,.02,steel);target(`court_digit_${i}` as Action,`${i+1}번째 숫자 올리기`,dial,[x,1.27,30.35],[x,31.25]);}
  for(const y of [1,1.45])box(24.58,y,30.304,.058,.13,.065,steel);box(25.34,1.09,30.34,.035,.15,.045,steel);
  const confirm=box(25,1.01,30.342,.32,.07,.04,rust);target('court_confirm','금고 번호 확인',confirm,[25,1.01,30.38],[25,31.25]);const confirmLabel=sign('확인',25,1.01,30.365,.26,.052);confirmLabel.material=new T.MeshBasicMaterial({map:(confirmLabel.material as T.MeshStandardMaterial).map,toneMapped:false});
- // Emergency telephone booth, with a supported handset and directory beside it.
+ // Weather-protected hands-free emergency station, mounted to its steel backing.
  box(25,1.24,-32,1.5,2.48,.14,steel,true);box(25,2.52,-31.3,1.7,.12,1.6,steel);
  for(const x of [24.2,25.8])box(x,1.24,-31.3,.07,2.48,1.6,steel,true);
- const phone=box(25,1.35,-31.805,.54,.64,.25,dark);box(24.85,1.35,-31.61,.12,.42,.09,steel);roundPipe(root,[24.85,1.12,-31.57],[24.9,.83,-31.57],.009,dark);
- sign('비상전화 · 야간 당직 17',25,2.17,-31.916,1.24,.22);target('court_phone','비상전화 걸기',phone,[25,1.35,-31.55],[25,-30.4]);
+ const courtPhone=createEmergencyPhone();courtPhone.root.position.set(25,1.35,-31.93);root.add(courtPhone.root);
+ roundPipe(root,[25,0,-31.91],[25,1.05,-31.91],.012,steel);for(const y of [.25,.75])box(25,y,-31.9,.06,.035,.035,steel);
+ sign('비상전화 · 야간 당직 17',25,2.17,-31.916,1.24,.22);
+ for(const [id,label,button] of [['court_phone','비상전화 통화',courtPhone.call],['court_hangup','비상전화 종료',courtPhone.stop]] as const){root.updateMatrixWorld(true);const p=button.getWorldPosition(new T.Vector3());p.z+=.005;target(id,label,button,[p.x,p.y,p.z],[25,-30.4]);targets.at(-1)!.precise=true;}
  // Disused playground and recovered headlamp shards on a supported inspection bench.
  for(const x of [-29,-22])for(const dz of [-1.1,1.1]){roundPipe(root,[x,0,-31+dz],[x,2.7,-31],.038,rust);box(x,.025,-31+dz,.3,.05,.3,concrete,true);}roundPipe(root,[-29,2.7,-31],[-22,2.7,-31],.043,rust);
  const swing=new T.Group();swing.name='courtyard-swing';swing.position.set(-25.5,2.7,-31);root.add(swing);
@@ -246,5 +249,5 @@ export function buildCourtyard(root:T.Group){
   swing.rotation.x=reduced?0:Math.sin(time*.7)*.055;
   const code=story?.code??'0000';if(code!==lastCode){lastCode=code;dials.forEach((dial,i)=>{const m=dial.material as T.MeshStandardMaterial,c=m.map!.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#aab099';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#223a31';ctx.font='620px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(code[i],c.width/2,c.height/2);m.map!.needsUpdate=true;});}
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:31.8,z:58},spawn:new T.Vector3(0,1.65,44.5),heading:0,heightAt:(x:number,z:number)=>z<=-51&&x>doorX-1.2&&x<doorX+4.3?-2.8:Math.abs(x-doorX)<1.4&&z<doorZ? -Math.min(2.8,Math.max(0,(-z+doorZ-.2)/.34)*.14):0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,updateStory,reset(){opened=-1;lastCode='';}};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:31.8,z:58},spawn:new T.Vector3(0,1.65,44.5),heading:0,heightAt:(x:number,z:number)=>z<=-51&&x>doorX-1.2&&x<doorX+4.3?-2.8:Math.abs(x-doorX)<1.4&&z<doorZ? -Math.min(2.8,Math.max(0,(-z+doorZ-.2)/.34)*.14):0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,courtPhone,updateStory,reset(){opened=-1;lastCode='';courtPhone.setState('idle');}};
 }

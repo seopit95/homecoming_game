@@ -25,7 +25,7 @@ export type ExpansionArea='annex'|'courtyard'|'archive'|'plant';
 export const expansionJournal={
  court_gate:{title:'중정 입구 · 우회 통로 안내',text:'입구 안내판: 정문 폐쇄. 지하 기록보관실 → 배수 기계실 → 주차장 차량 출구. 북쪽 지하문 열쇠는 동측 경비초소의 금고에 있다.\n\n금고 비밀번호 지침: 사고 차량의 입차 분 두 자리, 야간 당직 내선 두 자리. 서측 경비일지와 동측 비상전화의 안내를 확인할 것.\n\n중정 너머 정문에는 셔터가 내려와 있다. 그 뒤로 차가 지날 때마다 같은 경적이 들린다.'},
  court_log:{title:'서측 초소 · 돌아온 차량',text:'입차 기록 03:26. 앞범퍼 파손. 운전자 2803호.\n\n당직 대체 근무자가 남긴 메모. 「차를 세우고 물어보려 했으나 운전자가 창문을 열지 않음. 검은 물이 차량 우측 문 아래로 흐름.」\n\n그날도, 오늘도 내 차가 이 건물 안으로 들어온다.'},
- court_phone:{title:'비상전화 · 돌아오는 대답',text:'수화기를 들었다. 「사람이 죽었어요. 여기서 나가게 해 주세요.」\n\n잠시 뒤 전화 너머에서 내 목소리가 들렸다. 「잘못 거셨어요.」 내가 말을 멈춰도 그 목소리는 세 번 더 반복됐다.\n\n전화기 안쪽의 오래된 안내판: 야간 당직 내선 17. 한서연. 그녀가 마지막으로 받으려 했던 전화는 지금 내가 걸고 있는 전화와 같았다.'},
+ court_phone:{title:'비상전화 · 돌아오는 대답',text:'비상통화 버튼을 눌렀다. 「여보세요. 누구 없어요?」\n\n연결음이 끊기자 스피커에서 내 목소리가 들렸다. 「잘못 거셨어요.」 나는 입을 다물고 있었는데, 같은 말이 세 번 반복됐다.\n\n단말의 안내와 통화 기록: 야간 당직 내선 17. 한서연. 내 목소리는 지금의 질문에 대답하고 있는 게 아니었다. 지하 통화 원본에 그때 누가 전화를 받았는지 남아 있을 것이다.'},
  court_evidence:{title:'놀이터 옆 · 주운 반사판',text:'놀이터 옆 점검대 위에 내 차의 깨진 전조등 조각이 있다. 빗물로 씻어도 홈 사이의 어두운 자국은 지워지지 않는다.\n\n곁에 떨어진 당직 수첩. 「아이들 등교 전에 정문 횡단보도 전등 점검. 우천 시 비상벨 확인.」\n\n그녀는 그날도 누군가 다치지 않도록 길을 확인하러 나갔다. 나는 휴대전화를 보느라 그 사람을 보지 않았다.'},
  court_confirm:{title:'경비초소 · 지하문 열쇠',text:'금고 안에 지하 기록보관실 열쇠가 있다. 열쇠에는 마른 흙과 검은 머리카락이 감겨 있다.\n\n함께 놓인 인계 쪽지. 「사고 신고 녹음은 원본 보존. 수신자가 녹음 삭제를 요청했으나 거절함.」\n\n나는 다음 날에도 전화를 했다. 신고하려고 한 것이 아니었다. 그것까지 지우려고 했던 것이다. 중정 건너편에서 몸을 끄는 소리가 난다.'},
  annex_map:{title:'1층 · 나갈 수 없는 로비',text:'유리문 너머에 도로가 보인다. 출입문은 방범 셔터에 막혀 있고, 비상 해제 장치에는 물이 차 있다.\n\n안내도: 서측 세탁실·우편실 / 동측 경비 휴게실·통신실 / 중앙 경비실. 북쪽 방화문은 외부 중정으로 통한다. 정문 공사 중에는 중정의 지하 계단에서 기록보관실과 기계실을 거쳐 주차장으로 갈 수 있다.\n\n북쪽 문은 손잡이를 당겨도 열리지 않는다. 문 안의 잠금쇠가 움직일 때마다 중앙 교환기에서 수신 표시가 깜박인다. 우선 세탁실 정비대의 퓨즈로 통신실 전원을 살려야 한다.'},
@@ -46,9 +46,11 @@ export const expansionJournal={
  plant_start:{title:'기계실 · 물이 내려간다',text:'배수 펌프와 환기 장치가 돌아간다. 수면 아래에 있던 주차장 방향 표지가 드러났다.\n\n펌프의 울림 사이로 젖은 손이 콘크리트를 치는 소리가 섞인다. 북쪽 방화문까지 우회할 길을 기억해 둬야 한다. 멈춰 있으면 금방 따라잡힌다.'},
  plant_drained:{title:'주차장으로 · 다시 차에 탄다',text:'차량 진입로의 물이 빠졌다. 보행자 출구는 공사 셔터 때문에 여전히 막혀 있다.\n\n내 차는 사고 다음 날부터 같은 자리에 세워 두었다. 열쇠를 조수석 가방에 넣었던 기억이 난다. 경보로 그것을 다른 쪽에 유인하면 운전석까지 갈 수 있다.\n\n밖으로 나가기만 하면 끝날 거라고, 또 그렇게 생각했다.'},
 } as const;
-export type ExpansionAction=keyof typeof expansionJournal|'archive_preview_road'|'archive_preview_call'|'archive_preview_gate'|'archive_record_pause'|'archive_record_back'|'archive_record_forward'|'archive_record_mark'|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|`annex_digit_${0|1|2|3|4|5|6|7|8|9}`|'annex_clear'|'annex_dial'|'annex_exit'|'court_enter'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_route'|'plant_route_closed'|'plant_route_drain'|'plant_exit'|'parking_enter';
+export type ExpansionAction=keyof typeof expansionJournal|'archive_preview_road'|'archive_preview_call'|'archive_preview_gate'|'archive_record_pause'|'archive_record_back'|'archive_record_forward'|'archive_record_mark'|'archive_finish'|'service_board'|'service_arrive'|'annex_enter'|'annex_restore'|'annex_line_victim'|'annex_line_office'|`annex_digit_${0|1|2|3|4|5|6|7|8|9}`|'annex_clear'|'annex_dial'|'annex_exit'|'court_enter'|'court_hangup'|'court_digit_0'|'court_digit_1'|'court_digit_2'|'court_digit_3'|'court_exit'|'archive_enter'|'archive_sequence_road'|'archive_sequence_call'|'archive_sequence_gate'|'archive_exit'|'plant_enter'|'plant_circuit_pump'|'plant_circuit_air'|'plant_circuit_lights'|'plant_route'|'plant_route_closed'|'plant_route_drain'|'plant_exit'|'parking_enter';
 export const annexEvidence:Action[]=['annex_badge','annex_notice','annex_call'];
 export const archiveEvidence:Action[]=['archive_road','archive_call','archive_gate'];
+export const courtCallTimes=[2.8,5.4,8] as const;
+export const courtCallDuration=10.6;
 export const courtEvidence:Action[]=['court_log','court_phone'];
 export const expansionStages=Object.keys(expansionObjectives) as ExpansionStage[];
 export const isExpansion=(stage:Stage)=>stage.startsWith('annex_')||stage.startsWith('court_')||stage.startsWith('archive_')||stage.startsWith('plant_');
@@ -130,6 +132,7 @@ export function expansionTargetActive(s:Story,id:Action){
  if(id.startsWith('archive_preview_')||id.startsWith('archive_record_'))return s.stage==='archive_edit';
  if(id.startsWith('court_digit_')||id==='court_confirm')return s.stage==='court_search'||s.stage==='court_code';
  if(id==='court_exit')return s.stage==='court_unlocked';
+ if(id==='court_hangup')return ['court_search','court_code','court_unlocked'].includes(s.stage);
  if(id.startsWith('annex_line_'))return false;
  if(id.startsWith('annex_digit_')||id==='annex_clear'||id==='annex_dial')return s.stage==='annex_unlock';
  if(id.startsWith('archive_sequence_'))return s.stage==='archive_edit';

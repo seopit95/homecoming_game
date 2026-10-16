@@ -9,12 +9,12 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
-let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0,breathLevel=0;const deviceLevels={phone:0,radio:0};
+let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0,breathLevel=0;const deviceLevels={phone:0,radio:0},deviceStarts={};
 let pendingCompiles=null,rendererDisposals=0;
 class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{...realLighting,roomReflections:()=>({dispose(){}})}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setArchiveRecord(){}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setArchiveRecord(){}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -168,7 +168,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   const expansionStart=game.snapshot().elapsed;
   for(const [area,actions,nextStage] of [
    ['annex',[['annex_map','annex_fuse'],['annex_fuse','annex_restore'],['annex_restore','annex_search'],['annex_badge','annex_search'],['annex_notice','annex_search'],['annex_call','annex_search'],['annex_digit_2','annex_unlock'],['annex_digit_8','annex_unlock'],['annex_digit_0','annex_unlock'],['annex_digit_3','annex_unlock'],['annex_dial','annex_unlock'],['annex_exit','annex_departure']],'court_arrival'],
-   ['courtyard',[['court_gate','court_search'],['court_log','court_search'],['court_evidence','court_search'],['court_phone','court_code'],...Array.from('2617').flatMap((n,i)=>Array.from({length:Number(n)},()=>[`court_digit_${i}`,'court_code'])),['court_confirm','court_unlocked'],['court_exit','court_departure']],'archive_arrival'],
+   ['courtyard',[['court_gate','court_search'],['court_log','court_search'],['court_evidence','court_search'],['court_phone','court_search'],...Array.from('2617').flatMap((n,i)=>Array.from({length:Number(n)},()=>[`court_digit_${i}`,'court_code'])),['court_confirm','court_unlocked'],['court_exit','court_departure']],'archive_arrival'],
    ['archive',[['archive_ledger','archive_search'],['archive_road','archive_search'],['archive_call','archive_search'],['archive_gate','archive_edit'],['archive_sequence_road','archive_edit'],['archive_sequence_call','archive_edit'],['archive_sequence_gate','archive_reveal'],['archive_play','archive_playback'],['archive_exit','archive_departure']],'plant_arrival'],
    ['plant',[['plant_diagram','plant_isolate'],['plant_valve_west','plant_isolate'],['plant_valve_east','plant_power'],['plant_filter','plant_power'],['plant_route','plant_power'],['plant_route','plant_power'],['plant_circuit_pump','plant_power'],['plant_circuit_air','plant_power'],['plant_start','plant_drain'],['plant_exit','plant_departure']],'parking_gate'],
   ]){
@@ -179,6 +179,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
      const path=findPath(renderedCamera.position,at,reference.solids,reference.bounds,.26);assert.ok(path.length,`route to ${id} from ${renderedCamera.position.toArray()} to ${JSON.stringify(at)}`);for(const p of path)runTo(p.x,p.z);
      if(id==='plant_exit'&&game.snapshot().story.stage==='plant_drain'){game.key('KeyW',true);tick(.05);game.key('KeyW',false);tick(12);}
      aim(renderedCamera.position.toArray(),t.point.toArray());game.interact();assert.equal(game.snapshot().story.stage,want,id);tick();
+     if(id==='court_phone'){tick(10.7);assert.equal(game.snapshot().story.stage,'court_code');}
      if(id==='annex_call'){tick(7.8);assert.equal(game.snapshot().story.stage,'annex_unlock');}
      if(id==='annex_dial'){tick(4.6);assert.equal(game.snapshot().story.stage,'annex_exit_ready');}
      if(id==='annex_exit'){assert.ok(voiceCalls.includes('no'),'opening 1F exit triggers the refusal shout');}
@@ -802,13 +803,13 @@ test('being caught leaves the latched bell ringing until the ended screen and re
  }finally{f.close();}
 });
 
-async function annexDialFixture(stage='annex_unlock'){
+async function annexDialFixture(stage='annex_unlock',wait=0){
  const previous=win.localStorage,notes=['annex_map','annex_fuse','annex_badge','annex_notice',...(stage==='annex_unlock'?['annex_call']:[])];
- win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage,notes,circuit:[],elapsed:700,pursuit:false}):null,setItem(){},removeItem(){}};
+ win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage,notes,circuit:[],elapsed:700,pursuit:wait>0,pursuitWait:wait}):null,setItem(){},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick(.1);
  const {buildWorld,disposeWorld}=await import('../lib/world.ts'),reference=buildWorld(new THREE.Scene(),'annex');
  function use(id){const target=reference.targets.find(t=>t.id===id);assert.ok(target,`physical control ${id} exists`);const at=target.mesh.userData.approach;renderedCamera.position.set(at.x,1.65,at.z);const dx=target.point.x-at.x,dy=target.point.y-1.65,dz=target.point.z-at.z,yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
- return {game,use,close(){game.dispose();disposeWorld(reference.root);win.localStorage=previous;}};
+ return {game,use,reference,close(){game.dispose();disposeWorld(reference.root);win.localStorage=previous;}};
 }
 test('V66 last receiver is dialled physically and only a completed callback releases the exit',async()=>{
  const f=await annexDialFixture();try{assert.equal(renderedScene.getObjectByName('annex-intercom-phone')?.name,'annex-intercom-phone');for(const n of '2803')f.use('annex_digit_'+n);f.use('annex_dial');assert.equal(f.game.snapshot().story.stage,'annex_unlock');assert.match(f.game.snapshot().objective,/2803호 호출 중/,JSON.stringify(f.game.snapshot()));tick(.6);f.use('annex_dial');f.game.pause();const t=f.game.snapshot().elapsed;tick(4);assert.equal(f.game.snapshot().elapsed,t);f.game.pause(false);const p=renderedCamera.position.clone();f.game.key('KeyS',true);tick(.3);f.game.key('KeyS',false);assert.ok(p.distanceTo(renderedCamera.position)>.3);tick(6);assert.equal(f.game.snapshot().story.stage,'annex_exit_ready');assert.ok(f.game.snapshot().story.notes.includes('annex_line_home'));assert.equal(deviceLevels.ringback,0);}
@@ -839,5 +840,43 @@ test('V66 a hidden caller leaves a remembered sound at the console after ringbac
 
 test('V66 retry cancels a pending call and restores the earned investigation with an empty dial',async()=>{
  const f=await annexDialFixture();try{for(const n of '2803')f.use('annex_digit_'+n);f.use('annex_dial');tick(1);f.game.start(true);tick(.1);assert.equal(f.game.snapshot().story.stage,'annex_unlock');assert.doesNotMatch(f.game.snapshot().objective,/호출 중/);assert.equal(deviceLevels.ringback,0);assert.ok(f.game.snapshot().story.notes.includes('annex_call'));for(const n of '1704')f.use('annex_digit_'+n);f.use('annex_dial');assert.match(f.game.snapshot().objective,/1704호 호출 중/);tick(8.1);assert.equal(f.game.snapshot().story.stage,'annex_unlock','the cancelled home callback cannot complete a later wrong call');}
+ finally{f.close();}
+});
+
+async function courtCallFixture(notes=['court_gate','court_log','court_evidence'],wait=0){
+ const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'court_search',notes,circuit:[],elapsed:900,pursuit:wait>0,pursuitWait:wait});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick(.1);
+ const {buildWorld,disposeWorld}=await import('../lib/world.ts'),reference=buildWorld(new THREE.Scene(),'courtyard');
+ function use(id){const t=reference.targets.find(t=>t.id===id);assert.ok(t,`physical emergency control ${id}`);const at=t.mesh.userData.approach;renderedCamera.position.set(at.x,1.65,at.z);const d=t.point.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
+ return {game,use,close(){game.dispose();disposeWorld(reference.root);win.localStorage=previous;}};
+}
+test('V68 emergency call is heard before collection, repeats the own-voice recording and permits movement and pause',async()=>{
+ const f=await courtCallFixture();try{voiceCalls.length=0;f.use('court_phone');assert.equal(f.game.snapshot().story.notes.includes('court_phone'),false);assert.equal(f.game.snapshot().story.stage,'court_search');assert.match(f.game.snapshot().objective,/비상전화/);tick(3);assert.deepEqual(voiceCalls,['archive-denial']);f.use('court_phone');assert.deepEqual(voiceCalls,['archive-denial'],'pressing CALL again must not restart the call');f.game.pause();const t=f.game.snapshot().elapsed;tick(4);assert.equal(f.game.snapshot().elapsed,t);f.game.pause(false);const p=renderedCamera.position.clone();f.game.key('KeyS',true);tick(.3);f.game.key('KeyS',false);assert.ok(p.distanceTo(renderedCamera.position)>.3);tick(8);assert.equal(voiceCalls.filter(x=>x==='archive-denial').length,3);assert.equal(f.game.snapshot().story.stage,'court_code');assert.ok(f.game.snapshot().story.notes.includes('court_phone'));assert.equal(deviceLevels.ringback,0);}
+ finally{f.close();}
+});
+test('V68 emergency call cancellation and retry cannot award a partial or stale call',async()=>{
+ const f=await courtCallFixture();try{f.use('court_phone');tick(1);f.use('court_hangup');assert.equal(deviceLevels.ringback,0);tick(11);assert.equal(f.game.snapshot().story.notes.includes('court_phone'),false);f.use('court_phone');tick(1);f.game.start(true);tick(.1);assert.equal(deviceLevels.ringback,0);assert.equal(f.game.snapshot().story.notes.includes('court_phone'),false);assert.doesNotMatch(f.game.snapshot().objective,/비상전화 연결 중/);f.use('court_phone');tick(11);assert.ok(f.game.snapshot().story.notes.includes('court_phone'));}
+ finally{f.close();}
+});
+
+
+test('V68 booth sound is remembered at the station after the caller goes behind its backing',async()=>{
+ const f=await courtCallFixture();try{renderedCamera.position.set(25,1.65,-34.5);tick(3.3);f.use('court_phone');const ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(25,0,-21);ghost.rotation.y=Math.PI;renderedCamera.position.set(25,1.65,-34.5);f.game.torch();tick(.7);assert.equal(f.game.snapshot().story.stage,'court_search');assert.ok(ghost.position.z<-21.8,`unseen caller leaves the sound at the booth: ${ghost.position.toArray()}`);assert.ok(ghost.position.distanceTo(renderedCamera.position)>6);}
+ finally{f.close();}
+});
+test('V68 answering the emergency phone preserves a carried follower arrival delay',async()=>{
+ const f=await courtCallFixture(undefined,14);try{f.use('court_phone');tick(11);assert.ok(f.game.snapshot().story.notes.includes('court_phone'));assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the call cannot teleport a delayed follower into view');tick(3.2);assert.equal(renderedScene.getObjectByName('resident-remains').visible,true);}
+ finally{f.close();}
+});
+
+
+test('V68 emergency ringback keeps one device loop while waiting for an answer',async()=>{
+ const f=await courtCallFixture();try{const before=deviceStarts.ringback??0;f.use('court_phone');tick(.8);assert.equal((deviceStarts.ringback??0)-before,1,'another area must not stop and restart the courtyard tone every frame');}
+ finally{f.close();}
+});
+
+
+test('V68 legacy annex continue also retains a pending carried follower',async()=>{
+ const f=await annexDialFixture('annex_unlock',14);try{for(const n of '2803')f.use('annex_digit_'+n);f.use('annex_dial');tick(11);assert.equal(f.game.snapshot().story.stage,'annex_exit_ready');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);tick(3.2);const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,true);f.reference.root.updateMatrixWorld(true);const meshes=[];f.reference.root.traverse(o=>{if(o.isMesh&&!f.reference.figure.getObjectById(o.id))meshes.push(o);});const floor=new THREE.Raycaster(new THREE.Vector3(ghost.position.x,.05,ghost.position.z),new THREE.Vector3(0,-1,0),0,.1).intersectObjects(meshes,false)[0];assert.ok(floor&&floor.distance<.051,'restored follower requires real floor inside the annex');const {findPursuitPath}=await import('../lib/navigation.ts');assert.ok(findPursuitPath(ghost.position,{x:0,z:31},f.reference.solids,f.reference.bounds).length,'restored follower needs a route to the arrival spine');const at=ghost.position.clone();tick(1);assert.ok(ghost.position.distanceTo(at)>.3,'released follower actually pursues through the real annex');}
  finally{f.close();}
 });

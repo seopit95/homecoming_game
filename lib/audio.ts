@@ -155,8 +155,8 @@ export class HorrorAudio {
     this.chase.gain.setTargetAtTime(level*.9,t,fade);this.chasePulse.frequency.setTargetAtTime(2.2+level*1.25,t,.45);this.chaseFilter.frequency.setTargetAtTime(650+level*1300,t,.6);
   }
   mix(levels:{music:number;effects:number;voice:number}){this.levels={music:levels.music,effects:levels.effects,voice:levels.voice};if(!this.context)return;for(const [key,bus] of [['music',this.musicBus],['effects',this.effectsBus],['voice',this.voiceBus]] as const)bus?.gain.setTargetAtTime(this.levels[key],this.context.currentTime,.12);}
-  recording(line:GhostLine|'archive-guard'='memory'){
-    this.stopRecording();const ctx=this.context,buffer=line==='archive-guard'?this.clips[line]:this.voices[line];if(!ctx||!buffer||!this.voiceBus||ctx.state!=='running')return;
+  recording(line:GhostLine|'archive-guard'|'archive-denial'='memory'){
+    this.stopRecording();const ctx=this.context,buffer=line==='archive-guard'||line==='archive-denial'?this.clips[line]:this.voices[line];if(!ctx||!buffer||!this.voiceBus||ctx.state!=='running')return;
     const source=this.recordingSource=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=this.recordingGain=ctx.createGain(),pan=this.recordingPan=ctx.createStereoPanner();
     source.buffer=buffer;filter.type='lowpass';filter.frequency.value=2800;gain.gain.value=.54;source.connect(filter);filter.connect(gain);gain.connect(pan);pan.connect(this.voiceBus);this.recordingNodes=[source,filter,gain,pan];source.onended=()=>this.stopRecording();source.start();
   }

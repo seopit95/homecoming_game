@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive,plantProblem,plantRoute,annexTapeDuration,annexCallbackDuration} from './expansion-story.ts';
+import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive,plantProblem,plantRoute,annexTapeDuration,annexCallbackDuration,courtCallTimes,courtCallDuration} from './expansion-story.ts';
 import {expansionLayout} from './expansion-world.ts';
 import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,clampLightOrigin,type Target} from './world.ts';
 import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength} from './ghost.ts';
@@ -47,6 +47,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   let lastSeen:Point|null=null;
   let recordingAt=-1,recordingSpoken=false,recordingClue:'answerphone'|'annex_call'='answerphone';
   let annexNumber='',annexCallAt=-1,annexCallTo='',annexCallBeat=0,annexCallResult='',annexPressed='',annexPressedUntil=0,annexHeardCall=-1;
+  let courtCallAt=-1,courtCallBeat=0,courtPressed='',courtPressedUntil=0,courtHeardCall=-1;
   let evidenceReaction=false,evidenceYaw=0,evidencePitch=0;
   let hover:Target|undefined,dragging=false,previousX=0,previousY=0,holdProgress=0,holding=false,doorOpen=0,lastDisplay='',threat=0;
   let enemyPath:Point[]=[],repathAt=0,scriptBeat=0,searchTime=-1;
@@ -75,7 +76,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function snapshot():GameView{
     const chapter=story.stage.startsWith('service_')?{...chapters.lift,number:'05',title:'관리용 승강기'}:chapters[area];
     const retryLabels:Partial<Record<typeof story.stage,string>>={annex_arrival:'1층 공동시설부터 다시',archive_arrival:'지하 기록보관실부터 다시',plant_arrival:'기계실 입구부터 다시',service_ride:'관리용 승강기부터 다시',lift_call:'28층 외부 복도부터 다시',lift_exit:'24층 엘리베이터부터 다시',lift_button:'엘리베이터 안에서 다시',stairs_loop:'23층 비상계단부터 다시',resident_entry:'1704호 입구부터 다시',car_departure:'주차장 차량 탑승부터 다시',car_escape:'차량 탈출부터 다시',office_record:'17층 관리실부터 다시',parking_gate:'지하 주차장 입구부터 다시',parking_alarm:'주차장 경보기부터 다시'};
-    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='car_crash'?T.MathUtils.smoothstep(stageTime,2.5,5):story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,2.8,5.7):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:(opening[story.stage]??finale[story.stage])?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:(opening[story.stage]??finale[story.stage])?.cues?.findLast(cue=>stageTime>=cue.at)?.text??(opening[story.stage]??finale[story.stage])?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,notes:[...story.notes]},prompt:evidenceReaction?'':story.hidden?'장롱에서 나오기':hover?(area==='resident'&&story.notes.includes(hover.id)?'확인 완료 · ':'')+hover.label:'',message:controlText(message),objective:evidenceReaction?'':settings.hints?controlText(recordingAt>=0?(recordingClue==='answerphone'?'자동응답기':'통신실 녹음')+' 재생 중 · 주변을 계속 살펴볼 수 있습니다':annexCallAt>=0?annexCallTo+'호 호출 중 · 주변의 발소리를 살피세요':objectiveFor(story)):'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:area==='stairs'&&['stairs_reverse','stairs_passage'].includes(story.stage)?'17F':chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holding:holding||keys.has('KeyE'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||(isExpansion(story.resume)?chapters[areaFor({...story,stage:story.resume})].floor+' · 조사 이어하기':'28층 라디오 장면부터 다시')};
+    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='car_crash'?T.MathUtils.smoothstep(stageTime,2.5,5):story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,2.8,5.7):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:(opening[story.stage]??finale[story.stage])?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:(opening[story.stage]??finale[story.stage])?.cues?.findLast(cue=>stageTime>=cue.at)?.text??(opening[story.stage]??finale[story.stage])?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,notes:[...story.notes]},prompt:evidenceReaction?'':story.hidden?'장롱에서 나오기':hover?(area==='resident'&&story.notes.includes(hover.id)?'확인 완료 · ':'')+hover.label:'',message:controlText(message),objective:evidenceReaction?'':settings.hints?controlText(recordingAt>=0?(recordingClue==='answerphone'?'자동응답기':'통신실 녹음')+' 재생 중 · 주변을 계속 살펴볼 수 있습니다':annexCallAt>=0?annexCallTo+'호 호출 중 · 주변의 발소리를 살피세요':courtCallAt>=0?'비상전화 연결 중 · 움직이거나 옆의 종료 버튼으로 끊을 수 있습니다':objectiveFor(story)):'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:area==='stairs'&&['stairs_reverse','stairs_passage'].includes(story.stage)?'17F':chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holding:holding||keys.has('KeyE'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||(isExpansion(story.resume)?chapters[areaFor({...story,stage:story.resume})].floor+' · 조사 이어하기':'28층 라디오 장면부터 다시')};
   }
   const emit=()=>onChange(snapshot());
   function controlText(text:string){return text.replace(/\b(?:E|Shift)\b/g,key=>keyLabel(settings.bindings[key==='E'?'interact':'run']));}
@@ -87,6 +88,13 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function stopRecording(){recordingAt=-1;audio.stopRecording();world.answeringMachine?.setPlayback(null);}
   function stopAnnexCall(){if(annexCallAt>=0)audio.stopRecording();annexCallAt=-1;annexCallBeat=0;audio.setDevice('ringback',0);audio.setDevice('busy',0);}
+  function stopCourtCall(){if(courtCallAt>=0){audio.stopRecording();audio.setDevice('ringback',0);}courtCallAt=-1;courtCallBeat=0;}
+  function operateCourtPhone(action:Action){
+    courtPressed=action;courtPressedUntil=elapsed+.16;audio.sound('click',0,.25);
+    if(action==='court_hangup'){stopCourtCall();say('통화를 끊었다. 다시 통화 버튼을 누를 수 있다.',4);return;}
+    if(courtCallAt>=0){say('연결 중이다. 옆의 종료 버튼으로 끊을 수 있다.',3);return;}
+    courtCallAt=elapsed;courtCallBeat=0;lastVoice=elapsed;say('비상통화 버튼을 눌렀다.\n「여보세요. 누구 없어요?」',3);
+  }
   function operateIntercom(action:Action){
     const key=hover?.id===action?hover.mesh:action==='annex_dial'?world.intercom?.playButton:action==='annex_clear'?world.intercom?.stopButton:world.intercom?.keys.find(k=>k.label===action.at(-1))?.mesh;
     annexPressed=key?.uuid??'';annexPressedUntil=elapsed+.16;audio.sound('click',0,.2);
@@ -116,7 +124,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(value){audio.pause();if(document.pointerLockElement===canvas)document.exitPointerLock();}else{audio.resume();lock();}emit();
   }
   function loadArea(next:Area){
-    stopRecording();stopAnnexCall();annexNumber='';annexCallResult='';annexPressed='';annexHeardCall=-1;evidenceReaction=false;audio.setDrive(null);audio.setDevice('phone',0);audio.setDevice('radio',0);audio.setDevice('alarm',0);
+    stopRecording();stopAnnexCall();stopCourtCall();annexNumber='';annexCallResult='';annexPressed='';annexHeardCall=-1;courtHeardCall=-1;courtPressed='';evidenceReaction=false;audio.setDrive(null);audio.setDevice('phone',0);audio.setDevice('radio',0);audio.setDevice('alarm',0);
     if(road){road.root.removeFromParent();road=null;}for(const r of roads.values())r.root.removeFromParent();
     world.root.removeFromParent();area=next;world=preparedWorld(area);world.reset();scene.add(world.root);camera.position.copy(world.spawn);if(story.stage==='resident_arrival')camera.position.set(0,1.65,11.2);yaw=world.heading;pitch=0;
     hover=undefined;holdProgress=0;holding=false;doorOpen=0;lastDisplay='';enemyPath=[];repathAt=0;scriptBeat=0;threat=0;lastSound=elapsed;lastBreath=elapsed;lastDrip=elapsed;
@@ -140,9 +148,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const next=transition(story,action);if(next===story)return false;
     if(next.stage==='wait'&&story.stage!=='wait'){searchTime=-1;lastSeen=null;tracking=false;}
     story=next;stageTime=0;scriptBeat=0;voiceBeat=0;holdProgress=0;enemyPath=[];repathAt=0;
-    if(story.stage==='ended'){stopRecording();stopAnnexCall();if(story.ending==='crashed'){try{storage?.removeItem(PROGRESS_KEY);}catch{}saved=null;}keys.clear();holding=false;hover=undefined;threat=0;audio.stopVoices();audio.setDrive(null);whisper='';if(document.pointerLockElement===canvas)document.exitPointerLock();audio.sound('dread');emit();return true;}
+    if(story.stage==='ended'){stopRecording();stopAnnexCall();stopCourtCall();if(story.ending==='crashed'){try{storage?.removeItem(PROGRESS_KEY);}catch{}saved=null;}keys.clear();holding=false;hover=undefined;threat=0;audio.stopVoices();audio.setDrive(null);whisper='';if(document.pointerLockElement===canvas)document.exitPointerLock();audio.sound('dread');emit();return true;}
     if(story.stage==='dying'){
-      stopRecording();stopAnnexCall();keys.clear();holding=false;dragging=false;hover=undefined;message='';whisper='';threat=1;deathOrigin.copy(camera.position);deathFloor=world.heightAt(camera.position.x,camera.position.z);deathEye=camera.position.y-deathFloor;
+      stopRecording();stopAnnexCall();stopCourtCall();keys.clear();holding=false;dragging=false;hover=undefined;message='';whisper='';threat=1;deathOrigin.copy(camera.position);deathFloor=world.heightAt(camera.position.x,camera.position.z);deathEye=camera.position.y-deathFloor;
       deathDirection.copy(world.figure.position).sub(camera.position);deathDirection.y=0;if(deathDirection.lengthSq()<.001)deathDirection.set(-Math.sin(yaw),0,-Math.cos(yaw));deathDirection.normalize();
       deathGhostOrigin.copy(world.figure.position);
       world.figure.visible=true;audio.stopVoices();audio.voice('scream',0,1);audio.sound('slam',0,.8);emit();return true;
@@ -175,7 +183,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const resumeWait=retry==='continue'?saved?.pursuitWait??0:Math.max(0,entranceDelay-areaTime);
     if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&residentEvidence.every(id=>story.notes.includes(id)))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathRecovery=false;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
     lastStep=elapsed;lastEmit=elapsed-1;loadArea(areaFor(story));
-    if(resumePursuit&&(area==='archive'||area==='plant'||area==='parking')){carryPursuit(5.2,true,area==='parking'?layout.parking.z:expansionLayout[area].z);entranceDelay=Math.max(entranceDelay,resumeWait);persist();}
+    if(resumePursuit&&(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'||area==='parking')){carryPursuit(5.2,true,area==='parking'?layout.parking.z:expansionLayout[area].z);entranceDelay=Math.max(entranceDelay,resumeWait);persist();}
     audio.setTV(story.stage==='tv');
     if(isCinematic(story.stage)||story.stage==='tv'||story.stage==='wake_ring')openingScene();
     if(retry&&story.stage==='light_switch'){camera.position.set(...home.wakeStand);yaw=2.045;pitch=-.137;}
@@ -243,6 +251,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(action==='answerphone'&&area==='resident'){playRecording();return;}
     if(action==='annex_call'&&area==='annex'&&['annex_search','annex_unlock','annex_exit_ready'].includes(story.stage)){playRecording('annex_call');return;}
     if(story.stage==='annex_unlock'&&(action.startsWith('annex_digit_')||action==='annex_dial'||action==='annex_clear')){operateIntercom(action);return;}
+    if(area==='courtyard'&&(action==='court_hangup'||action==='court_phone'&&!story.notes.includes('court_phone')&&['court_search','court_code','court_unlocked'].includes(story.stage))){operateCourtPhone(action);return;}
     if(action==='pry'){say('문을 바라본 채 E 또는 화면의 문 벌리기 버튼을 길게 누르세요.',4);return;}
     if(action==='lure'){
       if(lureUsed){say('태엽이 다 풀렸다.',2);return;}lureUsed=true;const point=hover!.point;lastSeen={x:point.x,z:point.z};seenAt=elapsed;tracking=true;noiseRadius=0;audio.sound('alarm',-.65,.45);say('태엽 소리가 울린다. 멀리서 발소리가 방향을 바꿨다.',4);return;
@@ -277,7 +286,6 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(action.startsWith('court_digit_')){audio.sound('click',0,.3);return;}
       if(action==='court_confirm'){audio.sound('metal',0,.6);say('금고 안의 인계 쪽지. 「차량 소유자가 녹음 삭제를 요청함. 거절」\n다음 날에도 내가 전화했다. 신고하려던 게 아니었다.\n…지하 계단 열쇠를 챙겼다.',12);return;}
       if(action==='court_evidence'&&!story.notes.includes('court_phone')){whisper='수첩을 펴자, 건너편 비상전화가 울리기 시작한다.';whisperUntil=elapsed+7;}
-      if(action==='court_phone'){audio.setDevice('phone',0);audio.sound('phone',.3,.6);ghostVoice('cry',true);}
       if(action.startsWith('archive_sequence_')){audio.sound('metal',0,.25);if(story.stage==='archive_reveal')say('세 원본이 같은 순간을 가리킨다.\n모니터에서 지워진 아홉 초를 재생하자.',7);return;}
       if(action.startsWith('plant_circuit_')){audio.sound('click');say(objectiveFor(story),4);return;}
     }
@@ -355,6 +363,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     let best=Infinity;
     for(const t of world.targets){
       if(!expansionTargetActive(story,t.id))continue;
+      if(t.id==='court_hangup'&&courtCallAt<0)continue;
       if(t.id==='service_exit'&&story.stage==='office_departure')continue;
       if(t.id==='service_key'&&story.stage!=='office_key')continue;
       if(t.id==='door'&&['hide','wait','escape'].includes(story.stage))continue;
@@ -469,7 +478,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     else if(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'){
       const active=arrivalPursuit|| (area==='annex'?story.notes.includes('annex_badge')&&story.notes.includes('annex_notice'):area==='courtyard'?courtyardPursuitActive(story,arrivalPursuit):area==='archive'?['archive_escape','archive_departure'].includes(story.stage):story.notes.includes('plant_valve_west')||story.notes.includes('plant_valve_east'));
       if(active&&arrivalDoor&&arrivalDoorRelease<0){arrivalDoorRelease=areaTime;if(area==='courtyard'&&!arrivalPursuit)entranceDelay=areaTime+3;audio.sound('door-creak',0,.5);}
-      if(active&&areaTime>(arrivalPursuit||area==='courtyard'?entranceDelay:10)){world.figure.visible=true;if(area==='annex'&&annexCallAt>=0&&annexHeardCall!==annexCallAt&&!tracking&&!lastSeen&&Math.hypot(world.figure.position.x-.7,world.figure.position.z+19.7)<16){annexHeardCall=annexCallAt;lastSeen={x:.7,z:-19.7};seenAt=elapsed;repathAt=0;}hunt(story.stage==='annex_departure'?3.65:area==='plant'&&story.stage==='plant_drain'?2.35:area==='archive'?2.15:1.85,dt);}
+      if(active&&areaTime>(arrivalPursuit||area==='courtyard'?entranceDelay:10)){world.figure.visible=true;if(area==='annex'&&annexCallAt>=0&&annexHeardCall!==annexCallAt&&!tracking&&!lastSeen&&Math.hypot(world.figure.position.x-.7,world.figure.position.z+19.7)<16){annexHeardCall=annexCallAt;lastSeen={x:.7,z:-19.7};seenAt=elapsed;repathAt=0;}if(area==='courtyard'&&courtCallAt>=0&&courtHeardCall!==courtCallAt&&!tracking&&!lastSeen){const p=world.targets.find(t=>t.id==='court_phone')!.point;if(Math.hypot(world.figure.position.x-p.x,world.figure.position.z-p.z)<16){courtHeardCall=courtCallAt;lastSeen={x:p.x,z:p.z};seenAt=elapsed;repathAt=0;}}hunt(story.stage==='annex_departure'?3.65:area==='plant'&&story.stage==='plant_drain'?2.35:area==='archive'?2.15:1.85,dt);}
     }
     else if(area==='parking'&&areaTime>Math.max(2.8,entranceDelay)){
       world.figure.visible=true;hunt(story.stage==='parking_run'?2.7:2.2,dt,story.stage==='parking_run'?layout.parking.alarmApproach:undefined);
@@ -499,6 +508,11 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
         const homeLine=annexCallTo==='2803';stopAnnexCall();annexCallResult=homeLine?'2803 · 응답 종료\n북쪽 문에서 잠금 해제음':'응답 없음 · CLEAR로 지우기\n기록의 수신 세대를 다시 확인';
         if(homeLine){advance('annex_line_home');audio.sound('metal',0,.4);say(expansionJournal.annex_line_home.text,12);}else say('통화가 끊겼다. 문은 그대로 잠겨 있다. 마지막 호출의 수신 세대를 다시 확인하자.',6);
       }
+    }
+    if(courtCallAt>=0){
+      const t=elapsed-courtCallAt;
+      if(courtCallBeat<courtCallTimes.length&&t>=courtCallTimes[courtCallBeat]){courtCallBeat++;audio.setDevice('ringback',0);audio.recording('archive-denial');lastVoice=elapsed;say(courtCallBeat===1?'스피커에서 내 목소리가 들린다.\n「잘못 거셨어요.」':'나는 입을 다물고 있는데…\n「잘못 거셨어요.」',2.6);}
+      if(t>=courtCallDuration){stopCourtCall();advance('court_phone');audio.sound('click',0,.2);say(expansionJournal.court_phone.text,12);}
     }
     if(story.stage==='archive_playback'){
       if(scriptBeat<archiveReplay.length&&stageTime>=archiveReplay[scriptBeat].at){say(archiveReplay[scriptBeat].text,9);audio.sound(scriptBeat===archiveReplay.length-1?'drag':'dread',.4,.6);scriptBeat++;}
@@ -662,7 +676,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       const bulb=world.lamps[i].userData.bulb as T.MeshStandardMaterial|undefined;if(bulb)bulb.emissiveIntensity=powered?.35:0;
     }
     world.radioLight.intensity=story.stage==='radio'&&!evidenceReaction?1.5:0;world.phoneGlow.intensity=['wake_ring','light_switch','find_torch','power','phone'].includes(story.stage)?.8:0;
-    const courtPhone=area==='courtyard'&&story.notes.includes('court_evidence')&&!story.notes.includes('court_phone')?world.targets.find(t=>t.id==='court_phone')?.point:undefined;
+    const courtPhone=area==='courtyard'&&courtCallAt<0&&story.notes.includes('court_evidence')&&!story.notes.includes('court_phone')?world.targets.find(t=>t.id==='court_phone')?.point:undefined;
     for(const device of ['phone','radio'] as const){const residentRing=area==='resident'&&['resident_arrival','resident_entry','resident_memory'].includes(story.stage)&&recordingAt<0&&!story.notes.includes('answerphone'),stairRing=area==='stairs'&&['stairs_reverse','stairs_passage'].includes(story.stage);const active=started&&(area==='apartment'&&(device==='phone'?['wake_ring','light_switch','find_torch','power','phone'].includes(story.stage):story.stage==='radio'&&!evidenceReaction)||device==='phone'&&(residentRing||stairRing||!!courtPhone));const p=device==='phone'&&residentRing?[-3.8,.9,3.6]:device==='phone'&&stairRing?[-.8,.9,-31.9]:home[device],dx=(device==='phone'&&courtPhone?courtPhone.x:p[0])-camera.position.x,dz=(device==='phone'&&courtPhone?courtPhone.z:p[2])-camera.position.z,dist=Math.hypot(dx,dz);audio.setDevice(device,active?Math.min(1,3/Math.max(1,dist)):0,T.MathUtils.clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,dist),-1,1));}
     if(area==='apartment'&&!story.hidden&&['hide','escape'].includes(story.stage)&&Math.hypot(camera.position.x,camera.position.z-home.doorZ)<1.85){
       const door=world.root.getObjectByName('front-door')!;
@@ -690,7 +704,11 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     entranceDelay=pendingWait+Math.max(0,(distance-1.6)/(speed*.85));
     // Wait behind the fire-door sweep; standing on the landing traps both
     // the opening leaf and the pursuer against one another.
-    world.figure.position.set(-2.95,0,newZ+5.55);world.figure.rotation.y=Math.PI;
+    if(area==='annex'){
+      // This lobby has an enclosed lift, not an incoming connection passage.
+      // Resume behind the east room wall, with a real route through its doorway.
+      world.figure.position.set(3.5,0,26.5);world.figure.rotation.y=Math.PI/2;
+    }else{world.figure.position.set(-2.95,0,newZ+5.55);world.figure.rotation.y=Math.PI;}
     world.figure.visible=pursuing&&entranceDelay===0;lastGhostPosition.copy(world.figure.position);
   }
   function crossThresholds(){
@@ -780,10 +798,17 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const chasing=started&&!story.hidden&&world.figure.visible&&chaseStages.includes(story.stage)&&(tracking||story.stage==='hide'||area==='landing');
     audio.setChase(chasing?T.MathUtils.clamp(.4+threat*.6,0,1):0);
     world.answeringMachine?.setPlayback(recordingAt<0?null:elapsed-recordingAt);
-    const callDx=.7-camera.position.x,callDz=-20.86-camera.position.z,callDistance=Math.hypot(callDx,callDz),callPan=T.MathUtils.clamp((callDx*Math.cos(yaw)-callDz*Math.sin(yaw))/Math.max(1,callDistance),-1,1),callBlocked=area==='annex'&&!hasLineOfSight(camera.position,{x:.7,y:1,z:-20.86},world.solids),callLevel=Math.min(1,2.5/Math.max(1,callDistance))*(callBlocked?.4:1);
-    audio.setDevice('ringback',annexCallAt>=0&&annexCallBeat===0&&['2803','1704'].includes(annexCallTo)?callLevel:0,callPan);audio.setDevice('busy',annexCallAt>=0&&!['2803','1704'].includes(annexCallTo)?callLevel:0,callPan);
-    if(annexCallAt>=0&&annexCallBeat>0)audio.setRecordingPosition(callLevel,callPan);
-    world.updateIntercom?.(annexNumber,annexCallAt>=0?annexCallTo+'호 호출 중\n'+(annexCallBeat?'연결됨 · CLEAR로 통화 종료':'수신 응답 대기'):annexCallResult||(['annex_exit_ready','annex_departure'].includes(story.stage)?'2803 · 응답 종료\n북쪽 문 잠금 해제':'수신 세대 네 자리 → CALL\nCLEAR · 지우기 / 종료'),elapsed<annexPressedUntil?annexPressed:null);
+    if(area==='annex'){
+      const callDx=.7-camera.position.x,callDz=-20.86-camera.position.z,callDistance=Math.hypot(callDx,callDz),callPan=T.MathUtils.clamp((callDx*Math.cos(yaw)-callDz*Math.sin(yaw))/Math.max(1,callDistance),-1,1),callBlocked=area==='annex'&&!hasLineOfSight(camera.position,{x:.7,y:1,z:-20.86},world.solids),callLevel=Math.min(1,2.5/Math.max(1,callDistance))*(callBlocked?.4:1);
+      audio.setDevice('ringback',annexCallAt>=0&&annexCallBeat===0&&['2803','1704'].includes(annexCallTo)?callLevel:0,callPan);audio.setDevice('busy',annexCallAt>=0&&!['2803','1704'].includes(annexCallTo)?callLevel:0,callPan);
+      if(annexCallAt>=0&&annexCallBeat>0)audio.setRecordingPosition(callLevel,callPan);
+      world.updateIntercom?.(annexNumber,annexCallAt>=0?annexCallTo+'호 호출 중\n'+(annexCallBeat?'연결됨 · CLEAR로 통화 종료':'수신 응답 대기'):annexCallResult||(['annex_exit_ready','annex_departure'].includes(story.stage)?'2803 · 응답 종료\n북쪽 문 잠금 해제':'수신 세대 네 자리 → CALL\nCLEAR · 지우기 / 종료'),elapsed<annexPressedUntil?annexPressed:null);
+    }
+    if(area==='courtyard'){
+      const point=world.targets.find(t=>t.id==='court_phone')!.point,dx=point.x-camera.position.x,dz=point.z-camera.position.z,distance=Math.hypot(dx,dz),blocked=!hasLineOfSight(camera.position,point,world.solids),level=Math.min(1,3/Math.max(1,distance))*(blocked?.35:1),pan=T.MathUtils.clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,distance),-1,1);
+      audio.setDevice('ringback',courtCallAt>=0&&courtCallBeat===0?level:0,pan);if(courtCallAt>=0&&courtCallBeat>0)audio.setRecordingPosition(level,pan);
+      world.courtPhone?.setState(courtCallAt>=0?(courtCallBeat?'connected':'ringing'):story.notes.includes('court_phone')?'complete':'idle',elapsed<courtPressedUntil?courtPressed:'');
+    }
     if(recordingAt>=0){const source=recordingClue==='annex_call'?{x:11.57,y:.86,z:-5}:{x:-3.8,y:.84,z:3.6},dx=source.x-camera.position.x,dz=source.z-camera.position.z,distance=Math.hypot(dx,dz);const blocked=!hasLineOfSight(camera.position,source,world.solids);audio.setRecordingPosition(Math.min(1,2/Math.max(1,distance))*(blocked?.4:1),T.MathUtils.clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,distance),-1,1));}
     renderWorld(dt);
     if(started&&!paused&&story.stage!=='ended')findTarget();
