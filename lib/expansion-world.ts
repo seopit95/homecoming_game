@@ -17,6 +17,7 @@ import {createAnsweringMachine} from './resident-props.ts';
 import {facilityModel} from './facility-models.ts';
 import {createArchiveReview,archiveClips,archiveCamera} from './archive-review.ts';
 import {createArchiveDeck} from './archive-deck.ts';
+import {buildAnnexLobby} from './annex-lobby.ts';
 
 export const expansionLayout={
  courtyard:courtyardLayout,
@@ -67,11 +68,15 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  function puddle(x:number,z:number,w:number,d:number,opacity=.28){const mesh=new T.Mesh(new T.PlaneGeometry(w,d),new T.MeshPhysicalMaterial({map:wetTexture(false,Math.round(x*7+z*13)),color:'#233630',roughness:.06,transparent:true,opacity,depthWrite:false}));mesh.rotation.x=-Math.PI/2;mesh.position.set(x,.009,z);root.add(mesh);return mesh;}
  // Broad footprint, human-scale 4 m spine and outer loop aisles around real rooms.
  box(0,-.12,0,bx*2,.24,bz*2,floor);box(0,2.91,0,bx*2,.22,bz*2,wall);
- for(const x of [-bx,bx])wallAt(x,0,.18,bz*2);for(const side of [-1,1])wallAt(side*(bx+.72)/2,bz,bx-.72,.18);box(0,2.6,bz,1.44,.4,.18,wall);
+ for(const x of [-bx,bx]){
+  if(area==='annex'&&x===bx){wallAt(x,(-bz+27.6)/2,.18,bz+27.6);wallAt(x,(31.4+bz)/2,.18,bz-31.4);box(x,2.625,29.5,.18,.35,3.8,wall,true);}
+  else wallAt(x,0,.18,bz*2);
+ }
+ for(const side of [-1,1])wallAt(side*(bx+.72)/2,bz,bx-.72,.18);box(0,2.6,bz,1.44,.4,.18,wall);
  if(area!=='annex')connectionPassage(root,solids,lamps,-3,bz+6,0,.9);
  for(const side of [-1,1]){
   const segments=[[-bz,-27],[-24,-7],[-4,14],[17,25],[28,bz]];
-  for(const [a,b] of segments)wallAt(side*2,(a+b)/2,.15,b-a);
+  for(const [a,b] of segments){if(area==='annex'&&side===1&&a===28){wallAt(2,28.6,.15,1.2);wallAt(2,32.9,.15,2.2);}else wallAt(side*2,(a+b)/2,.15,b-a);}
   for(const z of [10,-11])wallAt(side*(bx/2-.5),z,bx-5,.15);
   for(const z of [15.5,-5.5,-25.5]){box(side*2,2.56,z,.2,.48,3,wall);for(const dz of [-1.5,1.5])box(side*2,1.2,z+dz,.21,2.4,.065,wood);}
   for(const z of [21,-19])fixture(side*(bx-4),z,area==='plant'?2.5:3.4,side<0?'#b9a789':'#92b1aa');
@@ -108,7 +113,9 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   for(const x of [-1.1,1.1])box(x,1.4,bz+1.35,.12,2.8,2.7,metal,true);box(0,1.4,bz+2.7,2.2,2.8,.12,metal,true);
   for(const x of [-.7,.7])box(x,1.18,bz,.12,2.36,.16,dark);box(0,.012,bz,1.35,.023,.22,metal);
 
-  const map=label('정문 셔터 침수 · 통행 불가\n세탁실 ←  통신실 →\n정문: 북쪽 방화문 → 중정',1.91,1.52,29,2,.9,-Math.PI/2);target('annex_map','공동시설 안내도',map,[1.89,1.52,29],[.8,29]);
+  const lobby=buildAnnexLobby(root,solids,lamps);fixture(10.5,30,2.2,'#9eaf9f');
+  target('annex_map','공동시설 안내도',lobby.map,[-1.89,1.52,29],[-.8,29]);
+  target('annex_front_exit','정문 손잡이 확인',lobby.door,lobby.frontPoint.toArray(),[15.8,29.64]);
   // Mail slots, laundry machines, employee lockers and the abandoned switchboard.
   box(-X-.275,.195,23,4.65,.39,.4,metal);box(-X-.275,.78,22.81,4.65,1.56,.08,metal);
   for(let row=0;row<3;row++)for(let col=0;col<8;col++){const x=-X-2.2+col*.55,z=23;box(x,.55+row*.39,z,.51,.34,.3,metal);box(x,.55+row*.39,z+.158,.48,.31,.015,blue);box(x,.61+row*.39,z+.17,.28,.015,.013,dark);box(x+.18,.50+row*.39,z+.173,.027,.035,.015,metal);box(x-.22,.55+row*.39,z+.173,.012,.14,.012,metal);if(row===2)label(String(2701+col),x,.43+row*.39,z+.167,.26,.065);}
@@ -158,7 +165,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   roundPipe(root,[2.12,1.89,-2],[2.12,2.8,-2],.019,metal);
   const restChair=facilityChair(wood,metal);restChair.position.set(X+2,0,20);restChair.rotation.y=-.4;root.add(restChair);solids.push({x:X+2,z:20,w:.65,d:.65,y:.44,h:.88});
   rack(-X,-18,4,.65);table(X,-18,2.5);for(const x of [X-1,X+.2])box(x,.87,-18,.75,.1,.45,paper);
-  puddle(-X,4,3,4);puddle(0,9,1.5,6);label('정문 셔터 침수\n지하 차량 출구 이용',-1.921,1.5,29,2,.7,Math.PI/2);
+  puddle(-X,4,3,4);puddle(0,9,1.5,6);
  }else if(area==='archive'){
   evidenceDesk('archive_ledger','기록 인계 대장',.2,27);
   evidenceDesk('archive_road','A / 정문 도로 영상',-X,20);evidenceDesk('archive_call','B / 비상 호출 기록',X,20);evidenceDesk('archive_gate','C / 지하 입차 영상',-X,-3);

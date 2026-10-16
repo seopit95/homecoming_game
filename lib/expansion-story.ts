@@ -3,7 +3,7 @@ import type {Action,Story,Stage} from './story.ts';
 export const expansionObjectives={
  office_departure:'열린 관리용 승강기에 걸어 들어가세요',
  service_ride:'관리용 승강기가 1층으로 내려가고 있다',service_open:'문이 열렸다. 1층 공동시설로 걸어 나가세요',
- annex_arrival:'1층 안내판에서 바깥으로 나갈 길을 확인하세요',
+ annex_arrival:'1층 정문과 안내판에서 바깥으로 나갈 길을 확인하세요',
  annex_fuse:'서측 세탁실의 정비대에서 통신용 퓨즈를 찾으세요',
  annex_restore:'동측 통신실의 인터폰 전원함에 퓨즈를 연결하세요',
  annex_search:'공동시설에 남은 발신 기록을 조사하세요',
@@ -29,7 +29,8 @@ export const expansionJournal={
  court_evidence:{title:'놀이터 옆 · 주운 반사판',text:'놀이터 옆 점검대 위에 내 차의 깨진 전조등 조각이 있다. 빗물로 씻어도 홈 사이의 어두운 자국은 지워지지 않는다.\n\n곁에 떨어진 당직 수첩. 「아이들 등교 전에 정문 횡단보도 전등 점검. 우천 시 비상벨 확인.」\n\n그녀는 그날도 누군가 다치지 않도록 길을 확인하러 나갔다. 나는 휴대전화를 보느라 그 사람을 보지 않았다.'},
  court_confirm:{title:'경비초소 · 열린 금고',text:'번호를 맞추고 손잡이를 돌렸다. 무거운 철문이 열린다. 안쪽 고리에 지하문 열쇠가 걸려 있다.\n\n뒤판의 인계 쪽지. 「사고 신고 녹음 원본 보존. 차량 소유자 삭제 요청. 접수 거절.」'},
  court_key:{title:'경비초소 · 지하문 열쇠',text:'고리에서 지하 기록보관실 열쇠를 뺐다. 차가운 금속이 손가락에 닿았다.\n\n나는 다음 날에도 전화를 했다. 신고하려고 한 것이 아니었다. 그것까지 지우려고 했던 것이다. 쪽지에 적힌 차량 소유자가 나라는 것을 알고 있다.\n\n중정 건너편에서 몸을 끄는 소리가 난다. 북쪽 지하 계단으로 가야 한다.'},
- annex_map:{title:'1층 · 나갈 수 없는 로비',text:'유리문 너머에 도로가 보인다. 출입문은 방범 셔터에 막혀 있고, 비상 해제 장치에는 물이 차 있다.\n\n안내도: 서측 세탁실·우편실 / 동측 경비 휴게실·통신실 / 중앙 경비실. 북쪽 방화문은 외부 중정으로 통한다. 정문 공사 중에는 중정의 지하 계단에서 기록보관실과 기계실을 거쳐 주차장으로 갈 수 있다.\n\n북쪽 문은 손잡이를 당겨도 열리지 않는다. 문 안의 잠금쇠가 움직일 때마다 중앙 교환기에서 수신 표시가 깜박인다. 우선 세탁실 정비대의 퓨즈로 통신실 전원을 살려야 한다.'},
+ annex_map:{title:'1층 · 나갈 수 없는 로비',text:'동측 로비의 유리 정문 너머로 도로가 보인다. 문 뒤의 방범 셔터는 내려와 있다. 젖은 제어함에 「누전 · 작동 금지」라는 쪽지가 붙어 있다.\n\n안내도: 서측 세탁실·우편실 / 동측 경비 휴게실·통신실 / 중앙 경비실. 북쪽 방화문은 외부 중정으로 통한다. 정문 고장 시에는 중정의 지하 계단에서 기록보관실과 기계실을 거쳐 주차장으로 우회할 수 있다.\n\n북쪽 문은 손잡이를 당겨도 열리지 않는다. 문 안의 잠금쇠가 움직일 때마다 중앙 교환기에서 수신 표시가 깜박인다. 우선 세탁실 정비대의 퓨즈로 통신실 전원을 살려야 한다.'},
+ annex_front_exit:{title:'1층 정문 · 길은 보이는데',text:'손잡이를 당겼지만 잠긴 유리문은 움직이지 않았다. 두 손잡이에 쇠사슬이 감겨 있다. 바깥 셔터의 격자 사이로 젖은 도로와 가로등이 보인다. 바로 저기까지 가면 되는데.\n\n제어함은 젖어 있고, 전원 표시등은 꺼져 있다. 「누전 · 작동 금지. 북측 중정으로 우회.」 안내문이 남아 있다.\n\n안내판에 적힌 지하 통로를 찾아야 한다. 이 문을 억지로 열다 발소리를 놓칠 수는 없다.'},
  annex_fuse:{title:'세탁실 · 마르지 않는 소매',text:'회전이 멈춘 세탁기 안에 흰 천이 뭉쳐 있다. 문에는 안쪽에서 긁은 자국이 있다.\n\n정비대에 놓인 예비 퓨즈를 챙겼다. 한서연이 붙인 점검표에는 「침수 시 외부조명 차단. 배수와 환기 전원은 유지」라고 쓰여 있다. 이 건물의 어두운 곳마다 그녀가 다녀간 흔적이 남아 있다.'},
  annex_badge:{title:'경비 휴게실 · 마지막 당직',text:'사물함 앞 책상에 한서연의 명찰과 당직표가 놓여 있다. 퇴근 시각은 03:10. 여백에 「오늘은 정문으로. 지하 통로 누수」.\n\n그녀가 그 시각 횡단보도를 건넌 이유가 있었다. 휴게실 사진에는 주민들의 화분을 옮기는 모습이 남아 있다. 나는 얼굴도 모르는 사람을 죽였다고 생각했다. 매일 보던 사람이었다.'},
  annex_notice:{title:'우편실 · 반송된 안내문',text:'2803호 앞유리 파손 차량 확인 요청. 입주민께서는 관리실로 연락 바랍니다.\n\n수령란에는 내 서명이 있다. 사흘 전 오후. 「주차 중 파손」이라고 내가 적었다. 기억이 없는 것이 아니었다. 기억할 때마다 다른 말로 덮어 놓았던 것이다.\n\n뒷면의 교환기 점검 기록: 마지막 발신은 정문 비상벨, 수신은 사고 차량 소유자의 세대.'},
@@ -81,6 +82,7 @@ export function plantProblem(s:PlantState){
 }
 function noted(s:Story,action:Action,stage:Stage=s.stage):Story{return {...s,stage,notes:[...new Set([...s.notes,action])]};}
 export function expansionTransition(s:Story,action:Action):Story|undefined{
+ if(s.stage.startsWith('annex_')&&action==='annex_front_exit')return s.notes.includes(action)?s:noted(s,action);
  if(['court_search','court_code','court_safe_open','court_unlocked','court_departure'].includes(s.stage)&&(courtEvidence.includes(action)||action==='court_evidence')){
   if(s.notes.includes(action))return s;const next=noted(s,action);
   if(s.stage==='court_search'&&courtEvidence.every(a=>next.notes.includes(a)))next.stage='court_code';
@@ -130,6 +132,7 @@ export function expansionObjective(s:Story){
  return expansionObjectives[s.stage as ExpansionStage];
 }
 export function expansionTargetActive(s:Story,id:Action){
+ if(id==='annex_front_exit')return s.stage.startsWith('annex_');
  if(['annex_fuse','annex_badge',...archiveEvidence].includes(id)&&s.notes.includes(id))return false;
  if(id==='annex_restore')return s.stage==='annex_restore';
  if(id==='archive_play')return s.stage==='archive_reveal';

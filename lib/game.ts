@@ -69,6 +69,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(area==='apartment')return camera.position.x/S>1.9?(camera.position.z/S>-.5?'침실':camera.position.x/S>4?'욕실':'다용도실'):camera.position.x/S< -2.7&&camera.position.z/S< -2.4?'서재':camera.position.x/S< -2&&camera.position.z/S<0?'주방':camera.position.z/S< -3?'현관':'거실 · 다이닝';
     if(area==='resident')return story.stage==='resident_arrival'?'17층 복도 · 1704호 앞':'한서연의 집';if(area==='aftermath')return '사흘 전의 횡단보도';
     if(area==='courtyard')return Math.abs(camera.position.x)<18?'외부 중정 · 공사 구역':camera.position.x<0?'외부 중정 · 서측 통로':'외부 중정 · 동측 통로';
+    if(area==='annex'&&camera.position.x>2&&camera.position.z>24.8)return '1층 · 정문 로비';
     if(area==='annex'||area==='archive'||area==='plant'){const L=expansionLayout[area];return Math.abs(camera.position.x)<2?L.name+' · 연결 복도':L.rooms[(camera.position.x<0?0:2)+(camera.position.z<10?1:0)];}
     if(area==='office')return camera.position.x< -1.6?(camera.position.z< -1.5?'문서 보관실':'야간 관리실'):camera.position.x>1.6?'전기실':'관리실 복도';
     return {landing:'28층 · 외부 복도',lift:'엘리베이터',corridor:'정전된 복도',stairs:'비상계단',parking:'지하 주차장'}[area];
@@ -283,6 +284,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       say(responses[action]||'이미 확인했다. 다음 단서를 찾아야 한다.',4);return;
     }
     if(isExpansion(story.stage)){
+      if(action==='annex_front_exit'){audio.sound('metal',.3,.55);noiseRadius=10;noiseUntil=elapsed+2;say('잠긴 문손잡이에서 쇠사슬이 울린다. 바깥 셔터도 내려와 있다.\n젖은 제어함에 북측 중정으로 우회하라는 안내가 붙어 있다.',9);return;}
       if(action==='plant_start'&&plantFault==='electrical'){audio.sound('metal',0,.6);noiseRadius=18;noiseUntil=elapsed+3;say('누전 보호기가 떨어졌다. 배수와 외부조명 스위치가 내려갔다. 침수된 외부조명은 끄고 배수 전원만 다시 연결하자.',8);return;}
       if(action==='plant_valve_west'||action==='plant_valve_east'||action==='plant_start'){audio.sound(action==='plant_start'?'motor':'metal',.4,.6);noiseRadius=18;noiseUntil=elapsed+2;}
       if(action==='plant_route'){audio.sound('metal',-.3,.4);noiseRadius=12;noiseUntil=elapsed+1.5;say(plantRoute(story)==='drain'?'토출 → 외부 우수관. 배관이 서쪽 벽으로 이어진다.':plantRoute(story)==='closed'?'토출 → 차단. 이 위치에서는 물이 나갈 수 없다.':'토출 → 집수정 환수. 물이 다시 이 방으로 돌아온다.',5);return;}
@@ -739,7 +741,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='office_departure'&&camera.position.z<-layout.office.z-.65&&Math.abs(camera.position.x)<.48){
       const p=camera.position.clone(),ry=yaw,rx=pitch;advance('service_board');camera.position.set(-p.x,p.y,-(p.z+layout.office.z)-1.35);yaw=ry+Math.PI;pitch=rx;doorOpen=1;chapterUntil=0;audio.sound('slam',0,.4);return;
     }
-    if(story.stage==='service_open'&&doorOpen>.75&&camera.position.z<-1.6&&Math.abs(camera.position.x)<.48){const p=camera.position.clone(),ry=yaw,rx=pitch;advance('annex_enter');camera.position.set(p.x,p.y,expansionLayout.annex.z+p.z+1.35);yaw=ry;pitch=rx;chapterUntil=0;say('1층 공동시설. 유리문 너머 도로가 보이지만 셔터가 내려와 있다.\n안내판에서 다른 출구를 찾아보자.',8);return;}
+    if(story.stage==='service_open'&&doorOpen>.75&&camera.position.z<-1.6&&Math.abs(camera.position.x)<.48){const p=camera.position.clone(),ry=yaw,rx=pitch;advance('annex_enter');camera.position.set(p.x,p.y,expansionLayout.annex.z+p.z+1.35);yaw=ry;pitch=rx;chapterUntil=0;say('1층. 오른쪽 창 너머에 로비 정문이 보인다.\n왼쪽 안내판에서 나갈 길을 확인하자.',8);return;}
     if(area==='courtyard'&&story.stage==='court_departure'&&camera.position.x>15.5&&camera.position.z<-52&&camera.position.z>-54){
       const p=camera.position.clone(),ry=yaw,rx=pitch,distance=world.figure.position.distanceTo(p),pursuing=world.figure.visible||arrivalPursuit,pendingWait=world.figure.visible?0:Math.max(0,entranceDelay-areaTime);advance('archive_enter');camera.position.set(p.x-17,p.y+2.8,expansionLayout.archive.z+6+p.z+51);yaw=ry;pitch=rx;chapterUntil=0;carryPursuit(distance,pursuing,expansionLayout.archive.z,2.15,pendingWait);persist();say(objectiveFor(story),7);return;
     }
