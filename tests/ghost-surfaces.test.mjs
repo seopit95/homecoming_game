@@ -231,8 +231,23 @@ test('partially opening the mouth never reverses or interpenetrates exposed toot
  const head=new T.Group(),r=createFace(head,new T.MeshStandardMaterial());
  for(const open of [.021,.05,.1,.13,.2,.220001,.4,1]){
   poseFace(r,open);head.updateMatrixWorld(true);if(!r.teeth.visible||!r.lower.visible)continue;
-  const upper=new T.Box3().setFromObject(r.teeth),lower=new T.Box3().setFromObject(r.lower);
-  assert.ok(upper.min.y>lower.max.y,`tooth rows cross at mouth openness ${open}`);
+  // Front incisors and rear molars sit at different heights/depths. Whole-arch
+  // Y bounds overlap even when no individual opposing crowns can touch.
+  for(const upper of r.teeth.children)for(const lower of r.lower.children){
+   const a=new T.Box3().setFromObject(upper),b=new T.Box3().setFromObject(lower);
+   if(!a.intersectsBox(b))continue;
+   for(const [source,target] of [[upper,lower],[lower,upper]]){
+    const p=source.geometry.getAttribute('position'),ix=source.geometry.index,edges=new Set();
+    for(let k=0;k<ix.count;k+=3)for(let j=0;j<3;j++){
+     const ia=ix.getX(k+j),ib=ix.getX(k+(j+1)%3),key=[ia,ib].sort((x,y)=>x-y).join('/');if(edges.has(key))continue;edges.add(key);
+     const from=new T.Vector3().fromBufferAttribute(p,ia).applyMatrix4(source.matrixWorld),to=new T.Vector3().fromBufferAttribute(p,ib).applyMatrix4(source.matrixWorld),length=from.distanceTo(to);
+     for(const [start,end] of [[from,to],[to,from]]){
+      const ray=new T.Raycaster(start,end.clone().sub(start).normalize(),.000001,length-.000001);
+      assert.equal(ray.intersectObject(target,false).length,0,`opposing enamel surfaces intersect at ${open}: ${upper.name}, ${lower.name}`);
+     }
+    }
+   }
+  }
  }
 });
 

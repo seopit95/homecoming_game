@@ -114,3 +114,30 @@ an open seam. Normals are smoothed across both stitch boundaries. Existing long
 fingers, nails, skeletal poses, wall-avoidance IK, navigation and story remain.
 Changed-surface checks and native crawl/capture images are bounded character
 evidence, not whole-game completion or a commercial-art certificate.
+
+### V84 — seated asymmetric eyelids and anatomical dental arches
+
+`lib/assets/ghost-teeth.json` derives the 32 separate **teeth_base** crowns from
+the same official CC0 system-assets archive already used for long01 hair. Both
+the OBJ and MHCLO explicitly release the asset as CC0 in September 2020; the
+material header does the same for its diffuse image. Credits: MakeHuman Team,
+Data Collection AB, Joel Palmius and Jonas Hauquier. Original source hashes,
+body source commit and bindings are retained in the derivative metadata.
+
+`node scripts/author-ghost-teeth.mjs <teeth_base-directory>
+<pinned-base-and-target-directory>` reproduces the crowns through the supplied
+hm08 barycentric bindings and the existing adult female head transform. The
+large source oral lining is omitted; the game's supported cavity, tongue and
+shared jaw frame remain. The fitted upper and lower arches have incisors,
+canines and posterior molars, replacing the sixteen procedural oval crowns.
+`ghost-teeth-v1.webp` is the source diffuse atlas encoded at WebP quality90;
+it adds no new remote or runtime dependency. Crowns retain authored root,
+occlusal shape and UVs, with a muted wet enamel material.
+
+The existing face skin also receives a local asymmetric lid/brow and soft
+tissue shape while both eyeballs remain seated in their original sockets.
+The posterior skull, scalp and lip attachment are preserved. The lower face,
+dentition and supported oral floor share a slightly asymmetric turning jaw;
+upper lip strain is shared by its skin, rim and cavity. Existing face, skin,
+hair and garment textures are retained. These are bounded face/scare changes,
+not full-character or whole-game commercial-quality acceptance.

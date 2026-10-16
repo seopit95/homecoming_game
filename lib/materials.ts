@@ -13,13 +13,13 @@ export function sharePrintedTexture(texture:T.CanvasTexture,key:readonly (string
 export function clearPrintedSources(){printedSources.clear();}
 
 // Decode each source once; floor changes own disposable texture clones.
-const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair'|'resident-photo',T.Texture>>={};
+const sources:Partial<Record<'surfaces'|'remains'|'face'|'teeth'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair'|'resident-photo',T.Texture>>={};
 const physicalSources:Partial<Record<`${'plaster'|'concrete'|'cast-concrete'|'worn-concrete'|'wood'|'wood-floor'|'painted-metal'|'bag-leather'|'cotton'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
-    const jobs=(['surfaces','remains','face','hand','hand-view','hair','hair-locks','cloth','resident-photo'] as const).map(async key=>{
-      const file=key==='resident-photo'?'resident-memory-photo-v1.webp':key==='hair-locks'?'ghost-hair-locks-v1.webp':key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
+    const jobs=(['surfaces','remains','face','teeth','hand','hand-view','hair','hair-locks','cloth','resident-photo'] as const).map(async key=>{
+      const file=key==='teeth'?'ghost-teeth-v1.webp':key==='resident-photo'?'resident-memory-photo-v1.webp':key==='hair-locks'?'ghost-hair-locks-v1.webp':key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
       const texture=await loadTexture(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     });
     const livingJobs=(['pedestrian-skin','pedestrian-shirt','pedestrian-shirt-normal','pedestrian-hair'] as const).map(async key=>{
@@ -107,6 +107,10 @@ export function faceMaterial(){
       diffuseColor.rgb*=vec3(.96,1.0,1.015);`);
   };
   material.customProgramCacheKey=()=> 'anatomical-accident-face-v5';return material;
+}
+export function ghostEnamelMaterial(){
+ const map=sources.teeth?.clone()??null;if(map)map.needsUpdate=true;
+ return new T.MeshPhysicalMaterial({color:'#b3a58c',map,roughness:.48,clearcoat:.15,clearcoatRoughness:.35});
 }
 export function boxUV(geometry:T.BufferGeometry,x=0,y=0,z=0,scale=1.8){
   const p=geometry.getAttribute('position'),n=geometry.getAttribute('normal'),uv=geometry.getAttribute('uv');

@@ -1,6 +1,7 @@
 import * as T from 'three';
-import {faceMaterial} from './materials.ts';
+import {faceMaterial,ghostEnamelMaterial} from './materials.ts';
 import anatomy from './assets/ghost-head.json' with {type:'json'};
+import dentition from './assets/ghost-teeth.json' with {type:'json'};
 
 // One anatomical skin; the lower face follows the same turning mandible as
 // its dentition. The posterior neck and upper skull retain their rest shape.
@@ -8,7 +9,19 @@ export function createFace(head:T.Group,skin:T.Material){
   const jaw=new T.Group();jaw.name='ghost-jaw';head.add(jaw);
   const face=new T.Mesh(new T.BufferGeometry(),faceMaterial());face.name='ghost-continuous-face';head.add(face);
   const base=new Float32Array(anatomy.position),weights=new Float32Array(anatomy.jawWeights),lift=new Float32Array(base.length/3);
-  for(let row=0;row<anatomy.patchRows;row++)for(let i=0;i<N;i++)lift[anatomy.patchStart+row*N+i]=.004*Math.max(0,Math.sin(i/N*Math.PI*2))**2*(1-T.MathUtils.smoothstep(row/anatomy.patchRows,0,1));
+  // Soft tissue retains the same seated eyes and skull. One swollen upper
+  // lid hangs lower; the opposite eye remains exposed beneath a strained brow.
+  const eyesAt=Object.values(anatomy.eyes).map(e=>e.center);
+  for(let i=0;i<base.length;i+=3){
+    const x=base[i],y=base[i+1],z=base[i+2],front=T.MathUtils.smoothstep(z,.035,.085)*T.MathUtils.smoothstep(y,.025,.06),g=(cx:number,cy:number,sx:number,sy:number)=>Math.exp(-(((x-cx)/sx)**2)-((y-cy)/sy)**2)*front;
+    for(const [cx,cy] of eyesAt){
+      base[i+1]+=(cx<0?-.015:.0035)*g(cx,cy+.013,.034,.013);
+      base[i+1]+=.004*g(cx*.42,cy+.041,.025,.018);
+    }
+    base[i+2]+=.006*g(-.082,.075,.035,.034);
+    base[i]-=.0035*g(0,.065,.027,.026);
+  }
+  for(let row=0;row<anatomy.patchRows;row++)for(let i=0;i<N;i++)lift[anatomy.patchStart+row*N+i]=.004*(1+.65*Math.cos(i/N*Math.PI*2))*Math.max(0,Math.sin(i/N*Math.PI*2))**2*(1-T.MathUtils.smoothstep(row/anatomy.patchRows,0,1));
   face.geometry.setAttribute('position',new T.BufferAttribute(base.slice(),3));face.geometry.setAttribute('uv',new T.Float32BufferAttribute(anatomy.uv,2));face.geometry.setIndex(anatomy.index);
   face.userData.mouthBorder=anatomy.mouthBorder;
   const blend=new Float32Array(base.length/3);for(let i=0;i<blend.length;i++)blend[i]=T.MathUtils.smoothstep(base[i*3+2],.025,.105);face.geometry.setAttribute('faceBlend',new T.BufferAttribute(blend,1));
@@ -24,33 +37,28 @@ export function createFace(head:T.Group,skin:T.Material){
   for(let i=0;i<tongueIndices.count;i+=3){const b=tongueIndices.getX(i+1);tongueIndices.setX(i+1,tongueIndices.getX(i+2));tongueIndices.setX(i+2,b);}
   tongueGeometry.setAttribute('color',new T.Float32BufferAttribute(new Float32Array(tongueShape.length),3));
   const tongue=new T.Mesh(tongueGeometry,new T.MeshPhysicalMaterial({color:'#68434b',roughness:.68,clearcoat:.08,clearcoatRoughness:.65,vertexColors:true}));tongue.name='ghost-tongue';tongue.castShadow=tongue.receiveShadow=true;jaw.add(tongue);
-  const enamel=new T.MeshStandardMaterial({color:'#a8a091',roughness:.56});
-  for(let i=0;i<8;i++)for(const bottom of [false,true]){
-    const crown=new T.SphereGeometry(1,16,12),positions=crown.getAttribute('position');
-    for(let j=0;j<positions.count;j++){
-      const x=positions.getX(j),y=positions.getY(j),z=positions.getZ(j),tip=y*(bottom?1:-1),taper=1-.12*T.MathUtils.smoothstep(-tip,0,1);
-      positions.setXYZ(j,Math.sign(x)*Math.abs(x)**.58*taper,y,Math.sign(z)*Math.abs(z)**.65);
-    }
-    crown.computeVertexNormals();
-    const tooth=new T.Mesh(crown,enamel);tooth.name=`ghost-${bottom?'lower':'upper'}-tooth-${i}`;tooth.scale.set(.0052+(i===3||i===4?.001:0),.008+(i%3)*.001,.006);if(i===1&&!bottom||i===6&&bottom)tooth.scale.y*=.35;
-    tooth.rotation.z=(i-3.5)*.035+Math.sin(i*3.1)*.14;(bottom?lower:teeth).add(tooth);
-  }
+  const enamel=ghostEnamelMaterial();
+  for(const [part,group] of [['upper',teeth],['lower',lower]] as const)dentition[part].forEach((data,i)=>{
+    const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(data.position,3));g.setAttribute('uv',new T.Float32BufferAttribute(data.uv,2));g.setIndex(data.index);g.computeVertexNormals();
+    const tooth=new T.Mesh(g,enamel);tooth.name=`ghost-${part}-tooth-${i}`;tooth.position.fromArray(data.anchor);if(part==='lower')tooth.position.sub(hinge);tooth.scale.fromArray(data.scale);tooth.castShadow=tooth.receiveShadow=true;group.add(tooth);
+  });
   const eyes=new T.Group();head.add(eyes);
   for(const [side,eye] of Object.entries(anatomy.eyes)){
     const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(eye.position,3));g.setIndex(eye.index);g.computeVertexNormals();
     const material=new T.MeshPhysicalMaterial({color:'#adb4a5',roughness:.4,clearcoat:.2});
     material.onBeforeCompile=shader=>{
       shader.uniforms.eyeCenter={value:new T.Vector3(...eye.center)};
+      shader.uniforms.irisOffset={value:new T.Vector2(eye.center[0]<0?-.001:.002,eye.center[0]<0?.006:.008)};
       shader.vertexShader='varying vec3 vEyePosition;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvEyePosition=position;');
-      shader.fragmentShader='uniform vec3 eyeCenter; varying vec3 vEyePosition;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-        float eyeRadius=length((vEyePosition.xy-eyeCenter.xy-vec2(.001,.003))*vec2(1.0,1.12));
+      shader.fragmentShader='uniform vec3 eyeCenter; uniform vec2 irisOffset; varying vec3 vEyePosition;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+        float eyeRadius=length((vEyePosition.xy-eyeCenter.xy-irisOffset)*vec2(1.0,1.12));
         float front=step(eyeCenter.z,vEyePosition.z);
         float iris=(1.0-smoothstep(.008,.011,eyeRadius))*front;
         float pupil=(1.0-smoothstep(.0014,.0026,eyeRadius))*front;
         diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.22,.25,.22),iris);
         diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.018,.024,.019),pupil);`);
     };
-    material.customProgramCacheKey=()=> 'clouded-anatomical-eye-v1';
+    material.customProgramCacheKey=()=> 'clouded-anatomical-eye-v2';
     const mesh=new T.Mesh(g,material);mesh.name=`ghost-eye-${side}`;mesh.receiveShadow=true;eyes.add(mesh);
   }
   for(const mesh of [face,throat,lip]){mesh.castShadow=true;mesh.receiveShadow=true;}
@@ -62,7 +70,7 @@ const hinge=new T.Vector3(0,.035,.008);
 function lipRest(a:number){return new T.Vector3().fromArray(anatomy.position,anatomy.mouthBorder[T.MathUtils.euclideanModulo(Math.round(a/(Math.PI*2)*N),N)]*3);}
 function lipPoint(a:number,jaw:T.Group,open:number){
   const s=Math.sin(a),v=lipRest(a);
-  const result=v.clone().lerp(v.sub(hinge).applyQuaternion(jaw.quaternion).add(jaw.position),(1-s)*.5);result.y+=.004*Math.max(0,s)**2*open;return result;
+  const result=v.clone().lerp(v.sub(hinge).applyQuaternion(jaw.quaternion).add(jaw.position),(1-s)*.5);result.y+=.004*(1+.65*Math.cos(a))*Math.max(0,s)**2*open;return result;
 }
 function grid(mesh:T.Mesh,rows:number,cols:number,positions:number[],uvs?:number[],cap=false){
   const g=mesh.geometry,p=g.getAttribute('position');
@@ -76,7 +84,7 @@ function grid(mesh:T.Mesh,rows:number,cols:number,positions:number[],uvs?:number
 }
 export function poseFace(r:FaceRig,open:number){
   if(r.lastOpen===open)return;r.lastOpen=open;r.face.userData.openness=open;
-  r.jaw.position.copy(hinge).add(new T.Vector3(-.003*open,-.004*open,.012*open));r.jaw.rotation.set(.82*open,-.018*open,-.025*open);
+  r.jaw.position.copy(hinge).add(new T.Vector3(-.006*open,-.004*open,.012*open));r.jaw.rotation.set(.90*open,-.025*open,-.075*open);
   const cavity=r.cavity,lips=r.lipPositions,positions=r.face.geometry.getAttribute('position');
   const rest=new T.Vector3(),posed=new T.Vector3();
   for(let i=0;i<positions.count;i++){
@@ -91,7 +99,7 @@ export function poseFace(r:FaceRig,open:number){
     const fold=Math.sin(t*Math.PI)*Math.sin(t*25+Math.cos(a)*2)*.0028*Math.max(0,Math.sin(a));
     rest.set(source.x*shrink,-.006+(source.y+.006)*shrink,source.z-.004-t*.096+fold);
     posed.copy(rest).sub(hinge).applyQuaternion(r.jaw.quaternion).add(r.jaw.position);rest.lerp(posed,(1-s)*.5);
-    const k=(row*(N+1)+i)*3;cavity[k]=rest.x;cavity[k+1]=rest.y+.004*Math.max(0,s)**2*open*(1-t);cavity[k+2]=rest.z;
+    const k=(row*(N+1)+i)*3;cavity[k]=rest.x;cavity[k+1]=rest.y+.004*(1+.65*Math.cos(a))*Math.max(0,s)**2*open*(1-t);cavity[k+2]=rest.z;
   }
   rest.set(0,-.006,.054);posed.copy(rest).sub(hinge).applyQuaternion(r.jaw.quaternion).add(r.jaw.position);rest.lerp(posed,.5);
   cavity[cavity.length-3]=rest.x;cavity[cavity.length-2]=rest.y;cavity[cavity.length-1]=rest.z;
@@ -126,10 +134,6 @@ export function poseFace(r:FaceRig,open:number){
   // Crowns and gum roots share the mandibular frame; the upper arch is fixed.
   [r.teeth,r.lower].forEach((group,row)=>{
     const y=row===0?-.004:-.0085;
-    group.children.forEach((tooth,i)=>{
-      const x=(i-3.5)*.013,z=(row===0?.149:.139)-((i-3.5)/3.5)**2*.035;
-      tooth.position.set(x,y,z);if(row===1)tooth.position.sub(hinge);
-    });
     const gum=r.gumPositions[row];
     for(let band=0;band<=2;band++)for(let i=0;i<=16;i++){
       const x=(i-8)*.0062,z=(row===0?.146:.136)-((i-8)/7.34)**2*.035;
