@@ -67,6 +67,19 @@ export function createFace(head:T.Group,skin:T.Material){
 export type FaceRig=ReturnType<typeof createFace>;
 const N=64;
 const hinge=new T.Vector3(0,.035,.008);
+// The dislocated mandible advances as it opens. A fixed ear hinge sends the
+// chin backwards into the cervical skin at the full horror gape. Fit the slide
+// to the actual source chin and neck while retaining the complete jaw rotation.
+const jawAdvance=(()=>{
+  const rotation=new T.Quaternion().setFromEuler(new T.Euler(.90,-.025,-.075)),v=new T.Vector3();let neckFront=-Infinity,chinBack=Infinity;
+  for(let i=0;i<anatomy.position.length/3;i++){
+    v.fromArray(anatomy.position,i*3);if(v.y<-.108)neckFront=Math.max(neckFront,v.z);
+    if(anatomy.jawWeights[i]>.99&&v.y<-.045&&v.z>.10){
+      v.sub(hinge).applyQuaternion(rotation).add(hinge);if(v.y-.004<-.08)chinBack=Math.min(chinBack,v.z);
+    }
+  }
+  return Number.isFinite(chinBack)?Math.max(.012,neckFront-chinBack+.008):.012;
+})();
 function lipRest(a:number){return new T.Vector3().fromArray(anatomy.position,anatomy.mouthBorder[T.MathUtils.euclideanModulo(Math.round(a/(Math.PI*2)*N),N)]*3);}
 function lipPoint(a:number,jaw:T.Group,open:number){
   const s=Math.sin(a),v=lipRest(a);
@@ -84,7 +97,7 @@ function grid(mesh:T.Mesh,rows:number,cols:number,positions:number[],uvs?:number
 }
 export function poseFace(r:FaceRig,open:number){
   if(r.lastOpen===open)return;r.lastOpen=open;r.face.userData.openness=open;
-  r.jaw.position.copy(hinge).add(new T.Vector3(-.006*open,-.004*open,.012*open));r.jaw.rotation.set(.90*open,-.025*open,-.075*open);
+  r.jaw.position.copy(hinge).add(new T.Vector3(-.006*open,-.004*open,jawAdvance*open*open));r.jaw.rotation.set(.90*open,-.025*open,-.075*open);
   const cavity=r.cavity,lips=r.lipPositions,positions=r.face.geometry.getAttribute('position');
   const rest=new T.Vector3(),posed=new T.Vector3();
   for(let i=0;i<positions.count;i++){

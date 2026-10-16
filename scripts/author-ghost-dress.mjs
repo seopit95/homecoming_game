@@ -5,8 +5,9 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-const [assetDir,bodyDir]=process.argv.slice(2);
-assert.ok(assetDir&&bodyDir,'Supply tunic and pinned body directories');
+import {sourceRigWeights} from './source-rig-weights.mjs';
+const [assetDir,bodyDir,rigDir]=process.argv.slice(2);
+assert.ok(assetDir&&bodyDir&&rigDir,'Supply tunic and pinned body directories');
 const read=(dir,file)=>fs.readFileSync(path.join(dir,file),'utf8'),hash=s=>crypto.createHash('sha256').update(s).digest('hex');
 const obj=read(assetDir,'mycenaean_tunic.obj'),binding=read(assetDir,'wdg_mycenaean_tunic.mhclo'),body=read(bodyDir,'base.obj'),target=read(bodyDir,'asian-female-young.target');
 const pins=JSON.parse(fs.readFileSync(new URL('../lib/assets/pedestrian-head.json',import.meta.url))).metadata.sources;
@@ -23,14 +24,14 @@ for(const line of obj.split(/\r?\n/)){const a=line.trim().split(/\s+/);if(a[0]==
 const adjacent=source.map(()=>new Set()),edges=new Map();
 for(const f of quads)for(let i=0;i<f.length;i++){const a=f[i][0],b=f[(i+1)%f.length][0],key=[Math.min(a,b),Math.max(a,b)].join('/');adjacent[a].add(b);adjacent[b].add(a);const edge=edges.get(key);edges.set(key,{a,b,n:(edge?.n??0)+1});}
 const boundary=[...edges.values()].filter(e=>e.n===1).flatMap(e=>[e.a,e.b]),cuffs=new Set(boundary.filter(i=>Math.abs(source[i][0])>2.2)),neck=new Set(boundary.filter(i=>source[i][1]>3.4));
-const p=source.map(([x,y,z])=>[x*.13,y*(y<0?.21:.14)-.23,(z-.28)*.11]),fixed=new Map();
-for(let i=0;i<p.length;i++){
- const [x,y]=p[i];
- if(cuffs.has(i)||Math.abs(x)>.25&&y>-.02)fixed.set(i,1);
- else if(y<-.02||y<.11&&Math.abs(x)<.20||Math.abs(x)<.105||neck.has(i))fixed.set(i,0);
-}
-let weights=p.map((_,i)=>fixed.get(i)??.5);
-for(let pass=0;pass<160;pass++)weights=weights.map((w,i)=>fixed.get(i)??[...adjacent[i]].reduce((s,j)=>s+weights[j],0)/adjacent[i].size);
+const p=source.map(([x,y,z])=>[x*.13,y*(y<0?.21:.14)-.23,(z-.28)*.11]);
+const skeletal=sourceRigWeights(rigDir,base.length),bound=values=>entries.map(w=>{
+ const value=w.length===1?values[w[0]]:w.slice(0,3).reduce((sum,i,j)=>sum+values[i]*w[j+3],0);
+ // MHCLO position binding permits tiny extrapolation. Skeletal influences
+ // remain convex even where that geometric fit extends beyond a body triangle.
+ assert.ok(value>=-.001&&value<=1.001);return T.MathUtils.clamp(value,0,1);
+});
+const weights=bound(skeletal.arm),cervicalWeights=bound(skeletal.neck);
 // Extend the source's adult arm direction to the existing deliberately long
 // upper-arm rig. Keep the authored shoulder/cuff topology and cloth allowance.
 for(let i=0;i<p.length;i++){
@@ -39,9 +40,9 @@ for(let i=0;i<p.length;i++){
  p[i]=v.add(pivot).toArray();
  const lower=T.MathUtils.smoothstep(-p[i][1],.12,.70);p[i][0]*=1+lower*.18;p[i][2]*=1+lower*.65;
 }
-const position=[],uv=[],armWeight=[],index=[],lookup=new Map();
+const position=[],uv=[],armWeight=[],neckWeight=[],index=[],lookup=new Map();
 for(const f of quads)for(let j=1;j<f.length-1;j++)for(const [v,t] of [f[0],f[j],f[j+1]]){
- const key=v+'/'+t;if(!lookup.has(key)){lookup.set(key,position.length/3);position.push(...p[v]);uv.push(...tex[t]);armWeight.push(weights[v]);}index.push(lookup.get(key));
+ const key=v+'/'+t;if(!lookup.has(key)){lookup.set(key,position.length/3);position.push(...p[v]);uv.push(...tex[t]);armWeight.push(weights[v]);neckWeight.push(cervicalWeights[v]);}index.push(lookup.get(key));
 }
 // Preserve the same adult body's actual clavicle/neck skin beneath the newly
 // open collar. The rest of the torso remains covered by opaque garment cloth.
@@ -75,7 +76,7 @@ for(const line of body.split(/\r?\n/)){
  }
 }
 for(const key of ['position','uv'])chest[key]=chest[key].map(n=>+n.toFixed(7));assert.ok(chest.index.length>0);
-assert.equal(source.length,1371);assert.ok(position.every(Number.isFinite)&&armWeight.every(w=>w>=0&&w<=1));
-const output={position,uv,armWeight,index,chest,metadata:{name:'WDG Mycenaean Tunic, fitted and extended as the ghost nightdress',author:'WDG; clavicle skin from MakeHuman Team / Data Collection AB / Joel Palmius / Jonas Hauquier',license:'CC0-1.0',licenseBasis:'Official current dress01 pack catalog explicitly lists wdg_mycenaean_tunic as CC0. The original legacy MHCLO header says AGPL3; retained in external source provenance, not rewritten. Body source explicitly released CC0 in September2020.',sourceURL:'https://files2.makehumancommunity.org/asset_packs/dress01/dress01_cc0.zip',licenseURL:'https://static.makehumancommunity.org/assets/assetpacks/dress01.html',sourceHashes:{obj:hash(obj),binding:hash(binding),base:hash(body),target:hash(target)},sourceVertices:source.length,triangles:index.length/3,construction:'Supplied hm08 single/barycentric fit to pinned adult Asian female. Body scale x .13,y .14 above pelvis/.21 below,z .11. Extend upper-arm length32% and12mm cloth ease with harmonic cuff-to-bodice weights; lower skirt gains18% side/65% depth allowance. Original connected garment topology and authored UV seams retained. Clavicle skin excerpt from the same body group: source y3.2..4.55 clipped in XZ to the collar convex aperture plus5mm overlap; boundaries stay beneath opaque clothing.'}};
-for(const key of ['position','uv','armWeight'])output[key]=output[key].map(n=>+n.toFixed(7));
+assert.equal(source.length,1371);assert.ok(position.every(Number.isFinite)&&armWeight.every(w=>w>=0&&w<=1),JSON.stringify({finite:position.every(Number.isFinite),min:Math.min(...armWeight),max:Math.max(...armWeight)}));
+const output={position,uv,armWeight,neckWeight,index,chest,metadata:{name:'WDG Mycenaean Tunic, fitted and extended as the ghost nightdress',author:'WDG; clavicle skin from MakeHuman Team / Data Collection AB / Joel Palmius / Jonas Hauquier',license:'CC0-1.0',licenseBasis:'Official current dress01 pack catalog explicitly lists wdg_mycenaean_tunic as CC0. The original legacy MHCLO header says AGPL3; retained in external source provenance, not rewritten. Body source explicitly released CC0 in September2020.',sourceURL:'https://files2.makehumancommunity.org/asset_packs/dress01/dress01_cc0.zip',licenseURL:'https://static.makehumancommunity.org/assets/assetpacks/dress01.html',sourceHashes:{obj:hash(obj),binding:hash(binding),base:hash(body),target:hash(target)},rig:skeletal.metadata,sourceVertices:source.length,triangles:index.length/3,construction:'Supplied hm08 single/barycentric fit to pinned adult Asian female. Body scale x .13,y .14 above pelvis/.21 below,z .11. Extend upper-arm length32% and12mm cloth ease with original authored skeletal weights transferred through the supplied vertex/barycentric binding; lower skirt gains18% side/65% depth allowance. Original connected garment topology and authored UV seams retained. Clavicle skin excerpt from the same body group: source y3.2..4.55 clipped in XZ to the collar convex aperture plus5mm overlap; boundaries stay beneath opaque clothing.'}};
+for(const key of ['position','uv','armWeight','neckWeight'])output[key]=output[key].map(n=>+n.toFixed(7));
 fs.writeFileSync(new URL('../lib/assets/ghost-dress.json',import.meta.url),JSON.stringify(output)+'\n');console.log({vertices:position.length/3,triangles:index.length/3,weighted:armWeight.filter(w=>w>.001).length,bounds:[0,1,2].map(a=>[Math.min(...p.map(v=>v[a])),Math.max(...p.map(v=>v[a]))])});

@@ -36,27 +36,17 @@ test('the nightdress sleeves remain stitched to the bodice in every animation br
  }
 });
 
-test('the upper clavicle joins the moving neck bridge without an exposed cut edge',()=>{
- const f=createGhost(new T.Group()),chest=f.getObjectByName('ghost-clavicle-skin'),neck=f.getObjectByName('ghost-neck'),p=chest.geometry.attributes.position,v=new T.Vector3();
- const top=garment.chest.position.flatMap((_,i)=>i%3===0&&garment.chest.position[i+1]>=.392?[i/3]:[]);assert.ok(top.length>0);
- for(const pose of ['walk','crawl','passenger','attack']){
-  if(pose==='passenger')animateGhostPassenger(f,3,1,false,true);else if(pose==='attack')animateGhostAttack(f,.4,false);else animateGhost(f,3,1,.7,false,1.6,pose==='crawl'?1:0);
-  f.updateMatrixWorld(true);
-  for(const i of top){v.fromBufferAttribute(p,i).applyMatrix4(chest.matrixWorld);neck.worldToLocal(v);assert.ok(v.length()<.995,`${pose}: exposed upper clavicle cut at vertex ${i}, radius ${v.length()}`);}
- }
-});
-
 test('the open neckline exposes chest skin instead of a hollow garment interior',()=>{
  const f=createGhost(new T.Group());animateGhost(f,3,0,.7,false);f.updateMatrixWorld(true);
- const gown=f.getObjectByName('ghost-wet-dress'),targets=[gown,f.getObjectByName('ghost-neck'),f.getObjectByName('ghost-clavicle-skin')].filter(Boolean),ray=new T.Raycaster();
+ const gown=f.getObjectByName('ghost-wet-dress'),targets=[gown,f.getObjectByName('ghost-collar-skin')],ray=new T.Raycaster();let exposedSkin=0;
  for(const x of [-.055,.055])for(const y of [.35,.37]){
   const from=gown.localToWorld(new T.Vector3(x,y,1)),direction=new T.Vector3(0,0,-1).transformDirection(gown.matrixWorld);ray.set(from,direction);ray.far=2;
   const hit=ray.intersectObjects(targets,false)[0];
-  // The raised right collar covers one probe; an outside cloth hit is valid.
-  // The left opening must expose actual skin, not the inside back of the dress.
-  const skin=hit?.object.material.name==='surface-skin';
-  assert.ok(hit&&(skin||gown.worldToLocal(hit.point.clone()).z>.015)&&(x>0||skin),`hollow neckline at ${x}, ${y}: ${hit?.object.name}`);
- }
+  // Collar motion can cover a probe with its actual front cloth. A ray must
+  // not see the inside back of the dress through missing chest skin.
+  const skin=hit?.object.name==='ghost-collar-skin';if(skin)exposedSkin++;
+  assert.ok(hit&&(skin||gown.worldToLocal(hit.point.clone()).z>.015),`hollow neckline at ${x}, ${y}: ${hit?.object.name}`);
+ }assert.ok(exposedSkin>0,'the open collar must still expose actual chest skin');
 });
 
 test('the authored garment clears the stair divider and rendered treads during crawl turns',()=>{

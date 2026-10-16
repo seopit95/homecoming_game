@@ -141,3 +141,38 @@ dentition and supported oral floor share a slightly asymmetric turning jaw;
 upper lip strain is shared by its skin, rim and cavity. Existing face, skin,
 hair and garment textures are retained. These are bounded face/scare changes,
 not full-character or whole-game commercial-quality acceptance.
+
+### Connected ghost body and anatomical legs
+
+`lib/assets/ghost-neck.json` now contains the connected native adult female
+neck, thorax, abdomen, pelvis and proximal limbs from the same pinned CC0
+MakeHuman body/target above: 2,249 vertices and 4,354 triangles. The original
+52-point head cut, humerus cuts and both 27-point femur cuts are paired with
+the actual posed head, arms and legs, including shared lighting normals.
+`lib/assets/ghost-legs.json` retains the source thigh, kneecap, shin and calf
+surfaces (580 vertices / 1,111 triangles per side). Only the longitudinal
+axes fit the existing 42cm / 42cm bones. Short native ankle bridges join the
+retained anatomical feet. The old lathe thighs/calves and knee spheres are
+removed; no new runtime package or remote asset is required.
+
+`scripts/author-ghost-legs.mjs <pinned-body-directory> <pinned-rig-directory>`
+and `scripts/author-ghost-neck.mjs` with the same arguments reproduce these
+derivatives. `scripts/source-rig-weights.mjs` validates the original CC0 rig
+and vertex weights at body commit
+`a8bc2d54ff0ac92e78ff71431b1023eda42bf482`. Rig SHA256 values are
+`99f179bce0aa850b45d4191a1d0d234c5851f881c057439470ded3bddf729a24`
+(`default.mhskel`) and
+`0f3641d651ae3d00ad6b4ccee43142edb109d3bd909d27d9e4139ef1beed8625`
+(`default_weights.mhw`). Original weights are normalized and transferred
+through the garment's source barycentric bindings. The reduced live rig
+drives upper-arm descendants while leaving the source clavicle/shoulder
+girdle on the thorax; this is a retargeted approximation, not the full
+original 163-bone skeleton. The head turns about its source cervical joint.
+
+The captive jaw retains its large rotation and advances as it opens instead
+of retracting through the neck. The seated character leans forward, braces
+one hand on her lap and reaches toward the driver with the other. Feet are
+planted ahead of the seat frame; native lower skin and wet lengths follow
+the cushion/bolster envelope. Private skin compression beneath opaque cloth
+is not a claim of a full physical soft-body simulation. These changes do not
+establish finished character art, whole-game quality or 30–40 minute pacing.

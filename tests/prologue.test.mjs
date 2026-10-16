@@ -156,7 +156,7 @@ test('the gathered seated garment still covers the actual knee surfaces',()=>{
  for(const [stage,t] of [['car_voice',3.5],['car_crash',.4]]){
   road.pose(stage,t,camera,false);road.root.updateMatrixWorld(true);const figure=road.root.getObjectByName('finale-passenger'),gown=figure.getObjectByName('ghost-wet-dress'),forward=new T.Vector3(0,0,1).transformDirection(figure.matrixWorld);
   for(const side of [-1,1]){
-   const knee=figure.getObjectByName('ghost-knee-'+side),origin=knee.localToWorld(new T.Vector3(0,-.014,0)).addScaledVector(forward,.3),ray=new T.Raycaster(origin,forward.clone().negate(),0,.6),skin=ray.intersectObjects(knee.children.filter(o=>o.isMesh),false)[0],cloth=ray.intersectObject(gown,false)[0];
+   const knee=figure.getObjectByName('ghost-knee-'+side),origin=knee.localToWorld(new T.Vector3(0,-.014,0)).addScaledVector(forward,.3),ray=new T.Raycaster(origin,forward.clone().negate(),0,.6),skin=ray.intersectObjects(figure.getObjectsByProperty('name','ghost-continuous-leg'),false)[0],cloth=ray.intersectObject(gown,false)[0];
    assert.ok(skin&&cloth,'both real knee and cloth must be sampled');assert.ok(cloth.distance<skin.distance-.003,'gathering must leave the actual knee covered');
   }
  }
@@ -177,13 +177,16 @@ test('the turning face and refitted hair clear actual closed cabin surfaces thro
  }
 });
 
-test('the added clavicle skin fits inside the actual passenger cabin',()=>{
+test('the connected native body and legs fit inside the actual passenger cabin',()=>{
  const road=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,160);
  // Two representative cabin poses; the upper skin follows the moving neck
  // bridge. These samples do not establish continuous-sweep clearance.
  for(const [stage,time] of [['car_voice',3.5],['car_crash',.4]]){
   road.pose(stage,time,camera,false);road.root.updateMatrixWorld(true);
-  const car=road.root.getObjectByName('hero-sedan'),skin=road.root.getObjectByName('finale-passenger').getObjectByName('ghost-clavicle-skin'),p=skin.geometry.attributes.position,ix=skin.geometry.index,hit=cabinTriangles(car),m=car.matrixWorld.clone().invert().multiply(skin.matrixWorld);
-  for(let i=0;i<ix.count;i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix.getX(i+j)).applyMatrix4(m)));assert.equal(hit(tri),null,`clavicle crosses cabin at ${stage}, triangle ${i/3}`);}
+  const car=road.root.getObjectByName('hero-sedan'),figure=road.root.getObjectByName('finale-passenger'),hit=cabinTriangles(car),inverse=car.matrixWorld.clone().invert(),meshes=[];
+  figure.traverse(mesh=>{if(['ghost-collar-skin','ghost-continuous-leg','ghost-ankle-skin','ghost-foot--1','ghost-foot-1'].includes(mesh.name))meshes.push(mesh);});assert.equal(meshes.length,7);
+  for(const skin of meshes){const p=skin.geometry.attributes.position,ix=skin.geometry.index,m=inverse.clone().multiply(skin.matrixWorld);
+   for(let i=0;i<ix.count;i+=3){const tri=new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix.getX(i+j)).applyMatrix4(m)));assert.equal(hit(tri),null,`${skin.name} crosses cabin at ${stage}, triangle ${i/3}`);}
+  }
  }
 });

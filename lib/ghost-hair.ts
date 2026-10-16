@@ -73,7 +73,7 @@ export function settleHair(tails:T.Group,figure:T.Group,time:number,floor:number
       point.applyMatrix4(bodyInverse);
       // Seated hair drapes in front of the inclined backrest, then onto the
       // lap. Work in the figure frame so a transformed/rolling car stays valid.
-      if(lengthScale<1&&point.y<1.22)point.z=Math.max(point.z,.036-.15*Math.max(.6,point.y));
+      if(lengthScale<1&&point.y<1.22){const side=T.MathUtils.smoothstep(Math.abs(point.x),.12,.18);point.z=Math.max(point.z,.048+side*.059-.15*Math.max(.6,point.y));}
       if(point.y<floor){point.z-=(floor-point.y)*.25;point.y=floor+.001;}
       point.applyMatrix4(figure.matrixWorld);
     }
