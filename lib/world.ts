@@ -56,8 +56,8 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const plantAttempt='plantAttempt' in content?content.plantAttempt:undefined;
   const answeringMachine='answeringMachine' in content?content.answeringMachine:undefined;
   const intercom='intercom' in content?content.intercom:undefined,updateIntercom='updateIntercom' in content?content.updateIntercom:undefined;
-  const courtPhone='courtPhone' in content?content.courtPhone:undefined;
-  return {...content,root,updateStory,reset,surveillance,archiveReview,plantAttempt,answeringMachine,intercom,updateIntercom,courtPhone};
+  const courtPhone='courtPhone' in content?content.courtPhone:undefined,courtSafe='courtSafe' in content?content.courtSafe:undefined;
+  return {...content,root,updateStory,reset,surveillance,archiveReview,plantAttempt,answeringMachine,intercom,updateIntercom,courtPhone,courtSafe};
 }
 export function disposeWorld(root:T.Object3D){
   root.traverse(o=>o.userData.surveillance?.dispose());

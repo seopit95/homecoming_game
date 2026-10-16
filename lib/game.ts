@@ -251,7 +251,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(action==='answerphone'&&area==='resident'){playRecording();return;}
     if(action==='annex_call'&&area==='annex'&&['annex_search','annex_unlock','annex_exit_ready'].includes(story.stage)){playRecording('annex_call');return;}
     if(story.stage==='annex_unlock'&&(action.startsWith('annex_digit_')||action==='annex_dial'||action==='annex_clear')){operateIntercom(action);return;}
-    if(area==='courtyard'&&(action==='court_hangup'||action==='court_phone'&&!story.notes.includes('court_phone')&&['court_search','court_code','court_unlocked'].includes(story.stage))){operateCourtPhone(action);return;}
+    if(area==='courtyard'&&(action==='court_hangup'||action==='court_phone'&&!story.notes.includes('court_phone')&&['court_search','court_code','court_safe_open','court_unlocked','court_departure'].includes(story.stage))){operateCourtPhone(action);return;}
     if(action==='pry'){say('문을 바라본 채 E 또는 화면의 문 벌리기 버튼을 길게 누르세요.',4);return;}
     if(action==='lure'){
       if(lureUsed){say('태엽이 다 풀렸다.',2);return;}lureUsed=true;const point=hover!.point;lastSeen={x:point.x,z:point.z};seenAt=elapsed;tracking=true;noiseRadius=0;audio.sound('alarm',-.65,.45);say('태엽 소리가 울린다. 멀리서 발소리가 방향을 바꿨다.',4);return;
@@ -284,7 +284,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(action==='annex_exit'){world.figure.visible=true;tracking=true;lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;ghostVoice('no',true);audio.sound('dread',0,.65);}
       if(action==='archive_play'){audio.sound('dread');say(archiveReplay[0].text,5);scriptBeat=1;return;}
       if(action.startsWith('court_digit_')){audio.sound('click',0,.3);return;}
-      if(action==='court_confirm'){audio.sound('metal',0,.6);say('금고 안의 인계 쪽지. 「차량 소유자가 녹음 삭제를 요청함. 거절」\n다음 날에도 내가 전화했다. 신고하려던 게 아니었다.\n…지하 계단 열쇠를 챙겼다.',12);return;}
+      if(action==='court_confirm'){audio.sound('metal',0,.6);say('잠금쇠가 풀렸다. 문이 열릴 수 있도록 한 걸음 물러서자.\n금고 안쪽에 열쇠와 인계 쪽지가 보인다.',6);return;}
+      if(action==='court_key'){audio.sound('metal',0,.3);say(expansionJournal.court_key.text,12);return;}
       if(action==='court_evidence'&&!story.notes.includes('court_phone')){whisper='수첩을 펴자, 건너편 비상전화가 울리기 시작한다.';whisperUntil=elapsed+7;}
       if(action.startsWith('archive_sequence_')){audio.sound('metal',0,.25);if(story.stage==='archive_reveal')say('세 원본이 같은 순간을 가리킨다.\n모니터에서 지워진 아홉 초를 재생하자.',7);return;}
       if(action.startsWith('plant_circuit_')){audio.sound('click');say(objectiveFor(story),4);return;}
@@ -364,6 +365,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     for(const t of world.targets){
       if(!expansionTargetActive(story,t.id))continue;
       if(t.id==='court_hangup'&&courtCallAt<0)continue;
+      if(t.id==='court_key'&&((world.courtSafe?.hinge.rotation.y??0)>-1.1||!world.courtSafe?.keyVisibleFrom(camera.position)))continue;
       if(t.id==='service_exit'&&story.stage==='office_departure')continue;
       if(t.id==='service_key'&&story.stage!=='office_key')continue;
       if(t.id==='door'&&['hide','wait','escape'].includes(story.stage))continue;

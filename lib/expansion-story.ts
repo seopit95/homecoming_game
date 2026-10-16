@@ -9,7 +9,7 @@ export const expansionObjectives={
  annex_search:'공동시설에 남은 발신 기록을 조사하세요',
  annex_unlock:'중앙 교환기에서 마지막 호출을 받은 세대 네 자리를 입력하고 CALL을 누르세요',
  annex_exit_ready:'북쪽 방화문을 열고 외부 중정으로 나가세요',annex_departure:'열린 방화문을 지나 중정으로 나가세요',
- court_arrival:'입구 왼쪽 안내판에서 지하 우회 통로를 확인하세요',court_search:'경비일지와 비상전화 안내에서 금고 번호를 찾으세요 · 번호를 알면 바로 입력할 수 있습니다',court_code:'동측 경비초소 금고 · 기록에서 찾은 네 자리 번호를 맞추고 확인하세요',court_unlocked:'금고에서 챙긴 열쇠로 북쪽 지하 기록보관실 문을 여세요',court_departure:'열린 계단을 따라 기록보관실로 내려가세요',
+ court_arrival:'입구 왼쪽 안내판에서 지하 우회 통로를 확인하세요',court_search:'경비일지와 비상전화 안내에서 금고 번호를 찾으세요 · 번호를 알면 바로 입력할 수 있습니다',court_code:'동측 경비초소 금고 · 기록에서 찾은 네 자리 번호를 맞추고 확인하세요',court_safe_open:'열린 금고 안에 걸린 지하문 열쇠를 챙기세요',court_unlocked:'금고에서 챙긴 열쇠로 북쪽 지하 기록보관실 문을 여세요',court_departure:'열린 계단을 따라 기록보관실로 내려가세요',
  archive_arrival:'기록보관실 입구의 인계 대장을 읽으세요',archive_search:'세 곳의 보관실에서 사고 당일 기록을 회수하세요',
  archive_edit:'북동쪽 편집실에서 원본을 재생하고 결정적인 순간에 증거 표시를 남기세요',
  archive_playback:'복원된 영상에서 지워진 아홉 초를 확인하세요',
@@ -27,7 +27,8 @@ export const expansionJournal={
  court_log:{title:'서측 초소 · 돌아온 차량',text:'입차 기록 03:26. 앞범퍼 파손. 운전자 2803호.\n\n당직 대체 근무자가 남긴 메모. 「차를 세우고 물어보려 했으나 운전자가 창문을 열지 않음. 검은 물이 차량 우측 문 아래로 흐름.」\n\n그날도, 오늘도 내 차가 이 건물 안으로 들어온다.'},
  court_phone:{title:'비상전화 · 돌아오는 대답',text:'비상통화 버튼을 눌렀다. 「여보세요. 누구 없어요?」\n\n연결음이 끊기자 스피커에서 내 목소리가 들렸다. 「잘못 거셨어요.」 나는 입을 다물고 있었는데, 같은 말이 세 번 반복됐다.\n\n단말의 안내와 통화 기록: 야간 당직 내선 17. 한서연. 내 목소리는 지금의 질문에 대답하고 있는 게 아니었다. 지하 통화 원본에 그때 누가 전화를 받았는지 남아 있을 것이다.'},
  court_evidence:{title:'놀이터 옆 · 주운 반사판',text:'놀이터 옆 점검대 위에 내 차의 깨진 전조등 조각이 있다. 빗물로 씻어도 홈 사이의 어두운 자국은 지워지지 않는다.\n\n곁에 떨어진 당직 수첩. 「아이들 등교 전에 정문 횡단보도 전등 점검. 우천 시 비상벨 확인.」\n\n그녀는 그날도 누군가 다치지 않도록 길을 확인하러 나갔다. 나는 휴대전화를 보느라 그 사람을 보지 않았다.'},
- court_confirm:{title:'경비초소 · 지하문 열쇠',text:'금고 안에 지하 기록보관실 열쇠가 있다. 열쇠에는 마른 흙과 검은 머리카락이 감겨 있다.\n\n함께 놓인 인계 쪽지. 「사고 신고 녹음은 원본 보존. 수신자가 녹음 삭제를 요청했으나 거절함.」\n\n나는 다음 날에도 전화를 했다. 신고하려고 한 것이 아니었다. 그것까지 지우려고 했던 것이다. 중정 건너편에서 몸을 끄는 소리가 난다.'},
+ court_confirm:{title:'경비초소 · 열린 금고',text:'번호를 맞추고 손잡이를 돌렸다. 무거운 철문이 열린다. 안쪽 고리에 지하문 열쇠가 걸려 있다.\n\n뒤판의 인계 쪽지. 「사고 신고 녹음 원본 보존. 차량 소유자 삭제 요청. 접수 거절.」'},
+ court_key:{title:'경비초소 · 지하문 열쇠',text:'고리에서 지하 기록보관실 열쇠를 뺐다. 차가운 금속이 손가락에 닿았다.\n\n나는 다음 날에도 전화를 했다. 신고하려고 한 것이 아니었다. 그것까지 지우려고 했던 것이다. 쪽지에 적힌 차량 소유자가 나라는 것을 알고 있다.\n\n중정 건너편에서 몸을 끄는 소리가 난다. 북쪽 지하 계단으로 가야 한다.'},
  annex_map:{title:'1층 · 나갈 수 없는 로비',text:'유리문 너머에 도로가 보인다. 출입문은 방범 셔터에 막혀 있고, 비상 해제 장치에는 물이 차 있다.\n\n안내도: 서측 세탁실·우편실 / 동측 경비 휴게실·통신실 / 중앙 경비실. 북쪽 방화문은 외부 중정으로 통한다. 정문 공사 중에는 중정의 지하 계단에서 기록보관실과 기계실을 거쳐 주차장으로 갈 수 있다.\n\n북쪽 문은 손잡이를 당겨도 열리지 않는다. 문 안의 잠금쇠가 움직일 때마다 중앙 교환기에서 수신 표시가 깜박인다. 우선 세탁실 정비대의 퓨즈로 통신실 전원을 살려야 한다.'},
  annex_fuse:{title:'세탁실 · 마르지 않는 소매',text:'회전이 멈춘 세탁기 안에 흰 천이 뭉쳐 있다. 문에는 안쪽에서 긁은 자국이 있다.\n\n정비대에 놓인 예비 퓨즈를 챙겼다. 한서연이 붙인 점검표에는 「침수 시 외부조명 차단. 배수와 환기 전원은 유지」라고 쓰여 있다. 이 건물의 어두운 곳마다 그녀가 다녀간 흔적이 남아 있다.'},
  annex_badge:{title:'경비 휴게실 · 마지막 당직',text:'사물함 앞 책상에 한서연의 명찰과 당직표가 놓여 있다. 퇴근 시각은 03:10. 여백에 「오늘은 정문으로. 지하 통로 누수」.\n\n그녀가 그 시각 횡단보도를 건넌 이유가 있었다. 휴게실 사진에는 주민들의 화분을 옮기는 모습이 남아 있다. 나는 얼굴도 모르는 사람을 죽였다고 생각했다. 매일 보던 사람이었다.'},
@@ -58,7 +59,7 @@ const steps:Partial<Record<Stage,[Action,Stage]>>={
  office_departure:['service_board','service_ride'],service_ride:['service_arrive','service_open'],service_open:['annex_enter','annex_arrival'],
  annex_arrival:['annex_map','annex_fuse'],annex_fuse:['annex_fuse','annex_restore'],annex_restore:['annex_restore','annex_search'],
  annex_unlock:['annex_line_home','annex_exit_ready'],annex_exit_ready:['annex_exit','annex_departure'],annex_departure:['court_enter','court_arrival'],
- court_arrival:['court_gate','court_search'],court_unlocked:['court_exit','court_departure'],court_departure:['archive_enter','archive_arrival'],
+ court_arrival:['court_gate','court_search'],court_safe_open:['court_key','court_unlocked'],court_unlocked:['court_exit','court_departure'],court_departure:['archive_enter','archive_arrival'],
  archive_arrival:['archive_ledger','archive_search'],archive_reveal:['archive_play','archive_playback'],archive_playback:['archive_finish','archive_escape'],archive_escape:['archive_exit','archive_departure'],archive_departure:['plant_enter','plant_arrival'],
  plant_arrival:['plant_diagram','plant_isolate'],plant_drain:['plant_drained','plant_exit_ready'],plant_exit_ready:['plant_exit','plant_departure'],plant_departure:['parking_enter','parking_gate'],
 };
@@ -77,7 +78,7 @@ export function plantProblem(s:PlantState){
 }
 function noted(s:Story,action:Action,stage:Stage=s.stage):Story{return {...s,stage,notes:[...new Set([...s.notes,action])]};}
 export function expansionTransition(s:Story,action:Action):Story|undefined{
- if(['court_search','court_code','court_unlocked'].includes(s.stage)&&(courtEvidence.includes(action)||action==='court_evidence')){
+ if(['court_search','court_code','court_safe_open','court_unlocked','court_departure'].includes(s.stage)&&(courtEvidence.includes(action)||action==='court_evidence')){
   if(s.notes.includes(action))return s;const next=noted(s,action);
   if(s.stage==='court_search'&&courtEvidence.every(a=>next.notes.includes(a)))next.stage='court_code';
   return next;
@@ -90,7 +91,7 @@ export function expansionTransition(s:Story,action:Action):Story|undefined{
  }
  if(s.stage==='court_search'||s.stage==='court_code'){
   if(action.startsWith('court_digit_')){const index=Number(action.at(-1)),digits=(s.code??'0000').split('');digits[index]=String((Number(digits[index])+1)%10);return {...s,stage:'court_code',code:digits.join('')};}
-  if(action==='court_confirm'&&s.code==='2617')return noted(s,action,'court_unlocked');
+  if(action==='court_confirm'&&s.code==='2617')return noted(s,action,'court_safe_open');
  }
  if(s.stage==='archive_edit'&&action.startsWith('archive_sequence_')){
   const order=['archive_sequence_road','archive_sequence_call','archive_sequence_gate'];if(!order.includes(action)||s.circuit.includes(action))return s;
@@ -131,8 +132,9 @@ export function expansionTargetActive(s:Story,id:Action){
  if(id==='archive_play')return s.stage==='archive_reveal';
  if(id.startsWith('archive_preview_')||id.startsWith('archive_record_'))return s.stage==='archive_edit';
  if(id.startsWith('court_digit_')||id==='court_confirm')return s.stage==='court_search'||s.stage==='court_code';
+ if(id==='court_key')return s.stage==='court_safe_open';
  if(id==='court_exit')return s.stage==='court_unlocked';
- if(id==='court_hangup')return ['court_search','court_code','court_unlocked'].includes(s.stage);
+ if(id==='court_hangup')return ['court_search','court_code','court_safe_open','court_unlocked','court_departure'].includes(s.stage);
  if(id.startsWith('annex_line_'))return false;
  if(id.startsWith('annex_digit_')||id==='annex_clear'||id==='annex_dial')return s.stage==='annex_unlock';
  if(id.startsWith('archive_sequence_'))return s.stage==='archive_edit';

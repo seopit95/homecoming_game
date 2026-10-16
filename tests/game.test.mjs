@@ -168,7 +168,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   const expansionStart=game.snapshot().elapsed;
   for(const [area,actions,nextStage] of [
    ['annex',[['annex_map','annex_fuse'],['annex_fuse','annex_restore'],['annex_restore','annex_search'],['annex_badge','annex_search'],['annex_notice','annex_search'],['annex_call','annex_search'],['annex_digit_2','annex_unlock'],['annex_digit_8','annex_unlock'],['annex_digit_0','annex_unlock'],['annex_digit_3','annex_unlock'],['annex_dial','annex_unlock'],['annex_exit','annex_departure']],'court_arrival'],
-   ['courtyard',[['court_gate','court_search'],['court_log','court_search'],['court_evidence','court_search'],['court_phone','court_search'],...Array.from('2617').flatMap((n,i)=>Array.from({length:Number(n)},()=>[`court_digit_${i}`,'court_code'])),['court_confirm','court_unlocked'],['court_exit','court_departure']],'archive_arrival'],
+   ['courtyard',[['court_gate','court_search'],['court_log','court_search'],['court_evidence','court_search'],['court_phone','court_search'],...Array.from('2617').flatMap((n,i)=>Array.from({length:Number(n)},()=>[`court_digit_${i}`,'court_code'])),['court_confirm','court_safe_open'],['court_key','court_unlocked'],['court_exit','court_departure']],'archive_arrival'],
    ['archive',[['archive_ledger','archive_search'],['archive_road','archive_search'],['archive_call','archive_search'],['archive_gate','archive_edit'],['archive_sequence_road','archive_edit'],['archive_sequence_call','archive_edit'],['archive_sequence_gate','archive_reveal'],['archive_play','archive_playback'],['archive_exit','archive_departure']],'plant_arrival'],
    ['plant',[['plant_diagram','plant_isolate'],['plant_valve_west','plant_isolate'],['plant_valve_east','plant_power'],['plant_filter','plant_power'],['plant_route','plant_power'],['plant_route','plant_power'],['plant_circuit_pump','plant_power'],['plant_circuit_air','plant_power'],['plant_start','plant_drain'],['plant_exit','plant_departure']],'parking_gate'],
   ]){
@@ -179,6 +179,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
      const path=findPath(renderedCamera.position,at,reference.solids,reference.bounds,.26);assert.ok(path.length,`route to ${id} from ${renderedCamera.position.toArray()} to ${JSON.stringify(at)}`);for(const p of path)runTo(p.x,p.z);
      if(id==='plant_exit'&&game.snapshot().story.stage==='plant_drain'){game.key('KeyW',true);tick(.05);game.key('KeyW',false);tick(12);}
      aim(renderedCamera.position.toArray(),t.point.toArray());game.interact();assert.equal(game.snapshot().story.stage,want,id);tick();
+     if(id==='court_confirm')tick(1.1);
      if(id==='court_phone'){tick(10.7);assert.equal(game.snapshot().story.stage,'court_code');}
      if(id==='annex_call'){tick(7.8);assert.equal(game.snapshot().story.stage,'annex_unlock');}
      if(id==='annex_dial'){tick(4.6);assert.equal(game.snapshot().story.stage,'annex_exit_ready');}
@@ -843,11 +844,11 @@ test('V66 retry cancels a pending call and restores the earned investigation wit
  finally{f.close();}
 });
 
-async function courtCallFixture(notes=['court_gate','court_log','court_evidence'],wait=0){
- const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'court_search',notes,circuit:[],elapsed:900,pursuit:wait>0,pursuitWait:wait});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
+async function courtCallFixture(notes=['court_gate','court_log','court_evidence'],wait=0,stage='court_search'){
+ const previous=win.localStorage;let raw=JSON.stringify({version:2,stage,notes,circuit:[],elapsed:900,pursuit:wait>0,pursuitWait:wait});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick(.1);
  const {buildWorld,disposeWorld}=await import('../lib/world.ts'),reference=buildWorld(new THREE.Scene(),'courtyard');
- function use(id){const t=reference.targets.find(t=>t.id===id);assert.ok(t,`physical emergency control ${id}`);const at=t.mesh.userData.approach;renderedCamera.position.set(at.x,1.65,at.z);const d=t.point.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
+ function use(id,position){const t=reference.targets.find(t=>t.id===id);assert.ok(t,`physical emergency control ${id}`);const at=position??t.mesh.userData.approach;renderedCamera.position.set(at.x,1.65,at.z);const d=t.point.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
  return {game,use,close(){game.dispose();disposeWorld(reference.root);win.localStorage=previous;}};
 }
 test('V68 emergency call is heard before collection, repeats the own-voice recording and permits movement and pause',async()=>{
@@ -878,5 +879,20 @@ test('V68 emergency ringback keeps one device loop while waiting for an answer',
 
 test('V68 legacy annex continue also retains a pending carried follower',async()=>{
  const f=await annexDialFixture('annex_unlock',14);try{for(const n of '2803')f.use('annex_digit_'+n);f.use('annex_dial');tick(11);assert.equal(f.game.snapshot().story.stage,'annex_exit_ready');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);tick(3.2);const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,true);f.reference.root.updateMatrixWorld(true);const meshes=[];f.reference.root.traverse(o=>{if(o.isMesh&&!f.reference.figure.getObjectById(o.id))meshes.push(o);});const floor=new THREE.Raycaster(new THREE.Vector3(ghost.position.x,.05,ghost.position.z),new THREE.Vector3(0,-1,0),0,.1).intersectObjects(meshes,false)[0];assert.ok(floor&&floor.distance<.051,'restored follower requires real floor inside the annex');const {findPursuitPath}=await import('../lib/navigation.ts');assert.ok(findPursuitPath(ghost.position,{x:0,z:31},f.reference.solids,f.reference.bounds).length,'restored follower needs a route to the arrival spine');const at=ghost.position.clone();tick(1);assert.ok(ghost.position.distanceTo(at)>.3,'released follower actually pursues through the real annex');}
+ finally{f.close();}
+});
+
+
+test('V69 an ongoing optional call completes into the journal after opening the exit',async()=>{
+ const f=await courtCallFixture(['court_gate','court_confirm','court_key'],0,'court_unlocked');try{f.use('court_phone');tick(1);f.use('court_exit');assert.equal(f.game.snapshot().story.stage,'court_departure');tick(10);assert.ok(f.game.snapshot().story.notes.includes('court_phone'));assert.equal(f.game.snapshot().story.stage,'court_departure');}
+ finally{f.close();}
+});
+
+test('V69 review: a departure call and repeated CALL require the heard recording before earning the clue',async()=>{
+ const f=await courtCallFixture(['court_gate','court_confirm','court_key'],0,'court_departure');try{voiceCalls.length=0;f.use('court_phone');assert.equal(f.game.snapshot().story.notes.includes('court_phone'),false);assert.match(f.game.snapshot().objective,/비상전화 연결 중/);tick(3);assert.deepEqual(voiceCalls,['archive-denial']);f.use('court_phone');assert.equal(f.game.snapshot().story.notes.includes('court_phone'),false);tick(8);assert.ok(f.game.snapshot().story.notes.includes('court_phone'));assert.equal(f.game.snapshot().story.stage,'court_departure');}
+ finally{f.close();}
+});
+test('V69 review: an opened safe rejects rear and side key pickup through its opaque case',async()=>{
+ const f=await courtCallFixture(['court_gate','court_confirm'],0,'court_safe_open');try{tick(1.2);f.use('court_key',{x:25,z:29.2});assert.equal(f.game.snapshot().story.stage,'court_safe_open','rear steel panel blocks the key');f.use('court_key',{x:23.9,z:29.9});assert.equal(f.game.snapshot().story.stage,'court_safe_open','side steel panel blocks the key');f.use('court_key');assert.equal(f.game.snapshot().story.stage,'court_unlocked','the open front still permits physical pickup');}
  finally{f.close();}
 });

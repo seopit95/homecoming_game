@@ -54,7 +54,7 @@ test('courtyard safe accepts the two useful clues and preserves partial input on
  writeProgress(storage,s,1300);assert.equal(readProgress(storage).code,'2000');
  assert.equal(checkpoint({...s,stage:'dying',resume:'court_code'}).code,'2000');
  for(const [i,n] of [[1,6],[2,1],[3,7]])for(let k=0;k<n;k++)s=transition(s,`court_digit_${i}`);
- s=act(s,'court_confirm','court_exit','archive_enter');assert.equal(s.stage,'archive_arrival');
+ s=act(s,'court_confirm','court_key','court_exit','archive_enter');assert.equal(s.stage,'archive_arrival');
 });
 
 test('a known safe code works after reading its instructions and optional evidence remains collectible',()=>{
@@ -63,7 +63,7 @@ test('a known safe code works after reading its instructions and optional eviden
  assert.equal(expansionTargetActive(s,'court_confirm'),true);
  assert.equal(transition(s,'court_confirm'),s,'an incorrect code still keeps the safe shut');
  for(const [i,n] of [[0,2],[1,6],[2,1],[3,7]])for(let k=0;k<n;k++)s=transition(s,`court_digit_${i}`);
- s=transition(s,'court_confirm');assert.equal(s.stage,'court_unlocked');
+ s=transition(s,'court_confirm');assert.equal(s.stage,'court_safe_open');s=transition(s,'court_key');assert.equal(s.stage,'court_unlocked');
  assert.equal(s.notes.includes('court_log'),false);assert.equal(s.notes.includes('court_phone'),false);
  s=transition(s,'court_evidence');assert.equal(s.stage,'court_unlocked');assert.ok(s.notes.includes('court_evidence'));
  assert.equal(transition(s,'court_evidence'),s,'rereading an optional record cannot reset progress');
@@ -76,7 +76,7 @@ test('an old search checkpoint with both code clues can unlock after load and re
  writeProgress(storage,original,1300);const saved=readProgress(storage);
  for(const s of [{...state(saved.stage),notes:saved.notes,code:saved.code},checkpoint(transition(transition(original,'caught'),'dead'))]){
   assert.equal(expansionTargetActive(s,'court_confirm'),true);
-  assert.equal(transition(s,'court_confirm').stage,'court_unlocked');
+  assert.equal(transition(s,'court_confirm').stage,'court_safe_open');
  }
 });
 

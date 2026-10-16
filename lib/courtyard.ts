@@ -6,6 +6,7 @@ import {surface,boxUV,softBox} from './materials.ts';
 import {roundPipe,createSedan,sedanSolids} from './props.ts';
 import {wetTexture} from './entry-props.ts';
 import {createGhost} from './ghost.ts';
+import {createCourtyardSafe} from './courtyard-safe.ts';
 import {createEmergencyPhone} from './emergency-phone.ts';
 import type {Solid,Target} from './world.ts';
 import type {Action,Stage,Story} from './story.ts';
@@ -185,11 +186,10 @@ export function buildCourtyard(root:T.Group){
  booth(-25,30,'서측 경비초소');booth(25,30,'동측 열쇠 보관 초소');
  box(-25,.81025,30,.65,.0005,.38,white);
  const log=sign('03:26 / 2803 입차\n금고: 입차 분 + 당직 내선',-25,.8105,30,.65,.38);log.rotation.x=-Math.PI/2;target('court_log','사흘 전 경비일지',log,[-25,.84,30.2],[-25,31.2]);
- box(25,1.22,30,.92,.82,.55,steel);box(25,1.22,30.292,.84,.73,.035,dark);
- const dials:T.Mesh[]=[];
- for(let i=0;i<4;i++){const x=24.72+i*.185,dial=sign('0',x,1.27,30.322,.14,.2);dial.material=new T.MeshBasicMaterial({map:(dial.material as T.MeshStandardMaterial).map,toneMapped:false});dials.push(dial);for(const dx of [-.079,.079])box(x+dx,1.27,30.34,.018,.235,.02,steel);for(const y of [1.155,1.385])box(x,y,30.34,.175,.02,.02,steel);target(`court_digit_${i}` as Action,`${i+1}번째 숫자 올리기`,dial,[x,1.27,30.35],[x,31.25]);}
- for(const y of [1,1.45])box(24.58,y,30.304,.058,.13,.065,steel);box(25.34,1.09,30.34,.035,.15,.045,steel);
- const confirm=box(25,1.01,30.342,.32,.07,.04,rust);target('court_confirm','금고 번호 확인',confirm,[25,1.01,30.38],[25,31.25]);const confirmLabel=sign('확인',25,1.01,30.365,.26,.052);confirmLabel.material=new T.MeshBasicMaterial({map:(confirmLabel.material as T.MeshStandardMaterial).map,toneMapped:false});
+ const courtSafe=createCourtyardSafe();root.add(courtSafe.root);solids.push(courtSafe.block);root.updateMatrixWorld(true);
+ for(let i=0;i<4;i++){const wheel=courtSafe.wheels[i],p=wheel.getWorldPosition(new T.Vector3());p.z+=.052;target(`court_digit_${i}` as Action,`${i+1}번째 숫자 올리기`,wheel,[p.x,p.y,p.z],[25,31.65]);targets.at(-1)!.precise=true;}
+ const handle=courtSafe.handle.getWorldPosition(new T.Vector3());target('court_confirm','번호 확인 · 금고 손잡이 돌리기',courtSafe.handle,[handle.x,handle.y,handle.z+.02],[25,31.65]);
+ const keyPoint=courtSafe.key.getWorldPosition(new T.Vector3());target('court_key','금고 안 지하문 열쇠 집기',courtSafe.key,[keyPoint.x,keyPoint.y,keyPoint.z],[25,31.65]);
  // Weather-protected hands-free emergency station, mounted to its steel backing.
  box(25,1.24,-32,1.5,2.48,.14,steel,true);box(25,2.52,-31.3,1.7,.12,1.6,steel);
  for(const x of [24.2,25.8])box(x,1.24,-31.3,.07,2.48,1.6,steel,true);
@@ -243,11 +243,11 @@ export function buildCourtyard(root:T.Group){
  connectionPassage(root,solids,lamps,doorX,-51,-2.8);for(const side of [-1,1])roundPipe(root,[doorX+side*1.22,.9,doorZ],[doorX+side*1.22,-1.9,-50.8],.023,steel);
  const stairLight=new T.PointLight('#869e90',3,10);stairLight.position.set(doorX,1.7,doorZ-.8);stairLight.userData.base=3;lamps.push(stairLight);root.add(stairLight);
  const figure=createGhost(root);figure.position.set(0,0,45);figure.visible=false;figure.rotation.y=Math.PI;
- let opened=-1,lastCode='';
+ let opened=-1;
  function updateStory(stage:Stage,time:number,reduced=false,story?:Story,occupants:Occupant[]=[]){
   if(stage==='court_departure'&&opened<0)opened=time;if(opened>=0)setDoorAngle(hinge,block,1.5*T.MathUtils.smoothstep(time-opened,0,.9),.7,0,occupants);
   swing.rotation.x=reduced?0:Math.sin(time*.7)*.055;
-  const code=story?.code??'0000';if(code!==lastCode){lastCode=code;dials.forEach((dial,i)=>{const m=dial.material as T.MeshStandardMaterial,c=m.map!.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#aab099';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#223a31';ctx.font='620px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(code[i],c.width/2,c.height/2);m.map!.needsUpdate=true;});}
+  if(story)courtSafe.update(stage,time,story,occupants);
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:31.8,z:58},spawn:new T.Vector3(0,1.65,44.5),heading:0,heightAt:(x:number,z:number)=>z<=-51&&x>doorX-1.2&&x<doorX+4.3?-2.8:Math.abs(x-doorX)<1.4&&z<doorZ? -Math.min(2.8,Math.max(0,(-z+doorZ-.2)/.34)*.14):0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,courtPhone,updateStory,reset(){opened=-1;lastCode='';courtPhone.setState('idle');}};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:31.8,z:58},spawn:new T.Vector3(0,1.65,44.5),heading:0,heightAt:(x:number,z:number)=>z<=-51&&x>doorX-1.2&&x<doorX+4.3?-2.8:Math.abs(x-doorX)<1.4&&z<doorZ? -Math.min(2.8,Math.max(0,(-z+doorZ-.2)/.34)*.14):0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,courtPhone,courtSafe,updateStory,reset(){opened=-1;courtSafe.reset();courtPhone.setState('idle');}};
 }
