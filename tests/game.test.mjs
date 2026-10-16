@@ -25,6 +25,26 @@ const {createGame}=await import('../lib/game.ts');
 const event=(target,type,properties)=>{const e=new Event(type);Object.assign(e,properties);target.dispatchEvent(e);};
 function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.min(.025,left)*1000;nextFrame(clock);}}
 
+test('V75 real resident input opens the physical drawer, earns its key and cannot postpone the returning pursuer with a late record',async()=>{
+ const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'resident_entry',notes:['belongings','answerphone','portrait'],elapsed:100})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ function aim(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
+ function use(pos,name){const mesh=renderedScene.getObjectByName(name);assert.ok(mesh,name);aim(pos,mesh.getWorldPosition(new THREE.Vector3()).toArray());assert.ok(game.snapshot().prompt,name+' must have a real input prompt');game.interact();}
+ try{await game.ready;tick();game.continueGame();tick();assert.equal(game.snapshot().story.stage,'resident_entry','three old records do not imply physical key possession');aim([0,1.65,-4.6],[0,1.25,-5.65]);game.interact();assert.equal(game.snapshot().story.stage,'resident_entry');assert.match(game.snapshot().message,/열쇠/);
+  use([3,1.65,-3.1],'resident-drawer-handle');tick(1);assert.ok(game.snapshot().story.notes.includes('resident_drawer'));use([3.06,1.65,-3.1],'resident-study-key-tag');assert.equal(game.snapshot().story.stage,'resident_return');assert.ok(game.snapshot().story.notes.includes('resident_key'));tick();assert.equal(renderedScene.getObjectByName('resident-study-key').visible,false);assert.ok(JSON.parse(data.get('homecoming.progress.v2')).notes.includes('resident_key'));
+  tick(3);use([2.45,1.65,-3.1],'resident-shift-page');assert.equal(game.snapshot().story.stage,'resident_return');const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(1.5);assert.ok(ghost.visible&&ghost.position.distanceTo(before)>.1,'a late optional record cannot reset the return grace period');aim([0,1.65,-4.6],[0,1.25,-5.65]);game.interact();assert.equal(game.snapshot().story.stage,'resident_departure');
+ }finally{game.dispose();win.localStorage=previous;}
+});
+test('V75 continuing with the resident key preserves the open desk and consumed pickup',async()=>{
+ const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['resident_drawer','resident_key'],elapsed:200}):null,setItem(){}};const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{await game.ready;tick();game.continueGame();tick();assert.equal(game.snapshot().story.stage,'resident_return');assert.equal(renderedScene.getObjectByName('resident-study-key').visible,false);tick(1);assert.ok(renderedScene.getObjectByName('resident-study-drawer').position.z>.4);assert.match(game.snapshot().objective,/연결문/);}finally{game.dispose();win.localStorage=previous;}
+});
+
+test('V75 a new optional record after key restore does not restart the entrance scare',async()=>{
+ const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['resident_drawer','resident_key'],elapsed:200}):null,setItem(){}};const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ try{await game.ready;tick();game.continueGame();tick();const page=renderedScene.getObjectByName('resident-shift-page'),at=page.getWorldPosition(new THREE.Vector3()),pos=[2.45,1.65,-3.1];renderedCamera.position.set(...pos);const d=at.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();soundCalls.length=0;game.interact();assert.ok(game.snapshot().story.notes.includes('resident_shift'));assert.equal(soundCalls.includes('knock'),false,'an optional record is not another key pickup');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the original remaining entrance delay is retained');}finally{game.dispose();win.localStorage=previous;}
+});
+
 test('leaving while shaders compile stops frames and defers GPU disposal until both scenes finish',async()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   pendingCompiles=[];const game=createGame(canvas,()=>{},()=>{}),jobs=pendingCompiles;pendingCompiles=null;
@@ -141,10 +161,11 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
     tick(1);aim(renderedCamera.position.toArray(),[3,1.65,-25.5],false);game.key('KeyW',true);for(let i=0;i<220&&game.snapshot().story.stage==='stairs_passage';i++)tick(.025);game.key('KeyW',false);
   assert.equal(game.snapshot().story.stage,'resident_arrival');assert.ok(renderedCamera.position.z>6,'arrive outside 1704');assert.ok(deviceLevels.phone>0);
   runTo(0,7.25);use([0,1.65,7.25],[0,1.25,6.12],'resident_entry');tick(1);runTo(0,4.05);
-  assert.equal(game.snapshot().threat,0,'the resident first visit leaves time to investigate');assert.equal(chaseLevel,0);assert.match(game.snapshot().objective,/0\/3/);
-  runTo(1.6,4.05);use([1.6,1.65,4.05],[1.6,.15,4.8],'resident_memory');assert.match(game.snapshot().objective,/1\/3.*자동응답기/);
-  runTo(0,4.05);runTo(-1.65,4.05);runTo(-3.8,2.8);use([-3.8,1.65,2.8],[-3.674,.785,3.51],'resident_memory');assert.match(game.snapshot().objective,/재생 중/);tick(5.4);assert.match(game.snapshot().objective,/2\/3.*냉장고/);assert.equal(deviceLevels.phone,0);
-  runTo(-1.6,3.15);runTo(0,3.15);runTo(3.8,3.15);use([3.8,1.65,3.15],[3.8,1.5,3.94],'resident_return');assert.match(game.snapshot().objective,/조사 완료/);
+  assert.equal(game.snapshot().threat,0,'the resident first visit leaves time to investigate');assert.equal(chaseLevel,0);assert.match(game.snapshot().objective,/0\/4/);
+  runTo(1.6,4.05);use([1.6,1.65,4.05],[1.6,.15,4.8],'resident_memory');assert.match(game.snapshot().objective,/1\/4/);
+  runTo(0,4.05);runTo(-1.65,4.05);runTo(-3.8,2.8);use([-3.8,1.65,2.8],[-3.674,.785,3.51],'resident_memory');assert.match(game.snapshot().objective,/재생 중/);tick(5.4);assert.match(game.snapshot().objective,/2\/4/);assert.equal(deviceLevels.phone,0);
+  runTo(-1.6,3.15);runTo(0,3.15);runTo(3.8,3.15);use([3.8,1.65,3.15],[3.8,1.5,3.94],'resident_memory');assert.match(game.snapshot().objective,/3\/4/);
+  runTo(0,3.15);runTo(0,-2.5);runTo(3,-2.5);runTo(3,-3.1);use([3,1.65,-3.1],[3,.621,-4.328],'resident_memory');tick(1);use([3.06,1.65,-3.1],[3.095,.55765,-4.07],'resident_return');runTo(3,-2.5);runTo(0,-2.5);
   runTo(0,3.15);runTo(0,-4.65);use([0,1.65,-4.65],[0,1.25,-5.65],'resident_departure');tick(1);
   runTo(0,-7.95);aim(renderedCamera.position.toArray(),[3,1.65,-7.95],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='resident_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'office_record');runTo(0,11.8);runTo(0,6.5);
   use([-3.7,1.65,2.8],[-3.7,.86,1.8],'office_fuse');
@@ -444,7 +465,7 @@ test('continue restores an earned chapter after disposal and a new game instance
   }finally{game.dispose();win.localStorage=previous;}
 });
 test('the resident return searches even when the player remains silent out of sight',async()=>{
-  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
+  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['resident_drawer','resident_key'],elapsed:0}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function use(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
   try{tick();game.continueGame();tick();use([1.6,1.65,3.65],[1.6,.3,4.8]);use([-3.8,1.65,2.2],[-3.674,.785,3.51]);use([3.8,1.65,2.8],[3.8,1.5,3.95]);tick(10);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(2);assert.ok(ghost.position.distanceTo(before)>1,'silent players still face a searching pursuer');assert.equal(game.snapshot().story.stage,'resident_return');}
@@ -452,7 +473,7 @@ test('the resident return searches even when the player remains silent out of si
 });
 
 for(const replay of [false,true])test(`V65 resident message ${replay?'replays independently after collection':'earns its clue only when the tape finishes'}`,async()=>{
-  const previous=win.localStorage,notes=replay?['belongings','portrait','answerphone']:['belongings','portrait'];
+  const previous=win.localStorage,notes=replay?['belongings','portrait','answerphone','resident_drawer','resident_key']:['belongings','portrait'];
   win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes,elapsed:100}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const game=createGame(canvas,()=>{},e=>assert.fail(e));
@@ -465,7 +486,7 @@ for(const replay of [false,true])test(`V65 resident message ${replay?'replays in
     assert.match(game.snapshot().objective,/재생 중/);tick(.7);game.interact();assert.deepEqual(voiceCalls,['memory'],'repeated E does not restart the same tape');
     game.pause();const at=game.snapshot().elapsed;tick(3);assert.equal(game.snapshot().elapsed,at);assert.equal(game.snapshot().story.notes.includes('answerphone'),replay);game.pause(false);
     aim([-2.4,1.65,4.6],[-2.4,1.65,5.4]);const before=renderedCamera.position.clone();game.key('KeyW',true);tick(.3);game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(before)>.3,'the player can leave the telephone while it plays');
-    tick(4.8);assert.equal(game.snapshot().story.stage,'resident_return');assert.equal(game.snapshot().story.notes.filter(n=>n==='answerphone').length,1);assert.doesNotMatch(game.snapshot().objective,/재생 중/);
+    tick(4.8);assert.equal(game.snapshot().story.stage,replay?'resident_return':'resident_memory');assert.equal(game.snapshot().story.notes.filter(n=>n==='answerphone').length,1);assert.doesNotMatch(game.snapshot().objective,/재생 중/);
     assert.equal(voiceCalls.filter(v=>v==='memory').length,1);
   }finally{game.dispose();win.localStorage=previous;}
 });
@@ -475,16 +496,16 @@ test('V65 other clues stay usable while the message runs without ending the inve
   win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['belongings'],elapsed:100}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function use(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt);game.interact();}
-  try{await game.ready;tick();game.continueGame();tick();use([-2.4,1.65,4.6],[-3.8,.82,3.52]);use([3.8,1.65,2.8],[3.8,1.5,3.94]);assert.ok(game.snapshot().story.notes.includes('portrait'));assert.equal(game.snapshot().story.notes.includes('answerphone'),false);assert.notEqual(game.snapshot().story.stage,'resident_return');tick(5.5);assert.equal(game.snapshot().story.stage,'resident_return');}
+  try{await game.ready;tick();game.continueGame();tick();use([-2.4,1.65,4.6],[-3.8,.82,3.52]);use([3.8,1.65,2.8],[3.8,1.5,3.94]);assert.ok(game.snapshot().story.notes.includes('portrait'));assert.equal(game.snapshot().story.notes.includes('answerphone'),false);assert.notEqual(game.snapshot().story.stage,'resident_return');tick(5.5);assert.equal(game.snapshot().story.stage,'resident_memory');assert.equal(game.snapshot().story.notes.includes('resident_key'),false);}
   finally{game.dispose();win.localStorage=previous;}
 });
 
 test('continuing 1704 preserves the remaining clue or restores an already completed investigation',()=>{
   const previous=win.localStorage;
-  for(const notes of [['belongings','answerphone'],['belongings','answerphone','portrait']]){
+  for(const notes of [['belongings','answerphone'],['belongings','answerphone','portrait'],['resident_drawer','resident_key']]){
     win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes,elapsed:200}):null,setItem(){},removeItem(){}};
     const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
-    try{tick();game.continueGame();tick();assert.deepEqual(game.snapshot().story.notes,notes);assert.match(game.snapshot().objective,notes.length===2?/2\/3.*냉장고/:/조사 완료/);assert.equal(game.snapshot().story.stage,notes.length===2?'resident_entry':'resident_return');}
+    try{tick();game.continueGame();tick();assert.deepEqual(game.snapshot().story.notes,notes);assert.match(game.snapshot().objective,/연결문|서재/);assert.equal(game.snapshot().story.stage,notes.includes('resident_key')?'resident_return':'resident_entry');}
     finally{game.dispose();win.localStorage=previous;}
   }
 });

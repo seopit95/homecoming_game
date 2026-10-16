@@ -7,6 +7,7 @@ import {createGhost} from './ghost.ts';
 import {nightWindow} from './japan.ts';
 import {dressLivingSpace} from './room-dressing.ts';
 import {createAnsweringMachine,createResidentPhoto} from './resident-props.ts';
+import {createResidentStudy} from './resident-study.ts';
 import {createLeatherShoe,wetTexture} from './entry-props.ts';
 import type {Solid,Target} from './world.ts';
 import type {Action,Stage} from './story.ts';
@@ -35,6 +36,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
   let frontDoor:T.Group|undefined,rearDoor:T.Group|undefined,frontBlock:Solid|undefined,rearBlock:Solid|undefined,frontAt=-1,rearAt=-1;
   let spawn=new T.Vector3(0,1.65,4.9),heading=0,door:T.Group|undefined,rain:T.LineSegments|undefined,carSolid:Solid|undefined;
   let answeringMachine:ReturnType<typeof createAnsweringMachine>|undefined;
+  let residentStudy:ReturnType<typeof createResidentStudy>|undefined;
   const wet=new T.MeshStandardMaterial({color:'#263637',roughness:.08,transparent:true,opacity:.4});
   if(resident){
     root.name='resident-1704';
@@ -90,8 +92,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
     box(3.92,1.408,3.956,.045,.021,.011,dark);
     const residentBed=bed(2,3.1,.505,wood,upholstery('#b0a68c'),upholstery('#727a69'));residentBed.name='resident-bed';residentBed.rotation.y=Math.PI;residentBed.position.set(-2.9,0,-3.4);root.add(residentBed);solids.push({x:-2.9,z:-3.4,w:2,d:3.1,y:.2525,h:.505},{x:-2.9,z:-5.01,w:2.1,d:.12,y:.72,h:1.2});
     const residentShelf=bookcase(1.8,2,.3,wood);residentShelf.name='resident-bookcase';residentShelf.rotation.y=Math.PI/2;residentShelf.position.set(-4.45,0,-3.9);root.add(residentShelf);solids.push({x:-4.45,z:-3.9,w:.3,d:1.8,y:1,h:2});
-    const residentDesk=writingTable(2,.81,.65,wood);residentDesk.name='resident-study-desk';residentDesk.position.set(3,0,-4.65);root.add(residentDesk);solids.push({x:3,z:-4.65,w:2,d:.65,y:.405,h:.81});
-    box(3,.86,-4.65,.42,.1,.26,paper);
+    residentStudy=createResidentStudy(wood);root.add(residentStudy.root);solids.push(...residentStudy.solids);targets.push(...residentStudy.targets);
     const receipt=label('관리비 납부 확인\n1704 · 한서연',-2.25,.455,1.98,.28,.17);receipt.rotation.x=-Math.PI/2;
     dressLivingSpace(root,solids,'resident');
     const window=new T.Mesh(new T.PlaneGeometry(2.4,1.5),nightWindow());window.position.set(2.7,1.85,-5.83);root.add(window);
@@ -137,6 +138,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
   }
   function updateStory(stage:Stage,time:number,reducedMotion=false,_story?:import('./story.ts').Story,occupants:Occupant[]=[]){
     if(resident){
+      residentStudy?.update(time,_story?.notes??[],occupants);
       const frontOpen=stage!=='resident_arrival',rearOpen=stage==='resident_departure';
       if(frontOpen&&frontAt<0)frontAt=time;
       if(rearOpen&&rearAt<0)rearAt=time;
@@ -147,7 +149,7 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
       if(carSolid){const i=solids.indexOf(carSolid);if(stage!=='road_exit'&&i<0)solids.push(carSolid);else if(stage==='road_exit'&&i>=0)solids.splice(i,1);}
       root.children.forEach(o=>{if(o.name==='rescue-light'&&o instanceof T.PointLight)o.intensity=stage==='road_wait'?(reducedMotion?3:Math.max(0,Math.sin(time*3+o.position.x))*14):0;});}
   }
-  return {bounds,solids,targets,lamps,figure,shoes,phoneGlow,radioLight,spawn,heading,answeringMachine,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,updateStory,reset(){frontAt=-1;rearAt=-1;}};
+  return {bounds,solids,targets,lamps,figure,shoes,phoneGlow,radioLight,spawn,heading,answeringMachine,residentStudy,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,updateStory,reset(){frontAt=-1;rearAt=-1;residentStudy?.reset();}};
 }
 
 // Both sides of the stair threshold render this exact gallery before the world changes.

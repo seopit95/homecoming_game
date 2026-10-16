@@ -98,6 +98,7 @@ test('every required interaction has a reachable position inside the apartment',
 for(const area of ['landing','lift','corridor','stairs','resident','office','parking','aftermath'])test(`${area}: all required interactions are reachable from the spawn`,()=>{
   const world=buildWorld(new THREE.Scene(),area);assert.ok(world.bounds,`${area} must provide its own walkable area`);
   if(area==='stairs'){world.updateStory('stairs_descent',0,false);world.updateStory('stairs_descent',1,false);}
+  if(area==='resident'){const story={...initialStory(),stage:'resident_memory',notes:['resident_drawer']};for(let i=0;i<80;i++)world.updateStory(story.stage,i/60,false,story);}
   if(area==='parking'){
     const story={...initialStory(),stage:'parking_key',notes:['car_passenger']};
     world.updateStory('parking_key',0,false,story);world.updateStory('parking_key',1.2,false,story);
