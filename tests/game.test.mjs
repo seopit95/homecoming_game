@@ -807,14 +807,20 @@ test('being caught leaves the latched bell ringing until the ended screen and re
  }finally{f.close();}
 });
 
-async function annexDialFixture(stage='annex_unlock',wait=0){
- const previous=win.localStorage,notes=['annex_map','annex_fuse','annex_badge','annex_notice',...(stage==='annex_unlock'?['annex_call']:[])];
+async function annexDialFixture(stage='annex_unlock',wait=0,earlyNotes){
+ const previous=win.localStorage,notes=earlyNotes??['annex_map','annex_fuse','annex_badge','annex_notice',...(stage==='annex_unlock'?['annex_call']:[])];
  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage,notes,circuit:[],elapsed:700,pursuit:wait>0,pursuitWait:wait}):null,setItem(){},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick(.1);
  const {buildWorld,disposeWorld}=await import('../lib/world.ts'),reference=buildWorld(new THREE.Scene(),'annex');
  function use(id){const target=reference.targets.find(t=>t.id===id);assert.ok(target,`physical control ${id} exists`);const at=target.mesh.userData.approach;renderedCamera.position.set(at.x,1.65,at.z);const dx=target.point.x-at.x,dy=target.point.y-1.65,dz=target.point.z-at.z,yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
  return {game,use,reference,close(){game.dispose();disposeWorld(reference.root);win.localStorage=previous;}};
 }
+test('V72 early annex recorder evidence requires the actual completed playback in each pre-power phase',async()=>{
+ for(const stage of ['annex_arrival','annex_fuse','annex_restore']){const notes=stage==='annex_arrival'?[]:['annex_map',...(stage==='annex_restore'?['annex_fuse']:[])],f=await annexDialFixture(stage,0,notes);try{voiceCalls.length=0;f.use('annex_call');assert.equal(f.game.snapshot().story.notes.includes('annex_call'),false,stage+' cannot grant an unheard clue');assert.deepEqual(voiceCalls,['archive-guard']);tick(3);assert.equal(f.game.snapshot().story.notes.includes('annex_call'),false);tick(4.9);assert.ok(f.game.snapshot().story.notes.includes('annex_call'));assert.equal(f.game.snapshot().story.stage,stage,'listening cannot bypass the map or fuse');}finally{f.close();}}
+});
+test('V72 a visible incoming or locally awakened annex pursuer can catch the player before power restoration',async()=>{
+ for(const [stage,wait] of [['annex_arrival',.2],['annex_fuse',.2],['annex_restore',.2],['annex_fuse',0]]){const notes=['annex_badge','annex_notice',...(stage==='annex_arrival'?[]:['annex_map']),...(stage==='annex_restore'?['annex_fuse']:[])],f=await annexDialFixture(stage,wait,notes);try{renderedCamera.position.set(0,1.65,-20);tick(wait?2.5:10.2);const ghost=renderedScene.getObjectByName('resident-remains');assert.ok(ghost.visible,'original pursuit should be active');ghost.position.set(0,0,-19.5);tick(.1);assert.equal(f.game.snapshot().story.stage,'dying',stage+' must not allow a visible pursuer through the player');}finally{f.close();}}
+});
 test('V66 last receiver is dialled physically and only a completed callback releases the exit',async()=>{
  const f=await annexDialFixture();try{assert.equal(renderedScene.getObjectByName('annex-intercom-phone')?.name,'annex-intercom-phone');for(const n of '2803')f.use('annex_digit_'+n);f.use('annex_dial');assert.equal(f.game.snapshot().story.stage,'annex_unlock');assert.match(f.game.snapshot().objective,/2803호 호출 중/,JSON.stringify(f.game.snapshot()));tick(.6);f.use('annex_dial');f.game.pause();const t=f.game.snapshot().elapsed;tick(4);assert.equal(f.game.snapshot().elapsed,t);f.game.pause(false);const p=renderedCamera.position.clone();f.game.key('KeyS',true);tick(.3);f.game.key('KeyS',false);assert.ok(p.distanceTo(renderedCamera.position)>.3);tick(6);assert.equal(f.game.snapshot().story.stage,'annex_exit_ready');assert.ok(f.game.snapshot().story.notes.includes('annex_line_home'));assert.equal(deviceLevels.ringback,0);}
  finally{f.close();}

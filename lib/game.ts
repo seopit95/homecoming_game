@@ -198,7 +198,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   const dialogue:Partial<Record<Action,string>>={
     ...Object.fromEntries(Object.entries(expansionJournal).map(([id,n])=>[id,n.text.split('\n\n')[0]+'\nJ키로 전체 기록을 다시 읽을 수 있다.'])),
-    annex_restore:'통신 전원이 돌아왔다. 복도 끝에서 젖은 손이 바닥을 짚는다.\n명찰·반송 안내문·비상벨 기록을 찾아 호출의 수신처를 확인하자.',
+    annex_restore:'통신 전원을 연결했다.\n명찰·반송 안내문·비상벨 기록으로 마지막 호출의 수신처를 확인하자.',
     annex_exit:'방화문 너머로 빗소리가 들린다. 중정 정문으로 나가 보자.',
     court_exit:'지하 계단 문이 열렸다. 기록보관실로 내려가자.',
     archive_exit:'북쪽 기계실 연결문이 열렸다. 좁은 통로로 빠져나가자.',
@@ -255,7 +255,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       reviewArchive(action);return;
     }
     if(action==='answerphone'&&area==='resident'){playRecording();return;}
-    if(action==='annex_call'&&area==='annex'&&['annex_search','annex_unlock','annex_exit_ready'].includes(story.stage)){playRecording('annex_call');return;}
+    if(action==='annex_call'&&area==='annex'){playRecording('annex_call');return;}
     if(story.stage==='annex_unlock'&&(action.startsWith('annex_digit_')||action==='annex_dial'||action==='annex_clear')){operateIntercom(action);return;}
     if(area==='courtyard'&&(action==='court_hangup'||action==='court_phone'&&!story.notes.includes('court_phone')&&['court_search','court_code','court_safe_open','court_unlocked','court_departure'].includes(story.stage))){operateCourtPhone(action);return;}
     if(action==='pry'){say('문을 바라본 채 E 또는 화면의 문 벌리기 버튼을 길게 누르세요.',4);return;}

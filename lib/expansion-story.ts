@@ -83,15 +83,21 @@ export function plantProblem(s:PlantState){
 function noted(s:Story,action:Action,stage:Stage=s.stage):Story{return {...s,stage,notes:[...new Set([...s.notes,action])]};}
 export function expansionTransition(s:Story,action:Action):Story|undefined{
  if(s.stage.startsWith('annex_')&&action==='annex_front_exit')return s.notes.includes(action)?s:noted(s,action);
+ if(s.stage.startsWith('annex_')&&annexEvidence.includes(action)){
+  if(s.notes.includes(action))return s;const next=noted(s,action);
+  if(s.stage==='annex_search'&&annexEvidence.every(a=>next.notes.includes(a)))next.stage='annex_unlock';
+  return next;
+ }
+ if(s.stage==='annex_arrival'&&action==='annex_fuse')return s.notes.includes(action)?s:noted(s,action);
  if(['court_search','court_code','court_safe_open','court_unlocked','court_departure'].includes(s.stage)&&(courtEvidence.includes(action)||action==='court_evidence')){
   if(s.notes.includes(action))return s;const next=noted(s,action);
   if(s.stage==='court_search'&&courtEvidence.every(a=>next.notes.includes(a)))next.stage='court_code';
   return next;
  }
- const collection=s.stage==='annex_search'?annexEvidence:s.stage==='archive_search'?archiveEvidence:s.stage==='plant_isolate'?['plant_valve_west','plant_valve_east'] as Action[]:undefined;
+ const collection=s.stage==='archive_search'?archiveEvidence:s.stage==='plant_isolate'?['plant_valve_west','plant_valve_east'] as Action[]:undefined;
  if(collection?.includes(action)){
   if(s.notes.includes(action))return s;const next=noted(s,action);
-  if(collection.every(a=>next.notes.includes(a)))next.stage=s.stage==='annex_search'?'annex_unlock':s.stage==='archive_search'?'archive_edit':'plant_power';
+  if(collection.every(a=>next.notes.includes(a)))next.stage=s.stage==='archive_search'?'archive_edit':'plant_power';
   return next;
  }
  if(s.stage==='court_search'||s.stage==='court_code'){
@@ -118,6 +124,8 @@ export function expansionTransition(s:Story,action:Action):Story|undefined{
  }
  const step=steps[s.stage];if(step?.[0]!==action)return undefined;
  const next=action in expansionJournal?noted(s,action,step[1]):{...s,stage:step[1]};
+ if(s.stage==='annex_arrival'&&s.notes.includes('annex_fuse'))next.stage='annex_restore';
+ if(s.stage==='annex_restore'&&annexEvidence.every(a=>s.notes.includes(a)))next.stage='annex_unlock';
  if(s.stage==='archive_departure'||s.stage==='annex_departure')next.circuit=[];
  return next;
 }
@@ -125,7 +133,7 @@ export function expansionObjective(s:Story){
  if(s.stage==='court_search')return `금고 단서 ${courtEvidence.filter(a=>s.notes.includes(a)).length}/2 · 서측 경비일지 / 동측 비상전화 · 번호를 알면 금고에 입력하세요`;
  if(s.stage==='court_code')return `경비초소 금고 ${s.code??'0000'} · 입차한 분 두 자리 + 야간 당직 내선 두 자리`;
  const ids=s.stage==='annex_search'?annexEvidence:s.stage==='archive_search'?archiveEvidence:undefined;
- if(ids){const missing=ids.filter(a=>!s.notes.includes(a));const places:Partial<Record<Action,string>>={annex_badge:'동측 경비 휴게실 · 당직 책상',annex_notice:'서측 우편실 · 반송함',annex_call:'동측 통신실 · 녹음기',archive_road:'서측 A실 · 도로 기록',archive_call:'동측 B실 · 통화 기록',archive_gate:'서측 C실 · 입차 기록'};return `기록 ${ids.length-missing.length}/${ids.length} · ${missing.map(a=>places[a]).join(' / ')}`;}
+ if(ids){const missing=ids.filter(a=>!s.notes.includes(a));const places:Partial<Record<Action,string>>={annex_badge:'동측 경비 휴게실 · 당직 책상',annex_notice:'서측 우편실 · 반송 접수대',annex_call:'동측 통신실 · 녹음기',archive_road:'서측 A실 · 도로 기록',archive_call:'동측 B실 · 통화 기록',archive_gate:'서측 C실 · 입차 기록'};return `기록 ${ids.length-missing.length}/${ids.length} · ${missing.map(a=>places[a]).join(' / ')}`;}
  if(s.stage==='archive_edit')return `${expansionObjectives.archive_edit} (${s.circuit.length}/3)`;
  if(s.stage==='plant_isolate')return `${expansionObjectives.plant_isolate} (${['plant_valve_west','plant_valve_east'].filter(a=>s.notes.includes(a)).length}/2)`;
  if(s.stage==='plant_power')return `흡입망 ${plantFilterCleared(s)?'확인':'막힘'} · 토출 ${plantRoute(s)==='drain'?'외부배수':plantRoute(s)==='closed'?'차단':'집수정 환수'} · 서측 설비 확인 후 동측 전기실에서 기동하세요`;

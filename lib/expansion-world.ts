@@ -12,12 +12,13 @@ import {archiveReplay,plantRoute,plantFilterCleared,plantProblem,type ExpansionA
 import {storageMaterials,storageShelf} from './storage.ts';
 import {createCRT,crtScreenGeometry,crtCable,createCrtSocket} from './crt-monitor.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
-import {facilityTable,facilityChair,laundryMachine,dryingRail,waterTank,pumpSkid,cartridgeFuse,videoCassette} from './facility-props.ts';
+import {facilityTable,facilityChair,waterTank,pumpSkid,cartridgeFuse,videoCassette} from './facility-props.ts';
 import {createAnsweringMachine} from './resident-props.ts';
 import {facilityModel} from './facility-models.ts';
 import {createArchiveReview,archiveClips,archiveCamera} from './archive-review.ts';
 import {createArchiveDeck} from './archive-deck.ts';
 import {buildAnnexLobby} from './annex-lobby.ts';
+import {buildAnnexWestWing} from './annex-west-wing.ts';
 
 export const expansionLayout={
  courtyard:courtyardLayout,
@@ -117,23 +118,13 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   target('annex_map','공동시설 안내도',lobby.map,[-1.89,1.52,29],[-.8,29]);
   target('annex_front_exit','정문 손잡이 확인',lobby.door,lobby.frontPoint.toArray(),[15.8,29.64]);
   // Mail slots, laundry machines, employee lockers and the abandoned switchboard.
-  box(-X-.275,.195,23,4.65,.39,.4,metal);box(-X-.275,.78,22.81,4.65,1.56,.08,metal);
-  for(let row=0;row<3;row++)for(let col=0;col<8;col++){const x=-X-2.2+col*.55,z=23;box(x,.55+row*.39,z,.51,.34,.3,metal);box(x,.55+row*.39,z+.158,.48,.31,.015,blue);box(x,.61+row*.39,z+.17,.28,.015,.013,dark);box(x+.18,.50+row*.39,z+.173,.027,.035,.015,metal);box(x-.22,.55+row*.39,z+.173,.012,.14,.012,metal);if(row===2)label(String(2701+col),x,.43+row*.39,z+.167,.26,.065);}
-  solids.push({x:-X-.275,z:23,w:4.65,d:.4,y:.95,h:1.9});
+  buildAnnexWestWing(root,solids);
   evidenceDesk('annex_notice','2803호 · 반송 안내문',-X,20);
   evidenceDesk('annex_fuse','통신용 퓨즈 · 정비표',-X,0);
   box(-X+.49,.8205,0,.12,.001,.075,paper);
   looseFuse=cartridgeFuse(metal);looseFuse.name='annex-fuse-pickup';looseFuse.position.set(-X+.49,.8248,0);root.add(looseFuse);
   const fuseTarget=targets.find(t=>t.id==='annex_fuse')!;fuseTarget.mesh=looseFuse;fuseTarget.point.set(-X+.49,.83,0);looseFuse.userData.approach={x:-X+.49,z:1};
   const fuseLabel=label('6A · 통신 예비',-X+.49,.8211,-.025,.1,.018);fuseLabel.rotation.x=-Math.PI/2;
-  const enamel=surface('steel','#b4b7ad',{roughness:.64,metalness:.15}),cloth=upholstery('#727b6e'),paleCloth=upholstery('#c5c0af');
-  for(const x of [-X-2.7,-X+1.7])for(const z of [-3,3]){
-   const washer=laundryMachine(enamel,metal,dark,glass);washer.position.set(x,0,z);root.add(washer);solids.push({x,z:z-.05,w:.9,d:1.02,y:.52,h:1.04});
-   label('세탁 / 탈수',x-.15,.9,z+.437,.32,.045,0,true);
-   box(x-.13,1.083,z,.44,.086,.42,paleCloth);
-  }
-  const rail=dryingRail(metal,cloth,paleCloth);rail.position.set(-X,0,-6);root.add(rail);
-  for(let i=0;i<5;i++)solids.push({x:-X-2+i*.85,z:-6,w:.78,d:.065,y:1.60,h:.94});
   for(let i=0;i<5;i++){const x=X-2.4+i*.9;box(x,1.04,23,.82,2.08,.58,metal,true);box(x,1.06,23.305,.75,1.96,.027,blue);box(x+.23,1.14,23.338,.028,.16,.034,dark);for(const y of [.32,.36,.40,1.89,1.93])box(x,y,23.324,.46,.012,.016,dark);for(const y of [.40,1.65])box(x-.36,y,23.328,.026,.11,.025,metal);box(x,.08,23,.86,.16,.62,dark);label(i===2?'한서연':'당직',x,1.77,23.325,.42,.18);}
   evidenceDesk('annex_badge','한서연 · 야간 당직 명찰',X,20);const shoe=createLeatherShoe('#242a27',false);shoe.position.set(X+1.3,0,23.5);root.add(shoe);
   badge=new T.Group();badge.name='annex-badge-pickup';badge.position.set(X+.49,.821,20);root.add(badge);
