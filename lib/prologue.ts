@@ -5,7 +5,7 @@ import {sedanWindshieldPoint} from './sedan.ts';
 import {extremity} from './ghost-anatomy.ts';
 import {createPedestrian} from './pedestrian.ts';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {surface,boxUV,softBox,handSkinMaterial,upholstery} from './materials.ts';
+import {sharePrintedTexture,surface,boxUV,softBox,handSkinMaterial,upholstery} from './materials.ts';
 import {createLeatherShoe} from './entry-props.ts';
 import {createGhost,animateGhostPassenger} from './ghost.ts';
 import {opening,openingTiming as beats,finale,finaleTiming as endingBeats,type Stage} from './story.ts';
@@ -27,7 +27,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   function tube(points:number[][],r:number,m:T.Material,parent:T.Object3D=root){return mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p as [number,number,number]))),20,r,6,false),m,[0,0,0],parent);}
   function label(text:string,w:number,h:number,p:number[],parent:T.Object3D=root,background='#111c22',ink='#c6d0c4'){
     const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d')!;ctx.fillStyle=background;ctx.fillRect(0,0,512,128);ctx.fillStyle=ink;ctx.font='42px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,69);
-    const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;return mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map}),p,parent);
+    const map=sharePrintedTexture(new T.CanvasTexture(c),['road-label-v1',text,background,ink]);map.colorSpace=T.SRGBColorSpace;return mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map}),p,parent);
   }
   const roadCenter=escapeDrive?-6.5:18,roadLength=escapeDrive?311:360;
   box(0,-.12,roadCenter,9,.24,roadLength,asphalt);

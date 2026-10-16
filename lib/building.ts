@@ -10,7 +10,7 @@ import {buildCourtyard} from './courtyard.ts';
 import {buildExpansion} from './expansion-world.ts';
 import type {Area,Action,Stage,Story} from './story';
 import type {Bounds,Solid,Target} from './world';
-import {surface,boxUV,softBox} from './materials.ts';
+import {sharePrintedTexture,surface,boxUV,softBox} from './materials.ts';
 import {roundPipe,doorHardware,createSedan,sedanSolids} from './props.ts';
 import {wetTexture} from './entry-props.ts';
 import {nightWindow} from './japan.ts';
@@ -36,10 +36,11 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   if(area==='parking'){floorMat.normalScale.setScalar(.28);floorMat.roughness=.72;}
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false){const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
   function wall(x:number,z:number,w:number,d:number,y=ceiling/2,h=ceiling){const mesh=box(x,y,z,w,h,d,wallMat,true);box(x,y-h/2+.46,z,w+.012,.9,d+.012,area==='lift'?metal:parkingLower);return mesh;}
-  function label(text:string,x:number,y:number,z:number,ry=0,w=1.1,h=.26,color='#c9ceaf',background='#25372f',lit=false){
-    const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;
+  function label(text:string,x:number,y:number,z:number,ry=0,w=1.1,h=.26,color='#c9ceaf',background='#25372f',lit=false,dynamic=false){
+    let c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);let ctx=c.getContext('2d')!;const texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;let shared=false;
     const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map:texture}):new T.MeshStandardMaterial({map:texture,roughness:.9}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);
     const update=(text:string)=>{
+      if(shared){const width=c.width,height=c.height;texture.dispose();c=document.createElement('canvas');c.width=width;c.height=height;ctx=c.getContext('2d')!;texture.source=new T.Source(c);shared=false;}
       const lines=text.split('\n'),font=Math.min(lines.length===1?c.height*.56:c.height/(lines.length*1.55),700/Math.max(1,...lines.map(line=>[...line].length)));
       ctx.fillStyle=background;ctx.fillRect(0,0,c.width,c.height);
       if(lines.length>1){
@@ -49,7 +50,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       }
       ctx.fillStyle=color;ctx.font=`${font}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
       lines.forEach((line,i)=>ctx.fillText(line,c.width/2,c.height/2+(i-(lines.length-1)/2)*font*1.35));texture.needsUpdate=true;
-    };update(text);return {mesh,update};
+    };update(text);if(!dynamic){sharePrintedTexture(texture,['building-label-v1',text,color,background]);shared=true;}return {mesh,update};
   }
   function light(x:number,y:number,z:number,color='#a4b7a7',intensity=4,range=8){const l=new T.PointLight(color,intensity,range,2);l.position.set(x,y,z);l.userData.base=intensity;root.add(l);lamps.push(l);return l;}
   function fixture(x:number,z:number,on=true,y=ceiling-.08){box(x,y+.04,z,.14,.08,.9,metal);box(x,y,z,.22,.08,1.1,metal);box(x,y-.048,z,.09,.018,.92,mat('#bec5b0',{emissive:'#a0b09d',emissiveIntensity:on?.6:0}));if(on)light(x,y-.12,z);}
@@ -92,7 +93,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const left=box(-.315,1.14,dz,.62,2.28,.06,metal),right=box(.315,1.14,dz,.62,2.28,.06,metal);left.name='lift-door-left';right.name='lift-door-right';const blocks:Solid[]=[{x:-.315,z:dz,w:.62,d:.06,y:1.14,h:2.28},{x:.315,z:dz,w:.62,d:.06,y:1.14,h:2.28}];solids.push(...blocks);liftDoors={left,right,blocks};
     for(const x of [-.7,.7])box(x,1.18,dz,.12,2.36,.16,dark);box(0,2.38,dz,1.52,.12,.16,metal);
     box(0,2.54,-bz+.107,.44,.22,.034,dark);
-    const display=label('28',0,2.54,-bz+.127,0,.36,.15,'#cb6f3e','#111510',true);setDisplay=display.update;
+    const display=label('28',0,2.54,-bz+.127,0,.36,.15,'#cb6f3e','#111510',true,true);setDisplay=display.update;
     box(0,.012,dz,1.35,.023,.22,metal);
     for(const x of [-.3,-.1,.1,.3])box(x,.026,dz,.012,.006,.22,dark);
     if(area==='landing'){
@@ -180,7 +181,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const note=label('백로아파트 · 시설 연락 메모\n\n같은 층으로 돌아왔다면\n계단 표지 아래를 확인하세요.\n\n17층 외벽 공사 / 임시 관리실 1703호\n야간 당직 한서연 · 내선 17\n부재 시 1704호로 연락 바랍니다.\n\n28 가 0317   /   03:17\n03:17   03:17   03:17\n\n그때 멈췄어야지.',1.25,1.65,5.904,Math.PI,.297,.42,'#34392e','#c6bfa6');note.mesh.name='stairs-clue-panel';
     for(const x of [1.14,1.36])box(x,1.865,5.903,.026,.02,.014,metal);
     target('stair_note','계단 점검 메모 읽기',note.mesh,1.25,1.65,5.7);
-    const floorLabel=label('23층',-1.89,2,3,Math.PI/2,.9,.55);label('↓ 아래층',1.906,1.35,3,-Math.PI/2,.65,.2);
+    const floorLabel=label('23층',-1.89,2,3,Math.PI/2,.9,.55,undefined,undefined,false,true);label('↓ 아래층',1.906,1.35,3,-Math.PI/2,.65,.2);
     light(0,3.2,3,'#8f9c83',5);light(-1,5.3,-4.8,'#b0a17b',3);light(1,-.3,-4.8,'#769789',3);
     // A physically connected second well makes the repeated floor believable
     // even when the player looks back. Neither actor changes coordinate space.
@@ -259,7 +260,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const mainRelay=new T.Mesh(new T.CylinderGeometry(.04,.04,.035,24),red);mainRelay.rotation.z=Math.PI/2;mainRelay.position.set(5.445,.95,-3.45);mainRelay.name='office-main-relay';root.add(mainRelay);
     target('security_power','선택한 회로에 비상전원 투입',mainRelay,5.415,.95,-3.45);targets.at(-1)!.precise=true;mainRelay.userData.approach={x:4.55,z:-3.45};
     label('전원 투입',5.5097,1.15,-3.45,-Math.PI/2,.4,.12);
-    const loadDisplay=label('퓨즈 없음',5.5097,.76,-4,-Math.PI/2,1.15,.15);let powerCaption='';
+    const loadDisplay=label('퓨즈 없음',5.5097,.76,-4,-Math.PI/2,1.15,.15,undefined,undefined,false,true);let powerCaption='';
     label('서고',-3,2.3,-1.531,0,.65,.2);label('배전반',3,2.3,-1.531,0,.8,.2);
     box(3.8,.75,3.8,2.1,.1,1.25,wood,true);for(const x of [2.9,4.7])for(const z of [3.3,4.3])box(x,.35,z,.07,.7,.07,metal);box(3.8,.48,3.3,1.9,.4,.05,wood);
     for(let z=2.7;z<6;z+=.7){box(5.4,1.15,z,.45,2.3,.55,metal,true);for(const y of [.35,.9,1.45,2]){box(5.166,y,z,.02,.5,.5,metal);box(5.146,y,z,.035,.035,.18,dark);}}

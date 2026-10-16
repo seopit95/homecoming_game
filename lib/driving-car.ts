@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {createSedan} from './sedan.ts';
-import {softBox,upholstery} from './materials.ts';
+import {softBox,upholstery,sharePrintedTexture} from './materials.ts';
 import {carSeatBag} from './facility-props.ts';
 
 // One complete sedan for memory, garage and escape. Canonical forward is -Z,
@@ -13,7 +13,7 @@ export function createDrivingCar(damaged=true,passengerAccess=false){
   const rubber=new T.MeshStandardMaterial({color:'#202623',roughness:.8});
   const steel=new T.MeshStandardMaterial({color:'#a2a8a7',metalness:.8,roughness:.35});
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,parent:T.Object3D=root){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);parent.add(o);return o;}
-  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#a6ad9a';ctx.fillRect(0,0,512,128);ctx.fillStyle='#2b3027';ctx.font='64px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('28 가 0317',256,64);const plateMap=new T.CanvasTexture(canvas);plateMap.colorSpace=T.SRGBColorSpace;
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#a6ad9a';ctx.fillRect(0,0,512,128);ctx.fillStyle='#2b3027';ctx.font='64px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('28 가 0317',256,64);const plateMap=sharePrintedTexture(new T.CanvasTexture(canvas),['hero-car-plate-v1']);plateMap.colorSpace=T.SRGBColorSpace;
   const plateMaterial=new T.MeshStandardMaterial({map:plateMap,roughness:.9});for(const end of [-1,1]){const plate=new T.Mesh(new T.PlaneGeometry(.47,.11),plateMaterial);plate.position.set(0,.548,end*2.263);plate.rotation.y=end>0?0:Math.PI;root.add(plate);}
   const dashboard=upholstery('#252a29');dashboard.bumpScale=.00035;
   const cluster=new T.Group();cluster.position.set(-.38,1.005,-.73);root.add(cluster);
@@ -21,7 +21,7 @@ export function createDrivingCar(damaged=true,passengerAccess=false){
   paint.fillStyle='#080c0c';paint.fillRect(0,0,1024,384);paint.textAlign='center';paint.textBaseline='middle';paint.font='28px sans-serif';paint.fillStyle='#c3c9b8';
   for(let gauge=0;gauge<2;gauge++)for(let i=0;i<=(gauge?9:8);i++){const angle=-2.3+i*4.6/(gauge?9:8);paint.fillText(String(gauge?i*20:i),256+gauge*512+Math.sin(angle)*127,192-Math.cos(angle)*127);}
   paint.font='24px sans-serif';paint.fillText('×1000',256,240);paint.fillText('km/h',768,240);paint.fillStyle='#8ca78f';paint.font='34px monospace';paint.fillText('03:17',512,240);
-  const atlas=new T.CanvasTexture(c);atlas.colorSpace=T.SRGBColorSpace;
+  const atlas=sharePrintedTexture(new T.CanvasTexture(c),['hero-car-instruments-v1']);atlas.colorSpace=T.SRGBColorSpace;
   const instruments=new T.MeshStandardMaterial({map:atlas,roughness:.6,emissiveMap:atlas,emissive:'#a0b49b',emissiveIntensity:.18});
   const housing=new T.Mesh(softBox(.414,.166,.042,.024),dashboard);cluster.add(housing);
   const face=new T.Mesh(new T.PlaneGeometry(.37,.135),instruments);face.position.z=.022;cluster.add(face);

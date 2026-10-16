@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {boxUV,softBox} from './materials.ts';
+import {boxUV,softBox,sharePrintedTexture} from './materials.ts';
 
 type Tile={x:number;y:number;w:number;h:number};
 const binderTile=(i:number):Tile=>({x:(i%8)*128,y:0,w:128,h:512});
@@ -32,12 +32,12 @@ export function storageMaterials(){
   }
   // The inner cardboard receives little indirect light through the small handhold.
   ctx.fillStyle='#201d17';ctx.fillRect(0,800,128,128);
-  const atlas=new T.CanvasTexture(canvas);atlas.colorSpace=T.SRGBColorSpace;atlas.anisotropy=8;
+  const atlas=sharePrintedTexture(new T.CanvasTexture(canvas),['storage-covers-v1']);atlas.colorSpace=T.SRGBColorSpace;atlas.anisotropy=8;
   const printed=new T.MeshStandardMaterial({map:atlas,roughness:.89});printed.name='storage-covers-and-cartons';
   const pages=document.createElement('canvas');pages.width=pages.height=256;const pageCtx=pages.getContext('2d')!;
   pageCtx.fillStyle='#c6bda3';pageCtx.fillRect(0,0,256,256);
   for(let y=0;y<256;y+=2){pageCtx.fillStyle=y%6?'#b9b298':'#a9a48d';pageCtx.fillRect(0,y,256,1);}
-  const pageMap=new T.CanvasTexture(pages);pageMap.colorSpace=T.SRGBColorSpace;pageMap.anisotropy=8;
+  const pageMap=sharePrintedTexture(new T.CanvasTexture(pages),['storage-pages-v1']);pageMap.colorSpace=T.SRGBColorSpace;pageMap.anisotropy=8;
   const paper=new T.MeshStandardMaterial({map:pageMap,roughness:.96});paper.name='storage-paper-edges';
   return {printed,paper};
 }

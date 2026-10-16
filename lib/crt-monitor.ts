@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {softBox} from './materials.ts';
+import {softBox,sharePrintedTexture} from './materials.ts';
 
 function outline(w:number,h:number,r:number){const x=w/2,y=h/2,s=new T.Shape();s.moveTo(-x+r,-y);s.lineTo(x-r,-y);s.quadraticCurveTo(x,-y,x,-y+r);s.lineTo(x,y-r);s.quadraticCurveTo(x,y,x-r,y);s.lineTo(-x+r,y);s.quadraticCurveTo(-x,y,-x,y-r);s.lineTo(-x,-y+r);s.quadraticCurveTo(-x,-y,-x+r,-y);return s;}
 export function crtScreenGeometry(w:number,h:number){const g=new T.PlaneGeometry(w,h,16,12),p=g.getAttribute('position');for(let i=0;i<p.count;i++){const x=p.getX(i)/(w/2),y=p.getY(i)/(h/2);p.setZ(i,.013*(1-x*x)*(1-y*y));}g.computeVertexNormals();return g;}
@@ -19,7 +19,7 @@ export function createCRT(videoCable=false){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#b0ac96';ctx.fillRect(0,0,512,256);
  let seed=171;for(let i=0;i<1000;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const x=seed%512;seed=(Math.imul(seed,1664525)+1013904223)>>>0;const y=seed%256;ctx.fillStyle=i%3?'rgba(72,67,51,.045)':'rgba(233,223,183,.07)';ctx.fillRect(x,y,1+i%4,1+i%3);}
  ctx.fillStyle='#3e453d';for(const left of [153,409])for(let i=0;i<9;i++)ctx.fillRect(left+i*7,40,3,151);
- const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;const shellMaterial=plastic.clone();shellMaterial.map=map;shellMaterial.bumpMap=map;shellMaterial.bumpScale=.0007;
+ const map=sharePrintedTexture(new T.CanvasTexture(canvas),['crt-case-v1']);map.colorSpace=T.SRGBColorSpace;const shellMaterial=plastic.clone();shellMaterial.map=map;shellMaterial.bumpMap=map;shellMaterial.bumpScale=.0007;
  const caseMesh=new T.Mesh(shell,shellMaterial);caseMesh.name='crt-rear-housing';caseMesh.castShadow=caseMesh.receiveShadow=true;root.add(caseMesh);
  const shape=outline(.58,.45,.025),hole=outline(.46,.345,.018);shape.holes.push(new T.Path(hole.getPoints(10).map(p=>p.add(new T.Vector2(0,.012)))));
  const bezel=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:.028,bevelEnabled:true,bevelThickness:.003,bevelSize:.003,bevelSegments:2,steps:1,curveSegments:10}),plastic);bezel.name='crt-open-bezel';bezel.position.y=.325;bezel.castShadow=bezel.receiveShadow=true;root.add(bezel);
@@ -28,7 +28,7 @@ export function createCRT(videoCable=false){
  const power=new T.Mesh(new T.CylinderGeometry(.009,.009,.005,20),dark);power.rotation.x=Math.PI/2;power.position.set(.225,.126,.032);root.add(power);
  const led=box('crt-power-led',.198,.126,.032,.004,.004,.003,new T.MeshStandardMaterial({color:'#6b8a53',emissive:'#597b48',emissiveIntensity:.5}));led.castShadow=false;
  for(let i=0;i<4;i++)box('crt-adjustment-key',-.19+i*.032,.126,.032,.022,.009,.005,dark);
- const labelCanvas=document.createElement('canvas');labelCanvas.width=256;labelCanvas.height=48;const ink=labelCanvas.getContext('2d')!;ink.fillStyle='#4f554b';ink.font='23px sans-serif';ink.textAlign='center';ink.textBaseline='middle';ink.fillText('B/W MONITOR',128,24);const labelMap=new T.CanvasTexture(labelCanvas);labelMap.colorSpace=T.SRGBColorSpace;
+ const labelCanvas=document.createElement('canvas');labelCanvas.width=256;labelCanvas.height=48;const ink=labelCanvas.getContext('2d')!;ink.fillStyle='#4f554b';ink.font='23px sans-serif';ink.textAlign='center';ink.textBaseline='middle';ink.fillText('B/W MONITOR',128,24);const labelMap=sharePrintedTexture(new T.CanvasTexture(labelCanvas),['crt-model-mark-v1']);labelMap.colorSpace=T.SRGBColorSpace;
  const label=new T.Mesh(new T.PlaneGeometry(.095,.018),new T.MeshStandardMaterial({map:labelMap,transparent:true,depthWrite:false,roughness:.85}));label.position.set(.045,.126,.0313);root.add(label);
  for(const x of [-.12,.12]){box('crt-rear-jack',x,.248,-.496,.055,.035,.014,metal);if(x>0||videoCable)box('crt-cable-plug',x,.248,-.511,.034,.022,.016,dark);else{const socket=new T.Mesh(new T.CircleGeometry(.008,16),dark);socket.name='crt-unused-video-socket';socket.rotation.y=Math.PI;socket.position.set(x,.248,-.5032);root.add(socket);}}
  for(const x of [-.17,.17])for(const y of [.18,.44]){const screw=new T.Mesh(new T.CylinderGeometry(.003,.003,.003,10),metal);screw.rotation.x=Math.PI/2;screw.position.set(x,y,-.492);root.add(screw);}

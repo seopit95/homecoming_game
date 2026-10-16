@@ -2,7 +2,7 @@ import * as T from 'three';
 import {connectionPassage,setDoorAngle} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import {courtyardLayout} from './courtyard.ts';
-import {surface,boxUV,softBox,upholstery} from './materials.ts';
+import {sharePrintedTexture,surface,boxUV,softBox,upholstery} from './materials.ts';
 import {createGhost} from './ghost.ts';
 import {roundPipe,doorHardware} from './props.ts';
 import {wetTexture,createLeatherShoe} from './entry-props.ts';
@@ -38,10 +38,10 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const mesh=new T.Mesh(boxUV(softBox(w,h,d,.012),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;
  }
  function wallAt(x:number,z:number,w:number,d:number){box(x,1.4,z,w,2.8,d,wall,true);box(x,.43,z,w+.015,.86,d+.015,lower);box(x,.045,z,w+.025,.09,d+.025,dark);}
- function label(text:string,x:number,y:number,z:number,w=1.3,h=.4,ry=0,lit=false){
+ function label(text:string,x:number,y:number,z:number,w=1.3,h=.4,ry=0,lit=false,dynamic=false){
   const canvas=document.createElement('canvas');canvas.width=768;canvas.height=Math.max(64,Math.round(768*h/w));const ctx=canvas.getContext('2d')!,lines=text.split('\n'),size=Math.min(canvas.height/(lines.length*1.5),700/Math.max(...lines.map(l=>l.length),1));
   ctx.fillStyle=lit?'#182d24':'#b6b098';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle=lit?'#b6d1af':'#28372f';ctx.font=`${size}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';lines.forEach((line,i)=>ctx.fillText(line,384,canvas.height/2+(i-(lines.length-1)/2)*size*1.3));
-  const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map}):new T.MeshStandardMaterial({map,roughness:.91}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);return mesh;
+  const map=new T.CanvasTexture(canvas);if(!dynamic)sharePrintedTexture(map,['expansion-label-v1',text,lit]);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map}):new T.MeshStandardMaterial({map,roughness:.91}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);return mesh;
  }
  function target(id:Action,caption:string,mesh:T.Object3D,p:[number,number,number],approach:[number,number]){mesh.userData.approach={x:approach[0],z:approach[1]};targets.push({id,label:caption,mesh,point:new T.Vector3(...p)});return mesh;}
  function fixture(x:number,z:number,power=3.2,color='#a4b6a3'){
@@ -145,7 +145,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const callTarget=targets.find(t=>t.id==='annex_call')!;callTarget.mesh=recorder;callTarget.point.set(X+.57,.86,-5);recorder.userData.approach={x:X+.57,z:-4};
   roundPipe(root,[X+.629,.854,-5.08],[X+.8,.854,-5.08],.0025,dark);roundPipe(root,[X+.8,.854,-5.08],[X+.8,.824,-5.36],.0025,dark);
   table(0,-21,2.4,1);const crt=createCRT();crt.root.name='annex-crt-monitor';crt.root.position.set(-.35,.82,-20.9);root.add(crt.root);
-  display=label('통화 기록 확인',0,0,0,.72,.54,0,true);display.geometry.dispose();display.geometry=crtScreenGeometry(.72,.54);display.name='annex-crt-status';crt.screenMount.add(display);
+  display=label('통화 기록 확인',0,0,0,.72,.54,0,true,true);display.geometry.dispose();display.geometry=crtScreenGeometry(.72,.54);display.name='annex-crt-status';crt.screenMount.add(display);
   intercom=createAnsweringMachine('intercom');intercom.root.position.set(.7,.82,-20.86);intercom.root.rotation.y=Math.PI;intercom.root.scale.setScalar(1.35);root.add(intercom.root);
   function dialTarget(id:Action,title:string,mesh:T.Mesh){const p=mesh.getWorldPosition(new T.Vector3());target(id,title,mesh,[p.x,p.y,p.z],[.7,-19.7]);targets.at(-1)!.precise=true;}
   for(const {mesh,label:key} of intercom.keys)dialTarget(key==='*'?'annex_clear':key==='#'?'annex_dial':`annex_digit_${key}` as Action,key==='*'?'지우기 / 통화 종료':key==='#'?'세대 호출':key+' 입력',mesh);
@@ -228,7 +228,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   for(let i=0;i<5;i++){const blade=box(0,.12,0,.075,.22,.012,metal,false,fan);blade.rotation.z=i*Math.PI*2/5;blade.position.set(-Math.sin(blade.rotation.z)*.12,Math.cos(blade.rotation.z)*.12,0);}
   const guard=new T.Mesh(new T.TorusGeometry(.265,.012,6,32),metal);guard.position.z=.11;fanCase.add(guard);
   for(let i=0;i<4;i++){const bar=box(0,0,.12,.51,.008,.009,metal,false,fanCase);bar.rotation.z=i*Math.PI/4;}
-  display=label('수위 HIGH\n급수 차단 후 전원 연결',0,1.65,-26,1.4,.55);box(0,1.62,-26.1,1.6,.75,.16,metal);for(const x of [-.6,.6])box(x,.63,-26.1,.07,1.26,.07,metal);
+  display=label('수위 HIGH\n급수 차단 후 전원 연결',0,1.65,-26,1.4,.55,0,false,true);box(0,1.62,-26.1,1.6,.75,.16,metal);for(const x of [-.6,.6])box(x,.63,-26.1,.07,1.26,.07,metal);
   // Flood stays below the dry raised perimeter; a visible grille blocks the central shortcut.
   water=puddle(0,-20,3.5,19,.68);water.position.y=.075;
   box(0,.24,-15,3.5,.48,.16,metal,true);for(let x=-1.5;x<=1.5;x+=.25)box(x,.59,-15,.019,.7,.03,metal);

@@ -3,6 +3,15 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {prepareFacilityModels} from './facility-models.ts';
 import {loadTexture} from './texture-loader.ts';
 
+// Static printed pixels share GPU storage; each caller still owns its Texture.
+const printedSources=new Map<string,T.Source>();
+export function sharePrintedTexture(texture:T.CanvasTexture,key:readonly (string|number|boolean)[]){
+  const id=JSON.stringify([texture.image.width,texture.image.height,...key]),source=printedSources.get(id);
+  if(source)texture.source=source;else printedSources.set(id,texture.source);
+  return texture;
+}
+export function clearPrintedSources(){printedSources.clear();}
+
 // Decode each source once; floor changes own disposable texture clones.
 const sources:Partial<Record<'surfaces'|'remains'|'face'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair'|'resident-photo',T.Texture>>={};
 const physicalSources:Partial<Record<`${'plaster'|'concrete'|'cast-concrete'|'worn-concrete'|'wood'|'wood-floor'|'painted-metal'|'bag-leather'|'cotton'}-${'color'|'normal'|'arm'}`,T.Texture>>={};

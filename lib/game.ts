@@ -4,6 +4,7 @@ import {expansionLayout} from './expansion-world.ts';
 import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,clampLightOrigin,type Target} from './world.ts';
 import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength} from './ghost.ts';
 export {prepareVisuals} from './materials.ts';
+import {clearPrintedSources} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
 import {initialStory,checkpoint,transition,objectiveFor,officePowerLoad,officePowerProblem,residentEvidence,residentMessageDuration,areaFor,chapters,chaseStages,opening,openingTiming as beats,finale,finaleTiming as endingBeats,isMemory,isFinale,isCinematic,hasFlashlight,tapeTimes,officeReplay,officeReplayDuration,type Story,type Action,type Area} from './story.ts';
 import {findPath,findPursuitPath,pursuerRadius,clearPath,type Point} from './navigation.ts';
@@ -879,7 +880,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     document.removeEventListener('keydown',keydown);document.removeEventListener('keyup',keyup);document.removeEventListener('pointermove',pointermove);document.removeEventListener('pointerup',pointerup);document.removeEventListener('pointerlockchange',lockchange);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('blur',blur);canvas.removeEventListener('pointerdown',pointerdown);
     // Three's asynchronous compiler still reads material programs while polling.
     // Stop gameplay immediately, but keep GPU resources alive until it settles.
-    const releaseGraphics=()=>{for(const r of roads.values()){r.dispose();disposeWorld(r.root);}for(const w of worlds.values())disposeWorld(w.root);disposeWorld(hands.scene);flashlight.shadow.map?.dispose();reflections.dispose();renderer.dispose();};
+    const releaseGraphics=()=>{for(const r of roads.values()){r.dispose();disposeWorld(r.root);}for(const w of worlds.values())disposeWorld(w.root);disposeWorld(hands.scene);flashlight.shadow.map?.dispose();reflections.dispose();renderer.dispose();clearPrintedSources();};
     void ready.catch(()=>{}).then(releaseGraphics);
   }};
 }
