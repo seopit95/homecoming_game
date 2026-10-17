@@ -84,6 +84,7 @@ export function ghostHairMaterials(){
   // alphaMap handling applies the same cutout to the visible and shadow passes.
   const fade=new T.DataTexture(new Uint8Array([0,0,0,255,255,255,255,255]),1,2);fade.channel=1;
   fade.magFilter=fade.minFilter=T.LinearFilter;fade.needsUpdate=true;scalp.alphaMap=loose.alphaMap=fade;
+  scalp.name='surface-wet-hair-roots';scalp.map=scalp.bumpMap=map;scalp.color.set('#929c9e');
   loose.name='surface-wet-hair-locks';loose.map=loose.bumpMap=map;loose.color.set('#929c9e');return [scalp,loose];
 }
 export function livingMaterial(part:'skin'|'shirt'|'hair'){
