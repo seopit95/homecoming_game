@@ -1,7 +1,8 @@
 import * as T from 'three';
 import {configureShadow} from './lighting.ts';
+import {buildRoadStreet} from './road-street.ts';
 import {createDrivingCar} from './driving-car.ts';
-import {sedanWindshieldPoint} from './sedan.ts';
+import {createSedan,sedanWindshieldPoint} from './sedan.ts';
 import {extremity} from './ghost-anatomy.ts';
 import {createPedestrian} from './pedestrian.ts';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -13,10 +14,9 @@ import {opening,openingTiming as beats,finale,finaleTiming as endingBeats,type S
 // All motion is sampled from simulation time: pause, skip and replay never leave a cutscene running.
 export function buildRoad(scene:T.Scene,escapeDrive=false){
   const root=new T.Group();root.name=escapeDrive?'escape-drive':'accident-memory';scene.add(root);
-  const asphalt=surface('concrete','#454b50',{roughness:.28,bumpScale:.009});
-  const concrete=surface('concrete','#747b7c'),wall=surface('wall','#95988d');
+  const asphalt=surface('asphalt','#a7aeb1',{roughness:.48,normalScale:new T.Vector2(.16,.16)});
+  const concrete=surface('wornConcrete','#a5aba5');
   const rubber=new T.MeshStandardMaterial({color:'#14191d',roughness:.86});
-  const body=new T.MeshPhysicalMaterial({color:'#1b252c',roughness:.25,metalness:.7,clearcoat:.7});
   const steel=new T.MeshStandardMaterial({color:'#626f75',roughness:.3,metalness:.8});
   const paint=surface('concrete','#d0cbb7',{roughness:.86,normalScale:new T.Vector2(.2,.2)});
   const warm=new T.MeshStandardMaterial({color:'#a29372',emissive:'#c7ad80',emissiveIntensity:.55,roughness:.6});
@@ -39,36 +39,24 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   marking(-2.05,1.5,3.8,.32);
   // Wet patches catch broken pools of streetlight without an expensive second scene render.
   const puddle=new T.MeshPhysicalMaterial({color:'#566570',metalness:.48,roughness:.07,transparent:true,opacity:.3,depthWrite:false});
-  for(let i=0;i<(escapeDrive?35:38);i++){const p=mesh(new T.CircleGeometry(1,24),puddle,[Math.sin(i*19.3)*3.8,.0018,-140+i*8.3]);p.castShadow=false;p.rotation.x=-Math.PI/2;p.scale.set(.22+(i%4)*.18,1.2+(i%5)*.3,1);}
+  for(let i=0;i<(escapeDrive?35:38);i++){const outline=new T.Shape();for(let j=0;j<36;j++){const a=j/36*Math.PI*2,r=1+.14*Math.sin(a*3+i)+.08*Math.sin(a*7+i*2);if(j===0)outline.moveTo(Math.cos(a)*r,Math.sin(a)*r);else outline.lineTo(Math.cos(a)*r,Math.sin(a)*r);}outline.closePath();const p=mesh(new T.ShapeGeometry(outline),puddle,[Math.sin(i*19.3)*3.8,.0018,-140+i*8.3]);p.castShadow=false;p.rotation.x=-Math.PI/2;p.scale.set(.22+(i%4)*.18,1.2+(i%5)*.3,1);}
   const glow=new T.ShaderMaterial({transparent:true,depthWrite:false,vertexShader:'varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 v;void main(){vec2 p=abs(v*2.-1.);float a=pow(1.-p.x,2.)*(1.-p.y)*(.6+.4*sin(v.y*190.));gl_FragColor=vec4(.51,.61,.66,a*.12);}'});
   for(let z=-135;z<(escapeDrive?149:170);z+=18){
-    for(const side of [-1,1]){
-      const height=5.5+((z+135)%36)*.19,x=side*8.3;
-      box(x,height/2,z,5,height,14,wall);box(side*5.8,1.5,z, .09,3,14,concrete);
-      for(let level=0;1.5+level*2.45+.7<height;level++)for(let slot=0;slot<3;slot++){
-        const yy=1.5+level*2.45,zz=z-4.5+slot*4;
-        box(side*5.76,yy,zz,.06,1.24,1.5,(slot+level+z)%4===0?warm:darkGlass);
-        box(side*5.71,yy,zz,.045,1.3,.055,steel);for(const edge of [-.77,.77])box(side*5.73,yy,zz+edge,.06,1.33,.045,steel);box(side*5.72,yy-.69,zz,.2,.08,1.68,concrete);
-        if(level<2){for(const offset of [-.19,.19]){rod([side*5.76,yy-.46,zz+1.25+offset],[side*5.31,yy-.46,zz+1.25+offset],.016,steel);rod([side*5.76,yy-.64,zz+1.25+offset],[side*5.37,yy-.46,zz+1.25+offset],.012,steel);}box(side*5.51,yy-.23,zz+1.25,.4,.43,.62,concrete);for(let k=0;k<4;k++)box(side*5.29,yy-.38+k*.09,zz+1.25,.012,.025,.5,rubber);}
-      }
-      rod([side*5.52,.15,z+6.8],[side*5.52,height,z+6.8],.045,steel);
-    }
     rod([4.95,.1,z],[4.95,5.5,z],.065,steel);rod([4.95,5.5,z],[3.8,5.5,z],.035,steel);box(3.8,5.42,z,.55,.1,.3,warm);
 
     const shine=mesh(new T.PlaneGeometry(1.3,8),glow,[2.6,.002,z+2]);shine.rotation.x=-Math.PI/2;shine.castShadow=false;
     for(let i=0;i<4;i++)box(4.32,.025,z+i*.13,.4,.025,.045,rubber);
   }
+  buildRoadStreet(root,escapeDrive);
   const streetLights=Array.from({length:4},()=>{const light=new T.SpotLight('#b8c9d2',65,22,.9,.9,2);root.add(light,light.target);return light;});
   // The red traffic light and lit crossing establish what the driver failed to notice.
   rod([4.9,.1,-6],[4.9,5.9,-6],.095,steel);rod([4.9,5.7,-6],[-.1,5.7,-6],.065,steel);
   box(-.4,5.45,-6,1.18,.4,.28,rubber);
-  for(let i=0;i<3;i++){const lens=mesh(new T.CircleGeometry(.12,24),i===2?red:darkGlass,[-.79+i*.38,5.45,-5.849]);box(-.79+i*.38,5.6,-5.79,.28,.075,.26,rubber);lens.castShadow=false;}
+  for(let i=0;i<3;i++){const lens=mesh(new T.CircleGeometry(.12,24),i===0?red:darkGlass,[-.79+i*.38,5.45,-5.849]);box(-.79+i*.38,5.6,-5.79,.28,.075,.26,rubber);lens.castShadow=false;}
   const crossingLight=new T.SpotLight('#c4d1d6',70,22,.85,.85,2);crossingLight.position.set(3.5,6,-2);crossingLight.target.position.set(-1,0,-2);configureShadow(crossingLight);crossingLight.shadow.mapSize.set(1024,1024);root.add(crossingLight,crossingLight.target);
   label('백로아파트  ｜  서행',2.4,.42,[3.4,3.6,-5.8]);
   box(4.92,1.18,7.4,.25,2.35,.25,concrete);box(5.35,.45,7.4,.8,.9,1.9,concrete);
-  // A parked delivery van partially screens the pedestrian on the near pavement.
-  box(3.38,.58,7.8,1.45,.9,3.5,body);box(3.38,1.4,8.1,1.4,1.08,2.3,concrete);box(3.38,1.57,9.27,1.23,.62,.035,darkGlass);
-  for(const x of [2.67,4.09])for(const z of [6.8,8.8]){const tyre=mesh(new T.CylinderGeometry(.28,.28,.16,20),rubber,[x,.31,z]);tyre.rotation.z=Math.PI/2;}
+  const parked=createSedan('#66716c');parked.position.set(-3.38,0,7.8);root.add(parked);
   // Volumetric rain wraps around the camera; individual drops on the glass are a separate layer.
   const rainPoints=[];for(let i=0;i<600;i++){const x=Math.sin(i*73.1)*8,y=(i*.173)%7,z=escapeDrive?-150+(i*7.31)%267:-42+(i*7.31)%53;rainPoints.push(x,y,z,x-.025,y-.22,z);}
   const rain=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(rainPoints,3)),new T.LineBasicMaterial({color:'#a4bcc9',transparent:true,opacity:.2,depthWrite:false}));root.add(rain);
@@ -158,7 +146,20 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     barrier!.name='finale-barrier';barrier!.position.set(1.65,0,-50.45);root.add(barrier!);
     box(0,.65,0,4.4,1.3,.55,concrete,barrier!);
     for(let i=0;i<11;i++)box(-2+i*.4,.82,.287,.2,.32,.02,i%2?rubber:warm,barrier!);
-    label('도로 통제',1.8,.26,[0,1.55,.1],barrier!);for(const x of [-.8,.8])rod([x,.5,0],[x,1.7,0],.025,steel,barrier!);
+    label('도로 침하 · 진입 금지',2.7,.34,[0,1.55,.1],barrier!);for(const x of [-.8,.8])rod([x,.5,0],[x,1.7,0],.025,steel,barrier!);
+  }
+  if(escapeDrive){
+    const orange=new T.MeshStandardMaterial({color:'#ad582a',roughness:.86}),white=new T.MeshStandardMaterial({color:'#b6b5a6',roughness:.88});
+    // A kerbside warning precedes the blocked lane; its legs meet the asphalt.
+    label('전방 도로 통제',1.3,.48,[-3.45,1,-27.85]);
+    for(const x of [-3.96,-2.94])for(const z of [-28.25,-27.55])rod([x,0,z],[x,1.27,-27.9],.022,steel);
+    for(let i=0;i<6;i++){
+      const x=-.55+i*.15,z=-28-i*3.8;
+      box(x,.025,z,.36,.05,.36,rubber);
+      mesh(new T.CylinderGeometry(.035,.14,.48,12),orange,[x,.29,z]);
+      mesh(new T.CylinderGeometry(.054,.08,.12,12),white,[x,.39,z]);
+    }
+    box(1.65,.001,-55,4.25,.002,6,rubber);
   }
   const facePosition=new T.Vector3(),carriedBag=new T.Vector3(),contactBounds=new T.Box3();
   const exitPath=new T.CatmullRomCurve3([[-.38,1.22,-.24],[-.72,1.28,-.12],[-1.25,1.34,-.06],[-1.3,1.65,.43]].map(p=>new T.Vector3(...p as [number,number,number])));
@@ -256,16 +257,18 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     return speed;
   }
   // Batch stationary building details by material; moving props retain their own transforms.
+  for(const owner of [root,root.getObjectByName('road-neighbourhood') as T.Group]){
   const batches=new Map<string,T.Mesh[]>();
-  for(const child of [...root.children])if(child instanceof T.Mesh&&child!==phone&&!Array.isArray(child.material)){
+  for(const child of [...owner.children])if(child instanceof T.Mesh&&child!==phone&&!Array.isArray(child.material)){
     const key=child.material.uuid+child.castShadow+child.receiveShadow+Boolean(child.geometry.index);
     const batch=batches.get(key)??[];batch.push(child);batches.set(key,batch);
   }
   for(const batch of batches.values())if(batch.length>1){
     const geometries=batch.map(m=>{m.updateMatrix();return m.geometry.clone().applyMatrix4(m.matrix);});
     const geometry=mergeGeometries(geometries);geometries.forEach(g=>g.dispose());if(!geometry)continue;
-    const merged=new T.Mesh(geometry,batch[0].material);merged.castShadow=batch[0].castShadow;merged.receiveShadow=batch[0].receiveShadow;root.add(merged);
-    batch.forEach(m=>{m.geometry.dispose();root.remove(m);});
+    const merged=new T.Mesh(geometry,batch[0].material);merged.castShadow=batch[0].castShadow;merged.receiveShadow=batch[0].receiveShadow;owner.add(merged);
+    batch.forEach(m=>{m.geometry.dispose();owner.remove(m);});
+  }
   }
   return {root,pose,renderMirror,setDepartureFrame(frame:T.Matrix4){frame.decompose(root.position,root.quaternion,root.scale);root.updateMatrixWorld(true);},dispose(){mirrorTarget.dispose();}};
 }

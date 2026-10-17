@@ -176,3 +176,18 @@ planted ahead of the seat frame; native lower skin and wet lengths follow
 the cushion/bolster envelope. Private skin compression beneath opaque cloth
 is not a claim of a full physical soft-body simulation. These changes do not
 establish finished character art, whole-game quality or 30–40 minute pacing.
+
+## Shared opening / escape street (V95)
+
+The two road sequences now share varied old shop frontage and a 28-floor
+apartment estate, while retaining their existing cinematic paths. Wet asphalt
+uses Poly Haven [Asphalt 03](https://polyhaven.com/a/asphalt_03), by Charlotte
+Baglioni and Dario Barresi, under [CC0](https://polyhaven.com/license). The
+1K JPEG diffuse, OpenGL normal and ARM maps are local static files; no runtime
+API or external image request is made. Mapping preserves the source 2m width;
+wet roughness and subtle normal strength are artistic adjustments. Existing
+photographic paving, plaster and weathered concrete are reused.
+
+- public/textures/pbr/asphalt-color.jpg · [source](https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_03/asphalt_03_diff_1k.jpg) · SHA256 95ad02e2631c41cf9fdd6a37596cf75adb4fb8a8b6880567cc78ed1c41dc5681
+- public/textures/pbr/asphalt-normal.jpg · [source](https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_03/asphalt_03_nor_gl_1k.jpg) · SHA256 978de8349ce2e9989325099a6fd1f5ea6b2826528e1264606a5c51296b1e2888
+- public/textures/pbr/asphalt-arm.jpg · [source](https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_03/asphalt_03_arm_1k.jpg) · SHA256 36e898a43fd828e71f5bc08fa0f86dc2c7338194c87eb6a2b30d7216318b9f31

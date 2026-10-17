@@ -173,11 +173,11 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function openingScene(){
     keys.clear();holding=false;dragging=false;hover=undefined;torch=false;chapterUntil=0;message='';
     if(isCinematic(story.stage)&&document.pointerLockElement===canvas)document.exitPointerLock();
-    if(story.stage==='car_departure'){world.carDeparture!.pose(0,camera,reducedMotion);for(const o of world.root.children)if(o.userData.departureRoadSurface)o.visible=false;const r=preparedRoad(true);r.setDepartureFrame(world.carDeparture!.roadFrame);scene.add(r.root);r.root.visible=true;r.root.getObjectByName('memory-car')!.visible=false;audio.sound('click',-.5,.5);}
-    if(story.stage==='drive'||story.stage==='car_escape'){road=preparedRoad(story.stage==='car_escape');if(story.stage==='car_escape'){road.setDepartureFrame(departureFrame);road.root.getObjectByName('memory-car')!.visible=true;}scene.add(road.root);road.root.visible=true;world.root.visible=false;if(story.stage==='car_escape'){chapterUntil=0;}}
+    if(story.stage==='car_departure'){scene.background=skyBackground??nightBackground;scene.backgroundIntensity=.035;world.carDeparture!.pose(0,camera,reducedMotion);for(const o of world.root.children)if(o.userData.departureRoadSurface)o.visible=false;const r=preparedRoad(true);r.setDepartureFrame(world.carDeparture!.roadFrame);scene.add(r.root);r.root.visible=true;r.root.getObjectByName('memory-car')!.visible=false;audio.sound('click',-.5,.5);}
+    if(story.stage==='drive'||story.stage==='car_escape'){scene.background=skyBackground??nightBackground;scene.backgroundIntensity=.035;road=preparedRoad(story.stage==='car_escape');if(story.stage==='car_escape'){road.setDepartureFrame(departureFrame);road.root.getObjectByName('memory-car')!.visible=true;}scene.add(road.root);road.root.visible=true;world.root.visible=false;if(story.stage==='car_escape'){chapterUntil=0;}}
     if(story.stage==='sleep'||story.stage==='tv'||story.stage==='wake_ring')audio.setDrive(null);
     if(story.stage==='sleep'||story.stage==='tv'||story.stage==='wake_ring'){
-      if(road){road.root.removeFromParent();road=null;}world.root.visible=true;
+      if(road){road.root.removeFromParent();road=null;}scene.background=nightBackground;scene.backgroundIntensity=1;world.root.visible=true;
     }
     if(story.stage==='tv'){camera.position.set(...home.seat);yaw=Math.PI/2;pitch=.05;audio.setTV(true);say('사고 후 사흘이 지났다. 그날 이후 밤마다 03:17에 눈이 떠진다.\nTV에서는 사흘 전 뺑소니 사고를 보도하고 있었다.',7);}
     if(story.stage==='impact'){audio.recorded('collision-impact',1);audio.sound('crash',0,.35);audio.sound('glass',-.2,.35);}
@@ -918,7 +918,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       for(const next of Object.keys(chapters) as Area[]){if(disposed)break;const w=preparedWorld(next);await warm(w.root,w.spawn,()=>w.surveillance?.prepare(renderer,scene),next==='courtyard');if(next==='parking'&&w.carDeparture){for(const t of [3,7,24]){camera.position.set(3.2,1.65,-17.8);w.carDeparture.pose(t,camera,false);await warm(w.root,camera.position.clone());}w.reset();}if(next==='lift'){w.updateStory?.('service_open',0,false);await warm(w.root,w.spawn);w.reset();}}
       // The mirror uses a linear render target and hides the car's lights. Its
       // material programs differ from the main camera, even for the same mesh.
-      for(const ending of [false,true]){if(disposed)break;const r=preparedRoad(ending);await warm(r.root,new T.Vector3(1.8,1.4,4),()=>r.renderMirror(renderer));}
+      for(const ending of [false,true]){if(disposed)break;const r=preparedRoad(ending);await warm(r.root,new T.Vector3(1.8,1.4,4),()=>r.renderMirror(renderer),true);}
       const garage=preparedWorld('parking'),exitRoad=preparedRoad(true);exitRoad.setDepartureFrame(departureFrame);exitRoad.pose('car_escape',0,camera,reducedMotion);exitRoad.root.getObjectByName('memory-car')!.visible=false;scene.add(exitRoad.root);
       try{for(const o of garage.root.children)if(o.userData.departureRoadSurface)o.visible=false;for(const t of [3,7,24]){camera.position.set(3.2,1.65,-17.8);garage.carDeparture!.pose(t,camera,false);await warm(garage.root,camera.position.clone());}}finally{garage.reset();exitRoad.root.removeFromParent();exitRoad.root.getObjectByName('memory-car')!.visible=true;}
     }finally{renderer.setRenderTarget(oldTarget);renderer.setViewport?.(viewport);if(!disposed)resize();camera.position.copy(savedCamera);camera.quaternion.copy(oldRotation);scene.add(world.root);preparing=false;if(canvas.style)canvas.style.visibility=oldVisibility??'';}
