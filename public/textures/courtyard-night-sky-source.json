@@ -1,0 +1,14 @@
+{
+  "id": "qwantani_night_puresky",
+  "source": "https://polyhaven.com/a/qwantani_night_puresky",
+  "license": "CC0-1.0",
+  "licenseURL": "https://polyhaven.com/license",
+  "original": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/qwantani_night_puresky.jpg",
+    "md5": "70c24e45fe8db819641c76068675c4a2",
+    "size": 30309210
+  },
+  "adaptation": "Ground-free original tonemapped night panorama resized to2048x1024 Lanczos JPEG92; courtyard-only0.035 background intensity, not environment lighting.",
+  "bytes": 325162,
+  "sha256": "c8eb20c2fc987d5aa7f33dd5c322c8ae9ef32554a7cf0e0ba70d926b10b379c1"
+}

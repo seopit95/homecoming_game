@@ -13,19 +13,19 @@ export function sharePrintedTexture(texture:T.CanvasTexture,key:readonly (string
 export function clearPrintedSources(){printedSources.clear();}
 
 // Decode each source once; floor changes own disposable texture clones.
-const sources:Partial<Record<'surfaces'|'remains'|'face'|'teeth'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair'|'resident-photo',T.Texture>>={};
-const physicalSources:Partial<Record<`${'plaster'|'concrete'|'cast-concrete'|'worn-concrete'|'wood'|'wood-floor'|'painted-metal'|'bag-leather'|'cotton'|'paving'|'terrazzo'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
+const sources:Partial<Record<'night-sky'|'surfaces'|'remains'|'face'|'teeth'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair'|'resident-photo',T.Texture>>={};
+const physicalSources:Partial<Record<`${'soil'|'plaster'|'concrete'|'cast-concrete'|'worn-concrete'|'wood'|'wood-floor'|'painted-metal'|'bag-leather'|'cotton'|'paving'|'terrazzo'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
-    const jobs=(['surfaces','remains','face','teeth','hand','hand-view','hair','hair-locks','cloth','resident-photo'] as const).map(async key=>{
-      const file=key==='teeth'?'ghost-teeth-v1.webp':key==='resident-photo'?'resident-memory-photo-v1.webp':key==='hair-locks'?'ghost-hair-locks-v1.webp':key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
-      const texture=await loadTexture(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
+    const jobs=(['night-sky','surfaces','remains','face','teeth','hand','hand-view','hair','hair-locks','cloth','resident-photo'] as const).map(async key=>{
+      const file=key==='night-sky'?'courtyard-night-sky-2k.jpg':key==='teeth'?'ghost-teeth-v1.webp':key==='resident-photo'?'resident-memory-photo-v1.webp':key==='hair-locks'?'ghost-hair-locks-v1.webp':key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.png`;
+      const texture=await loadTexture(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;if(key==='night-sky')texture.mapping=T.EquirectangularReflectionMapping;return {key,texture};
     });
     const livingJobs=(['pedestrian-skin','pedestrian-shirt','pedestrian-shirt-normal','pedestrian-hair'] as const).map(async key=>{
       const texture=await loadTexture('/textures/'+key+'-v1.webp');texture.colorSpace=key.endsWith('-normal')?T.NoColorSpace:T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     });
-    const physicalJobs=(['plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm','cast-concrete-color','cast-concrete-normal','cast-concrete-arm','worn-concrete-color','worn-concrete-normal','worn-concrete-arm','wood-color','wood-normal','wood-arm','wood-floor-color','wood-floor-normal','wood-floor-arm','painted-metal-color','painted-metal-normal','painted-metal-arm','bag-leather-color','bag-leather-normal','bag-leather-arm','cotton-color','cotton-normal','cotton-arm','paving-color','paving-normal','paving-arm','terrazzo-color','terrazzo-normal','terrazzo-arm'] as const).map(async key=>{
+    const physicalJobs=(['soil-color','soil-normal','soil-arm','plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm','cast-concrete-color','cast-concrete-normal','cast-concrete-arm','worn-concrete-color','worn-concrete-normal','worn-concrete-arm','wood-color','wood-normal','wood-arm','wood-floor-color','wood-floor-normal','wood-floor-arm','painted-metal-color','painted-metal-normal','painted-metal-arm','bag-leather-color','bag-leather-normal','bag-leather-arm','cotton-color','cotton-normal','cotton-arm','paving-color','paving-normal','paving-arm','terrazzo-color','terrazzo-normal','terrazzo-arm'] as const).map(async key=>{
       const texture=await loadTexture(`/textures/pbr/${key}.${key.startsWith('painted-metal')||key.startsWith('bag-leather')||key.startsWith('paving')?'webp':'jpg'}`);texture.colorSpace=key.endsWith('color')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.setScalar(.9);return {key,texture};
     });
     const [results,physical,facility]=await Promise.all([Promise.allSettled([...jobs,...livingJobs]),Promise.allSettled(physicalJobs),Promise.allSettled([prepareFacilityModels()])]);
@@ -35,13 +35,15 @@ export function prepareVisuals(){
   })();
   return loading;
 }
-export type Surface='wall'|'tile'|'concrete'|'castConcrete'|'wornConcrete'|'paving'|'wood'|'woodFloor'|'skin'|'cloth'|'hair'|'wound'|'decayWall'|'oldTile'|'garage'|'steel'|'paintedMetal'|'bagLeather'|'ceramic'|'fabric'|'leather';
-const tiles:Record<Surface,[number,number]>={wall:[0,2],wood:[1,2],woodFloor:[1,2],concrete:[2,2],castConcrete:[2,2],wornConcrete:[2,2],paving:[2,2],tile:[0,1],oldTile:[0,1],steel:[1,1],paintedMetal:[1,1],bagLeather:[1,0],ceramic:[2,1],fabric:[0,0],leather:[1,0],decayWall:[2,0],garage:[2,2],skin:[0,1],hair:[1,1],cloth:[0,0],wound:[1,0]};
-const fallback:Record<Surface,string>={wall:'#a7a59a',tile:'#898c86',concrete:'#62696b',castConcrete:'#93968e',wornConcrete:'#777d77',paving:'#999a8b',wood:'#635348',woodFloor:'#635348',skin:'#a5a49d',cloth:'#b9b8ac',hair:'#101215',wound:'#49483f',decayWall:'#8d9283',oldTile:'#979784',garage:'#626665',steel:'#706e64',paintedMetal:'#536468',bagLeather:'#514035',ceramic:'#c4c3b8',fabric:'#797975',leather:'#3c4243'};
+export function courtyardSky(){return sources['night-sky'];}
+
+export type Surface='soil'|'wall'|'tile'|'concrete'|'castConcrete'|'wornConcrete'|'paving'|'wood'|'woodFloor'|'skin'|'cloth'|'hair'|'wound'|'decayWall'|'oldTile'|'garage'|'steel'|'paintedMetal'|'bagLeather'|'ceramic'|'fabric'|'leather';
+const tiles:Record<Surface,[number,number]>={soil:[2,2],wall:[0,2],wood:[1,2],woodFloor:[1,2],concrete:[2,2],castConcrete:[2,2],wornConcrete:[2,2],paving:[2,2],tile:[0,1],oldTile:[0,1],steel:[1,1],paintedMetal:[1,1],bagLeather:[1,0],ceramic:[2,1],fabric:[0,0],leather:[1,0],decayWall:[2,0],garage:[2,2],skin:[0,1],hair:[1,1],cloth:[0,0],wound:[1,0]};
+const fallback:Record<Surface,string>={soil:'#473b2d',wall:'#a7a59a',tile:'#898c86',concrete:'#62696b',castConcrete:'#93968e',wornConcrete:'#777d77',paving:'#999a8b',wood:'#635348',woodFloor:'#635348',skin:'#a5a49d',cloth:'#b9b8ac',hair:'#101215',wound:'#49483f',decayWall:'#8d9283',oldTile:'#979784',garage:'#626665',steel:'#706e64',paintedMetal:'#536468',bagLeather:'#514035',ceramic:'#c4c3b8',fabric:'#797975',leather:'#3c4243'};
 export function surface(kind:Surface,color='#ffffff',options:T.MeshStandardMaterialParameters={}){
-  const physical=kind==='oldTile'?'terrazzo':kind==='paving'?'paving':kind==='castConcrete'?'cast-concrete':kind==='wornConcrete'?'worn-concrete':kind==='bagLeather'?'bag-leather':kind==='paintedMetal'?'painted-metal':kind==='wood'?'wood':kind==='woodFloor'?'wood-floor':kind==='wall'||kind==='decayWall'?'plaster':kind==='garage'||kind==='concrete'?'concrete':null;
+  const physical=kind==='soil'?'soil':kind==='oldTile'?'terrazzo':kind==='paving'?'paving':kind==='castConcrete'?'cast-concrete':kind==='wornConcrete'?'worn-concrete':kind==='bagLeather'?'bag-leather':kind==='paintedMetal'?'painted-metal':kind==='wood'?'wood':kind==='woodFloor'?'wood-floor':kind==='wall'||kind==='decayWall'?'plaster':kind==='garage'||kind==='concrete'?'concrete':null;
   if(physical&&physicalSources[`${physical}-color`]){
-    const wood=physical==='wood'||physical==='wood-floor',building=kind==='castConcrete'||kind==='wornConcrete'||kind==='paving'||kind==='oldTile',repeat=1.8/(physical==='bag-leather'?.4:physical==='wood-floor'?2.03:physical==='worn-concrete'?3:physical==='paving'?1.8:2),normal=wood?.25:building?.22:.65;
+    const wood=physical==='wood'||physical==='wood-floor',building=kind==='soil'||kind==='castConcrete'||kind==='wornConcrete'||kind==='paving'||kind==='oldTile',repeat=1.8/(physical==='soil'?1.26:physical==='bag-leather'?.4:physical==='wood-floor'?2.03:physical==='worn-concrete'?3:physical==='paving'?1.8:2),normal=wood?.25:building?.22:.65;
     const copy=(channel:'color'|'normal'|'arm')=>{const map=physicalSources[`${physical}-${channel}`]!.clone();map.repeat.setScalar(repeat);map.needsUpdate=true;return map;};
     const arm=copy('arm'),material=new T.MeshStandardMaterial({color,map:copy('color'),normalMap:copy('normal'),normalScale:new T.Vector2(normal,normal),roughness:kind==='castConcrete'?.88:kind==='wornConcrete'?.76:.95,roughnessMap:arm,aoMap:arm,aoMapIntensity:.55,...(kind==='paintedMetal'?{metalness:1,metalnessMap:arm}:{}),...options});
     material.name=`surface-${kind}`;return material;

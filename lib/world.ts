@@ -14,7 +14,7 @@ import {setDoorAngle} from './passage.ts';
 import type {Surveillance} from './surveillance.ts';
 
 export type Bounds={x:number;z:number;minX?:number};
-export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number; yaw?:number };
+export type Solid = { x: number; z: number; w: number; d: number; y?:number; h?:number; yaw?:number; seeThrough?:boolean };
 const lightRay=new T.Ray(),lightBox=new T.Box3(),lightHit=new T.Vector3(),lightDirection=new T.Vector3();
 export function clampLightOrigin(eye:T.Vector3,lens:T.Vector3,solids:Solid[]){
   const distance=eye.distanceTo(lens);if(distance<.001)return false;
@@ -29,10 +29,10 @@ export function clampLightOrigin(eye:T.Vector3,lens:T.Vector3,solids:Solid[]){
   lens.copy(eye).addScaledVector(lightDirection,Math.max(0,nearest-.06));return true;
 }
 export function canStandAt(x:number,z:number,solids:Solid[],r=.23,bounds:Bounds=home.bounds){return x>(bounds.minX??-bounds.x)&&x<bounds.x&&Math.abs(z)<bounds.z&&!solids.some(s=>solidContainsPoint(s,x,z,r));}
-export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:number;z:number},solids:Solid[]){
+export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:number;z:number},solids:Solid[],throughGlass=false){
   const distance=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);
   for(let s=.1;s<distance-.15;s+=.1){const t=s/distance,x=from.x+(to.x-from.x)*t,y=from.y+(to.y-from.y)*t,z=from.z+(to.z-from.z)*t;
-    if(solids.some(b=>solidContainsPoint(b,x,z)&&y>(b.y??1.5)-(b.h??3)/2&&y<(b.y??1.5)+(b.h??3)/2))return false;
+    if(solids.some(b=>(!throughGlass||!b.seeThrough)&&solidContainsPoint(b,x,z)&&y>(b.y??1.5)-(b.h??3)/2&&y<(b.y??1.5)+(b.h??3)/2))return false;
   }
   return true;
 }

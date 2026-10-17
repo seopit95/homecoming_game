@@ -1,0 +1,37 @@
+{
+  "id": "brown_mud",
+  "source": "https://polyhaven.com/a/brown_mud",
+  "license": "CC0-1.0",
+  "licenseURL": "https://polyhaven.com/license",
+  "physicalSizeMeters": 1.26,
+  "adaptation": "Original1k color/OpenGL normal/ARM images unchanged; soil-only material, no displacement or changed geometry/collider.",
+  "files": [
+    {
+      "file": "soil-color.jpg",
+      "original": {
+        "size": 501955,
+        "md5": "b141af27b413db140818d0a4998c394c",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud/brown_mud_diff_1k.jpg"
+      },
+      "sha256": "df3f135c899f10a3b018738343b222cbc67d13e7c76c5d8da834a3d34c984417"
+    },
+    {
+      "file": "soil-normal.jpg",
+      "original": {
+        "size": 1011780,
+        "md5": "62df05266fa5a0adc7733a7184a15dea",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud/brown_mud_nor_gl_1k.jpg"
+      },
+      "sha256": "ac517ca39eb507ae0f27e2b3db431c60888f9b5c3c52bec49d2c0775da0920cb"
+    },
+    {
+      "file": "soil-arm.jpg",
+      "original": {
+        "size": 224431,
+        "md5": "4f528864a1edbe9fff8c9b52a0922b9f",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud/brown_mud_arm_1k.jpg"
+      },
+      "sha256": "40a5ac438f23ea454ff45f3f62f0fe4ac5b89c42fd070d10e7d41c51252caf88"
+    }
+  ]
+}

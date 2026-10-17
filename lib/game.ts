@@ -1,3 +1,4 @@
+import {courtyardSky} from './materials.ts';
 import * as T from 'three';
 import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive,plantProblem,plantRoute,annexTapeDuration,courtCallTimes,courtCallDuration} from './expansion-story.ts';
 import {expansionLayout} from './expansion-world.ts';
@@ -30,7 +31,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
   renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
-  const scene=new T.Scene();scene.background=new T.Color('#080b10');scene.fog=new T.FogExp2('#14191d',.016);
+  const skyBackground=courtyardSky()?.clone();
+  const scene=new T.Scene(),nightBackground=new T.Color('#080b10');scene.background=nightBackground;scene.fog=new T.FogExp2('#14191d',.016);
   const reflections=roomReflections(renderer,scene);
   const ambient=new T.HemisphereLight('#a8b4c4','#302925',.7);scene.add(ambient);
   const camera=new T.PerspectiveCamera(68,1,.06,85);camera.rotation.order='YXZ';const hands=createViewmodel();
@@ -130,6 +132,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function loadArea(next:Area){
     stopRecording();stopAnnexCall();stopCourtCall();annexNumber='';annexCallResult='';annexPressed='';annexHeardCall=-1;courtHeardCall=-1;courtPressed='';evidenceReaction=false;audio.setDrive(null);audio.setDevice('phone',0);audio.setDevice('radio',0);audio.setDevice('alarm',0);
     if(road){road.root.removeFromParent();road=null;}for(const r of roads.values())r.root.removeFromParent();
+    scene.background=next==='courtyard'?(skyBackground??nightBackground):nightBackground;scene.backgroundIntensity=next==='courtyard'?.035:1;
     world.root.removeFromParent();area=next;world=preparedWorld(area);world.reset();scene.add(world.root);camera.position.copy(world.spawn);if(story.stage==='resident_arrival')camera.position.set(0,1.65,11.2);yaw=world.heading;pitch=0;
     hover=undefined;holdProgress=0;holding=false;doorOpen=0;lastDisplay='';enemyPath=[];repathAt=0;scriptBeat=0;threat=0;lastSound=elapsed;lastBreath=elapsed;lastDrip=elapsed;
     areaTime=0;entranceDelay=0;arrivalPursuit=false;arrivalDoor=undefined;arrivalDoorRelease=-1;lureUsed=false;crouched=false;walkPhase=0;lastSeen=null;tracking=false;seenAt=elapsed;patrol=0;voiceBeat=0;noiseRadius=0;noiseUntil=0;whisper='';lastVoice=elapsed-8;audio.stopVoices();
@@ -462,7 +465,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function detectsPlayer(){
     if(story.hidden)return false;
     const p=world.figure.position;
-    return perceives({ghost:p,player:camera.position,heading:world.figure.rotation.y,lineOfSight:hasLineOfSight({x:p.x,y:p.y+(crawling()?.7:1.55),z:p.z},camera.position,world.solids),torch,crouched,noise:area==='parking'&&parkingAlarmActive(story)?Math.min(noiseRadius,3):noiseRadius});
+    return perceives({ghost:p,player:camera.position,heading:world.figure.rotation.y,lineOfSight:hasLineOfSight({x:p.x,y:p.y+(crawling()?.7:1.55),z:p.z},camera.position,world.solids,true),torch,crouched,noise:area==='parking'&&parkingAlarmActive(story)?Math.min(noiseRadius,3):noiseRadius});
   }
   function hunt(speed:number,dt:number,distraction?:Point){
     const p=world.figure.position,distance=Math.hypot(p.x-camera.position.x,p.z-camera.position.z);
@@ -898,7 +901,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const oldTarget=renderer.getRenderTarget(),viewport=new T.Vector4();renderer.getViewport?.(viewport);
     const oldVisibility=canvas.style?.visibility;if(canvas.style)canvas.style.visibility='hidden';
     const savedCamera=camera.position.clone(),oldRotation=camera.quaternion.clone();
-    async function warm(root:T.Group,spawn:T.Vector3,extraPass?:()=>void|Promise<void>){
+    async function warm(root:T.Group,spawn:T.Vector3,extraPass?:()=>void|Promise<void>,exterior=false){
+      const background=scene.background,intensity=scene.backgroundIntensity;if(exterior){scene.background=skyBackground??background;scene.backgroundIntensity=.035;}
       scene.add(root);camera.position.copy(spawn);camera.rotation.set(0,0,0);camera.updateMatrixWorld();
       const flags:{o:T.Object3D;visible:boolean;frustum:boolean}[]=[];
       root.traverse(o=>{flags.push({o,visible:o.visible,frustum:o.frustumCulled});if(!(o instanceof T.Light))o.visible=true;o.frustumCulled=false;});
@@ -907,11 +911,11 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
         renderer.setRenderTarget(null);renderer.setViewport?.(0,0,128,128);
         await renderer.compileAsync?.(scene,camera);
         if(!disposed){renderer.render(scene,camera);await extraPass?.();}
-      }finally{for(const f of flags){f.o.visible=f.visible;f.o.frustumCulled=f.frustum;}root.removeFromParent();}
+      }finally{for(const f of flags){f.o.visible=f.visible;f.o.frustumCulled=f.frustum;}root.removeFromParent();scene.background=background;scene.backgroundIntensity=intensity;}
       await new Promise<void>(resolve=>setTimeout(resolve,0));
     }
     try{
-      for(const next of Object.keys(chapters) as Area[]){if(disposed)break;const w=preparedWorld(next);await warm(w.root,w.spawn,()=>w.surveillance?.prepare(renderer,scene));if(next==='parking'&&w.carDeparture){for(const t of [3,7,24]){camera.position.set(3.2,1.65,-17.8);w.carDeparture.pose(t,camera,false);await warm(w.root,camera.position.clone());}w.reset();}if(next==='lift'){w.updateStory?.('service_open',0,false);await warm(w.root,w.spawn);w.reset();}}
+      for(const next of Object.keys(chapters) as Area[]){if(disposed)break;const w=preparedWorld(next);await warm(w.root,w.spawn,()=>w.surveillance?.prepare(renderer,scene),next==='courtyard');if(next==='parking'&&w.carDeparture){for(const t of [3,7,24]){camera.position.set(3.2,1.65,-17.8);w.carDeparture.pose(t,camera,false);await warm(w.root,camera.position.clone());}w.reset();}if(next==='lift'){w.updateStory?.('service_open',0,false);await warm(w.root,w.spawn);w.reset();}}
       // The mirror uses a linear render target and hides the car's lights. Its
       // material programs differ from the main camera, even for the same mesh.
       for(const ending of [false,true]){if(disposed)break;const r=preparedRoad(ending);await warm(r.root,new T.Vector3(1.8,1.4,4),()=>r.renderMirror(renderer));}
@@ -928,7 +932,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     document.removeEventListener('keydown',keydown);document.removeEventListener('keyup',keyup);document.removeEventListener('pointermove',pointermove);document.removeEventListener('pointerup',pointerup);document.removeEventListener('pointerlockchange',lockchange);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('blur',blur);canvas.removeEventListener('pointerdown',pointerdown);
     // Three's asynchronous compiler still reads material programs while polling.
     // Stop gameplay immediately, but keep GPU resources alive until it settles.
-    const releaseGraphics=()=>{for(const r of roads.values()){r.dispose();disposeWorld(r.root);}for(const w of worlds.values())disposeWorld(w.root);disposeWorld(hands.scene);flashlight.shadow.map?.dispose();reflections.dispose();renderer.dispose();clearPrintedSources();};
+    const releaseGraphics=()=>{for(const r of roads.values()){r.dispose();disposeWorld(r.root);}for(const w of worlds.values())disposeWorld(w.root);disposeWorld(hands.scene);flashlight.shadow.map?.dispose();reflections.dispose();skyBackground?.dispose();renderer.dispose();clearPrintedSources();};
     void ready.catch(()=>{}).then(releaseGraphics);
   }};
 }

@@ -9,28 +9,32 @@ import {createGhost} from './ghost.ts';
 import {buildCourtyardGround} from './courtyard-ground.ts';
 import {createCourtyardSafe} from './courtyard-safe.ts';
 import {createEmergencyPhone} from './emergency-phone.ts';
+import {courtyardPlanting} from './courtyard-landscape.ts';
 import type {Solid,Target} from './world.ts';
 import type {Action,Stage,Story} from './story.ts';
 
 export const courtyardLayout={x:32,z:48,name:'1F · 외부 중정',exit:'B1 기록보관실',rooms:['서측 경비초소','놀이터','금고 보관 초소','비상전화'],patrol:[{x:-25,z:34},{x:-25,z:-34},{x:25,z:-34},{x:25,z:34}]};
 export function buildCourtyard(root:T.Group){
  const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
- const concrete=surface('castConcrete','#818b82'),wall=surface('decayWall','#9ca491'),steel=surface('steel','#929a89',{metalness:.28,roughness:.68}),wood=surface('wood','#76654d');
- const foliage=new T.MeshStandardMaterial({color:'#263c2c',roughness:1,flatShading:true}),leafGeometry=new T.IcosahedronGeometry(.22,1);
+ const concrete=surface('castConcrete','#818b82'),wall=surface('decayWall','#a9a69c'),steel=surface('steel','#929a89',{metalness:.28,roughness:.68}),wood=surface('wood','#76654d');
+ const plinth=surface('castConcrete','#707978'),soil=surface('soil','#b0a99b',{roughness:.96});
  const dark=new T.MeshStandardMaterial({color:'#182322',roughness:.82}),white=new T.MeshStandardMaterial({color:'#b8b6a1',roughness:.9}),rust=new T.MeshStandardMaterial({color:'#795744',roughness:.9});
  root.name='courtyard-chapter';
- function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=root){const mesh=new T.Mesh(boxUV(m===wood&&h<.2?softBox(w,h,d,.018):new T.BoxGeometry(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
+ function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=root){const mesh=new T.Mesh(boxUV(m===wood&&h<.2?softBox(w,h,d,.018):new T.BoxGeometry(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=!m.transparent;mesh.receiveShadow=true;parent.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
  function sign(text:string,x:number,y:number,z:number,w=1.5,h=.5,ry=0,ink='#223a31'):T.Mesh{const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,lines=text.split('\n'),font=Math.min(c.height/(lines.length*1.6),680/Math.max(...lines.map(l=>l.length),1));ctx.fillStyle='#aab099';ctx.fillRect(0,0,768,c.height);ctx.fillStyle=ink;ctx.font=`${font}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';lines.forEach((l,i)=>ctx.fillText(l,384,c.height/2+(i-(lines.length-1)/2)*font*1.4));const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.8}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);return mesh;}
  function target(id:Action,label:string,mesh:T.Object3D,p:[number,number,number],at:[number,number]){mesh.userData.approach={x:at[0],z:at[1]};targets.push({id,label,mesh,point:new T.Vector3(...p)});}
  function light(x:number,z:number,power=9){const l=new T.PointLight('#b0baa1',power,17,2);l.position.set(x,3.3,z);l.userData.base=power;lamps.push(l);root.add(l);roundPipe(root,[x,0,z],[x,3.5,z],.05,steel);box(x,3.5,z,.55,.09,.32,steel);box(x,3.445,z,.43,.02,.24,white);box(x,.04,z,.24,.08,.24,steel,true);return l;}
- buildCourtyardGround(root);for(const x of [-32,32]){box(x,1.45,0,.22,2.9,96,wall,true);box(x-Math.sign(x)*.08,.27,0,.28,.54,96,concrete);box(x-Math.sign(x)*.1,2.9,0,.32,.12,96,concrete);}
+ buildCourtyardGround(root);for(const x of [-32,32]){box(x,1.45,0,.22,2.9,96,plinth,true);box(x-Math.sign(x)*.08,.27,0,.28,.54,96,concrete);box(x-Math.sign(x)*.1,2.9,0,.32,.12,96,concrete);}
  for(const x of [-16.36,16.36])box(x,2.7,48,31.28,5.4,.22,wall,true);box(0,3.98,48,1.44,2.84,.22,wall);connectionPassage(root,solids,lamps,-3,54,0,.9);for(const [x,w] of [[-18,28],[8.25,8.5],[23.75,16.5]])box(x,2.7,-48,w,5.4,.22,wall,true);
  // Closed perimeter, visible towers, and sheeted construction enclose a believable service yard.
- const windowGlass=new T.MeshStandardMaterial({color:'#182a30',metalness:.35,roughness:.25}),windowLit=new T.MeshStandardMaterial({color:'#9c9a75',emissive:'#746d43',emissiveIntensity:.22,roughness:.5});
+ const windowGlass=new T.MeshPhysicalMaterial({color:'#889b9f',roughness:.22,transparent:true,opacity:.3,depthWrite:false,side:T.DoubleSide}),windowLit=new T.MeshStandardMaterial({color:'#9c9a75',emissive:'#746d43',emissiveIntensity:.22,roughness:.5});
+ const interior=new T.MeshStandardMaterial({color:'#111817',roughness:1}),curtainMaterials=['#92958a','#b6ad9b','#777d78'].map(color=>new T.MeshStandardMaterial({color,roughness:1,side:T.DoubleSide}));
+ const curtainGeometry=new T.PlaneGeometry(2.5,1.66,24,1);const folds=curtainGeometry.getAttribute('position');for(let i=0;i<folds.count;i++)folds.setZ(i,.012*Math.cos(folds.getX(i)*Math.PI*8));curtainGeometry.computeVertexNormals();
  // Recessed glazing sits behind thick jambs; spandrels and piers carry the bays.
  for(const side of [-1,1]){
-  box(side*35,18,0,5,36,98,wall);box(side*32.15,3.05,0,.7,.3,96,concrete);
-  for(let level=0;level<10;level++){
+  // Ground-floor facilities plus27 residential levels match the 28F home.
+  box(side*39.5,40.8,0,14,81.6,98,wall);box(side*32.15,3.05,0,.7,.3,96,concrete);
+  for(let level=0;level<27;level++){
    const y=4.6+level*2.9;
    box(side*32.15,y-1.18,0,.7,.54,96,concrete);box(side*32.15,y+1.2,0,.7,.5,96,wall);
    for(let bay=0;bay<17;bay++){
@@ -38,6 +42,10 @@ export function buildCourtyard(root:T.Group){
     box(x,y,z-2.03,.7,2.9,1.44,wall);
     box(x,y,z+2.03,.7,2.9,1.44,wall);
     box(side*32.35,y,z,.06,1.82,2.68,(bay+level*3)%17===0?windowLit:windowGlass);
+    if((bay+level*3)%17!==0){
+     box(side*32.46,y,z,.02,1.82,2.68,interior);
+     if((bay*7+level*3)%5<2){const curtain=new T.Mesh(curtainGeometry,curtainMaterials[(bay+level)%3]);curtain.rotation.y=-side*Math.PI/2;curtain.position.set(side*32.41,y,z);curtain.castShadow=curtain.receiveShadow=true;root.add(curtain);}
+    }
     for(const dz of [-1.37,0,1.37])box(side*32.12,y,z+dz,.41,1.9,.07,steel);
     for(const dy of [-.94,.94])box(side*32.12,y+dy,z,.41,.08,2.8,steel);
     box(side*31.97,y-.99,z,.88,.12,2.95,concrete);
@@ -56,10 +64,11 @@ export function buildCourtyard(root:T.Group){
    }
   }
   for(let z=-46.75;z<=44;z+=11){
-   roundPipe(root,[side*31.65,.15,z],[side*31.65,35,z],.07,steel);
-   for(let y=.7;y<35;y+=5.8)box(side*31.78,y,z,.27,.09,.22,steel);
+   roundPipe(root,[side*31.65,.15,z],[side*31.65,81.5,z],.07,steel);
+   for(let y=.7;y<81.5;y+=5.8)box(side*31.78,y,z,.27,.09,.22,steel);
    roundPipe(root,[side*31.65,.15,z],[side*31.35,.15,z],.07,steel);
   }
+  sign(side<0?'백로아파트\n101동':'백로아파트\n102동',side*31.89,3.8,35,2.6,1,-side*Math.PI/2);
   // Service cabinets and drain grilles remain against the structural plinth.
   for(const z of [-10,12,39]){
    box(side*31.69,.9,z,.4,1.2,.72,steel,true);
@@ -115,17 +124,11 @@ export function buildCourtyard(root:T.Group){
  for(let i=0;i<9;i++)box(-5.6+i*1.4,.24,-17,1.25,.48,.65,concrete);
  for(const x of [-16,16])for(const z of [-20,20]){box(x,.035,z,.48,.07,.48,dark);const cone=new T.Mesh(new T.ConeGeometry(.18,.6,12),rust);cone.position.set(x,.37,z);root.add(cone);}
  for(const side of [-1,1])for(const z of [-18,18]){
-  box(side*29,.25,z,1.5,.5,3.3,concrete,true);box(side*29,.505,z,1.25,.01,3,dark);
+  box(side*29,.25,z,1.5,.5,3.3,concrete,true);box(side*29,.505,z,1.25,.01,3,soil);
   for(const dx of [-.7,.7])box(side*29+dx,.53,z,.12,.12,3.4,concrete);
   for(const dz of [-1.65,1.65])box(side*29,.53,z+dz,1.5,.12,.12,concrete);
-  for(let i=0;i<5;i++){
-   const zz=z-1.2+i*.6,yy=.81+(i%3)*.035;
-   roundPipe(root,[side*29,.51,zz],[side*29,yy,zz],.023,wood);
-   for(const [dx,dy,dz,size] of [[0,0,0,1.2],[-.16,.04,0,.9],[.16,.08,.03,.95],[0,.23,0,.9],[.04,.1,-.16,.8],[-.02,.05,.16,.9]]){
-    const leaves=new T.Mesh(leafGeometry,foliage);leaves.position.set(side*29+dx,yy+dy,zz+dz);leaves.scale.set(size,1+(i%2)*.12,size);leaves.rotation.y=i*.7+dz;leaves.castShadow=true;leaves.receiveShadow=true;root.add(leaves);
-   }
-  }
  }
+ courtyardPlanting(root);
  box(0,1.04,23.055,4,.48,.05,white);box(0,1.36,23.055,5,.28,.05,white);
  sign('외벽 보수공사 · 중앙 진입 금지',0,1.04,23.081,4,.48);sign('← 서측 초소       동측 비상전화 →',0,1.36,23.081,5,.28);
  for(const x of [-25,25])for(const z of [-38,0,37])light(x,z);
@@ -150,14 +153,14 @@ export function buildCourtyard(root:T.Group){
    const xx=x+side*3;
    box(xx,.51,z,.18,1.02,6,wall,true);box(xx,2.21,z,.18,.38,6,wall,true);
    for(const dz of [-2.2,2.2])box(xx,1.52,z+dz,.18,1,1.6,wall,true);
-   box(xx,1.52,z,.04,1,2.8,windowGlass,true);
+   box(xx,1.52,z,.04,1,2.8,windowGlass,true);solids.at(-1)!.seeThrough=true;
    for(const dz of [-1.43,0,1.43])box(xx,1.52,z+dz,.22,1.12,.065,steel);
    for(const y of [1,2.04])box(xx,y,z,.3,.09,3,steel);
    box(xx-side*.06,.92,z,.44,.08,3.08,concrete);
   }
   for(const dx of [-2,2]){
    box(x+dx,.5,z+3,2,1,.18,wall,true);
-   box(x+dx,1.52,z+3,1.72,1.04,.04,windowGlass,true);
+   box(x+dx,1.52,z+3,1.72,1.04,.04,windowGlass,true);solids.at(-1)!.seeThrough=true;
    for(const jamb of [-.95,.95])box(x+dx+jamb,1.52,z+3,.1,1.04,.2,steel);
    for(const y of [1,2.04])box(x+dx,y,z+3,2,.08,.25,steel);
   }
