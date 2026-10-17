@@ -25,6 +25,15 @@ const {createGame}=await import('../lib/game.ts');
 const event=(target,type,properties)=>{const e=new Event(type);Object.assign(e,properties);target.dispatchEvent(e);};
 function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.min(.025,left)*1000;nextFrame(clock);}}
 
+test('V90 reading a real gallery notice cannot restart the lift arrival clock',async()=>{
+ const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'lift_call',notes:[],elapsed:200})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ function aim(pos,target){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...target).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'actual mounted target is usable');}
+ try{await game.ready;tick();game.continueGame();tick();aim([.2,1.65,-20.65],[.95,1.25,-22.55]);game.interact();assert.equal(game.snapshot().story.stage,'lift_wait');tick(3);
+  const paper=renderedScene.getObjectByName('gallery-notice-paper');assert.ok(paper,'notice is real world geometry');aim([.15,1.65,-19.8],paper.getWorldPosition(new THREE.Vector3()).toArray());game.interact();assert.ok(game.snapshot().story.notes.includes('gallery_notice'));assert.equal(game.snapshot().paused,false);tick(3.2);assert.equal(game.snapshot().story.stage,'lift_enter','the original arrival clock continues while reading');assert.ok(JSON.parse(data.get('homecoming.progress.v2')).notes.includes('gallery_notice'));
+ }finally{game.dispose();win.localStorage=previous;}
+});
+
 test('V77 real office input installs its fuse and chooses loads before operating the relay',async()=>{
  const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'office_record',notes:[],elapsed:500,pursuit:false})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));

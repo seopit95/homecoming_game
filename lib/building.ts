@@ -17,6 +17,7 @@ import {nightWindow} from './japan.ts';
 import {buildStoryRoom,buildResidentGallery} from './chapters.ts';
 import {facilityChair} from './facility-props.ts';
 import {storageMaterials,storageShelf} from './storage.ts';
+import {galleryDoor,galleryPaint,dressCommonGallery} from './common-gallery.ts';
 export {createGhost as makeFigure} from './ghost.ts';
 import {createGhost as makeFigure} from './ghost.ts';
 
@@ -58,7 +59,8 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   function door(id:Action,text:string,x:number,z:number,y=0,w=1.05){const mesh=box(x,y+1.1,z,w,2.2,.09,paint);doorHardware(mesh,w);box(x-w/2-.055,y+1.13,z,.09,2.26,.18,metal);box(x+w/2+.055,y+1.13,z,.09,2.26,.18,metal);box(x,y+2.38,z,w+.2,.24,.18,metal);label(text,x,y+2.38,z+.094,0,Math.min(1.1,w+.14),.2);target(id,text,mesh,x,y+1.25,z+.2);return mesh;}
   function pipe(x:number,y:number,z:number,length:number,along:'x'|'z'='z',m:T.Material=rust){roundPipe(root,[x-(along==='x'?length/2:0),y,z-(along==='z'?length/2:0)],[x+(along==='x'?length/2:0),y,z+(along==='z'?length/2:0)],.0325,m);for(let n=-length/2+.5;n<length/2;n+=2.5){const px=x+(along==='x'?n:0),pz=z+(along==='z'?n:0);box(px,y,pz,.12,.1,.12,metal);roundPipe(root,[px,y,pz],[px,ceiling,pz],.009,metal);box(px,ceiling-.015,pz,.16,.03,.16,metal);}}
   function puddle(x:number,z:number,sx:number,sz:number){const m=new T.Mesh(new T.PlaneGeometry(2,2),mat('#7c8885',{map:wetTexture(false,Math.round((x+31)*17+z)),roughness:.07,metalness:.22,transparent:true,opacity:.42,depthWrite:false}));m.rotation.x=-Math.PI/2;m.scale.set(sx,sz,1);m.position.set(x,.018,z);root.add(m);return m;}
-  function unit(x:number,z:number,no:string){box(x,1.1,z,.08,2.2,.95,paint);box(x-Math.sign(x)*.055,1.04,z+.3,.06,.045,.12,metal);label(no,x-Math.sign(x)*.06,2.05,z,-Math.sign(x)*Math.PI/2,.4,.14);box(x-Math.sign(x)*.12,.01,z,.36,.02,.75,dark);box(x-Math.sign(x)*.025,1.48,z+.65,.11,.21,.14,metal);for(const dz of [-.54,.54])box(x,1.12,z+dz,.1,2.24,.075,metal);box(x,2.24,z,.1,.08,1.15,metal);}
+  let unitPaint:T.MeshStandardMaterial|undefined;
+  function unit(x:number,z:number,no:string){return galleryDoor(root,x+Math.sign(x)*.03,z,no,unitPaint??=galleryPaint(),metal,dark);}
   // Openings use separate piers and lintels. No wall is left behind the sliding leaves.
   function portal(z:number,half=.66){const w=bx-half;wall(-(bx+half)/2,z,w,.18);wall((bx+half)/2,z,w,.18);box(0,2.56,z,half*2,.48,.18,wallMat);}
   const spawn=new T.Vector3(0,1.65,('spawnZ' in size?size.spawnZ:landing.spawnZ));const heading=0;let heightAt:((x:number,z:number)=>number)=()=>0;
@@ -107,7 +109,9 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       for(const y of [.93,1.13])roundPipe(root,[-bx,y,-bz],[-bx,y,bz],.021,rust);
       for(let z=-bz+.1;z<bz;z+=.75)roundPipe(root,[-bx,.91,z],[-bx,1.15,z],.0125,rust);
       box(-bx+.12,.005,0,.15,.015,bz*2,dark);
-      for(let z=-20;z<=21;z+=5.5){if(z<18)unit(bx-.12,z,String(2804+Math.round((18-z)/5.5)));box(-bx,1.4,z,.17,2.8,.22,concrete,true);fixture(.25,z,z!==2);}
+      unit(bx-.12,-12,'2801');unit(bx-.12,4,'2802');const lastUnit=unit(bx-.12,0,'2804');lastUnit.position.set(0,0,bz-.091);lastUnit.rotation.y=Math.PI;
+      for(let z=-20;z<=21;z+=5.5){box(-bx,1.4,z,.17,2.8,.22,concrete,true);fixture(.25,z,z!==2);}
+      const gallery=dressCommonGallery(root,'landing',bx,bz);target('gallery_notice','시설 방문 안내문',gallery.notice,gallery.point.x,gallery.point.y,gallery.point.z);
       for(const z of [-14,2,13])puddle(-.85,z,.3,1.6);
       for(let y=-3;y>-83;y-=3){box(0,y-.1,0,bx*2,.2,bz*2,concrete);box(-bx,y+.44,0,.13,.88,bz*2,concrete);}
       for(const y of [3,6]){box(0,y+2.8,0,bx*2,.16,bz*2,concrete);box(-bx,y+.44,0,.13,.88,bz*2,concrete);}
@@ -124,15 +128,14 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       label('정원 9명 · 600kg',0,2,bz-.11,Math.PI,.85,.17);label('승강기 검사 유효기간 경과',0,1.75,bz-.11,Math.PI,.95,.14,'#877954','#c2b790');
       // The elevator opens onto the actual type of landing for this floor.
       const previewStart=root.children.length;
-      box(0,-.1,dz-8,7,.2,16,floorMat);box(0,2.88,dz-2,7,.16,4,concrete);
+      const upperFloor=box(0,-.1,dz-8,7,.2,16,floorMat);boxUV(upperFloor.geometry,0,-.1,dz-8+21.35);box(0,2.88,dz-2,7,.16,4,concrete);
       box(0,1.4,dz-12,3.8,2.8,12,plaster);box(0,2.88,dz-7,7,.16,14,concrete);for(const x of [-3.5,3.5])box(x,1.4,dz-7,.18,2.8,14,plaster);
-      for(const x of [-2.65,2.65])box(x,-.1,dz-7,1.7,.2,14,floorMat);
-      for(const x of [-3.38,3.38])for(const z of [10,15.2])unit(x,z-21.35,String(2401+Math.round((z+16)/5.2)+(x>0?8:0)));
+      unit(-3.38,12-21.35,'2404');unit(3.38,12-21.35,'2401');
       for(const x of [-2.65,2.65])fixture(x,16-21.35,true);
       const signZ=17-21.35;box(0,2.4,signZ-.02,1.58,.27,.05,metal);for(const x of [-.55,.55])box(x,2.67,signZ-.02,.013,.27,.013,metal);label('복도 끝 비상계단',0,2.4,signZ+.012,0,1.5,.2);light(0,2.5,signZ,'#738877',3);
       regularPreview=root.children.slice(previewStart);regularPreview.forEach((mesh,i)=>{mesh.name=`lift-preview-24-${i}`;});
       const serviceStart=root.children.length,annexFloor=surface('oldTile','#aaa897',{roughness:.63}),annexWall=surface('decayWall','#b2b09b'),lower=surface('wall','#4b6054');
-      box(0,-.12,dz-8,4,.24,16,annexFloor);box(0,2.91,dz-8,4,.22,16,annexWall);
+      const groundFloor=box(0,-.12,dz-8,4,.24,16,annexFloor);boxUV(groundFloor.geometry,0,-.12,dz-8+35.35);box(0,2.91,dz-8,4,.22,16,annexWall);
       for(const x of [-2,2])for(const [a,b] of [[28,34],[17,25]]){const z=(a+b)/2-35.35;box(x,1.4,z,.15,2.8,b-a,annexWall);box(x,.43,z,.165,.86,b-a,lower);}
       for(const z of [dz-4,dz-16]){box(0,2.69,z,.19,.1,1.12,metal);box(0,2.635,z,.1,.013,.95,white);}
       servicePreview=root.children.slice(serviceStart);servicePreview.forEach((mesh,i)=>{mesh.name=`lift-preview-1-${i}`;mesh.visible=false;});
@@ -147,7 +150,8 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     let stairAt=-1;reset=()=>{stairAt=-1;};updateStory=(stage,time,_reduced,_story,occupants)=>{if(stage==='corridor_departure'&&stairAt<0)stairAt=time;if(stairAt>=0)setDoorAngle(stairHinge,stairBlock,1.5*T.MathUtils.smoothstep(time-stairAt,0,.75),.525,0,occupants);};
     label('24층 · 연결 복도',0,2.57,bz-.094,Math.PI,1.5,.22);
     for(const z of [-8,8]){box(0,1.4,z,3.8,2.8,12,plaster,true);for(const x of [-1.94,1.94]){label(z<0?'공동 배관실':'전기 설비실',Math.sign(x)*1.904,2,z,x<0?-Math.PI/2:Math.PI/2,.85,.18);box(x,1.02,z,.045,1.66,.79,metal);for(let i=0;i<7;i++)box(x+Math.sign(x)*.026,.54+i*.052,z,.012,.014,.55,dark);roundPipe(root,[x,2.36,z-5.8],[x,2.36,z+5.8],.017,metal);}}
-    for(const x of [-bx+.12,bx-.12])for(let z=-16;z<18;z+=5.2)unit(x,z,String(2401+Math.round((z+16)/5.2)+(x>0?8:0)));
+    unit(-bx+.12,12,'2404');unit(-bx+.12,-12,'2403');unit(bx-.12,12,'2401');unit(bx-.12,-12,'2402');
+    const gallery=dressCommonGallery(root,'corridor',bx,bz);target('core_notice','공용부 설비 점검표',gallery.notice,gallery.point.x,gallery.point.y,gallery.point.z);
     for(const x of [-2.65,2.65])for(const z of [-16,-5,5,16])fixture(x,z,z!==5);
     for(const z of [-17,0,17]){box(0,2.4,z-.02,1.58,.27,.05,metal);for(const x of [-.55,.55])box(x,2.67,z-.02,.013,.27,.013,metal);label('복도 끝 비상계단',0,2.4,z+.012,0,1.5,.2);light(0,2.5,z,'#738877',3);}
     for(const x of [-2.65,2.65])for(let z=-18;z<19;z+=3)box(x,.015,z,.06,.02,.55,mat('#92a68a',{emissive:'#455c3d',emissiveIntensity:.2}));
