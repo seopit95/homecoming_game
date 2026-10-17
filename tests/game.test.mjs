@@ -1144,3 +1144,31 @@ test('V99 reading the new home estimate cannot restart the apparition clock and 
   tick(1.15);assert.equal(f.game.snapshot().story.stage,'hide','the original 2.8 second apparition cue must keep its clock during optional reading');
  }finally{f.close();}
 });
+
+test('V100 real booth input delays a following ghost without trapping it or granting a safe-room loophole',async()=>{
+ const f=await officeAgencyInput({stage:'archive_edit',notes:['archive_road'],circuit:['archive_sequence_road'],elapsed:500,pursuit:true,pursuitWait:0});try{
+  const leaf=renderedScene.getObjectByName('archive-booth-hinge').children[0];const point=()=>leaf.localToWorld(new THREE.Vector3(.38,-.13,0)).toArray();
+  f.use([6.9,1.65,-17.8],point());assert.ok(f.game.snapshot().story.circuit.includes('archive_booth_close'));assert.equal(f.game.snapshot().story.stage,'archive_edit');tick(1);
+  const ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.set(4.7,0,-20);ghost.rotation.y=Math.PI/2;
+  renderedCamera.position.set(8,1.65,-19);const began=f.game.snapshot().elapsed;let opened=false;
+  for(let i=0;i<600;i++){tick(.025);if(!f.game.snapshot().story.circuit.includes('archive_booth_close')){opened=true;break;}}
+  assert.ok(opened,'original pursuit must find and push the closed door');assert.ok(f.game.snapshot().elapsed-began>1.8,'the warning buys a finite escape opportunity');assert.equal(f.game.snapshot().story.stage,'archive_edit');assert.ok(soundCalls.includes('knock'));assert.ok(f.game.snapshot().story.circuit.includes('archive_sequence_road'));
+  tick(.9);f.use([8,1.65,-17.5],point());assert.equal(f.game.snapshot().story.circuit.includes('archive_booth_close'),false,'cannot repeatedly shut the door on the nearby pursuer');
+  for(let i=0;i<100&&ghost.position.x<6.2;i++)tick(.025);assert.ok(ghost.position.x>6.2,'opening must actually admit the original moving body');
+ }finally{f.close();}
+});
+
+test('V100 occupied forced opening cannot become an indefinite body-block refuge',async()=>{
+ const f=await officeAgencyInput({stage:'archive_edit',notes:['archive_road'],circuit:['archive_sequence_road'],elapsed:500,pursuit:true,pursuitWait:0});try{
+  const hinge=renderedScene.getObjectByName('archive-booth-hinge'),leaf=hinge.children[0];
+  f.use([6.9,1.65,-17.8],leaf.localToWorld(new THREE.Vector3(.38,-.13,0)).toArray());tick(1);
+  const ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.set(4.7,0,-20);ghost.rotation.y=Math.PI/2;renderedCamera.position.set(8,1.65,-19);
+  const knocks=soundCalls.filter(x=>x==='knock').length;
+  for(let i=0;i<600&&soundCalls.filter(x=>x==='knock').length===knocks;i++)tick(.025);
+  assert.ok(soundCalls.filter(x=>x==='knock').length>knocks,'fixture reaches the original pressure warning');
+  renderedCamera.position.set(6.45,1.65,-17.2);tick(8);
+  const result={angle:hinge.rotation.y,player:renderedCamera.position.toArray(),ghost:ghost.position.toArray(),stage:f.game.snapshot().story.stage};console.log('occupied force result',JSON.stringify(result));
+  assert.ok(Math.abs(hinge.rotation.y)>1.35||['dying','dead'].includes(result.stage),'physical forced opening must recover from the occupied swing instead of leaving a permanent shelter');
+  assert.ok(f.game.snapshot().story.circuit.includes('archive_sequence_road'),'earned findings survive the recovery');
+ }finally{f.close();}
+});

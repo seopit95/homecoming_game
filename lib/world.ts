@@ -62,13 +62,14 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
   }
   const surveillance=root.getObjectByName('surveillance-screen')?.userData.surveillance as Surveillance|undefined;
   const archiveReview='archiveReview' in content?content.archiveReview:undefined;
+  const archiveDoor='archiveDoor' in content?content.archiveDoor:undefined;
   const plantAttempt='plantAttempt' in content?content.plantAttempt:undefined;
   const answeringMachine='answeringMachine' in content?content.answeringMachine:undefined;
   const intercom='intercom' in content?content.intercom:undefined,updateIntercom='updateIntercom' in content?content.updateIntercom:undefined;
   const courtPhone='courtPhone' in content?content.courtPhone:undefined,courtSafe='courtSafe' in content?content.courtSafe:undefined;
   const lureRadio='lureRadio' in content?content.lureRadio:undefined;
   const residentStudy='residentStudy' in content?content.residentStudy:undefined;
-  return {...content,root,updateStory,reset,surveillance,archiveReview,plantAttempt,answeringMachine,intercom,updateIntercom,courtPhone,courtSafe,residentStudy,lureRadio};
+  return {...content,root,updateStory,reset,surveillance,archiveReview,archiveDoor,plantAttempt,answeringMachine,intercom,updateIntercom,courtPhone,courtSafe,residentStudy,lureRadio};
 }
 export function disposeWorld(root:T.Object3D){
   root.traverse(o=>o.userData.surveillance?.dispose());

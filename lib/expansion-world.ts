@@ -20,6 +20,7 @@ import {createArchiveReview,archiveClips,archiveCamera,archiveReviewing} from '.
 import {createArchiveDeck} from './archive-deck.ts';
 import {buildAnnexLobby} from './annex-lobby.ts';
 import {buildAnnexWestWing} from './annex-west-wing.ts';
+import {createArchiveDoor} from './archive-door.ts';
 
 export const expansionLayout={
  courtyard:courtyardLayout,
@@ -101,7 +102,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  connectionPassage(root,solids,lamps,0,-bz);
  const heightAt=(_x:number,_z:number)=>0;
  let display:T.Mesh|undefined;let intercom:ReturnType<typeof createAnsweringMachine>|undefined,intercomStatus='';
- let surveillance:Surveillance|undefined;
+ let surveillance:Surveillance|undefined;let archiveDoor:ReturnType<typeof createArchiveDoor>|undefined;
  const archiveReview=area==='archive'?createArchiveReview():undefined;
  const faceText=(text:string)=>{if(!display)return;const map=(display.material as T.MeshStandardMaterial).map! as T.CanvasTexture;const c=map.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#101d18';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#b7cdae';ctx.font=`${Math.min(c.height*.26,650/Math.max(1,...text.split('\n').map(l=>l.length)))}px sans-serif`;ctx.textAlign='center';text.split('\n').forEach((l,i)=>ctx.fillText(l,c.width/2,c.height*(.34+i*.3)));map.needsUpdate=true;};
  const X=bx-6;
@@ -177,6 +178,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   for(const y of [.92,2.33])box(5.8,y,-20.05,.24,.055,3.75,metal);
   box(5.8,2.58,-17.2,.14,.44,1.4,wall);for(const z of [-17.9,-16.5])box(5.8,1.16,z,.2,2.32,.045,metal);
   label('기록 편집실',5.706,2.52,-17.2,1.1,.2,-Math.PI/2);
+  archiveDoor=createArchiveDoor(root,solids,targets);
   fixture(9.8,-22,2.1,'#a4b1a1');
   // Wall trunking and drops terminate on the equipment, rather than hanging in air.
   roundPipe(root,[12.98,2.49,-23.7],[12.98,2.49,-20.6],.012,metal);
@@ -305,6 +307,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   if(pressureLast){pressureLast.visible=true;pressureLast.rotation.z=2.4-(plantRoute(story)==='closed'?4.6:plantRoute(story)==='drain'?2.5:.6);}
  }
  function updateStory(stage:Stage,time:number,reduced=false,story?:Story,occupants:Occupant[]=[]){
+  if(story)archiveDoor?.update(time,story,occupants);
   const leaving=stage===`${area}_departure`;if(leaving&&opened<0)opened=time;
   if(opened>=0)setDoorAngle(hinge,doorBlock,1.5*T.MathUtils.smoothstep(time-opened,0,reduced?.2:.9),.7,0,occupants);
   const notes=story?.notes??[];
@@ -334,5 +337,5 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const reviewText=review?.source?`${archiveClips[review.source].title}\n${review.playing?'재생':'정지'} ${review.time.toFixed(1)}초 / ${archiveClips[review.source].duration}초`:text;
   surveillance?.update(stage,review?.source?review.time:replayTime,reviewText,review);
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,archiveReview,intercom,lureRadio,updateIntercom:area==='annex'?(digits:string,status:string,pressed:string|null)=>{intercomStatus=status;intercom!.setScreen(digits||'____');for(const {mesh} of intercom!.keys)mesh.position.y=pressed===mesh.uuid?.082:.085;intercom!.playButton.position.y=pressed===intercom!.playButton.uuid?.082:.085;intercom!.stopButton.position.y=pressed===intercom!.stopButton.uuid?.082:.085;}:undefined,plantAttempt:area==='plant'?(time:number,story:Story)=>{plantAttemptAt=time;recordPlantTrial(story);}:undefined,updateStory,reset(){lureRadio?.setActive(false);intercomStatus='';opened=-1;drainAt=-1;replayAt=-1;plantAttemptAt=-10;lastDisplay='';archiveReview?.reset();}};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,archiveReview,archiveDoor,intercom,lureRadio,updateIntercom:area==='annex'?(digits:string,status:string,pressed:string|null)=>{intercomStatus=status;intercom!.setScreen(digits||'____');for(const {mesh} of intercom!.keys)mesh.position.y=pressed===mesh.uuid?.082:.085;intercom!.playButton.position.y=pressed===intercom!.playButton.uuid?.082:.085;intercom!.stopButton.position.y=pressed===intercom!.stopButton.uuid?.082:.085;}:undefined,plantAttempt:area==='plant'?(time:number,story:Story)=>{plantAttemptAt=time;recordPlantTrial(story);}:undefined,updateStory,reset(){archiveDoor?.reset();lureRadio?.setActive(false);intercomStatus='';opened=-1;drainAt=-1;replayAt=-1;plantAttemptAt=-10;lastDisplay='';archiveReview?.reset();}};
 }
