@@ -12,7 +12,8 @@ import {archiveReplay,plantRoute,plantFilterCleared,plantProblem,type ExpansionA
 import {storageMaterials,storageShelf} from './storage.ts';
 import {createCRT,crtScreenGeometry,crtCable,createCrtSocket} from './crt-monitor.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
-import {facilityTable,facilityChair,waterTank,pumpSkid,cartridgeFuse,videoCassette} from './facility-props.ts';
+import {facilityTable,facilityChair,waterTank,pumpSkid,cartridgeFuse,videoCassette,portableRadio} from './facility-props.ts';
+import {annexRadio} from './radio-lure.ts';
 import {createAnsweringMachine} from './resident-props.ts';
 import {facilityModel} from './facility-models.ts';
 import {createArchiveReview,archiveClips,archiveCamera,archiveReviewing} from './archive-review.ts';
@@ -107,7 +108,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  let water:T.Mesh|undefined;
  let filterCloth:T.Group|undefined,routeHandle:T.Group|undefined,fan:T.Group|undefined,pumpMotor:T.Group|undefined;
  let suctionNeedle:T.Group|undefined,pressureNeedle:T.Group|undefined,suctionLast:T.Group|undefined,pressureLast:T.Group|undefined;
- let looseFuse:T.Group|undefined,installedFuse:T.Group|undefined,badge:T.Group|undefined;
+ let looseFuse:T.Group|undefined,installedFuse:T.Group|undefined,badge:T.Group|undefined,lureRadio:ReturnType<typeof portableRadio>|undefined;
  const recordings:{id:Action;mesh:T.Group}[]=[];
  if(area==='annex'){
   box(0,-.1,bz+1.35,2.2,.2,2.7,floor);box(0,2.83,bz+1.35,2.2,.12,2.7,metal);
@@ -127,6 +128,8 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const fuseLabel=label('6A · 통신 예비',-X+.49,.8211,-.025,.1,.018);fuseLabel.rotation.x=-Math.PI/2;
   for(let i=0;i<5;i++){const x=X-2.4+i*.9;box(x,1.04,23,.82,2.08,.58,metal,true);box(x,1.06,23.305,.75,1.96,.027,blue);box(x+.23,1.14,23.338,.028,.16,.034,dark);for(const y of [.32,.36,.40,1.89,1.93])box(x,y,23.324,.46,.012,.016,dark);for(const y of [.40,1.65])box(x-.36,y,23.328,.026,.11,.025,metal);box(x,.08,23,.86,.16,.62,dark);label(i===2?'한서연':'당직',x,1.77,23.325,.42,.18);}
   evidenceDesk('annex_badge','한서연 · 야간 당직 명찰',X,20);const shoe=createLeatherShoe('#242a27',false);shoe.position.set(X+1.3,0,23.5);root.add(shoe);
+  lureRadio=portableRadio();lureRadio.root.position.set(annexRadio.source.x,.8205,annexRadio.source.z);root.add(lureRadio.root);
+  target('annex_radio','건전지 라디오 켜기',lureRadio.root,[annexRadio.source.x,.94,annexRadio.source.z+.09],[annexRadio.approach.x,annexRadio.approach.z]);
   badge=new T.Group();badge.name='annex-badge-pickup';badge.position.set(X+.49,.821,20);root.add(badge);
   box(0,.0015,0,.095,.003,.065,glass,false,badge);box(0,.0016,0,.086,.001,.054,paper,false,badge);
   const badgeFace=label('백로아파트 시설관리\n한서연\n야간 당직 · 0917',X+.49,.8243,20,.082,.05);badgeFace.rotation.x=-Math.PI/2;badge.attach(badgeFace);
@@ -331,5 +334,5 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const reviewText=review?.source?`${archiveClips[review.source].title}\n${review.playing?'재생':'정지'} ${review.time.toFixed(1)}초 / ${archiveClips[review.source].duration}초`:text;
   surveillance?.update(stage,review?.source?review.time:replayTime,reviewText,review);
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,archiveReview,intercom,updateIntercom:area==='annex'?(digits:string,status:string,pressed:string|null)=>{intercomStatus=status;intercom!.setScreen(digits||'____');for(const {mesh} of intercom!.keys)mesh.position.y=pressed===mesh.uuid?.082:.085;intercom!.playButton.position.y=pressed===intercom!.playButton.uuid?.082:.085;intercom!.stopButton.position.y=pressed===intercom!.stopButton.uuid?.082:.085;}:undefined,plantAttempt:area==='plant'?(time:number,story:Story)=>{plantAttemptAt=time;recordPlantTrial(story);}:undefined,updateStory,reset(){intercomStatus='';opened=-1;drainAt=-1;replayAt=-1;plantAttemptAt=-10;lastDisplay='';archiveReview?.reset();}};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:bx-.15,z:bz+6.8},spawn:new T.Vector3(0,1.65,bz-3),heading:0,heightAt,liftDoors:undefined,setDisplay:faceText,fallingFigure:undefined,archiveReview,intercom,lureRadio,updateIntercom:area==='annex'?(digits:string,status:string,pressed:string|null)=>{intercomStatus=status;intercom!.setScreen(digits||'____');for(const {mesh} of intercom!.keys)mesh.position.y=pressed===mesh.uuid?.082:.085;intercom!.playButton.position.y=pressed===intercom!.playButton.uuid?.082:.085;intercom!.stopButton.position.y=pressed===intercom!.stopButton.uuid?.082:.085;}:undefined,plantAttempt:area==='plant'?(time:number,story:Story)=>{plantAttemptAt=time;recordPlantTrial(story);}:undefined,updateStory,reset(){lureRadio?.setActive(false);intercomStatus='';opened=-1;drainAt=-1;replayAt=-1;plantAttemptAt=-10;lastDisplay='';archiveReview?.reset();}};
 }

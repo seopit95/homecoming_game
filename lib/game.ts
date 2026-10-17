@@ -19,6 +19,7 @@ import {accidentCar} from './chapters.ts';
 import {landing,buildingLayout as layout} from './building.ts';
 import {freshStamina,stepStamina,canSprint} from './stamina.ts';
 import {perceives} from './perception.ts';
+import {createRadioLure,annexRadio} from './radio-lure.ts';
 import {roomReflections,configureShadow} from './lighting.ts';
 import {createViewmodel} from './viewmodel.ts';
 import {defaultSettings,normalizeSettings,readSettings,readProgress,writeProgress,writeSettings,PROGRESS_KEY,keyLabel,type Settings} from './preferences.ts';
@@ -50,6 +51,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   let message='',messageUntil=0,lastFrame=0,lastEmit=0,lastStep=0,stageTime=0,areaTime=0,lastSound=0,lastBreath=0,lastDrip=0,chapterUntil=0;
   let crouched=false,walkPhase=0,playerMoving=false,playerRunning=false,whisper='',whisperUntil=0,lastVoice=-20,voiceBeat=0,tracking=false,seenAt=0,patrol=0;
   let lastSeen:Point|null=null;
+  const radioLure=createRadioLure();let radioInterest:Point|null=null,radioUntil=0;
   let recordingAt=-1,recordingSpoken=false,recordingClue:'answerphone'|'annex_call'='answerphone';
   let annexNumber='',annexCallAt=-1,annexCallTo='',annexCallBeat=0,annexCallResult='',annexPressed='',annexPressedUntil=0,annexHeardCall=-1;
   let courtCallAt=-1,courtCallBeat=0,courtPressed='',courtPressedUntil=0,courtHeardCall=-1;
@@ -130,6 +132,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(value){audio.pause();if(document.pointerLockElement===canvas)document.exitPointerLock();}else{audio.resume();lock();}emit();
   }
   function loadArea(next:Area){
+    radioLure.reset();radioInterest=null;radioUntil=0;
     stopRecording();stopAnnexCall();stopCourtCall();annexNumber='';annexCallResult='';annexPressed='';annexHeardCall=-1;courtHeardCall=-1;courtPressed='';evidenceReaction=false;audio.setDrive(null);audio.setDevice('phone',0);audio.setDevice('radio',0);audio.setDevice('alarm',0);
     if(road){road.root.removeFromParent();road=null;}for(const r of roads.values())r.root.removeFromParent();
     scene.background=next==='courtyard'?(skyBackground??nightBackground):nightBackground;scene.backgroundIntensity=next==='courtyard'?.035:1;
@@ -273,6 +276,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     if(action==='answerphone'&&area==='resident'){playRecording();return;}
     if(action==='annex_call'&&area==='annex'){playRecording('annex_call');return;}
+    if(action==='annex_radio'&&area==='annex'){
+      const active=radioLure.toggle();world.lureRadio?.setActive(active);audio.sound('click',0,.25);
+      say(active?'건전지 라디오를 켰다.\n소리를 다른 곳에 남겨 두고 움직일 수 있다. 나를 보고 있다면 소용없겠지만.':'라디오를 껐다. 발소리가 가까워졌는지 들어 보자.',6);emit();return;
+    }
     if(area==='annex'&&annexCanCall(story.stage)&&(action.startsWith('annex_digit_')||action==='annex_dial'||action==='annex_clear')){operateIntercom(action);return;}
     if(area==='courtyard'&&(action==='court_hangup'||action==='court_phone'&&!story.notes.includes('court_phone')&&['court_search','court_code','court_safe_open','court_unlocked','court_departure'].includes(story.stage))){operateCourtPhone(action);return;}
     if(action==='car_board'){say(parkingCanBoard(story.stage)?'운전석을 바라보며 E를 길게 누르세요. 준비 중에도 뒤를 조심해야 한다.':story.notes.includes('car_search')?'차량 출구 앞에 물이 남아 있다. 배수 설비부터 확인하자.':'시동 키가 없다. 잠그지 않은 조수석 문을 열고 내 가방을 확인하자.',5);return;}
@@ -409,6 +416,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(choice!==null&&!review?.question)continue;
       if(t.id==='resident_key'&&(story.notes.includes('resident_key')||!world.residentStudy?.keyVisibleFrom(camera.position)))continue;
       if(t.id==='court_hangup'&&courtCallAt<0)continue;
+      if(t.id==='annex_radio')t.label=radioLure.active?'건전지 라디오 끄기':'건전지 라디오 켜기';
       if(t.id==='court_key'&&((world.courtSafe?.hinge.rotation.y??0)>-1.1||!world.courtSafe?.keyVisibleFrom(camera.position)))continue;
       if(t.id==='service_exit'&&story.stage==='office_departure')continue;
       if(t.id==='service_key'&&story.notes.includes('service_key'))continue;
@@ -469,12 +477,19 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function hunt(speed:number,dt:number,distraction?:Point){
     const p=world.figure.position,distance=Math.hypot(p.x-camera.position.x,p.z-camera.position.z);
-    if(detectsPlayer()){lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;if(!tracking){repathAt=0;ghostVoice('found');}tracking=true;}
+    if(detectsPlayer()){lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;radioInterest=null;if(!tracking){repathAt=0;ghostVoice('found');}tracking=true;}
     else if(tracking&&elapsed-seenAt>4){tracking=false;ghostVoice('here');}
     const reached=lastSeen&&Math.hypot(p.x-lastSeen.x,p.z-lastSeen.z)<.6;
     if(reached&&elapsed-seenAt>=2){lastSeen=null;repathAt=0;}
+    const broadcast=area==='annex'?radioLure.interest(p,elapsed,tracking||!!lastSeen):null;
+    if(broadcast){radioInterest=broadcast;radioUntil=elapsed+28;repathAt=0;}
+    if(elapsed>=radioUntil)radioInterest=null;
     if(lastSeen&&(!reached||elapsed-seenAt<2))followEnemy(lastSeen,speed,dt);
     else if(distraction)followEnemy(distraction,speed,dt);
+    else if(radioInterest){
+      if(Math.hypot(p.x-radioInterest.x,p.z-radioInterest.z)<.75)radioUntil=Math.min(radioUntil,elapsed+4);
+      followEnemy(radioInterest,speed*.85,dt);
+    }
     else{
       const points=area==='annex'||area==='courtyard'||area==='archive'||area==='plant'?expansionLayout[area].patrol:area==='resident'?[{x:0,z:2.8},{x:0,z:-3.8},{x:2.7,z:-3.8},{x:0,z:-3.8},{x:0,z:3.8},{x:-2.5,z:3.8}]:area==='apartment'?[home.bath,{x:0,z:-3*S},{x:0,z:3*S},{x:3.5*S,z:2*S}]:area==='office'?[{x:0,z:0},{x:0,z:-6},{x:3,z:5.6},{x:-3,z:4}]:area==='landing'?[{x:0,z:landing.liftZ+2},{x:1,z:0},{x:0,z:landing.spawnZ}]:area==='stairs'?[{x:1,z:-5},{x:0,z:4},{x:-1,z:-5}]:area==='parking'?[{x:8,z:-18},{x:-8,z:17},{x:8,z:17}]:[{x:-2.6,z:-17},{x:2.6,z:0},{x:-2.6,z:17}];
       const target=points[patrol%points.length];if(Math.hypot(p.x-target.x,p.z-target.z)<.8)patrol++;followEnemy(target,speed*.68,dt);if(elapsed-lastVoice>23)ghostVoice(patrol%2?'where':'cry');
@@ -751,7 +766,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     world.radioLight.intensity=story.stage==='radio'&&!evidenceReaction?1.5:0;world.phoneGlow.intensity=['wake_ring','light_switch','find_torch','power','phone'].includes(story.stage)?.8:0;
     const courtPhone=area==='courtyard'&&courtCallAt<0&&story.notes.includes('court_evidence')&&!story.notes.includes('court_phone')?world.targets.find(t=>t.id==='court_phone')?.point:undefined;
-    for(const device of ['phone','radio'] as const){const residentRing=area==='resident'&&['resident_arrival','resident_entry','resident_memory'].includes(story.stage)&&recordingAt<0&&!story.notes.includes('answerphone'),stairRing=area==='stairs'&&['stairs_reverse','stairs_passage'].includes(story.stage);const active=started&&(area==='apartment'&&(device==='phone'?['wake_ring','light_switch','find_torch','power','phone'].includes(story.stage):story.stage==='radio'&&!evidenceReaction)||device==='phone'&&(residentRing||stairRing||!!courtPhone));const p=device==='phone'&&residentRing?[-3.8,.9,3.6]:device==='phone'&&stairRing?[-.8,.9,-31.9]:home[device],dx=(device==='phone'&&courtPhone?courtPhone.x:p[0])-camera.position.x,dz=(device==='phone'&&courtPhone?courtPhone.z:p[2])-camera.position.z,dist=Math.hypot(dx,dz);audio.setDevice(device,active?Math.min(1,3/Math.max(1,dist)):0,T.MathUtils.clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,dist),-1,1));}
+    for(const device of ['phone','radio'] as const){const residentRing=area==='resident'&&['resident_arrival','resident_entry','resident_memory'].includes(story.stage)&&recordingAt<0&&!story.notes.includes('answerphone'),stairRing=area==='stairs'&&['stairs_reverse','stairs_passage'].includes(story.stage);const active=started&&(area==='apartment'&&(device==='phone'?['wake_ring','light_switch','find_torch','power','phone'].includes(story.stage):story.stage==='radio'&&!evidenceReaction)||device==='phone'&&(residentRing||stairRing||!!courtPhone)||device==='radio'&&area==='annex'&&radioLure.active&&story.stage!=='dying'&&story.stage!=='ended');const p=device==='radio'&&area==='annex'?[annexRadio.source.x,.94,annexRadio.source.z]:device==='phone'&&residentRing?[-3.8,.9,3.6]:device==='phone'&&stairRing?[-.8,.9,-31.9]:home[device],dx=(device==='phone'&&courtPhone?courtPhone.x:p[0])-camera.position.x,dz=(device==='phone'&&courtPhone?courtPhone.z:p[2])-camera.position.z,dist=Math.hypot(dx,dz);audio.setDevice(device,active?Math.min(1,3/Math.max(1,dist)):0,T.MathUtils.clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,dist),-1,1));}
     if(area==='apartment'&&!story.hidden&&['hide','escape'].includes(story.stage)&&Math.hypot(camera.position.x,camera.position.z-home.doorZ)<1.85){
       const door=world.root.getObjectByName('front-door')!;
       if(!door.userData.openRequested){door.userData.openRequested=true;audio.sound('click',0,.9);audio.sound('door-creak',0,.85);say('잠금쇠를 풀고 문을 밀었다. 복도로 나가야 한다!',3);}

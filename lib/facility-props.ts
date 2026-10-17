@@ -18,6 +18,25 @@ function assembly(name:string){
  return {group,box,mesh,pipe,finish};
 }
 
+export function portableRadio(){
+ const a=assembly('annex-lure-radio'),enamel=surface('paintedMetal','#6f7566',{roughness:.69,metalness:.16}),edge=surface('steel','#9da69a',{roughness:.43,metalness:.68}),dark=new T.MeshStandardMaterial({color:'#181f1b',roughness:.88});
+ for(const x of [-.126,.126])for(const z of [-.038,.038])a.box(x,.004,z,.026,.008,.024,dark);
+ a.box(0,.115,0,.33,.214,.118,enamel);a.box(0,.115,.06,.318,.199,.006,dark);
+ // Fine perforations and printed scale share a single front decal.
+ const c=document.createElement('canvas');c.width=1024;c.height=640;const ctx=c.getContext('2d')!;ctx.fillStyle='#454f42';ctx.fillRect(0,0,1024,640);
+ ctx.fillStyle='#131d16';for(let y=72;y<546;y+=14)for(let x=35;x<615;x+=14){ctx.beginPath();ctx.arc(x+(y%28?0:7),y,3,0,Math.PI*2);ctx.fill();}
+ ctx.fillStyle='#b5b79a';ctx.font='25px sans-serif';ctx.fillText('FM / AM',670,88);ctx.fillText('BATTERY',680,585);ctx.font='19px sans-serif';
+ ctx.fillStyle='#303c30';ctx.fillRect(657,115,320,78);ctx.fillStyle='#c2c5a0';ctx.fillText('88  92  96  100  108',672,138);for(let i=0;i<33;i++)ctx.fillRect(672+i*9,151,1,i%4?14:25);ctx.fillStyle='#c68c58';ctx.fillRect(812,146,3,38);
+ const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;const face=new T.Mesh(new T.PlaneGeometry(.31,.194),new T.MeshStandardMaterial({map,roughness:.82}));face.position.set(0,.115,.0632);a.group.add(face);
+ for(const [x,y,r] of [[.108,.09,.023],[.108,.147,.014]]){const knob=a.mesh(new T.CylinderGeometry(r,r,.015,32),dark,x,y,.077);knob.rotation.x=Math.PI/2;const mark=a.box(x,y+r*.5,.086,.002,r*.5,.0015,edge);mark.rotation.z=-.4;}
+ for(const x of [-.118,.118])a.box(x,.229,-.007,.021,.022,.034,dark);
+ a.pipe([-.118,.24,-.007],[-.118,.27,-.007],.007,dark);a.pipe([.118,.24,-.007],[.118,.27,-.007],.007,dark);a.pipe([-.118,.27,-.007],[.118,.27,-.007],.008,dark);
+ a.pipe([-.135,.216,-.035],[-.195,.48,-.035],.0022,edge);
+ const body=a.finish(false),ledMaterial=new T.MeshStandardMaterial({color:'#283726',emissive:'#b2a35f',emissiveIntensity:0,roughness:.48});
+ const led=new T.Mesh(new T.SphereGeometry(.0035,10,6),ledMaterial);led.name='radio-power-indicator';led.position.set(.147,.193,.066);body.add(led);
+ return {root:body,setActive(active:boolean){ledMaterial.emissiveIntensity=active?1.6:0;}};
+}
+
 export function carSeatBag(){
  const leather=surface('bagLeather','#d5c8b7',{roughness:.76}),lining=surface('fabric','#292b29'),metal=surface('steel','#aeb6b2',{roughness:.28,metalness:.8}),thread=new T.MeshStandardMaterial({color:'#8b7960',roughness:1});
  const a=assembly('garage-seat-bag');a.box(0,.012,0,.30,.024,.25,leather);a.box(0,.026,0,.27,.006,.22,lining);
