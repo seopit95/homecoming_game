@@ -16,7 +16,7 @@ mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{...realLighting,roomReflections:()=>({dispose(){}})}});
 mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setArchiveRecord(){}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
-const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
+const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){},arc(){},fill(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
 Object.defineProperty(globalThis,'document',{value:doc,configurable:true});
 const win=new EventTarget();Object.assign(win,{devicePixelRatio:1,matchMedia:()=>({matches:true})});Object.defineProperty(globalThis,'window',{value:win,configurable:true});
@@ -1133,5 +1133,14 @@ test('V94 a real contact during restored archive playback cannot pass through th
   const ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.set(9,0,-18.35);tick();
   assert.equal(f.game.snapshot().story.stage,'dying','the moving pursuer must remain lethal while the restored recording plays');
   assert.equal(f.game.snapshot().story.ending,'caught');assert.equal(f.game.snapshot().story.resume,'archive_reveal','retry returns before the interrupted reveal');
+ }finally{f.close();}
+});
+
+test('V99 reading the new home estimate cannot restart the apparition clock and is saved without changing the mission',async()=>{
+ const f=await officeAgencyInput({stage:'radio',notes:['wake'],elapsed:180});try{
+  f.use([...home.radioStart],[...home.radio]);assert.equal(f.game.snapshot().story.stage,'listen');tick(1.75);
+  f.use([-6.4197,1.65,5.8],[-6.4197,.8221,7.2238]);assert.ok(f.game.snapshot().story.notes.includes('home_repair'));assert.equal(f.game.snapshot().story.stage,'listen');
+  assert.ok(JSON.parse(f.data.get('homecoming.progress.v2')).notes.includes('home_repair'));
+  tick(1.15);assert.equal(f.game.snapshot().story.stage,'hide','the original 2.8 second apparition cue must keep its clock during optional reading');
  }finally{f.close();}
 });

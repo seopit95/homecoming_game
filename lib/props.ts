@@ -21,7 +21,8 @@ export function basin(width:number,depth:number,metal=false){
 }
 export function sinkCounter(width:number,depth:number,sinkX:number,sinkWidth:number,sinkDepth:number,sinkZ=0){
   const root=new T.Group();root.name='cut-out-sink-worktop';const material=surface('ceramic','#d0cec3');
-  const gapW=sinkWidth*.93,gapD=sinkDepth*.9,left=sinkX-gapW/2,right=sinkX+gapW/2;
+  // Clear the full bowl (radius .53), leaving the .55 flange supported on the slab.
+  const gapW=sinkWidth*1.06,gapD=sinkDepth*1.06,left=sinkX-gapW/2,right=sinkX+gapW/2;
   for(const [a,b] of [[-width/2,left],[right,width/2]])if(b>a)box(root,[(a+b)/2,-.03,0],[b-a,.06,depth],material);
   for(const [a,b] of [[-depth/2,sinkZ-gapD/2],[sinkZ+gapD/2,depth/2]])if(b>a)box(root,[sinkX,-.03,(a+b)/2],[gapW,.06,b-a],material);
   const flange=new T.Shape();flange.moveTo(-sinkWidth*.55,-sinkDepth*.55);flange.lineTo(sinkWidth*.55,-sinkDepth*.55);flange.lineTo(sinkWidth*.55,sinkDepth*.55);flange.lineTo(-sinkWidth*.55,sinkDepth*.55);flange.closePath();const hole=new T.Path();hole.absellipse(0,0,sinkWidth*.495,sinkDepth*.495,0,Math.PI*2,true,0);flange.holes.push(hole);const rim=new T.Mesh(new T.ShapeGeometry(flange,40),surface('steel','#d3d8d5',{roughness:.3,metalness:.6,side:T.DoubleSide}));rim.rotation.x=-Math.PI/2;rim.position.set(sinkX,.002,sinkZ);root.add(rim);

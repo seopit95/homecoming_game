@@ -5,9 +5,10 @@ import type { Action, Area } from './story';
 import {buildBuilding,makeFigure} from './building.ts';
 import {surface,boxUV,softBox,upholstery,cottonUpholstery} from './materials.ts';
 import {createEntryEvidence} from './entry-props.ts';
-import {basin,bathtub,sinkCounter,cabinet,roundPipe,sofa,drawerUnit,writingTable,bed,bookcase} from './props.ts';
+import {basin,bathtub,roundPipe,sofa,drawerUnit,writingTable,bed,bookcase} from './props.ts';
 import {dressApartment} from './japan.ts';
 import {dressLivingSpace} from './room-dressing.ts';
+import {createDomesticKitchen,createDomesticFridge,createDiningSet,createRepairEstimate,createKitchenTimer,placeDomestic} from './domestic-kitchen.ts';
 import {batchStaticGeometry} from './static-geometry.ts';
 import {solidContainsPoint,type Occupant} from './collision.ts';
 import {setDoorAngle} from './passage.ts';
@@ -166,18 +167,15 @@ function buildApartment(scene:T.Group) {
   }
   // Full kitchen, dining area and a separate study give the home a lived-in scale.
   at(-4.5,-1.7,0,-.45);
-  const kitchen=cabinet(3.5,.92,.9,wood);kitchen.position.set(-4.5,0,-1.7);scene.add(kitchen);solids.push({x:-4.5,z:-1.7,w:3.5,d:.9,y:.46,h:.92});
-  const worktop=sinkCounter(3.55,.94,-.8,.75,.59);worktop.position.set(-4.5,.98,-1.7);scene.add(worktop);
-  for(const x of [-4.1,-3.72])for(const z of [-1.52,-1.87]){const ring=new T.Mesh(new T.TorusGeometry(.105,.012,8,24),metal);ring.rotation.x=Math.PI/2;ring.position.set(x,1.008,z);scene.add(ring);cyl(x,1.006,z,.061,.019,dark);for(const flip of [false,true])box(x,1.026,z,flip?.022:.265,.022,flip?.265:.022,dark);}
-  at(-6.04,-.65);
-  box(-6.04,1,-.65,.78,2,.83,cream,true);box(-5.64,1,-.65,.03,.05,.77,metal);
-  at(-4.5,-1.7,0,-.45);
-  for(const x of [-5.5,-4.5,-3.5])box(x,2.1,-1.97,.9,.8,.36,wood);
+  const kitchen=createDomesticKitchen(3.5,true);kitchen.name='apartment-kitchen';placeDomestic(scene,kitchen,solids,-4.5,-1.7,0,3.525,1.02,.93);
+  const fridge=createDomesticFridge();fridge.name='apartment-refrigerator';placeDomestic(scene,fridge,solids,-6.70,-1.79,0,.76,.88,1.88);
   at(-4.2,5.15);
-  box(-4.2,.76,5.15,2.05,.12,.95,wood,true);for(const x of [-4.95,-3.45])for(const z of [4.9,5.4])box(x,.38,z,.07,.75,.07,wood);
-  for(const x of [-4.85,-3.55])for(const z of [4.42,5.84]){box(x,.42,z,.48,.08,.44,wood,true);box(x,.68,z+(z>5?.19:-.19),.48,.52,.07,wood);for(const dx of [-.17,.17])for(const dz of [-.16,.16])box(x+dx,.2,z+dz,.045,.4,.045,wood);}
+  const dining=createDiningSet();placeDomestic(scene,dining,solids,-4.2,5.15,0,2.05,.95,.82);
+  for(const x of [-4.85,-3.55])for(const z of [4.42,5.84])solids.push({x,z,w:.5,d:.50,y:.43,h:.86});
+  const estimate=createRepairEstimate();estimate.root.position.set(-4.68,.82,5.09);estimate.root.rotation.y=-.08;scene.add(estimate.root);
+  targets.push({id:'home_repair',point:new T.Vector3(-4.2*S-.48,.8221,5.15*S-.06),label:'식탁 위 차량 수리 견적 확인',mesh:estimate.page});
   at(-4.2,5.15);
-  const timer=cyl(-4.2,.9,5.15,.105,.16,cream);targets.push({id:'lure',point:new T.Vector3(-4.2*S,.94,5.15*S),label:'주방 타이머 울리기',mesh:timer});
+  const timer=createKitchenTimer();timer.position.set(-4.2,.82,5.15);scene.add(timer);targets.push({id:'lure',point:new T.Vector3(-4.2*S,.89,5.15*S-.06),label:'주방 타이머 울리기',mesh:timer});
   at(-5.3,-5.6);
   const study=writingTable(2.1,.8,.8,wood);study.name='home-study-desk';study.position.set(-5.3,0,-5.6);scene.add(study);solids.push({x:-5.3,z:-5.6,w:2.1,d:.8,y:.4,h:.8});
   at(-6.12,-3.4);
