@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import {buildWorld,canStandAt,hasLineOfSight,disposeWorld} from '../lib/world.ts';
 import {findPath} from '../lib/navigation.ts';
+import {initialStory} from '../lib/story.ts';
 const ctx={fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}};
 globalThis.document={createElement(){return {width:0,height:0,getContext:()=>ctx};}};
 
@@ -13,6 +14,10 @@ for(const area of ['annex','courtyard','archive','plant'])test(`${area} provides
   for(const target of world.targets){
    const approach=target.mesh.userData.approach;assert.ok(approach,`${target.id} has an authored interaction side`);
    assert.ok(canStandAt(approach.x,approach.z,world.solids,.23,world.bounds),`${target.id} clear approach`);
+   if(target.id==='court_key'){
+    assert.equal(hasLineOfSight({x:approach.x,y:1.65,z:approach.z},target.point,world.solids),false,'a closed safe door hides its key');
+    const story={...initialStory(),stage:'court_safe_open',code:'2617',notes:['court_confirm']};world.updateStory(story.stage,0,false,story);world.updateStory(story.stage,1.2,false,story);
+   }
    const p={x:approach.x,y:1.65,z:approach.z};assert.ok(hasLineOfSight(p,target.point,world.solids),`${target.id} visible from approach`);
    assert.ok(findPath(world.spawn,approach,world.solids,world.bounds,.23).length,`${target.id} has a walking route`);
    assert.ok(Math.hypot(p.x-target.point.x,p.y-target.point.y,p.z-target.point.z)<2.3,`${target.id} within reach`);

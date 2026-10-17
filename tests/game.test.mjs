@@ -49,6 +49,14 @@ test('V91 switching CCTV power off interrupts the actual recording and restores 
  }finally{f.close();}
 });
 
+test('V93 real safe confirmation exposes an actionable key under continuous physical occlusion',async()=>{
+ const f=await officeAgencyInput({stage:'court_code',code:'2617',notes:[],elapsed:950});try{
+  const safe=renderedScene.getObjectByName('courtyard-key-safe'),handle=safe.getObjectByName('safe-unlock-handle').getWorldPosition(new THREE.Vector3());handle.z+=.02;
+  f.use([25,1.65,31.65],handle.toArray());assert.equal(f.game.snapshot().story.stage,'court_safe_open');tick(1.3);
+  const key=safe.getObjectByName('courtyard-basement-key').getWorldPosition(new THREE.Vector3());f.use([25,1.65,31.65],key.toArray());assert.equal(f.game.snapshot().story.stage,'court_unlocked');assert.ok(f.game.snapshot().story.notes.includes('court_key'));assert.equal(f.game.snapshot().paused,false);
+ }finally{f.close();}
+});
+
 test('V90 reading a real gallery notice cannot restart the lift arrival clock',async()=>{
  const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'lift_call',notes:[],elapsed:200})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));

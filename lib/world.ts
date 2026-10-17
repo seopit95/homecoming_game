@@ -29,10 +29,18 @@ export function clampLightOrigin(eye:T.Vector3,lens:T.Vector3,solids:Solid[]){
   lens.copy(eye).addScaledVector(lightDirection,Math.max(0,nearest-.06));return true;
 }
 export function canStandAt(x:number,z:number,solids:Solid[],r=.23,bounds:Bounds=home.bounds){return x>(bounds.minX??-bounds.x)&&x<bounds.x&&Math.abs(z)<bounds.z&&!solids.some(s=>solidContainsPoint(s,x,z,r));}
+const sightRay=new T.Ray(),sightBox=new T.Box3(),sightHit=new T.Vector3();
 export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:number;z:number},solids:Solid[],throughGlass=false){
-  const distance=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);
-  for(let s=.1;s<distance-.15;s+=.1){const t=s/distance,x=from.x+(to.x-from.x)*t,y=from.y+(to.y-from.y)*t,z=from.z+(to.z-from.z)*t;
-    if(solids.some(b=>(!throughGlass||!b.seeThrough)&&solidContainsPoint(b,x,z)&&y>(b.y??1.5)-(b.h??3)/2&&y<(b.y??1.5)+(b.h??3)/2))return false;
+  const dx=to.x-from.x,dy=to.y-from.y,dz=to.z-from.z,distance=Math.hypot(dx,dy,dz);if(distance<=.25)return true;
+  const nx=dx/distance,ny=dy/distance,nz=dz/distance,limitSq=(distance-.25)**2,epsilon=1e-7;
+  for(const b of solids){
+    const h=b.h??3;if(throughGlass&&b.seeThrough||b.w<=2*epsilon||b.d<=2*epsilon||h<=2*epsilon)continue;
+    const y=b.y??1.5,c=Math.cos(b.yaw??0),n=Math.sin(b.yaw??0),x=from.x+nx*.1-b.x,z=from.z+nz*.1-b.z;
+    // Preserve the existing eye/target margins and open faces, but test every
+    // intervening surface continuously, including thin rotated door leaves.
+    sightBox.min.set(-b.w/2+epsilon,y-h/2+epsilon,-b.d/2+epsilon);sightBox.max.set(b.w/2-epsilon,y+h/2-epsilon,b.d/2-epsilon);
+    sightRay.origin.set(x*c-z*n,from.y+ny*.1,x*n+z*c);sightRay.direction.set(nx*c-nz*n,ny,nx*n+nz*c);
+    if(sightBox.containsPoint(sightRay.origin)||sightRay.intersectBox(sightBox,sightHit)&&sightRay.origin.distanceToSquared(sightHit)<limitSq)return false;
   }
   return true;
 }

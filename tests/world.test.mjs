@@ -93,7 +93,7 @@ test('every required interaction has a reachable position inside the apartment',
       seen.add(key);queue.push([nx,nz]);
     }
   }
-  for(const target of targets){assert.ok(queue.some(([x,z])=>Math.hypot(x/4-target.point.x,z/4-target.point.z)<1.25),`${target.id} must be reachable without walking through walls`);}
+  for(const target of targets){assert.ok(queue.some(([x,z])=>Math.hypot(x/4-target.point.x,z/4-target.point.z)<1.25&&hasLineOfSight({x:x/4,y:1.65,z:z/4},target.point,solids)),`${target.id} needs a reachable unobstructed approach`);}
 });
 for(const area of ['landing','lift','corridor','stairs','resident','office','parking','aftermath'])test(`${area}: all required interactions are reachable from the spawn`,()=>{
   const world=buildWorld(new THREE.Scene(),area);assert.ok(world.bounds,`${area} must provide its own walkable area`);
