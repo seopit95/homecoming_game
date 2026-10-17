@@ -8,7 +8,7 @@ import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength,
 export {prepareVisuals} from './materials.ts';
 import {clearPrintedSources} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
-import {initialStory,checkpoint,transition,objectiveFor,officePowerLoad,officePowerProblem,residentEvidence,residentMessageDuration,areaFor,chapters,chaseStages,opening,openingTiming as beats,finale,finaleTiming as endingBeats,isMemory,isFinale,isCinematic,hasFlashlight,parkingDrained,parkingCanBoard,parkingAlarmActive,parkingBoardDuration,tapeTimes,officeReplay,officeReplayDuration,type Story,type Action,type Area} from './story.ts';
+import {initialStory,checkpoint,transition,objectiveFor,officePowerLoad,officePowerProblem,officeCanWatch,residentEvidence,residentMessageDuration,areaFor,chapters,chaseStages,opening,openingTiming as beats,finale,finaleTiming as endingBeats,isMemory,isFinale,isCinematic,hasFlashlight,parkingDrained,parkingCanBoard,parkingAlarmActive,parkingBoardDuration,tapeTimes,officeReplay,officeReplayDuration,type Story,type Action,type Area} from './story.ts';
 import {findPath,findPursuitPath,pursuerRadius,clearPath,type Point} from './navigation.ts';
 import {setConnectionDoor} from './passage.ts';
 import {apartment as home,apartmentScale as S} from './apartment-layout.ts';
@@ -137,7 +137,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     (scene.fog as T.FogExp2).density=area==='corridor'?.026:area==='parking'?.021:.016;
     if(['landing','corridor','stairs'].includes(area)){world.figure.visible=true;const z=area==='landing'?landing.homeZ:area==='corridor'?19.2:area==='stairs'?5.25:7.1;world.figure.position.set(area==='landing'?3.7:area==='corridor'?.95:0,0,z);world.figure.lookAt(camera.position.x,0,camera.position.z);chapterUntil=elapsed+1.7;}
     if(area==='corridor'){world.figure.position.set(0,2.35,20.8);world.figure.rotation.y=Math.PI;}
-    if(area==='office'){world.figure.position.set(-2.95,0,13.35);world.figure.rotation.y=Math.PI;world.figure.visible=true;arrivalDoor=world.root.getObjectByName('connection-fire-door');}
+    if(area==='office'){arrivalPursuit=story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power');world.figure.position.set(-2.95,0,13.35);world.figure.rotation.y=Math.PI;world.figure.visible=true;arrivalDoor=world.root.getObjectByName('connection-fire-door');}
     if(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'){ambient.intensity=area==='annex'?.26:.22;(scene.fog as T.FogExp2).density=.019;}
     if(area==='courtyard'){world.figure.position.set(-2.95,0,53.55);world.figure.rotation.y=Math.PI;world.figure.visible=false;arrivalDoor=world.root.children.find(o=>o.name==='continuous-connection'&&o.position.z===54)?.getObjectByName('connection-fire-door');}
     if(area==='parking'){world.figure.position.set(0,0,21.3);world.figure.rotation.y=Math.PI;world.figure.visible=true;}
@@ -152,7 +152,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const next=transition(story,action);if(next===story)return false;
     if(next.stage==='wait'&&story.stage!=='wait'){searchTime=-1;lastSeen=null;tracking=false;}
     const keepInvestigationPhase=(area==='resident'||area==='office'||area==='annex'||action==='gallery_notice'||action==='core_notice')&&next.stage===story.stage;
-    story=next;if(!keepInvestigationPhase){stageTime=0;scriptBeat=0;voiceBeat=0;enemyPath=[];repathAt=0;}holdProgress=0;
+    story=next;if(area==='office'&&(story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power')))arrivalPursuit=true;if(!keepInvestigationPhase){stageTime=0;scriptBeat=0;voiceBeat=0;enemyPath=[];repathAt=0;}holdProgress=0;
     if(story.stage==='ended'){stopRecording();stopAnnexCall();stopCourtCall();if(story.ending==='crashed'){try{storage?.removeItem(PROGRESS_KEY);}catch{}saved=null;}keys.clear();holding=false;hover=undefined;threat=0;audio.stopVoices();audio.setDrive(null);whisper='';if(document.pointerLockElement===canvas)document.exitPointerLock();audio.sound('dread');emit();return true;}
     if(story.stage==='dying'){
       stopRecording();stopAnnexCall();stopCourtCall();keys.clear();holding=false;dragging=false;hover=undefined;message='';whisper='';threat=1;deathOrigin.copy(camera.position);deathFloor=world.heightAt(camera.position.x,camera.position.z);deathEye=camera.position.y-deathFloor;
@@ -186,8 +186,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     try{audio.start();audio.setVolume(settings.volume);audio.mix(settings);}catch{onError('소리를 시작하지 못했습니다. 소리 없이도 플레이할 수 있습니다.');}
     const resumePursuit=retry?(retry==='continue'?saved?.pursuit:arrivalPursuit):false;
     const resumeWait=retry==='continue'?saved?.pursuitWait??0:Math.max(0,entranceDelay-areaTime);
-    if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&story.notes.includes('resident_key'))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathRecovery=false;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
+    if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],officeSupply:saved.officeSupply,code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&story.notes.includes('resident_key'))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathRecovery=false;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
     lastStep=elapsed;lastEmit=elapsed-1;loadArea(areaFor(story));
+    if(resumePursuit&&area==='office')arrivalPursuit=true;
     if(resumePursuit&&(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'||area==='parking')){carryPursuit(5.2,true,area==='parking'?layout.parking.z:expansionLayout[area].z);entranceDelay=Math.max(entranceDelay,resumeWait);persist();}
     audio.setTV(story.stage==='tv');
     if(isCinematic(story.stage)||story.stage==='tv'||story.stage==='wake_ring')openingScene();
@@ -240,10 +241,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     car_door:'문을 열었다. 차가운 비가 손등을 때린다.\n그날은 이 문을 열고도 다시 차로 돌아갔다. 이번에는 떠나지 않겠다.',
     road_bag:'1704호 열쇠. 가방 곁의 전화기는 화면에 금이 갔지만 아직 켜져 있다.\n「도착하면 연락할게.」',
     road_phone:'「제가 사람을 치었습니다. 술을 마셨고, 도망쳤습니다.」\n「이번에는 여기 있겠습니다.」',
-    record:'03:26. 내 차가 멈춘 직후, 열람 영상에서 아홉 초가 빠져 있다.\n서고의 퓨즈를 배전반에 설치해야 한다. 비상전원은 6A, CCTV와 승강기 제어 전원이 필요하다.\nCCTV에서 내 차가 입차한 03:26 기록을 확인하자.',
+    record:'사고 다음 날 06:40, 인계자 박정호. 전임 야간 당직은 한서연이었다.\n승강기는 C 4A, CCTV는 B 2A. 비상 공급은 6A다. 열쇠는 CCTV 오른쪽, 예비 퓨즈는 서고.\n03:26 입차 영상에서 아홉 초가 빠져 있다. 알고 싶지 않은데… 화면을 켜면 확인할 수 있다.',
     fuse:'예비 퓨즈를 챙겼다.\n오른쪽 전기실 배전반의 빈 홀더에 먼저 설치하자.',
     security_power:'CCTV가 켜졌다. 사흘 전 주차장 기록이다.\n찌그러진 내 차가 들어오고 있다.',
-    monitor:officeReplay[0].text,service_key:'관리용 승강기 열쇠를 챙겼다. 복도 끝 승강기로 가자.',
+    monitor:officeReplay[0].text,service_key:'관리용 승강기 열쇠다. C 회로에 전원을 공급해야 승강기가 움직인다.',
     service_exit:'관리용 승강기 문이 열렸다. 비상 전원으로 1층까지 내려갈 수 있다.\n승강기 안으로 들어가자.',
     exit:'보행자 출구는 바깥에서 봉쇄됐다. 내 차로 나가야 한다.\n차량 출구도 침수됐다. 조수석의 배수 설비 열쇠를 찾아 물부터 빼자.',
     alarm:'벨이 울린다. 차체와 기둥으로 몸을 가려야 한다.\n나를 보지 못하면 소리 쪽으로 갈 것이다. 운전석으로 돌아가자.',
@@ -277,10 +278,11 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(lureUsed){say('태엽이 다 풀렸다.',2);return;}lureUsed=true;const point=hover!.point;lastSeen={x:point.x,z:point.z};seenAt=elapsed;tracking=true;noiseRadius=0;audio.sound('alarm',-.65,.45);say('태엽 소리가 울린다. 멀리서 발소리가 방향을 바꿨다.',4);return;
     }
     if((action.startsWith('annex_')||action.startsWith('court_')||action.startsWith('archive_')||action.startsWith('plant_'))&&story.notes.includes(action)&&action in expansionJournal&&!(action==='archive_play'&&story.stage==='archive_reveal')){say(expansionJournal[action as keyof typeof expansionJournal].text.split('\n\n')[0],10);return;}
-    const wasHidden=story.hidden,plantFault=action==='plant_start'?plantProblem(story):null,officeFault=action==='security_power'&&area==='office'?officePowerProblem(story):null;
+    const wasHidden=story.hidden,officeWasOn=story.officeSupply,plantFault=action==='plant_start'?plantProblem(story):null,officeFault=action==='security_power'&&area==='office'?officePowerProblem(story):null;
     if(action==='stay'){say(stageTime<12?'전화 너머에서 주소를 확인한다. 사이렌이 가까워진다.':'통화를 유지한 채 잠시 기다리자.',5);return;}
+    if(area==='office'&&action==='security_power'&&officeFault!=='fuse'&&officeFault!=='empty')arrivalPursuit=true;
     if(!advance(action)){
-      if(action==='security_power'&&area==='office'){audio.sound('click',.5,.3);const faults={fuse:'빈 퓨즈 홀더에 예비 퓨즈를 먼저 설치하자.',monitor:'CCTV 기록장치 전원이 선택되지 않았다. B 회로를 확인하자.',lift:'승강기 제어 전원이 빠졌다. 필요한 회로와 6A 공급 한도를 살펴보자.',overload:'선택한 부하가 6A를 넘는다.'};say(officeFault?faults[officeFault]:'이미 전원을 연결했다.',6);return;}
+      if(action==='security_power'&&area==='office'){audio.sound('click',.5,.3);const faults={fuse:'빈 퓨즈 홀더에 예비 퓨즈를 먼저 설치하자.',empty:'선택한 회로가 없다. 승강기 C 4A, CCTV B 2A 중 필요한 회로를 선택하자.',overload:'선택한 부하가 6A를 넘는다.'};say(officeFault?faults[officeFault]:'이미 전원을 연결했다.',6);return;}
       if(action==='office_install'){say('서고에서 예비 퓨즈를 먼저 챙겨야 한다.',5);return;}
       if(action==='court_confirm'){audio.sound('slam',0,.4);noiseRadius=24;noiseUntil=elapsed+4;say('금고가 열리지 않는다. 경비일지의 정기점검 완료일과 비상전화의 당직 내선을 대조하자.',6);return;}
       if(action==='plant_start'){
@@ -292,8 +294,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       }
       if(action.startsWith('annex_')||action.startsWith('court_')||action.startsWith('archive_')||action.startsWith('plant_')){say(objectiveFor(story),6);return;}
 
-      const responses:Partial<Record<Action,string>>={exit:'보행자 출구는 바깥에서 막혔다. 내 차를 타고 차량 출구로 나가야 한다.',resident_leave:'연결문이 잠겼다. 열쇠가 필요하다. 현관 관리비 봉투나 서재의 수첩을 살펴보자.',resident_drawer:'서랍이 걸려 있다면 앞에서 한 걸음 물러서자. 안의 1703호 열쇠를 챙겨야 한다.',door:'문이 꿈쩍하지 않는다. 안쪽 잠금쇠는 풀려 있는데…',closet:'장롱 안에 몸을 숨길 수 있다.',up:'문이 움직이지 않는다. 먼저 아래쪽 계단을 확인하자.',fuse:'먼저 관리실 책상의 근무일지를 살펴보자.',security_power:'퓨즈가 빠져 있다. 서고의 예비 부품을 찾아야 한다.',monitor:story.stage==='office_tape'?'이 시각에는 내 차가 없다. 근무일지의 입차 시각을 다시 확인하자.':'화면이 꺼져 있다. 기록과 전원을 확인해야 한다.',service_exit:'비상 열쇠가 필요하다. CCTV 옆 열쇠함이 보인다.'};
-      if(action==='monitor'&&story.stage==='office_tape'){audio.sound('alarm',0,.25);noiseRadius=22;noiseUntil=elapsed+3;}
+      const responses:Partial<Record<Action,string>>={exit:'보행자 출구는 바깥에서 막혔다. 내 차를 타고 차량 출구로 나가야 한다.',resident_leave:'연결문이 잠겼다. 열쇠가 필요하다. 현관 관리비 봉투나 서재의 수첩을 살펴보자.',resident_drawer:'서랍이 걸려 있다면 앞에서 한 걸음 물러서자. 안의 1703호 열쇠를 챙겨야 한다.',door:'문이 꿈쩍하지 않는다. 안쪽 잠금쇠는 풀려 있는데…',closet:'장롱 안에 몸을 숨길 수 있다.',up:'문이 움직이지 않는다. 먼저 아래쪽 계단을 확인하자.',fuse:'먼저 관리실 책상의 근무일지를 살펴보자.',security_power:'퓨즈가 빠져 있다. 서고의 예비 부품을 찾아야 한다.',monitor:officeCanWatch(story)?'이 시각에는 내 차가 없다. 근무일지의 입차 시각을 다시 확인하자.':'CCTV 전원이 꺼져 있다. 배전반의 B 회로 2A가 필요하다.',service_exit:story.notes.includes('service_key')?'열쇠는 있다. 전기실에서 C 승강기 제어 회로에 비상전원을 공급해야 한다.':'비상 열쇠가 필요하다. CCTV 오른쪽 책상에 보인다.'};
+      if(action==='monitor'&&officeCanWatch(story)){audio.sound('alarm',0,.25);noiseRadius=22;noiseUntil=elapsed+3;}
       if(action==='pump'&&story.stage==='parking_pump'){say(story.notes.includes('valve_a')?'동측 급수관이 아직 열려 있다. 물부터 차단해야 한다.':story.notes.includes('valve_b')?'서측 급수관이 아직 열려 있다. 물부터 차단해야 한다.':'압력계가 흔들린다. 양쪽 급수 밸브를 먼저 잠가야 한다.',5);return;}
       if(action==='phone'&&!story.notes.includes('phone')){say(hasFlashlight(story)?'전화벨이 끊이지 않는다. 먼저 다용도실 차단기를 확인하자.':'어둡다. 침실의 스위치를 확인하고 손전등부터 찾아야 한다.',5);return;}
       if(story.notes.includes(action)&&['belongings','portrait','resident_shift','gallery_notice','core_notice'].includes(action)){say(dialogue[action]!,6);return;}
@@ -341,12 +343,13 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(action==='leave_lift'){audio.sound('slam',-.8);audio.sound('dread',-.8);}
     if(action==='down')audio.sound('door-creak',0,.6);
     if(action==='fuse'&&hover)hover.mesh.visible=false;
-    if(action.startsWith('circuit_')){audio.sound('click',.5,.3);say(`회로 ${story.circuit.includes(action)?'켜짐':'꺼짐'} · 선택 부하 ${officePowerLoad(story)}/6A. 필요한 회로를 고른 뒤 전원 투입 버튼을 누르자.`,5);}
-    if(action==='office_install'){audio.sound('metal',.5,.3);say('퓨즈를 홀더에 끼웠다. CCTV와 승강기 제어에 필요한 부하를 고르자. 비상 공급은 6A다.',7);}
+    if(action==='service_key'){audio.sound('metal',0,.35);noiseRadius=8;noiseUntil=elapsed+1.5;say('승강기 열쇠를 챙겼다. 연결문 밖에서 긁는 소리가 들린다.\n'+objectiveFor(story),8);}
+    if(action.startsWith('circuit_')){audio.sound('click',.5,.3);say(`회로 ${story.circuit.includes(action)?'선택':'해제'} · ${officePowerLoad(story)}/6A. ${officeWasOn?'선택 변경으로 공급이 끊겼다. ':''}필요한 부하를 고른 뒤 전원을 다시 투입하자.`,6);}
+    if(action==='office_install'){audio.sound('metal',.5,.3);say('퓨즈를 홀더에 끼웠다. 승강기는 C 4A, CCTV는 B 2A. 필요한 회로에 공급할 수 있다. 비상 한도는 6A다.',7);}
     if(action==='tape_next'){world.setDisplay?.(tapeTimes[story.tapeIndex]);say(`선택된 기록: ${tapeTimes[story.tapeIndex]}. 화면을 확인해 재생한다.`,3);}
     if(action==='valve_a'||action==='valve_b'){audio.sound('metal');noiseRadius=12;noiseUntil=elapsed+2;say(['valve_a','valve_b'].every(n=>story.notes.includes(n))?'두 급수관을 모두 잠갔다. 서측 펌프를 가동하자.':action==='valve_a'?'서측 급수관을 잠갔다. 동측 밸브가 아직 남아 있다.':'동측 급수관을 잠갔다. 서측 밸브가 아직 남아 있다.',5);}
     if(action==='pump'){audio.sound('motor');noiseRadius=22;noiseUntil=elapsed+3;}
-    if(action==='security_power'){noiseRadius=officeFault==='overload'?22:10;noiseUntil=elapsed+3;audio.sound(officeFault==='overload'?'slam':'motor',.5,.4);say(officeFault==='overload'?'부하 초과. 보호계전기가 떨어져 선택 회로가 해제됐다. 퓨즈는 그대로다. 필요한 회로만 골라 다시 투입하자.':'CCTV와 승강기 제어 전원이 들어왔다. 근무일지의 입차 시각으로 CCTV를 확인하자.',7);}
+    if(action==='security_power'){noiseRadius=officeFault==='overload'?22:10;noiseUntil=elapsed+3;audio.sound(officeFault==='overload'?'slam':'motor',.5,.4);say(officeFault==='overload'?'부하 초과. 보호계전기가 떨어져 선택 회로가 해제됐다. 퓨즈는 그대로다. 필요한 회로만 골라 다시 투입하자.':'선택한 회로에 비상전원이 들어왔다. '+objectiveFor(story),7);}
     if(action==='monitor')scriptBeat=1;
     if(residentEvidence.includes(action as typeof residentEvidence[number]))say(dialogue[action]+'\n\n'+objectiveFor(story),12);
     if(action==='road_phone'){audio.sound('phone');}
@@ -405,20 +408,20 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(t.id==='court_hangup'&&courtCallAt<0)continue;
       if(t.id==='court_key'&&((world.courtSafe?.hinge.rotation.y??0)>-1.1||!world.courtSafe?.keyVisibleFrom(camera.position)))continue;
       if(t.id==='service_exit'&&story.stage==='office_departure')continue;
-      if(t.id==='service_key'&&story.stage!=='office_key')continue;
-      if(t.id==='office_install'&&(story.stage!=='office_power'||story.notes.includes('office_install')))continue;
-      if(t.id==='security_power'&&story.stage!=='office_power')continue;
+      if(t.id==='service_key'&&story.notes.includes('service_key'))continue;
+      if(t.id==='office_install'&&(!story.notes.includes('fuse')||story.notes.includes('office_install')))continue;
+      if(t.id==='security_power'&&story.stage==='office_departure')continue;
       if(t.id==='door'&&['hide','wait','escape'].includes(story.stage))continue;
       if(t.id==='switch'&&story.stage!=='light_switch')continue;
       if(t.id==='flashlight'&&story.stage!=='find_torch')continue;
-      if(t.id.startsWith('circuit_')&&story.stage!=='office_power')continue;
-      if((t.id==='tape_next'||t.id==='monitor')&&story.stage!=='office_tape')continue;
+      if(t.id.startsWith('circuit_')&&story.stage==='office_departure')continue;
+      if((t.id==='tape_next'||t.id==='monitor')&&(!officeCanWatch(story)||story.stage==='office_playback'||story.notes.includes('monitor')))continue;
       if(t.id==='car_passenger'&&(!['parking_gate','parking_key'].includes(story.stage)||story.notes.includes('car_passenger')))continue;
       if(t.id==='car_search'&&(story.stage!=='parking_key'||!story.notes.includes('car_passenger')||(world.carDeparture?.passengerDoor.rotation.y??0)<1))continue;
       if(t.id==='car_board'){if(!story.stage.startsWith('parking'))continue;t.label=parkingCanBoard(story.stage)?'운전석 탑승 · 길게 누르기':'운전석 확인';}
       if(['valve_a','valve_b','pump'].includes(t.id)&&(story.stage!=='parking_pump'||story.notes.includes(t.id)))continue;
       if(t.id==='shoes'&&!world.shoes.visible)continue;
-      if(t.id==='fuse'&&(story.stage!=='office_fuse'||story.notes.includes('fuse')))continue;
+      if(t.id==='fuse'&&story.notes.includes('fuse'))continue;
       if(area==='resident'&&story.stage==='resident_arrival'&&t.id!=='resident_open')continue;
       if(t.id==='resident_open'&&story.stage!=='resident_arrival')continue;
       if(t.id==='resident_leave'&&story.stage==='resident_departure')continue;
@@ -518,7 +521,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     else if(area==='stairs'){world.figure.visible=areaTime>=entranceDelay;if(areaTime>Math.max(5,entranceDelay))hunt(1.65,dt);}
     else if(area==='resident'){if(arrivalPursuit||story.stage==='resident_departure'||story.stage==='resident_return'&&stageTime>4){world.figure.visible=true;hunt(1.4,dt);}}
-    else if(area==='office'){if(world.figure.visible&&['office_key','office_leave','office_departure'].includes(story.stage)){if(arrivalDoorRelease<0)arrivalDoorRelease=areaTime;hunt(1.8,dt);}}
+    else if(area==='office'){if(world.figure.visible&&(arrivalPursuit||story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power'))){if(arrivalDoorRelease<0)arrivalDoorRelease=areaTime;hunt(1.8,dt);}}
     else if(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'){
       const active=arrivalPursuit|| (area==='annex'?annexCanCall(story.stage)||story.notes.includes('annex_badge')&&story.notes.includes('annex_notice'):area==='courtyard'?courtyardPursuitActive(story,arrivalPursuit):area==='archive'?['archive_escape','archive_departure'].includes(story.stage):story.notes.includes('plant_valve_west')||story.notes.includes('plant_valve_east'));
       if(active&&arrivalDoor&&arrivalDoorRelease<0){arrivalDoorRelease=areaTime;if(area==='courtyard'&&!arrivalPursuit)entranceDelay=areaTime+3;audio.sound('door-creak',0,.5);}
@@ -569,7 +572,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     if(story.stage==='service_ride'){
       if(elapsed-lastSound>1.8){audio.sound('motor',0,.45);lastSound=elapsed;}
-      if(stageTime>3&&scriptBeat===0){scriptBeat=1;say('17… 12… 8… 층수가 내려간다.\n1704호 관리비 봉투의 이름이 떠오른다. 한서연. 방금 읽은 당직일지에도 같은 이름이 있었다.',7);}
+      if(stageTime>3&&scriptBeat===0){scriptBeat=1;say('17… 12… 8… 층수가 내려간다.\n1704호 관리비 봉투의 이름이 떠오른다. 한서연. 정말 아래로 내려가고 있는 걸까.',7);}
       if(stageTime>=11){advance('service_arrive');audio.sound('chime');say('1층. 정문으로 나갈 수 있을까. 문이 열리고 있다.',5);}
     }
     if(story.stage==='plant_drain'){
@@ -661,7 +664,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     if(story.stage==='office_playback'){
       const cue=officeReplay[scriptBeat];if(cue&&stageTime>=cue.at){scriptBeat++;say(cue.text,4);if(cue.at===3)audio.sound('click',0,.35);}
-      if(stageTime>=officeReplayDuration){advance('office_finish');arrivalDoorRelease=areaTime;lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;tracking=true;audio.sound('drag',.3,.6);ghostVoice('here',true);say('뒤쪽 연결문에서 긁는 소리가 난다.\nCCTV 오른쪽의 승강기 열쇠를 챙겨야 한다.',8);}
+      if(stageTime>=officeReplayDuration){advance('office_finish');if(arrivalDoorRelease<0)arrivalDoorRelease=areaTime;lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;tracking=true;audio.sound('drag',.3,.6);ghostVoice('here',true);say(story.notes.includes('service_key')?'뒤쪽 연결문에서 긁는 소리가 난다. 열쇠는 챙겼다.\n'+objectiveFor(story):'뒤쪽 연결문에서 긁는 소리가 난다.\nCCTV 오른쪽의 승강기 열쇠를 챙겨야 한다.',8);}
     }
     if(story.stage==='shoes'&&stageTime>1.4&&scriptBeat===0){scriptBeat=1;audio.sound('drip',-.6,.9);}
   }

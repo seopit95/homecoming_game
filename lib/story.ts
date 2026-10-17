@@ -2,7 +2,7 @@ import {expansionObjectives,expansionJournal,expansionTransition,expansionObject
 export type Stage = ExpansionStage|'stairs_descent'|'corridor_departure'|'stairs_passage'|'resident_arrival'|'resident_departure'|'car_departure'|'car_escape'|'car_voice'|'car_crash'|'drive'|'impact'|'flee'|'sleep'|'tv'|'wake_ring'|'light_switch'|'find_torch'|'phone'|'power'|'shoes'|'radio'|'listen'|'hide'|'wait'|'escape'|'lift_call'|'lift_wait'|'lift_enter'|'lift_boarding'|'lift_button'|'descent'|'pry'|'lift_exit'|'corridor_run'|'stairs_loop'|'stairs_clue'|'stairs_reverse'|'office_record'|'office_fuse'|'office_power'|'office_tape'|'office_playback'|'office_key'|'office_leave'|'parking_gate'|'parking_key'|'parking_pump'|'parking_alarm'|'parking_run'|'resident_entry'|'resident_memory'|'resident_return'|'road_exit'|'road_evidence'|'road_call'|'road_wait'|'dying'|'ended';
 export type Area = ExpansionArea|'apartment'|'landing'|'lift'|'corridor'|'stairs'|'office'|'parking'|'resident'|'aftermath';
 export type Action = ExpansionAction|'gallery_notice'|'core_notice'|'office_install'|'car_passenger'|'stair_loop'|'stair_enter'|'stair_exit'|'resident_open'|'office_entry'|'car_departed'|'car_board'|'passenger'|'wreck'|'fatal'|'collision'|'fled'|'home'|'wake'|'skip_memory'|'blackout'|'awake'|'switch'|'flashlight'|'circuit_a'|'circuit_b'|'circuit_c'|'tape_next'|'car_search'|'valve_a'|'valve_b'|'pump'|'phone'|'breaker'|'shoes'|'radio'|'heard'|'closet'|'survived'|'door'|'caught'|'call'|'arrived'|'enter'|'sealed'|'panel'|'stopped'|'pry'|'leave_lift'|'stairs'|'down'|'stair_note'|'up'|'record'|'fuse'|'security_power'|'monitor'|'office_finish'|'service_key'|'service_exit'|'exit'|'alarm'|'dead'|'belongings'|'portrait'|'answerphone'|'resident_leave'|'car_door'|'road_bag'|'road_phone'|'stay'|'lure'|'resident_drawer'|'resident_key'|'resident_shift';
-export type Story = {stage:Stage;hidden:boolean;ending:'crashed'|'caught'|null;resume:Stage;notes:string[];circuit:Action[];tapeIndex:number;code?:string};
+export type Story = {stage:Stage;hidden:boolean;ending:'crashed'|'caught'|null;resume:Stage;notes:string[];circuit:Action[];officeSupply:boolean;tapeIndex:number;code?:string};
 export const chaseStages:Stage[]=['court_search','court_code','court_safe_open','court_unlocked','court_departure','office_departure','annex_arrival','annex_fuse','annex_restore','annex_search','annex_unlock','annex_exit_ready','annex_departure','archive_search','archive_edit','archive_reveal','archive_escape','archive_departure','plant_isolate','plant_power','plant_drain','plant_exit_ready','plant_departure','hide','escape','lift_call','lift_wait','lift_enter','corridor_run','corridor_departure','stairs_loop','stairs_descent','stairs_clue','stairs_reverse','stairs_passage','office_record','office_fuse','office_power','office_tape','office_playback','office_key','office_leave','parking_gate','parking_key','parking_pump','parking_alarm','parking_run','resident_arrival','resident_entry','resident_memory','resident_return','resident_departure'];
 export const opening:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={
   drive:{duration:20,action:'collision',label:'사흘 전 · 새벽 03:17',text:'술을 마셨다.\n대리운전은 두 번 취소됐다.',cues:[
@@ -47,12 +47,26 @@ export function officePowerLoad(s:Pick<Story,'circuit'>){return s.circuit.reduce
 export function officePowerProblem(s:Pick<Story,'notes'|'circuit'>){
   if(!s.notes.includes('office_install'))return 'fuse';
   if(officePowerLoad(s)>6)return 'overload';
-  if(!s.circuit.includes('circuit_b'))return 'monitor';
-  if(!s.circuit.includes('circuit_c'))return 'lift';
+  if(!officePowerLoad(s))return 'empty';
   return null;
 }
+export function officeCanWatch(s:Pick<Story,'notes'|'circuit'|'officeSupply'>){return s.officeSupply&&!officePowerProblem(s)&&s.circuit.includes('circuit_b');}
+export function officeCanLeave(s:Pick<Story,'notes'|'circuit'|'officeSupply'>){return s.officeSupply&&!officePowerProblem(s)&&s.circuit.includes('circuit_c')&&s.notes.includes('service_key');}
+function officePhase(s:Story):Stage{
+  if(s.stage==='office_departure'||s.stage==='office_playback'&&officeCanWatch(s))return s.stage;
+  if(officeCanLeave(s))return 'office_leave';
+  if(officeCanWatch(s)&&!s.notes.includes('monitor'))return 'office_tape';
+  if(officeCanWatch(s)&&!s.notes.includes('service_key'))return 'office_key';
+  return s.notes.includes('fuse')||s.notes.includes('office_install')?'office_power':s.notes.includes('record')?'office_fuse':'office_record';
+}
 export function objectiveFor(story:Story){
-  if(story.stage==='office_power')return officePowerProblem(story)==='fuse'?'전기실 배전반에 가져온 예비 퓨즈를 설치하세요':`비상전원 ${officePowerLoad(story)}/6A · CCTV와 승강기 제어에 공급할 회로를 선택한 뒤 전원을 투입하세요`;
+  if(story.stage.startsWith('office')&&story.stage!=='office_departure'&&story.stage!=='office_playback'){
+    if(officeCanLeave(story))return `승강기 제어 전원 연결됨 · 복도 끝 승강기로 탈출하세요${officeCanWatch(story)&&!story.notes.includes('monitor')?' · 선택: CCTV 입차 기록 확인':''}`;
+    if(officeCanWatch(story)&&!story.notes.includes('monitor'))return 'CCTV 전원 연결됨 · 03:26 입차 기록을 확인하거나 승강기 제어 전원을 준비하세요';
+    if(!story.notes.includes('fuse'))return story.notes.includes('service_key')?'승강기 열쇠 확보 · 서고의 예비 퓨즈로 비상전원을 복구하세요':'관리용 승강기 열쇠와 예비 퓨즈를 찾으세요 · 근무 인계문에서 위치를 확인할 수 있습니다';
+    if(!story.notes.includes('office_install'))return '전기실의 빈 퓨즈 홀더에 가져온 예비 퓨즈를 설치하세요';
+    return `비상전원 ${officePowerLoad(story)}/6A · ${story.officeSupply?'공급 중':'전원 대기'} · 승강기 C 4A / CCTV B 2A${story.notes.includes('service_key')?'':' · CCTV 오른쪽 책상의 열쇠도 필요합니다'}`;
+  }
   if(story.stage==='parking_key')return story.notes.includes('car_passenger')?`열린 조수석의 가방에서 ${parkingDrained(story)?'차':'설비'} 열쇠를 꺼내세요`:'내 차 오른쪽 조수석 문을 열어 가방을 확인하세요';
   if(parkingCanBoard(story.stage)&&parkingAlarmActive(story))return objectives.parking_run;
   const expanded=expansionObjective(story);if(expanded)return expanded;
@@ -69,7 +83,7 @@ export const officeReplay=[{at:0,text:'앞부분이 찌그러진 내 차다. 사
 export const officeReplayDuration=11;
 export const tapeTimes=['03:17 · 진입로','03:26 · 지하 입차','03:31 · 승강기'];
 export function isMemory(stage:Stage){return opening[stage]!==undefined;}
-export function initialStory():Story{return {stage:'drive',hidden:false,ending:null,resume:'radio',notes:[],circuit:[],tapeIndex:0,code:'0000'};}
+export function initialStory():Story{return {stage:'drive',hidden:false,ending:null,resume:'radio',notes:[],circuit:[],officeSupply:false,tapeIndex:0,code:'0000'};}
 export function parkingDrained(state:Pick<Story,'notes'>){return state.notes.includes('plant_drained')||state.notes.includes('pump');}
 function parkingAfterKey(state:Pick<Story,'notes'>){return parkingDrained(state)?'parking_alarm':'parking_pump';}
 export const parkingBoardDuration=.9;
@@ -96,15 +110,15 @@ export function checkpoint(state?:Story):Story{
   if(stage==='parking_gate'&&state?.notes.includes('car_search'))stage=parkingAfterKey(state);
   else if(stage==='parking_gate'&&state?.notes.includes('car_passenger'))stage='parking_key';
   if(stage==='resident_entry'&&state?.notes.includes('resident_key'))stage='resident_return';
-  if(stage==='office_record'&&state){stage=state.notes.includes('service_key')?'office_leave':state.notes.includes('monitor')?'office_key':state.notes.includes('security_power')?'office_tape':state.notes.includes('fuse')||state.notes.includes('office_install')?'office_power':state.notes.includes('record')?'office_fuse':'office_record';}
-  return {...initialStory(),stage,resume:stage,notes:[...(state?.notes||[])],circuit:isExpansion(stage)||stage.startsWith('office')?[...(state?.circuit||[])]:[],code:state?.code??'0000'};
+  if(stage==='office_record'&&state)stage=officePhase({...state,stage});
+  return {...initialStory(),stage,resume:stage,notes:[...(state?.notes||[])],circuit:isExpansion(stage)||stage.startsWith('office')?[...(state?.circuit||[])]:[],officeSupply:state?.officeSupply??false,code:state?.code??'0000'};
 }
 const steps:Partial<Record<Stage,[Action,Stage]>>={
   drive:['collision','impact'],impact:['fled','flee'],flee:['home','sleep'],sleep:['wake','wake_ring'],
   tv:['blackout','wake_ring'],wake_ring:['awake','light_switch'],light_switch:['switch','find_torch'],find_torch:['flashlight','power'],power:['breaker','phone'],phone:['phone','shoes'],shoes:['shoes','radio'],radio:['radio','listen'],listen:['heard','hide'],
   escape:['door','lift_call'],lift_call:['call','lift_wait'],lift_wait:['arrived','lift_enter'],lift_enter:['enter','lift_boarding'],lift_boarding:['sealed','lift_button'],lift_button:['panel','descent'],descent:['stopped','pry'],pry:['pry','lift_exit'],lift_exit:['leave_lift','corridor_run'],corridor_run:['stairs','corridor_departure'],corridor_departure:['stair_enter','stairs_loop'],
   stairs_loop:['down','stairs_descent'],stairs_descent:['stair_loop','stairs_clue'],stairs_clue:['stair_note','stairs_reverse'],stairs_reverse:['up','stairs_passage'],stairs_passage:['stair_exit','resident_arrival'],resident_arrival:['resident_open','resident_entry'],
-  office_record:['record','office_fuse'],office_fuse:['fuse','office_power'],office_key:['service_key','office_leave'],office_leave:['service_exit','office_departure'],parking_alarm:['alarm','parking_run'],car_departure:['car_departed','car_escape'],car_escape:['passenger','car_voice'],car_voice:['wreck','car_crash'],car_crash:['fatal','ended'],resident_departure:['office_entry','office_record'],
+  parking_alarm:['alarm','parking_run'],car_departure:['car_departed','car_escape'],car_escape:['passenger','car_voice'],car_voice:['wreck','car_crash'],car_crash:['fatal','ended'],resident_departure:['office_entry','office_record'],
 };
 export function transition(state:Story,action:Action):Story{
   if(state.stage==='ended')return state;
@@ -134,26 +148,29 @@ export function transition(state:Story,action:Action):Story{
       return {...state,notes:[...state.notes,action],stage:state.notes.includes('resident_key')?'resident_return':'resident_memory'};
     }
   }
-  if(state.stage==='office_power'){
-    if(action==='office_install'){
+  if(state.stage.startsWith('office')&&state.stage!=='office_departure'){
+    let next:Story|undefined;
+    if(['record','fuse','service_key'].includes(action)){
+      if(state.notes.includes(action))return state;
+      next={...state,notes:[...state.notes,action]};
+    }else if(action==='office_install'){
       if(!state.notes.includes('fuse')||state.notes.includes(action))return state;
-      return {...state,notes:[...state.notes,action]};
-    }
-    if(['circuit_a','circuit_b','circuit_c'].includes(action)){
-      if(officePowerProblem(state)==='fuse')return state;
-      return {...state,circuit:state.circuit.includes(action)?state.circuit.filter(a=>a!==action):[...state.circuit,action]};
-    }
-    if(action==='security_power'){
+      next={...state,notes:[...state.notes,action]};
+    }else if(['circuit_a','circuit_b','circuit_c'].includes(action)){
+      next={...state,officeSupply:false,circuit:state.circuit.includes(action)?state.circuit.filter(a=>a!==action):[...state.circuit,action]};
+    }else if(action==='security_power'){
       const problem=officePowerProblem(state);
-      if(problem==='overload')return {...state,circuit:[]};
-      return problem?state:{...state,stage:'office_tape',notes:[...new Set([...state.notes,action])]};
-    }
+      if(problem==='overload')next={...state,officeSupply:false,circuit:[]};
+      else if(problem||state.officeSupply)return state;
+      else next={...state,officeSupply:true,notes:[...new Set([...state.notes,action])]};
+    }else if(action==='tape_next')return officeCanWatch(state)&&state.stage!=='office_playback'?{...state,tapeIndex:(state.tapeIndex+1)%3}:state;
+    else if(action==='monitor')return officeCanWatch(state)&&!state.notes.includes('monitor')&&state.stage!=='office_playback'&&state.tapeIndex===1?{...state,stage:'office_playback'}:state;
+    else if(action==='office_finish'){
+      if(state.stage!=='office_playback'||!officeCanWatch(state))return state;
+      next={...state,stage:'office_power',notes:[...new Set([...state.notes,'monitor'])]};
+    }else if(action==='service_exit')return officeCanLeave(state)?{...state,stage:'office_departure'}:state;
+    if(next)return {...next,stage:officePhase(next)};
   }
-  if(state.stage==='office_tape'){
-    if(action==='tape_next')return {...state,tapeIndex:(state.tapeIndex+1)%3};
-    if(action==='monitor'&&state.tapeIndex===1)return {...state,stage:'office_playback'};
-  }
-  if(state.stage==='office_playback'&&action==='office_finish')return {...state,stage:'office_key',notes:[...new Set([...state.notes,'monitor'])]};
   if(state.stage.startsWith('parking')){
     if(action==='exit')return state.notes.includes(action)?state:{...state,stage:state.stage==='parking_gate'?(state.notes.includes('car_search')?parkingAfterKey(state):'parking_key'):state.stage,notes:[...state.notes,action]};
     if(action==='car_passenger'&&['parking_gate','parking_key'].includes(state.stage))return state.notes.includes(action)?state:{...state,stage:'parking_key',notes:[...state.notes,action]};
@@ -206,10 +223,10 @@ export const journal:Partial<Record<Action,{title:string;text:string}>>={
   core_notice:{title:'24층 · 익숙한 안내판',text:'승강기 반대편에 비상계단이 있다. 관리실은 17층 공사 때문에 1703호로 옮겼고, 인접 세대와 이어진 연결문은 야간 통행 후 잠그라는 내용이다. 손때가 묻은 공용부 점검표. 평소에는 읽지도 않고 지나쳤다.\n\n층수는 24. 네 세대의 번호와 비상계단 위치까지 내가 알던 아파트 그대로다. 그런데 문 안에서는 아무 소리도 들리지 않는다. 집집마다 나처럼 숨을 죽이고 있는 것 같았다.'},
 
   ...expansionJournal,
-  security_power:{title:'17층 · 비상전원 공급',text:'CCTV와 관리용 승강기 제어에 비상전원을 연결했다. 조명까지 모두 켤 용량은 없다. 이제 입차 기록을 확인하고 아래층으로 내려갈 수 있다.'},
-  service_key:{title:'17층 · 관리용 승강기 열쇠',text:'CCTV 옆에서 관리용 승강기 열쇠를 챙겼다. 비상전원을 연결한 승강기를 열고 아래층으로 내려가야 한다.'},
+  security_power:{title:'17층 · 선택한 비상전원',text:'공급 한도 6A. A 구역 조명은 4A, B CCTV는 2A, C 승강기 제어는 4A다. 승강기만 복구할 수도, 조명을 포기하고 기록장치와 함께 연결할 수도 있다.\n\n회로를 바꾸면 주 공급이 끊긴다. 부하를 확인한 뒤 전원을 다시 투입해야 한다. 배전반의 확인등이 실제로 공급 중인 회로를 보여 준다.'},
+  service_key:{title:'17층 · 관리용 승강기 열쇠',text:'CCTV 오른쪽 책상에서 관리용 승강기 열쇠를 챙겼다. 이 열쇠만으로는 승강기를 움직일 수 없다. 전기실의 C 제어 회로에 비상전원이 필요하다. B CCTV 회로는 기록을 확인하고 싶을 때 연결할 수 있다.'},
   fuse:{title:'17층 · 예비 퓨즈',text:'서고의 예비 부품대에서 퓨즈를 챙겼다. 전기실 배전반의 빈 홀더에 설치해야 비상전원 선택기를 사용할 수 있다.'},
-  office_install:{title:'17층 · 제한된 비상전원',text:'빈 홀더에 예비 퓨즈를 설치했다. 비상 공급 한도는 6A. A는 구역 조명 4A, B는 CCTV 기록장치 2A, C는 관리용 승강기 제어 4A다.\n\n모두 켜면 보호계전기가 전원을 끊는다. 필요한 부하만 선택하고 전원을 투입해야 한다. 조명을 전부 살릴 수는 없다. 기록을 보고 아래층으로 내려갈 길부터 확보하자.'},
+  office_install:{title:'17층 · 제한된 비상전원',text:'빈 홀더에 예비 퓨즈를 설치했다. 비상 공급 한도는 6A. A는 구역 조명 4A, B는 CCTV 기록장치 2A, C는 관리용 승강기 제어 4A다.\n\n모두 켜면 보호계전기가 전원을 끊는다. 승강기 제어만 복구하면 나갈 수 있지만, CCTV에는 내 차의 기록이 남아 있다. 필요한 부하를 선택해 공급하고, 바꿀 때는 주 전원을 다시 투입해야 한다.'},
   flashlight:{title:'28층 · 꺼진 조명',text:'스위치를 눌러도 불이 들어오지 않는다. 침대 옆 협탁 위에서 손전등을 찾았다. 전화벨은 아직도 울린다.'},
   alarm:{title:'B1 · 멈추지 않는 벨',text:'버튼이 안쪽에 걸리고 빨간 확인등이 켜졌다. 경보는 계속 울리고 먼 발소리는 벨에 묻힌다. 그러나 바로 옆의 발소리나 눈앞에 보이는 나까지 놓치지는 않는다. 차체와 기둥 뒤로 시야를 끊어야 한다. 그러면 마지막으로 나를 본 곳을 뒤진 뒤, 다시 벨 쪽으로 갈 것이다.'},
   car_passenger:{title:'B1 · 잠그지 않은 문',text:'손잡이를 당기자 조수석 문이 열렸다. 사흘 전 차에서 내릴 때는 문조차 잠그지 않았다. 잠금 버튼을 누른 것은 그보다 앞, 누군가 창문을 두드렸을 때였다.\n\n조수석 뒤 발밑에 내 가방이 벌어진 채 놓여 있다. 안쪽에 열쇠가 보인다. 빗물을 맞을 수 없었던 안전벨트까지 젖어 있다.'},
@@ -226,7 +243,7 @@ export const journal:Partial<Record<Action,{title:string;text:string}>>={
   wake:{title:'사흘 전 · 내가 외면한 밤',text:'술을 마신 채 차를 몰았다. 백로아파트 앞 횡단보도에서 여성을 치었다. 새벽 03:17.\n\n차에서 내려 쓰러진 여자를 확인했다. 신고해야 했다. 그런데 나는 다시 차에 탔다. 문을 잠그고 현장을 떠나 2803호로 돌아왔다. 아무에게도 말하지 않았다.\n\n사흘이 지났다. 매일 그 시각에 눈이 떠진다. 오늘은 전화벨에 잠이 깼다. 스위치를 눌러도 불이 들어오지 않는다.'},
   phone:{title:'28층 · 정전 뒤의 전화',text:'차단기는 올라갔지만 불은 돌아오지 않았다. 전화기에서 빗소리와 와이퍼 소리가 들렸다.\n「문 잠가도… 소용없어.」\n\n현관에는 젖은 검은 신발이 놓여 있었다. 그날 차 앞에 떨어졌던 신발. 분명 도로에 두고 왔다.'},
   stair_note:{title:'23층 · 지워지지 않는 시각',text:'같은 층으로 돌아왔다면 계단 표지 아래를 보세요.\n23 위에 덧칠된 숫자가 벗겨진다. 그 아래에는 17.\n방화문 너머에서 사고 현장의 전화벨이 들린다.\n1704호 문 옆 명패에는 한서연이라고 적혀 있다.\n\n종이 아래쪽에 내 차 번호와 03:17이 반복해서 적혀 있다.\n「그때 멈췄어야지.」'},
-  record:{title:'17층 · 사흘 전의 사고 기록',text:'백로아파트 임시 관리실 / 사흘 전\n당직: 한서연. 17층 외벽 공사로 사용하던 임시 사무실은 사고 다음 날 폐쇄됐다.\n03:17. 건물 앞 횡단보도에서 보행자 사망 사고. 검은 승용차가 현장을 이탈.\n03:26. 파손 차량 입차. 관리실 열람 영상에서 정차 직후 아홉 초가 누락됨. 다음 장면에는 문이 이미 닫혀 있고 운전자가 혼자 걸어감.\n\n아홉 초. 숫자를 보는 순간 손끝이 차가워졌다. 그 사이에 내가 무엇을 했는지 떠올리고 싶지 않다.\n\n시설 인계: 「관리용 승강기 열쇠는 CCTV 오른쪽 책상에 보관. 전원이 끊기면 서고의 예비 퓨즈를 사용할 것. 비상전원은 6A까지만 공급한다. 구역 조명 4A / 기록장치 2A / 승강기 제어 4A. 서고의 퓨즈를 배전반 빈 홀더에 설치하고 필요한 부하만 선택해 전원을 투입할 것. 입차 시각으로 열람 영상을 찾을 것. 누락 구간은 지하 기록보관실 원본과 대조 필요.」'},
+  record:{title:'17층 · 사흘 전의 사고 기록',text:'백로아파트 임시 관리실 / 사고 다음 날 06:40\n인계 작성: 박정호. 전임 야간 당직: 한서연.\n17층 외벽 공사로 옮겨 쓰던 1703호는 이 인계를 끝으로 폐쇄됐다.\n03:17. 건물 앞 횡단보도에서 보행자 사망 사고. 검은 승용차가 현장을 이탈.\n03:26. 파손 차량 입차. 관리실 열람 영상에서 정차 직후 아홉 초가 누락됨. 다음 장면에는 문이 이미 닫혀 있고 운전자가 혼자 걸어감.\n\n아홉 초. 숫자를 보는 순간 손끝이 차가워졌다. 그 사이에 내가 무엇을 했는지 떠올리고 싶지 않다.\n\n시설 인계: 「관리용 승강기 열쇠는 CCTV 오른쪽 책상에 보관. 전원이 끊기면 서고의 예비 퓨즈를 사용할 것. 비상전원은 6A까지만 공급한다. 구역 조명 4A / 기록장치 2A / 승강기 제어 4A. 서고의 퓨즈를 배전반 빈 홀더에 설치하고 필요한 부하만 선택해 전원을 투입할 것. 탈출에는 승강기 제어 전원이 필요하다. CCTV를 열람한다면 입차 시각을 선택할 것. 누락 구간은 지하 기록보관실 원본과 대조 필요.」'},
   monitor:{title:'CCTV · 빠진 아홉 초',text:'사흘 전 03:26. 앞부분이 찌그러진 내 차가 멈춘다. 시간이 아홉 초를 건너뛴다. 다음 장면에서 차 문은 이미 닫혀 있고, 나는 혼자 걸어간다.\n\n조수석 유리에 흰 소매 같은 것이 비친다. 화면이 깨져 얼굴은 보이지 않는다. 아래쪽 숫자만 선명하다.\n「귀가자 2명 / 2803호」\n\n함께 내린 사람은 보이지 않는데 왜 둘이라고 적혀 있을까. CCTV 옆에 관리용 승강기 열쇠가 있다. 우선 1층으로 내려가야 한다.'},
   exit:{title:'B1 · 다시 마주한 차',text:'출구 옆에 내 차가 있다. 앞유리의 금, 구겨진 보닛. 조수석 시트만 흠뻑 젖어 있다.\n\n침수된 문 아래에 잔해가 끼어 있다. 배수 설비 안내에는 양측 급수 차단 후 펌프 가동이라고 적혀 있다. 조수석 가방에서 금속이 부딪치는 소리가 났다. 열쇠가 있는지 확인해야 한다. 물을 빼야 차량 출구를 열 수 있다. 보행자 출구는 바깥에서 봉쇄되어 있다. 차로 나가야 한다. 나를 따라오는 발소리는 경보로 유인할 수 있을 것이다.\n문 너머에서 들리는 것은 빗소리다. 그날 밤과 똑같은.'},
 };

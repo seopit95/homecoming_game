@@ -25,6 +25,30 @@ const {createGame}=await import('../lib/game.ts');
 const event=(target,type,properties)=>{const e=new Event(type);Object.assign(e,properties);target.dispatchEvent(e);};
 function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.min(.025,left)*1000;nextFrame(clock);}}
 
+async function officeAgencyInput(saved){
+ const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'office_record',notes:[],elapsed:500,officeSupply:false,...saved})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick();
+ function use(pos,at){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...at).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
+ return {game,data,use,close(){game.dispose();win.localStorage=previous;}};
+}
+test('V91 real input takes the visible key first and powers only the lift without forced CCTV',async()=>{
+ const f=await officeAgencyInput();try{
+  f.use([-2.13,1.65,2.45],[-2.13,.82,1.28]);assert.ok(f.game.snapshot().story.notes.includes('service_key'));assert.equal(renderedScene.getObjectByName('office-exit-key').visible,false);
+  f.use([-2.1,1.65,-4.95],[-2.1,1.17,-5.7]);assert.ok(f.game.snapshot().story.notes.includes('fuse'));f.use([4.55,1.65,-4.55],[5.39,1.02,-4.55]);f.use([4.55,1.65,-3.45],[5.34,1.45,-3.45]);f.use([4.55,1.65,-3.45],[5.39,.95,-3.45]);
+  const s=f.game.snapshot().story;assert.equal(s.stage,'office_leave');assert.equal(s.officeSupply,true);assert.deepEqual(s.circuit,['circuit_c']);assert.equal(s.notes.includes('record'),false);assert.equal(s.notes.includes('monitor'),false);const stored=JSON.parse(f.data.get('homecoming.progress.v2'));assert.equal(stored.officeSupply,true);assert.deepEqual(stored.circuit,['circuit_c']);
+  f.use([0,1.65,-6.5],[0,1.25,-7.48]);assert.equal(f.game.snapshot().story.stage,'office_departure');tick(1);assert.ok(renderedScene.getObjectByName('office-service-door').rotation.y>1.2);assert.equal(f.game.snapshot().paused,false);
+ }finally{f.close();}
+});
+test('V91 switching CCTV power off interrupts the actual recording and restores a fresh replay clock',async()=>{
+ const f=await officeAgencyInput({notes:['fuse','office_install','security_power'],circuit:['circuit_b'],officeSupply:true});try{
+  const feed=renderedScene.getObjectByName('surveillance-screen').userData.surveillance,update=feed.update,frames=[];feed.update=function(...args){frames.push({stage:args[0],time:args[1]});return update.apply(this,args);};
+  f.use([-1.95,1.65,2.6],[-1.95,.9,1.8]);f.use([-2.65,1.65,2.65],[-2.65,1.137,1.80]);assert.equal(f.game.snapshot().story.stage,'office_playback');tick(3);
+  f.use([4.55,1.65,-4],[5.34,1.45,-4]);assert.equal(f.game.snapshot().story.officeSupply,false);assert.equal(f.game.snapshot().story.stage,'office_power');tick(5);assert.equal(f.game.snapshot().story.notes.includes('monitor'),false);
+  f.use([4.55,1.65,-4],[5.34,1.45,-4]);f.use([4.55,1.65,-3.45],[5.39,.95,-3.45]);frames.length=0;f.use([-2.65,1.65,2.65],[-2.65,1.137,1.80]);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(2);
+  assert.equal(f.game.snapshot().story.stage,'office_playback');assert.equal(f.game.snapshot().story.notes.includes('monitor'),false);const playback=frames.filter(f=>f.stage==='office_playback');assert.ok(playback.length>20);assert.ok(playback[0].time<.1&&playback.at(-1).time<2.2,'the actual surveillance consumer receives a new recording clock');assert.ok(ghost.position.distanceTo(before)>.1,'the live pursuer is not paused for CCTV');
+ }finally{f.close();}
+});
+
 test('V90 reading a real gallery notice cannot restart the lift arrival clock',async()=>{
  const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'lift_call',notes:[],elapsed:200})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
@@ -40,9 +64,9 @@ test('V77 real office input installs its fuse and chooses loads before operating
  function use(pos,target){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...target).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'real target prompt at '+target);game.interact();tick();}
  try{await game.ready;tick();game.continueGame();tick();use([-3.7,1.65,2.6],[-3.7,.86,1.8]);assert.equal(game.snapshot().story.stage,'office_fuse');use([-2.1,1.65,-4.95],[-2.1,1.17,-5.7]);assert.equal(game.snapshot().story.stage,'office_power');
   assert.ok(renderedScene.getObjectByName('office-fuse-installed'));use([4.55,1.65,-4.55],[5.39,1.02,-4.55]);assert.ok(game.snapshot().story.notes.includes('office_install'));
-  use([4.55,1.65,-4],[5.34,1.45,-4]);use([4.55,1.65,-4.55],[5.34,1.45,-4.55]);use([4.55,1.65,-3.45],[5.39,.95,-3.45]);assert.equal(game.snapshot().story.stage,'office_power');assert.match(game.snapshot().message,/승강기/);
+  use([4.55,1.65,-4],[5.34,1.45,-4]);use([4.55,1.65,-4.55],[5.34,1.45,-4.55]);use([4.55,1.65,-3.45],[5.39,.95,-3.45]);assert.equal(game.snapshot().story.stage,'office_tape');assert.equal(game.snapshot().story.officeSupply,true);assert.deepEqual(game.snapshot().story.circuit,['circuit_b','circuit_a']);
   use([4.55,1.65,-4.55],[5.34,1.45,-4.55]);use([4.55,1.65,-3.45],[5.34,1.45,-3.45]);const record=JSON.parse(data.get('homecoming.progress.v2'));assert.equal(record.stage,'office_power');assert.ok(record.notes.includes('office_install'));
-  voiceCalls.length=0;use([4.55,1.65,-3.45],[5.39,.95,-3.45]);assert.equal(game.snapshot().story.stage,'office_tape');assert.ok(renderedScene.getObjectByName('resident-remains').position.z>11,'a powered panel cannot move the incoming ghost indoors');assert.equal(voiceCalls.includes('cry'),false);
+  assert.equal(game.snapshot().story.officeSupply,false,'changing selected loads cuts the main supply');voiceCalls.length=0;use([4.55,1.65,-3.45],[5.39,.95,-3.45]);assert.equal(game.snapshot().story.stage,'office_tape');assert.ok(renderedScene.getObjectByName('resident-remains').position.z>11,'a powered panel cannot move the incoming ghost indoors');assert.equal(voiceCalls.includes('cry'),false);
  }finally{game.dispose();win.localStorage=previous;}
 });
 test('V77 continuing a completed office recording releases the real waiting pursuer',async()=>{

@@ -9,7 +9,7 @@ const take=()=>S.transition(state(),'fuse');
 const install=()=>S.transition(take(),'office_install');
 test('V77 finding a spare fuse is distinct from installing it into the backup panel',()=>{
  const taken=take();assert.ok(taken.notes.includes('fuse'),'the actual spare must enter inventory');assert.equal(taken.stage,'office_power');assert.ok(!taken.notes.includes('office_install'));
- assert.equal(S.transition(taken,'circuit_b'),taken,'unpowered circuits cannot silently grant power');assert.equal(S.transition(taken,'security_power'),taken);
+ const selected=S.transition(taken,'circuit_b');assert.deepEqual(selected.circuit,['circuit_b']);assert.equal(selected.officeSupply,false,'a physical switch position does not energize an empty fuse holder');assert.equal(S.transition(selected,'security_power'),selected);assert.equal(S.transition(taken,'security_power'),taken);
  const ready=S.transition(taken,'office_install');assert.ok(ready.notes.includes('office_install'));assert.equal(S.transition(ready,'office_install'),ready);
  assert.equal(S.transition({...S.initialStory(),stage:'office_power'},'office_install').notes.includes('office_install'),false,'an empty hand cannot install a fuse');
 });
@@ -22,9 +22,9 @@ test('V77 overload trips the relay but retains the installed fuse and supports a
  s=S.transition(s,'security_power');assert.equal(s.stage,'office_power');assert.deepEqual(s.circuit,[]);assert.ok(s.notes.includes('office_install'),'a protective relay trip does not invent another fuse fetch');
  s=S.transition(S.transition(s,'circuit_c'),'circuit_b');assert.equal(S.transition(s,'security_power').stage,'office_tape');
 });
-test('V77 the capacity budget distinguishes a valid load from missing essential equipment',()=>{
- assert.equal(typeof S.officePowerProblem,'function');let s=install();assert.equal(S.officePowerProblem(s),'monitor');s=S.transition(s,'circuit_b');assert.equal(S.officePowerProblem(s),'lift');s=S.transition(s,'circuit_a');assert.equal(S.officePowerProblem(s),'lift','lighting plus CCTV fits6A but cannot run the service lift');
- assert.equal(S.transition(s,'security_power'),s);assert.match(S.objectiveFor(take()),/퓨즈.*설치/);assert.match(S.objectiveFor(install()),/6A/);
+test('V91 the capacity budget permits partial supply without inventing lift power',()=>{
+ assert.equal(typeof S.officePowerProblem,'function');let s=install();assert.equal(S.officePowerProblem(s),'empty');s=S.transition(s,'circuit_b');assert.equal(S.officePowerProblem(s),null);s=S.transition(s,'circuit_a');assert.equal(S.officePowerProblem(s),null,'lighting plus CCTV fits6A');
+ s=S.transition(s,'security_power');assert.equal(s.officeSupply,true);assert.equal(S.officeCanWatch(s),true);assert.equal(S.officeCanLeave({...s,notes:[...s.notes,'service_key']}),false,'the running CCTV does not power an unselected lift');assert.match(S.objectiveFor(take()),/퓨즈.*설치/);assert.match(S.objectiveFor(install()),/6A/);
 });
 test('V77 the actual office has a reachable fuse holder and shows the installed fuse only after placement',()=>{
  globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}})})};

@@ -3,7 +3,7 @@ import * as T from 'three';
 import {buildCarDeparture,type CarDeparture} from './car-departure.ts';
 import {createCRT,crtCable,createCrtSocket} from './crt-monitor.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
-import {tapeTimes,officePowerLoad,parkingDrained,parkingAlarmActive} from './story.ts';
+import {tapeTimes,officePowerLoad,officeCanWatch,parkingDrained,parkingAlarmActive} from './story.ts';
 import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import {buildCourtyard} from './courtyard.ts';
@@ -18,6 +18,7 @@ import {buildStoryRoom,buildResidentGallery} from './chapters.ts';
 import {facilityChair} from './facility-props.ts';
 import {storageMaterials,storageShelf} from './storage.ts';
 import {galleryDoor,galleryPaint,dressCommonGallery} from './common-gallery.ts';
+import {officeDesk,dressOffice} from './office-dressing.ts';
 export {createGhost as makeFigure} from './ghost.ts';
 import {createGhost as makeFigure} from './ghost.ts';
 
@@ -31,7 +32,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   const size=area==='landing'?{x:landing.halfWidth,z:landing.halfLength}:buildingLayout[area];
   const bx=size.x,bz=size.z,bounds:Bounds=area==='landing'?{x:4.2,z:25.45,minX:-1.17}:{x:bx-.13,z:bz-.13},ceiling=area==='parking'?2.7:2.8;
   const mat=(color:string,extra:object={})=>new T.MeshStandardMaterial({color,roughness:.85,...extra});
-  const plaster=surface('decayWall','#b5b6a6'),concrete=surface('castConcrete','#a2a9a3'),floorMat=surface(area==='parking'?'wornConcrete':'oldTile','#b0b1a4',{roughness:.62}),metal=surface(area==='lift'?'paintedMetal':'steel','#878d8b',{metalness:.55,roughness:.48}),dark=mat('#141b1c'),rust=mat('#523b29'),wood=surface('wood','#807668'),paint=surface('decayWall','#a7b0a0',{roughness:.79}),white=mat('#a7ab94'),red=mat('#802b20'),wallMat=area==='parking'?concrete:area==='lift'?metal:plaster;
+  const plaster=surface('decayWall','#b5b6a6'),concrete=surface('castConcrete','#a2a9a3'),floorMat=surface(area==='parking'?'wornConcrete':area==='office'?'woodFloor':'oldTile',area==='office'?'#a19b8b':'#b0b1a4',{roughness:.62}),metal=surface(area==='lift'?'paintedMetal':'steel','#878d8b',{metalness:.55,roughness:.48}),dark=mat('#141b1c'),rust=mat('#523b29'),wood=surface('wood','#807668'),paint=surface('decayWall','#a7b0a0',{roughness:.79}),white=mat('#a7ab94'),red=mat('#802b20'),wallMat=area==='parking'?concrete:area==='lift'?metal:plaster;
   const parkingLower=area==='parking'?surface('wall','#84968b',{roughness:.86}):paint;
   if(area==='lift'){metal.map?.dispose();metal.map=null;metal.metalnessMap=null;metal.metalness=.68;metal.normalScale.setScalar(.12);}
   if(area==='parking'){floorMat.normalScale.setScalar(.28);floorMat.roughness=.72;}
@@ -217,12 +218,9 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     connectionPassage(root,solids,lamps,-3,bz+6,0,.9);bounds.z=bz+6.2;
     for(const x of [-.95,.95]){wall(x,-4.9,.13,5.5);wall(x,3.8,.13,1.8);}
     wall(-4,-1.6,3.4,.13);wall(4,-1.6,3.4,.13);
-    // Full-size desk with a drawer pedestal, knee space and a supported CRT.
-    const desk=box(-3,.75,1.5,2.5,.1,.95,wood,true);box(-3.85,.35,1.5,.57,.7,.85,wood);
-    for(const x of [-4.12,-1.88])for(const z of [1.14,1.86])box(x,.35,z,.065,.7,.065,metal);
-    box(-2.65,.43,1.11,1.76,.47,.045,wood);for(const y of [.17,.39,.61]){box(-3.85,y,1.938,.52,.2,.023,wood);box(-3.85,y,1.96,.16,.025,.035,metal);}
+    const desk=officeDesk(root);solids.push({x:-3,z:1.5,w:2.5,d:.95,y:.4,h:.8});
     box(-3.7,.809,1.58,.42,.018,.31,white);
-    const log=label('백로아파트 · 야간 근무 인계\n\n당직: 한서연 / 사고 다음 날 임시 관리실 폐쇄\n03:17  정문 횡단보도 보행자 사망 / 검은 차량 이탈\n03:26  파손 차량 입차 / 정차 직후 영상 9초 누락\n누락 구간은 지하 기록보관실 원본과 대조할 것.\n\n감시 설비 정전 시: 서고 예비 퓨즈 사용\n비상 공급 6A / 구역등 4A · CCTV 2A · 승강기 제어 4A\n퓨즈를 홀더에 설치하고 필요한 부하만 선택 후 전원 투입\n입차 시각으로 CCTV 열람 기록을 선택할 것.\n승강기 열쇠 보관: CCTV 오른쪽 책상',-3.7,.8182,1.58,0,.4,.28,'#292b27','#c6bfa6');log.mesh.rotation.x=-Math.PI/2;log.mesh.name='office-duty-log';target('record','야간 근무일지 읽기',desk,-3.7,.86,1.8);
+    const log=label('백로아파트 · 사고 다음 날 06:40 인계\n\n작성: 박정호 / 전임 야간 당직: 한서연\n03:17  정문 횡단보도 보행자 사망 / 검은 차량 이탈\n03:26  파손 차량 입차 / 정차 직후 영상 9초 누락\n누락 구간은 지하 기록보관실 원본과 대조할 것.\n\n감시 설비 정전 시: 서고 예비 퓨즈 사용\n비상 공급 6A / 구역등 4A · CCTV 2A · 승강기 제어 4A\n퓨즈를 홀더에 설치하고 필요한 부하만 선택 후 전원 투입\n승강기 C 4A / CCTV 열람은 B 2A 선택 연결\n승강기 열쇠 보관: CCTV 오른쪽 책상',-3.7,.8182,1.58,0,.4,.28,'#292b27','#c6bfa6');log.mesh.rotation.x=-Math.PI/2;log.mesh.name='office-duty-log';target('record','야간 근무일지 읽기',desk,-3.7,.86,1.8);
     const crt=createCRT();crt.root.name='office-crt-monitor';crt.root.position.set(-2.65,.8,1.76);root.add(crt.root);
     const screen=createSurveillance('office');crt.screenMount.add(screen);const surveillance=screen.userData.surveillance as Surveillance;target('monitor','선택한 CCTV 기록 재생',crt.root,-2.65,1.137,1.80);
     const socket=createCrtSocket();socket.root.position.set(-bx+.09,.27,1.05);socket.root.rotation.y=Math.PI/2;root.add(socket.root);root.updateMatrixWorld(true);
@@ -267,18 +265,28 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const loadDisplay=label('퓨즈 없음',5.5097,.76,-4,-Math.PI/2,1.15,.15,undefined,undefined,false,true);let powerCaption='';
     label('서고',-3,2.3,-1.531,0,.65,.2);label('배전반',3,2.3,-1.531,0,.8,.2);
     box(3.8,.75,3.8,2.1,.1,1.25,wood,true);for(const x of [2.9,4.7])for(const z of [3.3,4.3])box(x,.35,z,.07,.7,.07,metal);box(3.8,.48,3.3,1.9,.4,.05,wood);
-    for(let z=2.7;z<6;z+=.7){box(5.4,1.15,z,.45,2.3,.55,metal,true);for(const y of [.35,.9,1.45,2]){box(5.166,y,z,.02,.5,.5,metal);box(5.146,y,z,.035,.035,.18,dark);}}
+    dressOffice(root);solids.push({x:5.4,z:4.3,w:.66,d:3.3,y:.435,h:.87});
     const dutyChair=facilityChair(wood,metal);dutyChair.position.set(-2.7,0,.45);root.add(dutyChair);solids.push({x:-2.7,z:.45,w:.5,d:.5,y:.44,h:.88});
     const breakChair=facilityChair(wood,metal);breakChair.position.set(3.8,0,2.65);breakChair.rotation.y=Math.PI;root.add(breakChair);solids.push({x:3.8,z:2.65,w:.5,d:.5,y:.44,h:.88});
-    box(3.8,.801,3.8,.55,.002,.34,white);box(4.35,.86,3.8,.3,.12,.23,metal);for(const x of [4.26,4.44])box(x,.925,3.8,.09,.01,.14,dark);
+    box(3.8,.801,3.8,.55,.002,.34,white);
     box(5.68,.3125,-4,.12,.625,1.65,cabinet,true);
-    fixture(0,4);fixture(0,-4,false);light(-3,2.5,1,'#b49f7d',4);light(-3,2.5,-4,'#8b9b85',3);light(3.5,2.5,-4,'#839c96',3);
+    const zoneLightStart=lamps.length;fixture(0,4);fixture(0,-4,false);light(-3,2.5,1,'#b49f7d',4);light(-3,2.5,-4,'#8b9b85',3);light(3.5,2.5,-4,'#839c96',3);const zoneLights=lamps.slice(zoneLightStart).map(l=>({light:l,base:l.intensity}));
     const serviceHinge=new T.Group();serviceHinge.name='office-service-door';serviceHinge.position.set(-.6,0,-bz+.12);root.add(serviceHinge);
     const serviceLeaf=box(0,1.1,-bz+.12,1.18,2.2,.09,metal);serviceHinge.attach(serviceLeaf);doorHardware(serviceLeaf,1.18);target('service_exit','관리용 승강기 열기',serviceLeaf,0,1.25,-bz+.32);
     const serviceBlock={x:0,z:-bz+.12,w:1.2,d:.12,y:1.1,h:2.2};solids.push(serviceBlock);let serviceAt=-1,playAt=-1;reset=()=>{serviceAt=-1;playAt=-1;};bounds.z=bz+6.2;
     box(0,-.09,-bz-1.35,2.2,.18,2.7,floorMat);box(0,2.8,-bz-1.35,2.2,.12,2.7,metal);for(const x of [-1.1,1.1])box(x,1.4,-bz-1.35,.12,2.8,2.7,metal,true);box(0,1.4,-bz-2.7,2.2,2.8,.12,metal,true);light(0,2.5,-bz-1.3,'#98ad9b',3,4);label('관리용 승강기 · 1F',0,2.5,-bz+.094,0,1.8,.2);
     label('17층 · 구 관리사무소',0,2.57,bz-.094,Math.PI,1.65,.2);puddle(2.6,5,.45,1);
-    updateStory=(stage,time,_reduced,story,occupants)=>{if(stage==='office_playback'&&playAt<0)playAt=time;surveillance.update(stage,playAt<0?0:time-playAt,stage==='office_tape'?tapeTimes[story?.tapeIndex??0]:'신호 없음');fuse.visible=!story?.notes.includes('fuse')&&['office_record','office_fuse'].includes(stage);const powered=['office_tape','office_playback','office_key','office_leave','office_departure'].includes(stage),installed=powered||!!story?.notes.includes('office_install');installedFuse.visible=installed;for(const b of branches){const on=!!story?.circuit.includes(b.id);b.handle.rotation.z=on?-.55:.55;b.lamp.emissiveIntensity=installed&&on?.65:0;}const caption=installed?`선택 ${officePowerLoad(story??{circuit:[]})} / 6A · ${powered?'공급 중':'전원 대기'}`:'퓨즈 없음';if(caption!==powerCaption){loadDisplay.update(caption);powerCaption=caption;}exitKey.visible=!['office_leave','office_departure'].includes(stage);if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0)setDoorAngle(serviceHinge,serviceBlock,1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85),.6,0,occupants);};
+    updateStory=(stage,time,_reduced,story,occupants)=>{
+      const state:Pick<Story,'notes'|'circuit'|'officeSupply'>=story??{notes:[],circuit:[],officeSupply:false};const supply=state.officeSupply,watch=officeCanWatch(state),installed=state.notes.includes('office_install');
+      if(stage!=='office_playback')playAt=-1;else if(playAt<0)playAt=time;
+      surveillance.update(watch?stage:'office_power',playAt<0?0:time-playAt,watch?'기록 선택 · '+tapeTimes[story?.tapeIndex??0]:'전원 없음 · B CCTV 2A');
+      fuse.visible=!state.notes.includes('fuse');installedFuse.visible=installed;
+      for(const b of branches){const on=state.circuit.includes(b.id);b.handle.rotation.z=on?-.55:.55;b.lamp.emissiveIntensity=supply&&on?.65:0;}
+      for(const {light,base} of zoneLights)light.userData.base=base*(supply&&state.circuit.includes('circuit_a')?1:.3);
+      const caption=installed?`선택 ${officePowerLoad(state)} / 6A · ${supply?'공급 중':'전원 대기'}`:'퓨즈 없음';if(caption!==powerCaption){loadDisplay.update(caption);powerCaption=caption;}
+      exitKey.visible=!state.notes.includes('service_key');
+      if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0)setDoorAngle(serviceHinge,serviceBlock,1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85),.6,0,occupants);
+    };
   }
   if(area==='parking'){
     bounds.z=bz+6.8;connectionPassage(root,solids,lamps,-3,bz+6,0,.9);
