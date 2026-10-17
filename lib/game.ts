@@ -888,7 +888,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(started&&!paused&&story.stage!=='ended')findTarget();
     if(started&&!paused&&elapsed-lastEmit>.09){lastEmit=elapsed;emit();}
     if(road)road.renderMirror(renderer);
-    world.surveillance?.render(renderer,scene);
+    world.surveillance?.render(renderer,scene,false,area==='archive'?{position:camera.position,floor:world.heightAt(camera.position.x,camera.position.z),yaw,pitch,crouched,torch,time:elapsed,solids:world.solids}:undefined);
     renderer.render(scene,camera);
     if(hands.root.visible){renderer.autoClear=false;renderer.clearDepth();renderer.render(hands.scene,hands.camera);renderer.autoClear=true;}
   }

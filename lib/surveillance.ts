@@ -7,11 +7,14 @@ import {surface,boxUV} from './materials.ts';
 import {disposeWorld} from './world.ts';
 import {officeReplayDuration,type Stage} from './story.ts';
 import {archiveCamera,archiveClips,archiveReviewing,type ArchiveFrame} from './archive-review.ts';
+import {createObservedPlayer,type ObservedPlayer} from './observed-player.ts';
 
 // The small monitor has its own 10 fps recording, then switches to the real room.
 export function createSurveillance(kind:'archive'|'office'='archive'){
   const root=new T.Group();root.name='surveillance-screen';
   const target=new T.WebGLRenderTarget(640,480),recording=new T.Scene();recording.name='surveillance-recording';
+  const observed=kind==='archive'?createObservedPlayer():undefined;
+  if(observed){observed.resources.visible=false;recording.add(observed.resources);}
   recording.background=new T.Color('#11191a');recording.fog=new T.FogExp2('#172021',.023);
   recording.add(new T.HemisphereLight('#c5dbd7','#26312d',1.2));
   const key=new T.DirectionalLight('#bed0ce',2.4);key.position.set(2,8,5);recording.add(key);
@@ -60,8 +63,10 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     const office=kind==='office',warning=stage==='archive_escape'||stage==='archive_departure';
     const preview=!office&&archiveReviewing(stage)&&!!review?.source;
     const active=office?['office_playback','office_key','office_leave','office_departure'].includes(stage):preview||stage==='archive_playback'||warning;
-    clock=office?Math.min(officeReplayDuration,Math.max(0,time)):preview?(review!.source==='road'?review!.time:review!.source==='call'?5+review!.time:12+review!.time):stage==='archive_playback'?12+time:Math.max(warning?27:0,time);
-    mode=!active?'idle':office?'office':preview?review!.source!:clock<5?'road':clock<12?'call':clock<21?'gate':'live';
+    clock=office?Math.min(officeReplayDuration,Math.max(0,time)):preview?(review!.source==='road'?review!.time:review!.source==='call'?5+review!.time:12+review!.time):stage==='archive_playback'||warning?12+Math.max(0,time):Math.max(0,time);
+    mode=!active?'idle':office?'office':preview?review!.source!:warning?'live':clock<5?'road':clock<12?'call':clock<21?'gate':'live';
+    // The current-room camera raises gain in low light; recording exposure stays intact.
+    if(mode==='live')image.material.color.setRGB(1.05,1.2,1.05);else image.material.color.set('#a2b3a8');
     image.visible=active&&mode!=='call';
     const frame=Math.floor(clock*10),next=`${mode}:${active?frame:text}:${preview?review!.playing:''}:${review?.question??false}`;if(next===lastKey)return;lastKey=next;pending=true;
     road.visible=!office&&(mode==='road'||mode==='idle');garage.visible=mode==='gate'||mode==='office';car.visible=active&&mode!=='call'&&mode!=='live';
@@ -89,7 +94,7 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     ctx.globalCompositeOperation='copy';ctx.fillStyle=image.visible?'rgba(0,0,0,0)':'#0b1512';ctx.fillRect(0,0,640,480);ctx.globalCompositeOperation='source-over';
     ctx.fillStyle='rgba(4,14,10,.72)';ctx.fillRect(0,0,640,48);ctx.fillRect(0,398,640,82);
     ctx.fillStyle='#c0d2bd';ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='21px monospace';
-    const timecode=mode==='office'?`03:26:${String(Math.floor(clock)+(clock>=3?9:0)).padStart(2,'0')}`:mode==='road'?`03:17:${String(12+Math.floor(clock)).padStart(2,'0')}`:mode==='call'?`03:20:${String(Math.floor(clock-5)).padStart(2,'0')}`:mode==='gate'?`03:26:${String(Math.floor(clock-12)+3).padStart(2,'0')}`:'03:17:00';
+    const timecode=mode==='office'?`03:26:${String(Math.floor(clock)+(clock>=3?9:0)).padStart(2,'0')}`:mode==='road'?`03:17:${String(12+Math.floor(clock)).padStart(2,'0')}`:mode==='call'?`03:20:${String(Math.floor(clock-5)).padStart(2,'0')}`:mode==='gate'?`03:26:${String(Math.floor(clock-12)+3).padStart(2,'0')}`:`03:17:${String(Math.floor(Math.max(0,clock-21))%60).padStart(2,'0')}`;
     ctx.fillText(mode==='live'?`LIVE  CAM-08  편집실  ${timecode}`:mode==='idle'?'BAEKRO / 감시 기록 장치':`${office?'저장':'원본'}  ${mode==='road'?'CAM-01':mode==='gate'||mode==='office'?'CAM-04':'AUDIO-17'}  ${timecode}`,20,25);
     if(mode==='call'){
       ctx.font='26px sans-serif';ctx.fillText('정문 비상벨 → 2803 등록 휴대전화',36,132);
@@ -109,19 +114,19 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     ctx.fillStyle='rgba(0,8,4,.14)';for(let y=51;y<398;y+=4)ctx.fillRect(0,y,640,1);
     overlayMap.needsUpdate=true;
   }
-  function render(renderer:T.WebGLRenderer,liveScene:T.Scene,force=false){
+  function render(renderer:T.WebGLRenderer,liveScene:T.Scene,force=false,observer?:ObservedPlayer){
     if(disposed||!force&&(!pending||!image.visible))return;
     const previous=renderer.getRenderTarget(),shadows=renderer.shadowMap.autoUpdate,visible=root.visible;
     recording.environment=liveScene.environment;recording.environmentIntensity=.3;root.visible=false;renderer.shadowMap.autoUpdate=false;
-    try{renderer.setRenderTarget(target);renderer.render(mode==='live'?liveScene:recording,mode==='live'?liveCamera:camera);pending=false;}
-    finally{renderer.setRenderTarget(previous);renderer.shadowMap.autoUpdate=shadows;root.visible=visible;}
+    try{if(mode==='live'&&observed){if(observer)observed.update(observer);liveScene.add(observed.root);}renderer.setRenderTarget(target);renderer.render(mode==='live'?liveScene:recording,mode==='live'?liveCamera:camera);pending=false;}
+    finally{if(observed)observed.resources.add(observed.root);renderer.setRenderTarget(previous);renderer.shadowMap.autoUpdate=shadows;root.visible=visible;}
   }
   const feed:Surveillance={update,render,async prepare(renderer:T.WebGLRenderer,liveScene:T.Scene){
     const a=road.visible,b=garage.visible,c=car.visible,h=hand.visible,d=driver.root.visible,intact=intactCar.visible,saved=mode;
     road.visible=garage.visible=car.visible=hand.visible=driver.root.visible=intactCar.visible=true;recording.environment=liveScene.environment;
-    try{await renderer.compileAsync?.(recording,camera);render(renderer,liveScene,true);if(kind==='archive'){mode='live';await renderer.compileAsync?.(liveScene,liveCamera);render(renderer,liveScene,true);}}
-    finally{road.visible=a;garage.visible=b;car.visible=c;hand.visible=h;driver.root.visible=d;intactCar.visible=intact;mode=saved;pending=true;}
+    try{await renderer.compileAsync?.(recording,camera);render(renderer,liveScene,true);if(observed){mode='live';liveScene.add(observed.root);await renderer.compileAsync?.(liveScene,liveCamera);render(renderer,liveScene,true);}}
+    finally{if(observed)observed.resources.add(observed.root);road.visible=a;garage.visible=b;car.visible=c;hand.visible=h;driver.root.visible=d;intactCar.visible=intact;mode=saved;pending=true;}
   },dispose(){if(disposed)return;disposed=true;target.dispose();disposeWorld(recording);}};
   root.userData.surveillance=feed;update(kind==='office'?'office_record':'archive_reveal',0,kind==='office'?'신호 없음':'회수한 원본부터 검토하세요\n장면 표시 → 4·5 사실 대조');return root;
 }
-export type Surveillance={update:(stage:Stage,time:number,text:string,review?:ArchiveFrame)=>void;render:(renderer:T.WebGLRenderer,scene:T.Scene,force?:boolean)=>void;prepare:(renderer:T.WebGLRenderer,scene:T.Scene)=>Promise<void>;dispose:()=>void};
+export type Surveillance={update:(stage:Stage,time:number,text:string,review?:ArchiveFrame)=>void;render:(renderer:T.WebGLRenderer,scene:T.Scene,force?:boolean,observer?:ObservedPlayer)=>void;prepare:(renderer:T.WebGLRenderer,scene:T.Scene)=>Promise<void>;dispose:()=>void};

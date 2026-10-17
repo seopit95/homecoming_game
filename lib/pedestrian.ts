@@ -49,22 +49,26 @@ export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='vi
   const shoe=createLeatherShoe();shoe.name=side===1?'memory-shoe':'memory-other-shoe';shoe.position.y=-.06;ankle.add(shoe);
  }
  const clothes=appearance==='victim'?createLivingShirt(torso,pants):null;
- function pose(clock:number,hit:number|null,speed=1.37){
-  const phase=clock/.92,beat=phase*Math.PI*2,impact=hit!==null,wrap=impact?T.MathUtils.smoothstep(hit,0,.44):0,slide=impact?T.MathUtils.smoothstep(hit,.45,1.55):0;
+ const observerLook=new T.Quaternion(),observerAngles=new T.Euler();
+ function pose(clock:number,hit:number|null,speed=1.37,observer?:{crouched:boolean;pitch:number;leanX?:number;leanZ?:number}){
+  const phase=(observer&&speed===0?0:clock)/.92,beat=phase*Math.PI*2,impact=hit!==null,wrap=impact?T.MathUtils.smoothstep(hit,0,.44):0,slide=impact?T.MathUtils.smoothstep(hit,.45,1.55):0;
   const rest=impact?T.MathUtils.smoothstep(hit,1.6,3):0;
   // Solve feet in the body's frame: a supporting foot travels backwards by
   // exactly the root's advance. Swing is lifted, with matching takeoff/landing velocity.
-  const stance=.6,travel=speed*.92*stance,feet=[0,.5].map(offset=>{
+  const crouch=observer?.crouched?1:0,stance=.6,travel=speed*.92*stance*(crouch?.35:1),feet=[0,.5].map(offset=>{
    const u=((phase+offset)%1+1)%1,v=(u-stance)/(1-stance);
    return {planted:u<stance,z:u<stance?travel*(.5-u/stance):travel*(T.MathUtils.smoothstep(v,0,1)-.5)-speed*.92*(1-stance)*v*(1-v)*(1-2*v),y:.064+(u<stance?0:.115*Math.sin(v*Math.PI))};
   });
   const support=Math.min(...feet.filter(f=>f.planted).map(f=>Math.abs(f.z)));
-  body.position.y=.064+Math.sqrt(.81**2-support**2)-.005-pivot.position.y-legs[0].position.y;
+  body.position.y=.064+Math.sqrt((.81-.64*crouch)**2-support**2)-.005-pivot.position.y-legs[0].position.y;
+  // A deep crouch sits behind the heels, keeping the knees above the floor.
+  body.position.z=-.18*crouch;
   pivot.rotation.set(-.15*slide*(1-slide),0,1.3*wrap+.24*slide);
   torso.rotation.set(T.MathUtils.lerp(Math.sin(beat)*.012,-.13,wrap),0,Math.sin(beat)*.012*(1-wrap)+.19*wrap*(1-slide));
   head.rotation.set(T.MathUtils.lerp(.015,-.22,wrap),T.MathUtils.lerp(.25,-.38,wrap),-.14*wrap*(1-slide));
+  if(observer){torso.rotation.x+=.08*crouch+(observer.leanX??0);torso.rotation.z+=observer.leanZ??0;head.quaternion.copy(torso.quaternion).invert().multiply(observerLook.setFromEuler(observerAngles.set(-observer.pitch,0,0)));}
   for(let i=0;i<2;i++){
-   const {y,z}=feet[i];
+   const y=feet[i].y,z=feet[i].z+.18*crouch;
    const dy=y-(pivot.position.y+body.position.y+legs[i].position.y),distance=Math.min(.809,Math.hypot(dy,z));
    const knee=2*Math.acos(distance/.81),hip=Math.atan2(-z,-dy)-knee/2;
    legs[i].rotation.set(T.MathUtils.lerp(hip,-.15+(i?-.36:.22),wrap),0,0);
@@ -79,6 +83,11 @@ export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='vi
     // the chest, keeping the upper sleeve outside the torso as the palm settles.
     arms[i].rotation.x=T.MathUtils.lerp(arms[i].rotation.x,-1.3,rest);arms[i].rotation.z=T.MathUtils.lerp(arms[i].rotation.z,-.8,rest);elbows[i].rotation.x=T.MathUtils.lerp(elbows[i].rotation.x,-.3,rest);elbows[i].rotation.z=-.8*rest;
     const flat=new T.Quaternion().setFromEuler(new T.Euler(0,-Math.PI/2,0)),wrist=arms[i].quaternion.clone().multiply(elbows[i].quaternion).invert().multiply(flat);wrists[i].quaternion.slerp(wrist,rest);
+   }
+   if(observer){
+    arms[i].position.x=(i?1:-1)*.16;
+    arms[i].rotation.set(i?.1:.4,0,i?-.3:.3);
+    elbows[i].rotation.set(i?-.8:-2.7,0,0);wrists[i].rotation.set(i?.7:0,0,i?0:-Math.PI/2);
    }
    if(sleeves[i])poseSkinArm(sleeves[i],arms[i],elbows[i],wrists[i]);poseSkinArm(trousers[i],legs[i],knees[i],ankles[i]);
   }

@@ -1125,3 +1125,13 @@ test('V89 a real tight-wall route reversal leaves enough time for folded hands t
   assert.ok(turned>.001,'the pursuer actually reverses toward the alarm route');assert.ok(turned<=allowed+1e-7,`folded-hand turn exceeds its stroke budget: ${turned} > ${allowed}`);
  }finally{f.dispose();disposeWorld(reference.root);}
 });
+
+test('V94 a real contact during restored archive playback cannot pass through the player',async()=>{
+ const f=await officeAgencyInput({stage:'archive_reveal',notes:['archive_road','archive_call','archive_gate'],circuit:['archive_sequence_road','archive_sequence_call','archive_sequence_gate'],elapsed:850,pursuit:false});
+ try{
+  f.use([9,1.65,-18.9],[9,1.157,-19.88]);assert.equal(f.game.snapshot().story.stage,'archive_playback');assert.equal(f.game.snapshot().paused,false);
+  const ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.set(9,0,-18.35);tick();
+  assert.equal(f.game.snapshot().story.stage,'dying','the moving pursuer must remain lethal while the restored recording plays');
+  assert.equal(f.game.snapshot().story.ending,'caught');assert.equal(f.game.snapshot().story.resume,'archive_reveal','retry returns before the interrupted reveal');
+ }finally{f.close();}
+});

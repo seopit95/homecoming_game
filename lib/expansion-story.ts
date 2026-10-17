@@ -14,7 +14,7 @@ export const expansionObjectives={
  court_arrival:'입구 왼쪽 안내판에서 지하 우회 통로를 확인하세요',court_search:'경비일지와 비상전화 안내에서 금고 번호를 찾으세요 · 번호를 알면 바로 입력할 수 있습니다',court_code:'동측 경비초소 금고 · 기록에서 찾은 네 자리 번호를 맞추고 확인하세요',court_safe_open:'열린 금고 안에 걸린 지하문 열쇠를 챙기세요',court_unlocked:'금고에서 챙긴 열쇠로 북쪽 지하 기록보관실 문을 여세요',court_departure:'열린 계단을 따라 기록보관실로 내려가세요',
  archive_arrival:'인계 대장에서 원본 위치를 확인하세요 · 찾은 원본은 북동쪽 편집실에서 바로 검토할 수 있습니다',archive_search:'사고 당일 원본을 찾고 편집실에서 각 기록의 사실을 대조하세요',
  archive_edit:'북동쪽 편집실에서 원본의 장면을 표시하고, 영상·소리에 맞는 사실을 대조하세요',
- archive_playback:'복원된 영상에서 지워진 아홉 초를 확인하세요',
+ archive_playback:'복원된 아홉 초를 확인하세요 · 재생 중에도 주변을 살피며 움직일 수 있습니다',
  archive_reveal:'북동쪽 편집실 모니터에서 원본의 아홉 초를 재생하세요',
  archive_escape:'문밖에서 손톱 소리가 들린다. 북쪽 기계실 연결문으로 빠져나가세요',archive_departure:'열린 연결문을 지나 기계실로 이동하세요',
  plant_arrival:'침수된 통로 옆의 배관 계통도를 확인하세요',plant_isolate:'서측과 동측 급수 밸브를 모두 잠그세요',
