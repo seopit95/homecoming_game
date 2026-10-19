@@ -14,9 +14,10 @@
 | 중정·별관·지하 | `lib/courtyard.ts`, `lib/annex-lobby.ts`, `lib/annex-west-wing.ts`, `lib/expansion-world.ts` |
 | 도입 사고·차량·마지막 탈출 | `lib/prologue.ts`, `lib/road-street.ts`, `lib/car-departure.ts`, `lib/sedan.ts` |
 | 귀신 외형·관절·걷기·기기 | `lib/ghost.ts`에서 `ghost-arms`, `ghost-legs`, `ghost-dress`, `ghost-face`, `ghost-hair` 등 필요한 부위로 이동 |
-| 추적·시야·소리·문 충돌 | `lib/navigation.ts`, `lib/perception.ts`, `lib/collision.ts`; 자료실 문: `lib/archive-door.ts` |
+| 추적·시야·소리·문 충돌 | `lib/navigation.ts`, `lib/perception.ts`, `lib/collision.ts`; 단계별 속도·가속: `lib/pursuit.ts`; 자료실 문: `lib/archive-door.ts` |
 | 퍼즐·전화·원본 대조 | `lib/annex-call.ts`, `lib/surveillance.ts`, `lib/archive-review.ts`, `lib/plant-*.ts` |
-| 음원·배경음·믹싱 | `lib/audio.ts`, `public/audio/` |
+| 음원·배경음·믹싱 | `lib/audio.ts`, `public/audio/`; 추격 비명·가속 전환은 `lib/game.ts`의 `chaseSpeed` |
+| 어둠·손전등·환경광 | `lib/game.ts`의 구역별 ambient/fill/lamps, `lib/lighting.ts`의 반사광; 사용자 밝기는 `lib/preferences.ts` |
 | 재질·텍스처·정적 메쉬 성능 | `lib/materials.ts`, `lib/texture-loader.ts`, `lib/static-geometry.ts` |
 | 에셋·출처 | `public/models/`, `public/textures/`, `docs/assets.md`; 생성 도구: `scripts/author-*.mjs` |
 | 검증 | `tests/<관련 기능>.test.mjs`; 게임 통합 fixture: `tests/game.test.mjs`; 합격 범위: `VERIFICATION.md` |

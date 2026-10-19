@@ -159,7 +159,7 @@ export function ghostStrideLength(figure:T.Group,solids:Solid[],crawl:boolean){
   return crawl?.82*(1-tuck.front*.86):1.56*(1-Math.max(tuck.front,tuck.back)*.65);
 }
 export function ghostStep(turn:number,speed:number,dt:number,stride:number,crawl:boolean){
-  const budget=stride*(crawl?3:1.3)*dt,limit=Math.min(2.4*dt,budget/.25),rotation=T.MathUtils.clamp(turn,-limit,limit),facing=Math.max(0,Math.cos(turn));
+  const budget=stride*(crawl?5.2:1.3)*dt,limit=Math.min(2.4*dt,budget/.25),rotation=T.MathUtils.clamp(turn,-limit,limit),facing=Math.max(0,Math.cos(turn));
   return {turn:rotation,distance:Math.min(speed*.85*dt,Math.max(0,budget-Math.abs(rotation)*.25))*facing*facing};
 }
 

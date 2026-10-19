@@ -61,22 +61,21 @@ function officePhase(s:Story):Stage{
 }
 export function objectiveFor(story:Story){
   if(story.stage.startsWith('office')&&story.stage!=='office_departure'&&story.stage!=='office_playback'){
-    if(officeCanLeave(story))return `승강기 제어 전원 연결됨 · 복도 끝 승강기로 탈출하세요${officeCanWatch(story)&&!story.notes.includes('monitor')?' · 선택: CCTV 입차 기록 확인':''}`;
-    if(officeCanWatch(story)&&!story.notes.includes('monitor'))return 'CCTV 전원 연결됨 · 03:26 입차 기록을 확인하거나 승강기 제어 전원을 준비하세요';
-    if(!story.notes.includes('fuse'))return story.notes.includes('service_key')?'승강기 열쇠 확보 · 서고의 예비 퓨즈로 비상전원을 복구하세요':'관리용 승강기 열쇠와 예비 퓨즈를 찾으세요 · 근무 인계문에서 위치를 확인할 수 있습니다';
-    if(!story.notes.includes('office_install'))return '전기실의 빈 퓨즈 홀더에 가져온 예비 퓨즈를 설치하세요';
-    return `비상전원 ${officePowerLoad(story)}/6A · ${story.officeSupply?'공급 중':'전원 대기'} · 승강기 C 4A / CCTV B 2A${story.notes.includes('service_key')?'':' · CCTV 오른쪽 책상의 열쇠도 필요합니다'}`;
+    if(officeCanLeave(story))return '관리용 승강기에서 모터 소리가 돌아온다. 오래 기다릴 수는 없다.';
+    if(officeCanWatch(story)&&!story.notes.includes('monitor'))return 'CCTV 화면이 켜졌다. 내 차가 돌아왔던 시간은 기억한다.';
+    if(!story.notes.includes('fuse'))return '관리실은 비상전원을 쓰고 있다. 인계 기록에 남은 고장 흔적.';
+    if(!story.notes.includes('office_install'))return '예비 퓨즈를 챙겼다. 타 버린 홀더가 있던 곳으로.';
+    return `비상전원 ${officePowerLoad(story)}/6A · ${story.officeSupply?'공급 중':'차단됨'}. 모든 회로를 함께 살릴 수는 없다.`;
   }
-  if(story.stage==='parking_key')return story.notes.includes('car_passenger')?`열린 조수석의 가방에서 ${parkingDrained(story)?'차':'설비'} 열쇠를 꺼내세요`:'내 차 오른쪽 조수석 문을 열어 가방을 확인하세요';
+  if(story.stage==='parking_key')return story.notes.includes('car_passenger')?'벌어진 가방. 젖은 금속이 보인다.':'내 차는 그대로다. 조수석에 두었던 가방도.';
   if(parkingCanBoard(story.stage)&&parkingAlarmActive(story))return objectives.parking_run;
   const expanded=expansionObjective(story);if(expanded)return expanded;
   if(['resident_entry','resident_memory','resident_return'].includes(story.stage)){
-    if(story.notes.includes('resident_key'))return '1703호 연결문 열쇠를 챙겼다. 뒤쪽 연결문을 열고 나가세요';
-    if(story.notes.includes('resident_drawer'))return '당긴 서랍 안에서 1703호 연결문 열쇠를 챙기세요 · 걸리면 한 걸음 물러서세요';
-    const count=residentEvidence.filter(id=>story.notes.includes(id)).length;
-    if(story.notes.includes('resident_shift'))return `서재 책상 가운데 서랍을 확인하세요 · 생활 기록 ${count}/4`;
-    if(story.notes.includes('belongings'))return `1703호 연결문은 열쇠가 필요하다. 뒤쪽 서재의 당직 수첩을 살펴보세요 · 생활 기록 ${count}/4`;
-    return `집주인의 흔적을 살피며 나갈 길을 찾으세요 · 선택 기록 ${count}/4`;
+    if(story.notes.includes('resident_key'))return '1703. 열쇠의 숫자는 옆집과 같다. 현관 쪽에서 다시 소리가 난다.';
+    if(story.notes.includes('resident_drawer'))return '서랍 안에서 작은 금속이 번뜩인다. 전화벨은 멎었다.';
+    if(story.notes.includes('resident_shift'))return '퇴근 후 연결문을 잠근다는 기록. 여벌 열쇠도 이 집에 있다.';
+    if(story.notes.includes('belongings'))return '연결문은 잠겼다. 누군가는 이 집에 열쇠를 두었을 것이다.';
+    return '돌아오지 못한 사람의 집. 불은 꺼졌는데 생활의 흔적이 남아 있다.';
   }return objectives[story.stage];
 }
 export const officeReplay=[{at:0,text:'앞부분이 찌그러진 내 차다. 사흘 전, 돌아왔던 시간.'},{at:3,text:'…시간이 아홉 초를 건너뛰었다.\n차 문은 닫혀 있고, 나는 혼자 걸어간다.'},{at:7,text:'조수석 유리에 흰 소매. 귀가자 두 명?\n함께 내린 사람은 없는데.'}] as const;
@@ -214,10 +213,10 @@ export const chapters:Record<Area,{number:string;title:string;floor:string}>={
 };
 export const objectives:Record<Stage,string>={
   ...expansionObjectives,
-  drive:'사흘 전의 기억',impact:'사람이었다',flee:'나는 도망쳤다',sleep:'집으로 돌아와 잠들었다',tv:'사흘 뒤',wake_ring:'전화벨에 잠이 깬다',light_switch:'침실 입구의 전등 스위치를 켜세요',find_torch:'불이 들어오지 않는다. 침대 옆 협탁 위에서 손전등을 찾으세요',phone:'거실 탁자에서 울리는 전화기를 확인하세요',power:'정전이다. 손전등을 들고 다용도실의 차단기를 확인하세요',shoes:'현관에서 들린 소리를 확인하세요',radio:'침실에서 혼자 켜진 라디오를 끄세요',listen:'라디오는 꺼졌다. 그런데 복도에서 무슨 소리가…',hide:'침실 장롱에 숨으세요 · Shift 달리기',wait:'어둠 속의 움직임에 귀를 기울인다',escape:'귀신이 멀어졌다. 현관으로 다가가 문을 열고 빠져나가세요',
-  lift_call:'뒤따라온다! 외부 복도 끝의 엘리베이터를 호출하세요',lift_wait:'뒤를 살피며 거리를 벌리세요. 엘리베이터가 오고 있습니다',lift_enter:'문이 열렸다! 엘리베이터로 뛰어드세요',lift_boarding:'탑승했다. 문이 닫히고 있다',lift_button:'오른쪽 조작반에서 1층을 누르세요',descent:'1층으로 내려가는 중',pry:'문 가까이에서 E를 길게 눌러 문을 벌리세요',lift_exit:'벌어진 문으로 탈출하세요',corridor_run:'좌우 복도로 우회하세요! 반대편 녹색 비상계단으로!',
-  corridor_departure:'열린 방화문을 지나 계단으로 들어가세요',stairs_loop:'비상계단을 따라 아래층으로 내려가세요',stairs_descent:'열린 아래층 문을 지나 연결 통로를 따라가세요',stairs_clue:'또 23층이다. 벽에 붙은 점검 메모를 읽으세요',stairs_reverse:'17층? 위쪽 방화문 너머의 전화 소리를 확인하세요',stairs_passage:'열린 방화문을 지나 복도로 나가세요',office_record:'관리실 책상의 야간 근무일지를 확인하세요',office_fuse:'서고의 예비 부품대에서 퓨즈를 찾으세요',office_power:'전기실 배전반에 퓨즈를 설치하고 6A 한도 안에서 필요한 회로를 선택하세요',office_tape:'CCTV 시간 선택 버튼으로 내 차가 입차한 기록을 찾아 재생하세요',office_playback:'재생 중 · 지하 입차 기록의 누락 구간을 확인하세요',office_key:'CCTV 오른쪽 책상에 놓인 관리용 승강기 열쇠를 챙기세요',office_leave:'복도 끝 관리용 승강기를 열어 1층으로 내려가세요',
-  parking_gate:'북쪽 경사로 옆의 내 차와 보행자 출구에서 나갈 길을 찾으세요',parking_key:'내 차 오른쪽 조수석 문을 열고 가방에서 설비 열쇠를 찾으세요',parking_pump:'급수 밸브 두 곳을 잠근 뒤 배수 펌프를 가동하세요',parking_alarm:'운전석에 탑승하세요 · 필요하면 입구 쪽 경보로 유인할 수 있습니다',parking_run:'귀신의 시야를 피해 차체와 기둥 뒤로 이동해 운전석에 탑승하세요',resident_arrival:'전화 소리가 나는 1704호 현관문을 확인하세요',resident_departure:'열린 뒤쪽 연결문을 지나 임시 관리실로 가세요',resident_entry:'1704호. 현관에 그 신발 한 짝이 남아 있다',resident_memory:'서재의 수첩과 서랍을 살펴 연결문 열쇠를 찾으세요',resident_return:'연결문 열쇠를 챙겼다. 뒤쪽 1703호로 피하세요',road_exit:'03:17. 이번에는 차 문을 연다',road_evidence:'횡단보도 위에 떨어진 가방을 확인한다',road_call:'가방 곁의 금 간 전화기를 든다. 이번에는 신고한다',road_wait:'도망치지 않고, 구조를 기다린다',car_departure:'',car_escape:'',car_voice:'',car_crash:'',dying:'',ended:'',
+  drive:'사흘 전의 기억',impact:'사람이었다',flee:'나는 도망쳤다',sleep:'집으로 돌아와 잠들었다',tv:'사흘 뒤',wake_ring:'전화벨에 잠이 깬다',light_switch:'익숙한 방. 벽의 스위치를 더듬는다.',find_torch:'불이 들어오지 않는다. 잠들기 전 협탁에 두었던 손전등.',phone:'전화벨이 거실에서 울린다. 이 시간에 누구지.',power:'우리 집만 정전인가. 다용도실 쪽에서 전기 타는 냄새가 난다.',shoes:'현관. 무언가 젖은 것이 바닥에 닿았다.',radio:'침실의 라디오. 분명 꺼 두었는데.',listen:'라디오는 꺼졌다. 그런데 복도에서 무슨 소리가…',hide:'발소리가 가까워진다. 침실 장롱이라면 몸을 감출 수 있다.',wait:'어둠 속의 움직임에 귀를 기울인다',escape:'발을 끄는 소리가 멀어진다. 지금이라면 현관까지.',
+  lift_call:'문밖까지 따라왔다. 복도 끝에 승강기 표시등이 보인다.',lift_wait:'승강기가 올라온다. 등 뒤의 소리가 빨라진다.',lift_enter:'문이 열렸다. 더 기다릴 수 없다.',lift_boarding:'탑승했다. 문이 닫히고 있다',lift_button:'1층. 제발 한 번에 내려가 줘.',descent:'1층으로 내려가는 중',pry:'문 가까이에서 E를 길게 눌러 문을 벌리세요',lift_exit:'멈춘 승강기. 문틈 너머에 바닥이 보인다.',corridor_run:'천장에서 기어 내려온다. 어둠 너머 녹색 유도등.',
+  corridor_departure:'방화문 너머 계단. 문을 닫을 시간은 없다.',stairs_loop:'아래로. 내려가면 끝이 있을 것이다.',stairs_descent:'아래층 문이 열려 있다. 같은 발소리가 따라온다.',stairs_clue:'또 23층. 벽의 점검 메모만 아까와 다르다.',stairs_reverse:'17층. 방화문 너머에서 전화가 울린다.',stairs_passage:'전화벨이 이어진다. 문이 열린 쪽에서.',office_record:'관리실 책상의 야간 근무일지를 확인하세요',office_fuse:'서고의 예비 부품대에서 퓨즈를 찾으세요',office_power:'전기실 배전반에 퓨즈를 설치하고 6A 한도 안에서 필요한 회로를 선택하세요',office_tape:'CCTV 시간 선택 버튼으로 내 차가 입차한 기록을 찾아 재생하세요',office_playback:'재생 중 · 지하 입차 기록의 누락 구간을 확인하세요',office_key:'CCTV 오른쪽 책상에 놓인 관리용 승강기 열쇠를 챙기세요',office_leave:'복도 끝 관리용 승강기를 열어 1층으로 내려가세요',
+  parking_gate:'주차장. 내 차만 그대로 서 있다. 출구 쪽에는 물이 차 있다.',parking_key:'내 차 오른쪽 조수석 문을 열고 가방에서 설비 열쇠를 찾으세요',parking_pump:'물이 계속 밀려든다. 펌프보다 먼저 유입을 멈춰야 한다.',parking_alarm:'물은 빠졌다. 시동만 걸면 된다. 입구에 경보기 소리가 남아 있다.',parking_run:'경보가 울린다. 차체 너머로 손톱 긁는 소리가 다가온다.',resident_arrival:'1704호. 전화벨과 명패의 이름이 겹친다. 한서연.',resident_departure:'연결문이 열렸다. 뒤에서는 더 이상 발소리가 나지 않는다.',resident_entry:'1704호. 현관에 그 신발 한 짝이 남아 있다',resident_memory:'서재의 수첩과 서랍을 살펴 연결문 열쇠를 찾으세요',resident_return:'연결문 열쇠를 챙겼다. 뒤쪽 1703호로 피하세요',road_exit:'03:17. 이번에는 차 문을 연다',road_evidence:'횡단보도 위에 떨어진 가방을 확인한다',road_call:'가방 곁의 금 간 전화기를 든다. 이번에는 신고한다',road_wait:'도망치지 않고, 구조를 기다린다',car_departure:'',car_escape:'',car_voice:'',car_crash:'',dying:'',ended:'',
 };
 export const journal:Partial<Record<Action,{title:string;text:string}>>={
   home_repair:{title:'2803호 · 신고보다 먼저',text:'식탁 위 차량 수리 견적. 앞범퍼와 우측 헤드램프. 내일 오전 입고 예약. 아래에 「고객 요청: 보험 접수 없이」라고 적혀 있다.\n\n사고 다음 날, 사진을 보내고 견적을 받았다. 어디에 부딪혔느냐는 물음에 주차장 기둥이라고 답했다. 신고 전화 대신 수리점을 찾아봤다. 내가 사흘 동안 아무것도 하지 않은 것은 아니었다.'},

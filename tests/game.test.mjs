@@ -31,6 +31,23 @@ async function officeAgencyInput(saved){
  function use(pos,at){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...at).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
  return {game,data,use,close(){game.dispose();win.localStorage=previous;}};
 }
+test('V106 visible resident key can be picked up across its blade without pixel hunting',async()=>{
+ const f=await officeAgencyInput({stage:'resident_entry',notes:['resident_drawer'],elapsed:350});try{
+  tick(1.2);const key=renderedScene.getObjectByName('resident-study-key-tag'),aim=key.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(-.12,.005,0));
+  f.use([3.06,1.65,-3.1],aim.toArray());assert.ok(f.game.snapshot().story.notes.includes('resident_key'),'looking at the exposed blade must collect the actual key, not the drawer handle');assert.equal(f.game.snapshot().story.stage,'resident_return');
+  const saved=JSON.parse(f.data.get('homecoming.progress.v2'));assert.ok(saved.notes.includes('resident_key'));assert.equal(renderedScene.getObjectByName('resident-study-key').visible,false);
+ }finally{f.close();}
+});
+
+test('V106 a detected late-game player triggers a scream and closing burst, with lower ambient fill',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  renderedCamera.position.set(2,1.65,0);const ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(2,0,11);ghost.rotation.y=Math.PI;voiceCalls.length=0;tick(2.9);
+  ghost.position.set(2,0,11);ghost.rotation.y=Math.PI;tick(.1);const before=ghost.position.z;tick(1.6);
+  assert.ok(voiceCalls.includes('scream'),'active pursuit must audibly threaten the player '+JSON.stringify({voices:voiceCalls,before,after:ghost.position.toArray(),player:renderedCamera.position.toArray(),threat:f.game.snapshot().threat,stage:f.game.snapshot().story.stage}));assert.ok(before-ghost.position.z>3.8,'late chase must close distance faster than walking');
+  const ambient=renderedScene.children.find(o=>o.isHemisphereLight);assert.ok(ambient.intensity<=.18,'unlit parking should not have broad bright ambient fill');assert.ok(chaseLevel>.4);
+ }finally{f.close();}
+});
+
 test('V91 real input takes the visible key first and powers only the lift without forced CCTV',async()=>{
  const f=await officeAgencyInput();try{
   f.use([-2.13,1.65,2.45],[-2.13,.82,1.28]);assert.ok(f.game.snapshot().story.notes.includes('service_key'));assert.equal(renderedScene.getObjectByName('office-exit-key').visible,false);

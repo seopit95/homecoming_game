@@ -91,7 +91,7 @@ test('V89 live stair supports do not drive visible skin below a tread',()=>{
 });
 test('V89 turning and translation share one clearance-limited stroke budget',async()=>{
  const {ghostStep}=await import('../lib/ghost.ts');assert.equal(typeof ghostStep,'function');
- for(const [stride,crawl,cycles] of [[.1148,true,3],[.82,true,3],[.546,false,1.3],[1.56,false,1.3]])for(const angle of [0,.08,1,Math.PI,-Math.PI])for(const dt of [1/60,.05]){
+ for(const [stride,crawl,cycles] of [[.1148,true,5.2],[.82,true,5.2],[.546,false,1.3],[1.56,false,1.3]])for(const angle of [0,.08,1,Math.PI,-Math.PI])for(const dt of [1/60,.05]){
   const step=ghostStep(angle,3.8,dt,stride,crawl);
   assert.ok(step.distance+Math.abs(step.turn)*.25<=stride*cycles*dt+1e-9,'turning cannot be added on top of the complete translation budget');
   assert.ok(Math.abs(step.turn)<=2.4*dt+1e-9);assert.ok(step.distance>=0);
@@ -109,10 +109,10 @@ test('V89 a planted hand withdraws continuously before a closing lift leaf reach
  }
 });
 
-test('V89 a crawling hand replants after entering side clearance during a fast chase',()=>{
+test('V106 a crawling hand replants beside a wall at the new surge speed',()=>{
  const f=createGhost(new T.Group()),solids=[{x:.95,z:5,w:.2,d:30}],dt=1/60;let phase=2.5,previous,checked=0;
  for(let frame=0;frame<=100;frame++){
-  const x=Math.min(frame,20)*.02,z=frame*2.295*dt;
+  const x=Math.min(frame,20)*.02,z=frame*4.1*dt;
   if(frame){const distance=Math.hypot(x-f.position.x,z-f.position.z);phase+=distance*Math.PI*2/ghostStrideLength(f,solids,true);}
   f.position.set(x,0,z);animateGhost(f,3+frame*dt,1,.5,false,phase,1,undefined,solids);f.updateMatrixWorld(true);
   const hands=[-1,1].map(side=>tip(f,`ghost-hand-${side}`)),stance=[0,1].map(i=>T.MathUtils.euclideanModulo(phase+i*Math.PI,Math.PI*2)/(Math.PI*2)>=.36);

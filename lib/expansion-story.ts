@@ -3,24 +3,24 @@ import {annexCanCall} from './annex-call.ts';
 import {archiveReviewing} from './archive-review.ts';
 
 export const expansionObjectives={
- office_departure:'열린 관리용 승강기에 걸어 들어가세요',
- service_ride:'관리용 승강기가 1층으로 내려가고 있다',service_open:'문이 열렸다. 1층 공동시설로 걸어 나가세요',
- annex_arrival:'1층 정문과 안내판에서 바깥으로 나갈 길을 확인하세요',
- annex_fuse:'서측 세탁실의 정비대에서 통신용 퓨즈를 찾으세요',
- annex_restore:'동측 통신실의 인터폰 전원함에 퓨즈를 연결하세요',
- annex_search:'중앙 교환기로 마지막 호출의 수신 세대에 다시 전화하세요 · 번호를 안다면 바로 호출할 수 있습니다',
- annex_unlock:'중앙 교환기로 마지막 호출의 수신 세대에 다시 전화하세요 · 단서가 필요하면 우편실과 통신실을 조사하세요',
- annex_exit_ready:'북쪽 방화문을 열고 외부 중정으로 나가세요',annex_departure:'열린 방화문을 지나 중정으로 나가세요',
- court_arrival:'입구 왼쪽 안내판에서 지하 우회 통로를 확인하세요',court_search:'경비일지와 비상전화 안내에서 금고 번호를 찾으세요 · 번호를 알면 바로 입력할 수 있습니다',court_code:'동측 경비초소 금고 · 기록에서 찾은 네 자리 번호를 맞추고 확인하세요',court_safe_open:'열린 금고 안에 걸린 지하문 열쇠를 챙기세요',court_unlocked:'금고에서 챙긴 열쇠로 북쪽 지하 기록보관실 문을 여세요',court_departure:'열린 계단을 따라 기록보관실로 내려가세요',
- archive_arrival:'인계 대장에서 원본 위치를 확인하세요 · 찾은 원본은 북동쪽 편집실에서 바로 검토할 수 있습니다',archive_search:'사고 당일 원본을 찾고 편집실에서 각 기록의 사실을 대조하세요',
- archive_edit:'북동쪽 편집실에서 원본의 장면을 표시하고, 영상·소리에 맞는 사실을 대조하세요',
+ office_departure:'승강기 문이 열렸다. 바닥에서 진동이 올라온다.',
+ service_ride:'관리용 승강기가 1층으로 내려가고 있다',service_open:'1층. 문 너머 공기가 차갑다.',
+ annex_arrival:'정문까지 왔다. 밖은 보이는데 셔터는 내려가 있다.',
+ annex_fuse:'통신 전원이 끊겼다. 마지막 정비 기록은 세탁실에서 끝난다.',
+ annex_restore:'퓨즈는 멀쩡하다. 통신실의 빈 자리가 떠오른다.',
+ annex_search:'마지막 호출. 그녀는 누구에게 돌아간다고 말했을까.',
+ annex_unlock:'우편물과 통화 기록. 같은 수신자가 남아 있을 것이다.',
+ annex_exit_ready:'잠금이 풀리는 소리. 정문 너머에서 무언가 달려온다.',annex_departure:'밖이다. 문턱에서 멈출 수 없다.',
+ court_arrival:'정문은 막혔다. 오래된 우회 통로 표지가 남아 있다.',court_search:'초소의 금고. 근무를 넘기던 두 사람의 기록이 필요하다.',court_code:'닳은 네 자리 다이얼. 인계 메모의 숫자가 떠오른다.',court_safe_open:'금고가 열렸다. 안쪽 고리에서 금속이 흔들린다.',court_unlocked:'기록보관실 열쇠. 아래에는 내가 지우려 했던 것이 남아 있다.',court_departure:'계단 아래에서 냉기가 올라온다. 등 뒤가 가까워졌다.',
+ archive_arrival:'인계 대장. 사흘 전의 원본은 아직 이곳에 있다.',archive_search:'영상과 통화와 입차 기록. 내가 기억하는 밤과 맞지 않는다.',
+ archive_edit:'편집된 자리에는 흔적이 남는다. 실제 영상과 소리를 믿어야 한다.',
  archive_playback:'복원된 아홉 초를 확인하세요 · 재생 중에도 주변을 살피며 움직일 수 있습니다',
- archive_reveal:'북동쪽 편집실 모니터에서 원본의 아홉 초를 재생하세요',
- archive_escape:'문밖에서 손톱 소리가 들린다. 북쪽 기계실 연결문으로 빠져나가세요',archive_departure:'열린 연결문을 지나 기계실로 이동하세요',
- plant_arrival:'침수된 통로 옆의 배관 계통도를 확인하세요',plant_isolate:'서측과 동측 급수 밸브를 모두 잠그세요',
- plant_power:'서측 펌프실의 흡입망과 토출 방향을 확인하고 전기실에서 배수를 시험하세요',
- plant_drain:'배수가 진행 중이다. 기계실을 돌며 접근하는 소리를 피하세요',
- plant_exit_ready:'물이 빠졌다. 북쪽 주차장 연결문을 여세요',plant_departure:'열린 문을 지나 주차장으로 나가세요',
+ archive_reveal:'아홉 초가 돌아왔다. 이번에는 끝까지 봐야 한다.',
+ archive_escape:'문밖의 손톱 소리. 아홉 초를 되찾자 더 가까워졌다.',archive_departure:'연결문 너머에서 펌프 소리가 들린다.',
+ plant_arrival:'물이 출구까지 찼다. 벽의 배관도에 수선 자국이 남아 있다.',plant_isolate:'유입이 멎지 않는다. 배관은 양쪽에서 들어온다.',
+ plant_power:'전력은 한정돼 있다. 펌프와 배관이 어디로 이어지는지 살펴야 한다.',
+ plant_drain:'수위가 내려간다. 펌프 소리 사이로 비명이 섞인다.',
+ plant_exit_ready:'물이 빠졌다. 주차장 쪽 문 아래로 바람이 들어온다.',plant_departure:'문이 열렸다. 젖은 손바닥 소리가 더 빨라진다.',
 } as const;
 export type ExpansionStage=keyof typeof expansionObjectives;
 export type ExpansionArea='annex'|'courtyard'|'archive'|'plant';
@@ -141,13 +141,12 @@ export function expansionTransition(s:Story,action:Action):Story|undefined{
  return next;
 }
 export function expansionObjective(s:Story){
- if(s.stage==='court_search')return `금고 단서 ${courtEvidence.filter(a=>s.notes.includes(a)).length}/2 · 서측 경비일지 / 동측 비상전화 · 번호를 알면 금고에 입력하세요`;
- if(s.stage==='court_code')return `경비초소 금고 ${s.code??'0000'} · 정기점검 완료일 두 자리 + 야간 당직 내선 두 자리`;
- const ids=s.stage==='archive_search'?archiveEvidence:undefined;
- if(ids){const missing=ids.filter(a=>!s.notes.includes(a));const places:Partial<Record<Action,string>>={archive_road:'서측 A실 · 도로',archive_call:'동측 B실 · 통화',archive_gate:'서측 C실 · 입차'};return `원본 ${ids.length-missing.length}/${ids.length} · 대조 ${archiveFindings.filter(a=>s.circuit.includes(a)).length}/3 · ${missing.map(a=>places[a]).join(' / ')} · 찾은 원본은 북동쪽 편집실에서 검토하세요`;}
- if(s.stage==='archive_edit')return `${expansionObjectives.archive_edit} · 대조 ${archiveFindings.filter(a=>s.circuit.includes(a)).length}/3`;
- if(s.stage==='plant_isolate')return `${expansionObjectives.plant_isolate} (${['plant_valve_west','plant_valve_east'].filter(a=>s.notes.includes(a)).length}/2)`;
- if(s.stage==='plant_power')return `흡입망 ${plantFilterCleared(s)?'확인':'막힘'} · 토출 ${plantRoute(s)==='drain'?'외부배수':plantRoute(s)==='closed'?'차단':'집수정 환수'} · 서측 설비 확인 후 동측 전기실에서 기동하세요`;
+ if(s.stage==='court_search')return expansionObjectives.court_search;
+ if(s.stage==='court_code')return `금고 ${s.code??'0000'} · 근무 인계 메모가 남긴 순서.`;
+ if(s.stage==='archive_search')return expansionObjectives.archive_search;
+ if(s.stage==='archive_edit')return archiveFindings.every(a=>s.circuit.includes(a))?'기록이 이어진다. 빠진 장면은 무엇이었나.':expansionObjectives.archive_edit;
+ if(s.stage==='plant_isolate')return expansionObjectives.plant_isolate;
+ if(s.stage==='plant_power')return `흡입망 ${plantFilterCleared(s)?'확인':'막힘'} · 토출 ${plantRoute(s)==='drain'?'외부배수':plantRoute(s)==='closed'?'차단':'집수정 환수'}. 계기의 반응을 살핀다.`;
  return expansionObjectives[s.stage as ExpansionStage];
 }
 export function expansionTargetActive(s:Story,id:Action){

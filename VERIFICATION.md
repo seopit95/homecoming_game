@@ -9,6 +9,7 @@
 
 | 합격 범위 | 증거 폴더 / 문서 | 다시 확인할 조건 |
 | --- | --- | --- |
+| V106 한서연의 집 열쇠 칼날 끝 조준 획득·저장·진행, 후반 실제 추격 입력의 비명·가속·낮은 환경광, 4.1m/s 기기 손 접지·벽 여유, 단계별 제한 가속 | `quality-2026-10-20/resident-dread-v106/`: RED, 변경별 GREEN, 실제 WebGL 관찰, 소스·배포 영수증 | 해당 상호작용/추격/조명 변경. 미변경 모델·전체 캠페인·초기 로딩 합격 재사용. 신규 플레이어 난도·모든 모니터 밝기·실제 청취 믹스의 보증 아님 |
 | V105 초기 다운로드 힌트3개 제한, 동적 게임 진입 복원, CSS1개로 초기 전달. 관련 계약 테스트와 배포용 빌드의 실제 WebGL HTTP200·시작/도입 성공 | `quality-2026-10-20/startup-bounded-v105/`: `hint-budget-green.txt`, `production-smoke.json`, `production-title.png`, `production-intro.png` | 레이아웃/부트스트랩/힌트/초기 CSS 변경. V103 픽셀·셰이더·캐시 합격은 재사용. 배포용 초기화 확인은 개발 모드로 대체하지 않음 |
 | V103 시작 로딩: 맵별 셰이더 제출 병렬화·요청 사이 응답 양보, 코드/이미지 로딩 겹치기, 텍스처5장 무손실 WebP. 관련4개 게임 테스트와 실제 WebGL 시작/도입 장면 확인 | `quality-2026-10-19/startup-v103/`: `final-startup-tests.txt`, `lossless-textures.json`, `final-timings.json` | 부트스트랩/준비 배치/정리 수명/해당 이미지 변경. 단일 로컬 측정의 그래픽 준비 약6.8→3.8초이며 네트워크·기기 전체 성능 보장 아님 |
 | V102 UI: 상시 키 설명 축약, 소모·회복 중 체력 표시, 현재 키 설정을 반영한 수동 일시정지 안내. UI fixture 12항목 + 변경한 메뉴 배치/재개 + 320px 긴 키 이름 배치 합격 | `quality-2026-10-19/project-map-hud-v102/`: `after-ui-results.json`, `final-layout-results.json`, `long-bindings-results.json` | HUD/일시정지 JSX·해당 CSS·키 라벨 계약 변경. UI fixture 결과이며 실제 AI/체력 로직/캠페인 검증 아님 |
