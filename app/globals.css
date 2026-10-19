@@ -30,3 +30,15 @@
 .stamina{position:absolute;bottom:76px;left:32px;display:grid;gap:7px;width:155px;color:#babfb0;font-size:11px;letter-spacing:.05em;pointer-events:none}.stamina progress{appearance:none;width:100%;height:3px;border:0;background:#a7b49a22}.stamina progress::-webkit-progress-bar{background:#a7b49a22}.stamina progress::-webkit-progress-value{background:#a7b49a;transition:width .12s linear}.stamina.exhausted{color:#c1957d}.stamina.exhausted progress::-webkit-progress-value{background:#b88870}@media(max-width:700px){.stamina{bottom:220px;left:22px;width:120px}}
 
 .memory-caption>span{display:block;animation:memory-caption-in .35s ease-out both}@keyframes memory-caption-in{from{opacity:0}to{opacity:1}}.reduce-motion .memory-caption>span{animation:none}@media(prefers-reduced-motion:reduce){.memory-caption>span{animation:none}}
+
+.pause-controls{margin-top:22px;padding:16px 0;border-top:1px solid #8d96852b}
+.pause-controls h3{margin:0 0 12px;font-size:14px;font-weight:500;color:#d3cec0}
+.pause-controls dl{display:grid;grid-template-columns:1fr 1fr;gap:9px 24px;margin:0}
+.pause-controls dl>div{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}
+.pause-controls dl>div:first-child{grid-column:1/-1}
+.pause-controls dl>div:first-child dd{min-width:0;white-space:normal;text-align:right}
+.pause-controls dl>div:first-child kbd{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.pause-controls dt{font-size:12px;color:#b8beb5}
+.pause-controls dd{margin:0;white-space:nowrap;color:#d3cec0;font-size:12px}
+.pause-controls p{margin:14px 0 0;font-size:12px;line-height:1.7;color:#a4ae9e}
+@media(max-width:420px){.pause-controls dl{column-gap:16px}}
