@@ -1,6 +1,5 @@
 import {investigation} from '../lib/investigation';
 import type {Story} from '../lib/story';
-import './investigation-notebook.css';
 
 export function InvestigationNotebook({story,onClose}:{story:Pick<Story,'notes'>;onClose:()=>void}){
  const book=investigation(story);

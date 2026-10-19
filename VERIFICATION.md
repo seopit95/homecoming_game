@@ -9,7 +9,7 @@
 
 | 합격 범위 | 증거 폴더 / 문서 | 다시 확인할 조건 |
 | --- | --- | --- |
-| V104 초기 HTML의 다운로드 힌트와 실제 시작 요청69개 일치, 낮은 우선순위·동일 자격 모드, 정적 게임 의존성. 실제 로컬 WebGL에서69개 URL을 링크 힌트로 받고 중복 네트워크 전송 없이 시작/도입 성공 | `quality-2026-10-20/startup-priority-v104/`: `hints-green.json`, `visual-hints-test.txt`, `local-final-timings.json`, `hint-reuse.json` | 레이아웃/부트스트랩/힌트 JSON/실제 텍스처 URL 변경. 변경 없는 V103 픽셀·셰이더·캐시 테스트는 재사용; 로컬 시간을 공개 속도로 주장하지 않음 |
+| V105 초기 다운로드 힌트3개 제한, 동적 게임 진입 복원, CSS1개로 초기 전달. 관련 계약 테스트와 배포용 빌드의 실제 WebGL HTTP200·시작/도입 성공 | `quality-2026-10-20/startup-bounded-v105/`: `hint-budget-green.txt`, `production-smoke.json`, `production-title.png`, `production-intro.png` | 레이아웃/부트스트랩/힌트/초기 CSS 변경. V103 픽셀·셰이더·캐시 합격은 재사용. 배포용 초기화 확인은 개발 모드로 대체하지 않음 |
 | V103 시작 로딩: 맵별 셰이더 제출 병렬화·요청 사이 응답 양보, 코드/이미지 로딩 겹치기, 텍스처5장 무손실 WebP. 관련4개 게임 테스트와 실제 WebGL 시작/도입 장면 확인 | `quality-2026-10-19/startup-v103/`: `final-startup-tests.txt`, `lossless-textures.json`, `final-timings.json` | 부트스트랩/준비 배치/정리 수명/해당 이미지 변경. 단일 로컬 측정의 그래픽 준비 약6.8→3.8초이며 네트워크·기기 전체 성능 보장 아님 |
 | V102 UI: 상시 키 설명 축약, 소모·회복 중 체력 표시, 현재 키 설정을 반영한 수동 일시정지 안내. UI fixture 12항목 + 변경한 메뉴 배치/재개 + 320px 긴 키 이름 배치 합격 | `quality-2026-10-19/project-map-hud-v102/`: `after-ui-results.json`, `final-layout-results.json`, `long-bindings-results.json` | HUD/일시정지 JSX·해당 CSS·키 라벨 계약 변경. UI fixture 결과이며 실제 AI/체력 로직/캠페인 검증 아님 |
 | V101 평지 기기 무릎 접지, 손 간격, 문·모서리 여유, 계단 모드 분리. 유한 포즈·native 추격/포획 확인 | `quality-2026-10-19/crawl-support-v101/`: `scope.md`, `reviewed-source-manifest.json`, `native/`, `native-game/` | `ghost.ts` 관련 관절·바닥·충돌 입력 변경, 새 해당 포즈 결함 |
@@ -28,6 +28,8 @@
 - V102 메뉴 배치 보완 뒤에는 배치·재개와 새 긴 키 이름 사례만 확인했다. 이미 합격한 체력·수첩·상호작용 UI 사례는 재실행하지 않았다.
 
 ## 아직 완료로 볼 수 없는 것
+
+V104는 개발 모드에서는 시작했지만 공개 환경에서90초 내 시작하지 못해 V103으로 복구했다. 배포용 미리보기의 부분 HTTP500도 확인했다. 해당 버전의 개발 모드 로딩 결과를 공개 시작 성공으로 재사용하지 않는다. V105는 정상 동적 진입과 표준 루트 구조를 복원하고 배포용 HTTP200부터 확인했다.
 
 - 귀신 전체의 실사감·실루엣·의상/머리카락과 모든 연속 동작의 상용 수준 완성도.
 - 집 밖 모든 공간의 일관된 구축 아파트 미술과 모든 소품의 지지·관통 상태. 기존 유한 배치 합격을 전체 보증으로 확대하지 않는다.

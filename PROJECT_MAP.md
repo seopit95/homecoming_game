@@ -7,7 +7,7 @@
 | 플레이 화면·설정·모바일 조작 | `app/page.tsx`, `app/globals.css`; 키·설정·저장: `lib/preferences.ts` |
 | 조사 수첩·획득한 증거 해석 | `app/investigation-notebook.tsx`, `lib/investigation.ts` |
 | 게임 루프·입력·상호작용·장면 이동 | `lib/game.ts`; 통과 판정: `lib/passage.ts` |
-| 시작 화면 로딩·그래픽 준비 | `app/layout.tsx`와 `lib/visual-preloads.json`이 HTML에서 텍스처 다운로드를 먼저 시작; `app/page.tsx`는 게임 코드를 정적 의존성으로 요청 → `lib/materials.ts`의 `prepareVisuals` → `lib/game.ts`의 `ready`. URL을 바꾸면 `tests/visual-hints.test.mjs`로 힌트 목록 일치 확인. 모든 맵 업로드·렌더 준비는 유지 |
+| 시작 화면 로딩·그래픽 준비 | `app/layout.tsx`의 첫 CSS와 `lib/visual-preloads.json`의 제한된3개 다운로드 힌트 → `app/page.tsx`의 동적 게임 import → `lib/materials.ts`의 `prepareVisuals` → `lib/game.ts`의 `ready`. URL 변경은 `tests/visual-hints.test.mjs`로 확인. 모든 맵 업로드·렌더 준비 유지. SSR 경로 변경은 개발 모드 대신 배포용 빌드에서 HTTP200·실제 시작을 확인 |
 | 미션·단서·체크포인트 | `lib/story.ts`, `lib/expansion-story.ts`; 장 정보: `lib/chapters.ts` |
 | 집 내부·배치·충돌 | `lib/world.ts`, `lib/apartment-layout.ts` |
 | 복도·승강기·계단·관리실·주차장 | `lib/building.ts`에서 해당 공간 제작 함수 확인 |
@@ -31,6 +31,6 @@
 
 ## 현재 작업 방향
 
-자동 goal 없이 일반 요청으로 개발한다. V101까지의 수정은 재사용했다. V102는 HUD·일시정지 안내, V103은 그래픽 준비와 무손실 압축, V104는 공개 환경의 순차 다운로드 대기를 개선한 범위다. 이후 우선순위는 공간 전체의 일관된 미술, 단서의 의미와 선택, 처음 하는 사람의 길 찾기·긴장·난이도다. 새 아이템이나 대기 시간을 늘리는 것만으로 플레이 길이를 맞추지 않는다.
+자동 goal 없이 일반 요청으로 개발한다. V101까지의 수정은 재사용했다. V102는 HUD·일시정지 안내, V103은 그래픽 준비와 무손실 압축이다. V104의 과도한 초기 힌트·정적 게임 진입은 공개 시작 실패로 철회했다. V105는 기존 동적 진입을 복원하고 초기 힌트를3개로 제한하며 CSS 요청 단계를 줄였다. 이후 미술·스토리 작업에서도 이미 합격한 입력은 재검증하지 않는다.
 
 참고한 방식: [프로젝트 지도 경험담](https://www.reddit.com/r/KoreanGameDev/comments/1wn1wuq/), [플레이어 피드백·UI 논의](https://www.reddit.com/r/KoreanGameDev/comments/1wvj3iz/), [결정·근거를 짧게 남기는 개발 워크플로](https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex). 토큰 절감률을 측정한 자료는 아니다.
