@@ -10,6 +10,8 @@ The data was fitted to the game's original clothed character rig, with finger cu
 
 `public/textures/ghost-face-v4.png` and `ghost-surfaces-v4.png` are original built-in image-generation outputs, used as albedo textures. Prompts and intended use are in the 2026-09-23 encounter plan. They depict fictional horror makeup and stained clothing.
 
+V103 loads lossless WebP copies of `environment-v3`, `ghost-face-v4`, `ghost-surfaces-v4`, `hand-skin`, and `hand-view` to reduce startup transfer. Resolution and decoded RGBA pixels match the retained PNG originals exactly; provenance and usage rights are unchanged. The five fetched files total 8,700,168 bytes instead of 12,625,497 bytes. Pixel equality and encoding sizes are recorded in the V103 `lossless-textures.json` evidence.
+
 `public/audio/chase-score.wav` is an original 30.476-second stereo composition rendered at 32 kHz, 126 BPM: detuned low-string ostinato, dissonant bowed/brass clusters, synthesized drums and metallic percussion with stereo delay. It uses no sampled commercial music or external recordings. The reproducible authoring script is `scripts/compose-chase.py`.
 
 ### Anatomical ghost head (V45)

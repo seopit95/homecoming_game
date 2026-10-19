@@ -929,6 +929,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const oldTarget=renderer.getRenderTarget(),viewport=new T.Vector4();renderer.getViewport?.(viewport);
     const oldVisibility=canvas.style?.visibility;if(canvas.style)canvas.style.visibility='hidden';
     const savedCamera=camera.position.clone(),oldRotation=camera.quaternion.clone();
+    let compileOnly=true;const shaders:Promise<unknown>[]=[];
     async function warm(root:T.Group,spawn:T.Vector3,extraPass?:()=>void|Promise<void>,exterior=false){
       const background=scene.background,intensity=scene.backgroundIntensity;if(exterior){scene.background=skyBackground??background;scene.backgroundIntensity=.035;}
       scene.add(root);camera.position.copy(spawn);camera.rotation.set(0,0,0);camera.updateMatrixWorld();
@@ -937,18 +938,25 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       try{
         // The default framebuffer uses different tone-mapping/color shaders than a render target.
         renderer.setRenderTarget(null);renderer.setViewport?.(0,0,128,128);
-        await renderer.compileAsync?.(scene,camera);
-        if(!disposed){renderer.render(scene,camera);await extraPass?.();}
+        const compilation=renderer.compileAsync?.(scene,camera);
+        if(compileOnly)shaders.push(Promise.resolve(compilation));
+        else{await compilation;if(!disposed){renderer.render(scene,camera);await extraPass?.();}}
       }finally{for(const f of flags){f.o.visible=f.visible;f.o.frustumCulled=f.frustum;}root.removeFromParent();scene.background=background;scene.backgroundIntensity=intensity;}
       await new Promise<void>(resolve=>setTimeout(resolve,0));
     }
-    try{
+    async function warmPasses(){
       for(const next of Object.keys(chapters) as Area[]){if(disposed)break;const w=preparedWorld(next);await warm(w.root,w.spawn,()=>w.surveillance?.prepare(renderer,scene),next==='courtyard');if(next==='parking'&&w.carDeparture){for(const t of [3,7,24]){camera.position.set(3.2,1.65,-17.8);w.carDeparture.pose(t,camera,false);await warm(w.root,camera.position.clone());}w.reset();}if(next==='lift'){w.updateStory?.('service_open',0,false);await warm(w.root,w.spawn);w.reset();}}
       // The mirror uses a linear render target and hides the car's lights. Its
       // material programs differ from the main camera, even for the same mesh.
       for(const ending of [false,true]){if(disposed)break;const r=preparedRoad(ending);await warm(r.root,new T.Vector3(1.8,1.4,4),()=>r.renderMirror(renderer),true);}
+      if(disposed)return;
       const garage=preparedWorld('parking'),exitRoad=preparedRoad(true);exitRoad.setDepartureFrame(departureFrame);exitRoad.pose('car_escape',0,camera,reducedMotion);exitRoad.root.getObjectByName('memory-car')!.visible=false;scene.add(exitRoad.root);
       try{for(const o of garage.root.children)if(o.userData.departureRoadSurface)o.visible=false;for(const t of [3,7,24]){camera.position.set(3.2,1.65,-17.8);garage.carDeparture!.pose(t,camera,false);await warm(garage.root,camera.position.clone());}}finally{garage.reset();exitRoad.root.removeFromParent();exitRoad.root.getObjectByName('memory-car')!.visible=true;}
+    }
+    try{
+      // Submit every room's programs before waiting on the GPU. Keep the same
+      // upload/render passes afterwards so door crossings still use warm caches.
+      await warmPasses();await Promise.all(shaders);compileOnly=false;await warmPasses();
     }finally{renderer.setRenderTarget(oldTarget);renderer.setViewport?.(viewport);if(!disposed)resize();camera.position.copy(savedCamera);camera.quaternion.copy(oldRotation);scene.add(world.root);preparing=false;if(canvas.style)canvas.style.visibility=oldVisibility??'';}
   });
   frameId=requestAnimationFrame(frame);emit();

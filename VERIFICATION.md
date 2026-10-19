@@ -9,6 +9,7 @@
 
 | 합격 범위 | 증거 폴더 / 문서 | 다시 확인할 조건 |
 | --- | --- | --- |
+| V103 시작 로딩: 맵별 셰이더 제출 병렬화·요청 사이 응답 양보, 코드/이미지 로딩 겹치기, 텍스처5장 무손실 WebP. 관련4개 게임 테스트와 실제 WebGL 시작/도입 장면 확인 | `quality-2026-10-19/startup-v103/`: `final-startup-tests.txt`, `lossless-textures.json`, `final-timings.json` | 부트스트랩/준비 배치/정리 수명/해당 이미지 변경. 단일 로컬 측정의 그래픽 준비 약6.8→3.8초이며 네트워크·기기 전체 성능 보장 아님 |
 | V102 UI: 상시 키 설명 축약, 소모·회복 중 체력 표시, 현재 키 설정을 반영한 수동 일시정지 안내. UI fixture 12항목 + 변경한 메뉴 배치/재개 + 320px 긴 키 이름 배치 합격 | `quality-2026-10-19/project-map-hud-v102/`: `after-ui-results.json`, `final-layout-results.json`, `long-bindings-results.json` | HUD/일시정지 JSX·해당 CSS·키 라벨 계약 변경. UI fixture 결과이며 실제 AI/체력 로직/캠페인 검증 아님 |
 | V101 평지 기기 무릎 접지, 손 간격, 문·모서리 여유, 계단 모드 분리. 유한 포즈·native 추격/포획 확인 | `quality-2026-10-19/crawl-support-v101/`: `scope.md`, `reviewed-source-manifest.json`, `native/`, `native-game/` | `ghost.ts` 관련 관절·바닥·충돌 입력 변경, 새 해당 포즈 결함 |
 | V100 자료실 문 닫기·경고·귀신 밀고 들어오기, 양쪽에서 달리며 문막기 | `quality-2026-10-17/archive-pressure-door-v100/`: scoped review·native 결과 | 자료실 문/충돌/추적 입력 변경 |

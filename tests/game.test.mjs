@@ -112,6 +112,35 @@ test('leaving while shaders compile stops frames and defers GPU disposal until b
   jobs[1]();await game.ready;await Promise.resolve();assert.equal(rendererDisposals,before+1);
 });
 
+function laterShadersQueued(jobs){
+ return new Promise((resolve,reject)=>{
+  const timeout=setTimeout(()=>reject(Error('later room shader submissions are still serialized')),3000),push=jobs.push;
+  jobs.push=function(...calls){const size=push.apply(this,calls);if(size>3){clearTimeout(timeout);resolve();}return size;};
+ });
+}
+test('startup queues later scene shaders before waiting for the first later scene',async()=>{
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+ pendingCompiles=[];const game=createGame(canvas,()=>{},e=>assert.fail(e)),jobs=pendingCompiles;
+ try{
+  assert.equal(jobs.length,2);const queued=laterShadersQueued(jobs);jobs[0]();jobs[1]();await queued;
+  assert.ok(jobs.length>3,'a slow shader from the first later room must not serialize all other rooms');
+ }finally{
+  pendingCompiles=null;for(const resolve of jobs)resolve();await game.ready;game.dispose();
+ }
+});
+
+test('leaving during the startup shader batch retains GPU resources until the entire batch settles',async()=>{
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
+ pendingCompiles=[];const game=createGame(canvas,()=>{},e=>assert.fail(e)),jobs=pendingCompiles,before=rendererDisposals;
+ try{
+  const queued=laterShadersQueued(jobs);jobs[0]();jobs[1]();await queued;assert.ok(jobs.length>3);
+  game.dispose();pendingCompiles=null;
+  for(const resolve of jobs.slice(0,-1))resolve();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(rendererDisposals,before,'the last shader still owns its GPU resources');
+  jobs.at(-1)();await game.ready;await Promise.resolve();assert.equal(rendererDisposals,before+1);
+ }finally{pendingCompiles=null;for(const resolve of jobs)resolve();await game.ready;game.dispose();}
+});
+
 test('a close divider stays within the held flashlight shadow frustum',()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const game=createGame(canvas,()=>{},()=>{});tick();game.start();game.skipMemory();tick(7);
