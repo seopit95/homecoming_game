@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+test('V114 prolonged holding builds strain gradually, freezes on pause and clears smoothly after release',async()=>{
+ const {freshHeldBreath,stepHeldBreath,stepBreathStrain}=await import('../lib/held-breath.ts');let s=freshHeldBreath(),strain=0;
+ for(let i=0;i<60;i++){s=stepHeldBreath(s,.05,true,true);strain=stepBreathStrain(strain,.05,s);}assert.equal(strain,0,'a short hold remains clear');
+ for(let i=0;i<150;i++){s=stepHeldBreath(s,.05,true,true);strain=stepBreathStrain(strain,.05,s);}assert.ok(strain>.75&&strain<=1);assert.equal(stepBreathStrain(strain,0,s),strain);
+ const peak=strain;s=stepHeldBreath(s,.05,false,true);strain=stepBreathStrain(strain,.05,s);assert.ok(strain>0&&strain<peak);for(let i=0;i<200;i++)strain=stepBreathStrain(strain,.05,s);assert.equal(strain,0);
+});
+
 test('V113 holding silences hidden breathing, runs out and cannot restart until recovered',async()=>{
  const {freshHeldBreath,stepHeldBreath,playerBreathLevel}=await import('../lib/held-breath.ts');let s=freshHeldBreath();s=stepHeldBreath(s,1,true,true);assert.equal(s.holding,true);assert.equal(playerBreathLevel(s,.9,true),0);assert.ok(s.air<1);
  for(let i=0;i<300&&!s.locked;i++)s=stepHeldBreath(s,.1,true,true);assert.equal(s.holding,false);assert.equal(s.locked,true);assert.ok(playerBreathLevel(s,0,true)>.6);

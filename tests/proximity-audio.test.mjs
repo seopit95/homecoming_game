@@ -8,6 +8,11 @@ class Context{currentTime=10;sampleRate=24000;state='running';nodes=[];make(){co
 const position=(x,z,occluded=false)=>({x,y:-.8,z,distance:Math.hypot(x,z),occluded});
 function setup(){const audio=new HorrorAudio();audio.context=new Context();audio.master=new Node();audio.effectsBus=new Node();audio.noise={duration:4};return audio;}
 
+test('V114 breath strain raises a centered heartbeat without a ghost and shares one bounded pulse with proximity',()=>{
+ const a=setup();a.setBreathStrain(.3);const loop=a.heartbeatSource,quiet=a.heartbeat.gain.targets.at(-1)[0];assert.ok(quiet>0);assert.equal(a.ghostPanner,null,'personal strain cannot invent a ghost emitter');a.setBreathStrain(.9);assert.ok(a.heartbeat.gain.targets.at(-1)[0]>quiet);
+ const strained=a.heartbeat.gain.targets.at(-1)[0];a.setGhostPosition(position(0,-2));assert.equal(a.heartbeatSource,loop);assert.ok(a.heartbeat.gain.targets.at(-1)[0]>strained);assert.ok(a.heartbeat.gain.targets.at(-1)[0]<=.85);a.setGhostPosition(null);assert.ok(a.heartbeat.gain.targets.at(-1)[0]>0,'removing the ghost cannot erase player strain');a.setBreathStrain(0);assert.equal(a.heartbeat.gain.targets.at(-1)[0],0);a.dispose();assert.equal(loop.stopped,true);
+});
+
 test('V112 real proximity quickens a centered double heartbeat without restarting or scheduling timers',()=>{
  const a=setup();a.setGhostPosition(position(0,-12));const loop=a.heartbeatSource,slow=loop.playbackRate.targets.at(-1)[0],quiet=a.heartbeat.gain.targets.at(-1)[0];a.setGhostPosition(position(0,-6));const medium=loop.playbackRate.targets.at(-1)[0];a.setGhostPosition(position(0,-1.5));
  assert.equal(a.heartbeatSource,loop);assert.ok(slow<medium&&medium<loop.playbackRate.targets.at(-1)[0]);assert.ok(a.heartbeat.gain.targets.at(-1)[0]>quiet);assert.ok(a.heartbeat.connections.includes(a.effectsBus));assert.equal(loop.loop,true);

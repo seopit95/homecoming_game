@@ -37,7 +37,7 @@ export class HorrorAudio {
   lastFoot:Partial<Record<keyof typeof footBank,number>>={};
   ghostPanner:PannerNode|null=null;ghostFilter:BiquadFilterNode|null=null;ghostGain:GainNode|null=null;
   ghostPosition:GhostSoundPosition|null=null;
-  heartbeat:GainNode|null=null;heartbeatSource:AudioBufferSourceNode|null=null;heartbeatLevel=-1;
+  heartbeat:GainNode|null=null;heartbeatSource:AudioBufferSourceNode|null=null;heartbeatLevel=-1;heartbeatBpm=-1;breathStrain=0;
   ghostSounds=new Set<AudioScheduledSourceNode>();
   volume = .42;
   start() {
@@ -172,8 +172,6 @@ export class HorrorAudio {
       this.ghostPanner=ctx.createPanner();this.ghostPanner.panningModel='HRTF';this.ghostPanner.distanceModel='inverse';this.ghostPanner.refDistance=1.5;this.ghostPanner.maxDistance=35;this.ghostPanner.rolloffFactor=1;
       this.ghostFilter=ctx.createBiquadFilter();this.ghostFilter.type='lowpass';this.ghostGain=ctx.createGain();this.ghostGain.gain.value=0;
       this.ghostFilter.connect(this.ghostGain);this.ghostGain.connect(this.ghostPanner);this.ghostPanner.connect(this.effectsBus);
-      this.heartbeat=ctx.createGain();this.heartbeat.gain.value=0;this.heartbeat.connect(this.effectsBus);
-      this.heartbeatSource=ctx.createBufferSource();this.heartbeatSource.buffer=heartbeatBuffer(ctx);this.heartbeatSource.loop=true;this.heartbeatSource.connect(this.heartbeat);this.heartbeatSource.start();
     }
     const old=this.ghostPosition,t=ctx.currentTime;this.ghostPosition=position;
     if(this.ghostPanner&&position){
@@ -182,10 +180,20 @@ export class HorrorAudio {
       }
       if(!old||old.occluded!==position.occluded){this.ghostGain!.gain.setTargetAtTime(position.occluded?.42:1,t,.08);this.ghostFilter!.frequency.setTargetAtTime(position.occluded?850:6500,t,.08);}
     }else if(old){this.ghostGain?.gain.setTargetAtTime(0,t,.035);for(const source of this.ghostSounds)source.stop();this.ghostSounds.clear();}
-    const proximity=position?Math.max(0,1-position.distance/14)**1.15:0;
-    if(this.heartbeat&&(proximity===0?this.heartbeatLevel!==0:Math.abs(proximity-this.heartbeatLevel)>.008)){
-      this.heartbeatLevel=proximity;this.heartbeat.gain.setTargetAtTime(.48*proximity,t,proximity===0?.12:.22);this.heartbeatSource!.playbackRate.setTargetAtTime((64+88*proximity)/60,t,.3);
+    this.updateHeartbeat();
+  }
+  setBreathStrain(value:number){this.breathStrain=Math.max(0,Math.min(1,value));this.updateHeartbeat();}
+  private updateHeartbeat(){
+    const ctx=this.context;if(!ctx||!this.effectsBus)return;
+    const proximity=this.ghostPosition?Math.max(0,1-this.ghostPosition.distance/14)**1.15:0;
+    const level=Math.min(.85,.48*proximity+.34*this.breathStrain),bpm=Math.max(64+88*proximity,64+64*this.breathStrain),t=ctx.currentTime;
+    if(level>0&&!this.heartbeat){
+      this.heartbeat=ctx.createGain();this.heartbeat.gain.value=0;this.heartbeat.connect(this.effectsBus);
+      this.heartbeatSource=ctx.createBufferSource();this.heartbeatSource.buffer=heartbeatBuffer(ctx);this.heartbeatSource.loop=true;this.heartbeatSource.connect(this.heartbeat);this.heartbeatSource.start();
     }
+    if(!this.heartbeat)return;
+    if(level===0?this.heartbeatLevel!==0:Math.abs(level-this.heartbeatLevel)>.004){this.heartbeatLevel=level;this.heartbeat.gain.setTargetAtTime(level,t,level===0?.12:.22);}
+    if(Math.abs(bpm-this.heartbeatBpm)>.5){this.heartbeatBpm=bpm;this.heartbeatSource!.playbackRate.setTargetAtTime(bpm/60,t,.3);}
   }
   mix(levels:{music:number;effects:number;voice:number}){this.levels={music:levels.music,effects:levels.effects,voice:levels.voice};if(!this.context)return;for(const [key,bus] of [['music',this.musicBus],['effects',this.effectsBus],['voice',this.voiceBus]] as const)bus?.gain.setTargetAtTime(this.levels[key],this.context.currentTime,.12);}
   recording(line:GhostLine|'archive-guard'|'archive-denial'='memory',channel:'local'|'intercom'='local'){
@@ -275,7 +283,7 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);if(spatial)this.ghostSounds.add(o);o.onended=()=>{this.ghostSounds.delete(o);o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.setGhostPosition(null);this.heartbeatSource?.stop();this.heartbeatSource=null;for(const node of [this.heartbeat,this.ghostFilter,this.ghostGain,this.ghostPanner])node?.disconnect();this.heartbeat=null;this.heartbeatLevel=-1;this.ghostPanner=null;this.ghostFilter=null;this.ghostGain=null;this.ghostPosition=null;this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.breathStrain=0;this.setGhostPosition(null);this.heartbeatSource?.stop();this.heartbeatSource=null;for(const node of [this.heartbeat,this.ghostFilter,this.ghostGain,this.ghostPanner])node?.disconnect();this.heartbeat=null;this.heartbeatLevel=-1;this.heartbeatBpm=-1;this.ghostPanner=null;this.ghostFilter=null;this.ghostGain=null;this.ghostPosition=null;this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }
 
 // A local private exchange: one-second ringback bursts and a shorter busy cadence.

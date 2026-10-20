@@ -14,3 +14,9 @@ export function stepBreathNotice(current:number,dt:number,distance:number,level:
   if(dt<=0)return current;
   return clear&&level>0&&distance<1.4+3.2*level?Math.min(1,current+dt*(.7+level*.8)):Math.max(0,current-dt*1.5);
 }
+export function stepBreathStrain(current:number,dt:number,s:HeldBreath){
+  if(dt<=0)return current;
+  const t=s.holding?Math.max(0,Math.min(1,(1-s.air-.35)/.65)):0,target=t*t*(3-2*t);
+  const value=target+(current-target)*Math.exp(-dt*(target>current?3:1.8));
+  return target===0&&value<.002?0:value;
+}

@@ -55,7 +55,7 @@ export default function Home(){
   </div>;
 
   return <main className={`game-shell ${began?'is-playing':''} ${hidden?'is-hidden':''} ${!settings.filmGrain?'no-grain':''} ${settings.reducedMotion?'reduce-motion':''}`} style={{'--subtitle-scale':settings.subtitleScale} as CSSProperties} ref={root}>
-    <canvas ref={canvas} className="world" aria-label="정전된 아파트를 탐색하는 1인칭 공포게임 화면"/>
+    <canvas ref={canvas} className="world" style={{filter:view?.breathBlur?`blur(${view.breathBlur.toFixed(2)}px)`:undefined,transition:paused?'none':'filter .12s linear'}} aria-label="정전된 아파트를 탐색하는 1인칭 공포게임 화면"/>
     <div className="vignette"/><div className="film-grain"/><div className="lens-edge"/>
     {!began&&<section className="title-screen" aria-label="게임 시작 화면">
       <div className="topline"><span className="edition">백로아파트 · 야간 기록</span><span className="address">2803호<span/>03:17</span></div>

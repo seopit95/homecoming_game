@@ -15,7 +15,7 @@
 | 도입 사고·차량·마지막 탈출 | `lib/prologue.ts`, `lib/road-street.ts`, `lib/car-departure.ts`, `lib/sedan.ts` |
 | 귀신 외형·관절·걷기·기기 | `lib/ghost.ts`에서 `ghost-arms`, `ghost-legs`, `ghost-dress`, `ghost-face`, `ghost-hair` 등 필요한 부위로 이동 |
 | 추적·시야·소리·문 충돌 | `lib/navigation.ts`, `lib/perception.ts`, `lib/collision.ts`; 단계별 속도·가속: `lib/pursuit.ts`; 자료실 문: `lib/archive-door.ts` |
-| 은신 중 숨 참기·호흡 발각 | `lib/held-breath.ts`의 공기/회복/청취 누적 → `game.ts.hearsHiddenBreath`·`searchShelter` 및 집 장롱 검사. 기본 Ctrl(재지정 가능), `app/breath-control.tsx` 표시/터치 해제. 입력 해제는 잠금·은신 종료·컴포넌트 제거 때 보장 |
+| 은신 중 숨 참기·호흡 발각 | `lib/held-breath.ts`의 공기/회복/청취 누적 → `game.ts.hearsHiddenBreath`·`searchShelter` 및 집 장롱 검사. 기본 Ctrl(재지정 가능), `app/breath-control.tsx` 표시/터치 해제. 입력 해제는 잠금·은신 종료·컴포넌트 제거 때 보장. `stepBreathStrain` → 게임 화면만 `breathBlur`, 공유 심장 음량 `setBreathStrain`, 불 꺼진 손의 한계 떨림 `viewmodel.update.strain`; 모션 줄이기는 떨림 제거/흐림 완화 |
 | 집 밖 은신처·문틈 관찰·수색 후 지나가기 | `lib/hiding-places.ts`의 20개 배치·접이문 `setOpen`·문틈 수색 경로 → `lib/world.ts`에서 등록/닫힌 상태 복원 → `lib/game.ts`의 `updateShelterMotion`(시뮬레이션 시간 출입), `protectedInShelter`, `searchShelter`, `leaveShelter`. 수색 경로·정지/재방문 선택은 `lib/shelter-search.ts`에서 한 번 결정한다. 집 장롱의 스토리 hidden과 집 밖의 로컬 은신 상태를 분리해 자동 미션 시간이 계속 흐름 |
 | 퍼즐·전화·원본 대조 | `lib/annex-call.ts`, `lib/surveillance.ts`, `lib/archive-review.ts`, `lib/plant-*.ts` |
 | 붙잡힘·얼굴 전체화면 돌진 | `lib/game.ts`의 dying 분기 → `lib/capture-scene.ts`가 같은 귀신의 피부·입·치아·머리카락을 공유해 근접 촬영. 재시도 때 일반 시점 복귀. 암전은 `app/page.tsx` |

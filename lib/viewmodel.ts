@@ -55,11 +55,15 @@ export function createViewmodel(){
   let handPlate:T.Mesh|undefined;
   if(photographic){arm.visible=false;hand.visible=false;torch.visible=false;handPlate=new T.Mesh(new T.PlaneGeometry(.61,.61),photographic);handPlate.name='natural-hand-cutout';handPlate.position.set(.05,-.14,.04);root.add(handPlate);}
   const beamOrigin=new T.Vector3();
-  function update(p:{time:number;stepPhase?:number;stepAmount?:number;moving:boolean;running:boolean;crouched:boolean;torch:boolean;visible:boolean;reducedMotion:boolean;aspect:number;fov:number;obstructed?:boolean}){
+  function update(p:{time:number;stepPhase?:number;stepAmount?:number;strain?:number;moving:boolean;running:boolean;crouched:boolean;torch:boolean;visible:boolean;reducedMotion:boolean;aspect:number;fov:number;obstructed?:boolean}){
     root.visible=p.visible;
     const phase=p.stepPhase??p.time*(p.running?12:8),motion=p.reducedMotion?0:p.stepAmount!==undefined?p.stepAmount*.006:p.moving?(p.running?.012:.004):.0015;
     root.position.set(.285*Math.min(1,p.aspect/(16/9))+Math.sin(phase)*motion,-.105+(p.torch?0:-.085)+(p.crouched?-.025:0)+(p.obstructed?-.13:0)+Math.cos(phase*2)*motion*.55,p.obstructed?-.34:-.56);
     root.rotation.set(p.torch?(p.obstructed?.32:-.065):.28,.065,Math.sin(phase)*motion*1.2);
+    const tremor=p.reducedMotion?0:T.MathUtils.smoothstep(p.strain??0,.6,1);
+    const pulse=Math.sin(p.time*54.7)*.7+Math.sin(p.time*82.3)*.3;
+    root.position.x+=pulse*tremor*.0018;root.position.y+=Math.sin(p.time*67.1)*tremor*.0012;
+    root.rotation.x+=Math.sin(p.time*61.3)*tremor*.003;root.rotation.z+=pulse*tremor*.006;
     lens.material.emissiveIntensity=p.torch?.7:0;
     if(photographic)photographic.color.setScalar(p.torch?.62:.22);
     key.intensity=p.torch?1.7:.35;ambient.intensity=p.torch?1:.45;
