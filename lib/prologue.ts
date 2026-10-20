@@ -3,10 +3,10 @@ import {configureShadow} from './lighting.ts';
 import {buildRoadStreet} from './road-street.ts';
 import {createDrivingCar} from './driving-car.ts';
 import {createSedan,sedanWindshieldPoint} from './sedan.ts';
-import {extremity} from './ghost-anatomy.ts';
+import {createDrivingHands} from './driving-hands.ts';
 import {createPedestrian} from './pedestrian.ts';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {sharePrintedTexture,surface,boxUV,softBox,handSkinMaterial,upholstery} from './materials.ts';
+import {sharePrintedTexture,surface,boxUV,softBox} from './materials.ts';
 import {createLeatherShoe} from './entry-props.ts';
 import {createGhost,animateGhostPassenger} from './ghost.ts';
 import {opening,openingTiming as beats,finale,finaleTiming as endingBeats,type Stage} from './story.ts';
@@ -64,20 +64,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const drivingCar=createDrivingCar(escapeDrive);car.add(drivingCar.root);
   const wheel=drivingCar.root.getObjectByName('hero-steering-wheel')!;
   let memoryHands:T.Group|undefined;
-  if(!escapeDrive){
-    // Real adult hand surfaces curl around the existing rim; the cabin remains 3D when leaning.
-    const hands=new T.Group();memoryHands=hands;hands.rotation.y=Math.PI;wheel.add(hands);
-    const skin=handSkinMaterial(),sleeve=upholstery('#292f32');
-    for(const side of [-1,1]){
-      const grip=new T.Group();grip.position.set(side*.08,.015,.07);hands.add(grip);
-      const hand=extremity('hand',side,skin,false);hand.name=side<0?'memory-driver-hand-left':'memory-driver-hand-right';
-      const position=hand.geometry.attributes.position;
-      for(let i=0;i<position.count;i++){const y=position.getY(i),angle=T.MathUtils.clamp((-y-.055)/.024,0,3.9);if(y<-.055)position.setXYZ(i,position.getX(i),-.055-.024*Math.sin(angle),position.getZ(i)-.024*(1-Math.cos(angle)));}
-      hand.geometry.computeVertexNormals();hand.rotation.z=side*Math.PI/2;grip.add(hand);
-      rod([0,0,.005],[side*.02,-.13,.18],.027,skin,grip,.041);
-      rod([side*.018,-.115,.16],[side*.13,-.36,.42],.047,sleeve,grip,.073);
-    }
-  }
+  if(!escapeDrive)memoryHands=createDrivingHands(wheel);
   const mirrorTarget=new T.WebGLRenderTarget(384,112),mirrorCamera=new T.PerspectiveCamera(32,384/112,.1,75);
   let mirrorFace:T.Mesh|undefined;
   if(!escapeDrive){

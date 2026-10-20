@@ -87,7 +87,7 @@ function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,red
     }
   }
   if(crawl>0){
-    crawlPose(rig,phase,moving,T.MathUtils.clamp(crawl,0,1),tuck,kneeGround);
+    crawlPose(rig,phase,moving,T.MathUtils.clamp(crawl,0,1),tuck,kneeGround,reducedMotion?0:1);
     const twitch=reducedMotion?0:Math.pow(Math.max(0,Math.sin(time*1.43)),20)*.085;
     rig.head.rotation.y+=twitch*crawl;rig.head.rotation.z-=twitch*.6*crawl;
   }
@@ -242,7 +242,9 @@ export function groundGhost(figure:T.Group,heightAt:(x:number,z:number)=>number,
     const bearing=yaw+(arm?(i===0?1:-1)*.25*armTuck(rig.tuck):0);
     const support=Math.max(...[-.1,.1].flatMap(x=>[-.07,arm?.38:.24].map(z=>floorAt(target.z+Math.cos(bearing)*z-Math.sin(bearing)*x))));
     target.y=support+lift+.055*(1-flatSupport);
-    const side=i===0?-1:1,pole=arm?new T.Vector3(side*.55,.18,-.55).lerp(new T.Vector3(0,0,-1).applyQuaternion(rig.torso.quaternion.clone().invert()),armTuck(rig.tuck)):new T.Vector3(side*.18,-1,.3).lerp(new T.Vector3(0,0,1),rig.tuck.back);
+    // Keep the authored elbow direction, including crawl blends and reduced motion,
+    // while fitting the wrist to the floor. Replacing it here made slopes symmetric.
+    const side=i===0?-1:1,pole=arm&&rig.crawl>0?upper.parent!.worldToLocal(lower.getWorldPosition(new T.Vector3())).sub(upper.position):arm?new T.Vector3(side*.55,.18,-.55).lerp(new T.Vector3(0,0,-1).applyQuaternion(rig.torso.quaternion.clone().invert()),armTuck(rig.tuck)):new T.Vector3(side*.18,-1,.3).lerp(new T.Vector3(0,0,1),rig.tuck.back);
     reach(upper,lower,upper.parent!.worldToLocal(target),arm?.46:.42,arm?.49:.42,side,pole);
     tip.quaternion.copy(lower.getWorldQuaternion(new T.Quaternion()).invert().multiply(orientation));
   }
@@ -259,17 +261,21 @@ function reach(upper:T.Group,lower:T.Group,target:T.Vector3,l1:number,l2:number,
   lower.quaternion.setFromUnitVectors(new T.Vector3(0,-1,0),fore);
 }
 
-function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearance=openClearance,kneeGround=1){
+function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearance=openClearance,kneeGround=1,unease=1){
   const front=tuck.front,back=tuck.back,arms=armTuck(tuck);
+  const room=1-Math.max(front,back,tuck.side),strain=unease*moving*room;
+  // Shoulder-led dragging lags behind the alternating planted hands. The root
+  // speed and contact phases stay distance-driven; only the supported body coils.
+  const stagger=Math.sin(phase*.5-.4)*.028*strain,pull=(Math.sin(phase*2-.75)*.035+Math.sin(phase*4-.2)*.009)*strain;
   // The knee-led stroke has a longer trailing shin than the gathered drag.
   // Blend out before that rear envelope reaches a nearby divider or leaf.
   rig.kneel=blend*kneeGround*(1-T.MathUtils.smoothstep(Math.max(front,back,tuck.side),0,.25));
   const walkingHands=rig.arms.map((arm,i)=>new T.Vector3(0,-.49,0).applyQuaternion(rig.forearms[i].quaternion).add(rig.forearms[i].position).applyQuaternion(arm.quaternion).add(arm.position).applyQuaternion(rig.torso.quaternion).add(rig.torso.position));
   const walkingElbows=rig.arms.map((arm,i)=>rig.forearms[i].position.clone().applyQuaternion(arm.quaternion).add(arm.position).applyQuaternion(rig.torso.quaternion).add(rig.torso.position));
   const walkingPalms=rig.arms.map((arm,i)=>rig.torso.quaternion.clone().multiply(arm.quaternion).multiply(rig.forearms[i].quaternion).multiply(rig.palms[i].quaternion));
-  rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving, .445+back*.22+Math.cos(phase*2)*.014*moving,-.1-front*.06+Math.sin(phase*2-.9)*.022*moving*(1-front)),blend);
-  rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17-front*.37,Math.sin(phase)*.025*moving,Math.sin(phase)*.055*moving)),blend);
-  rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+Math.sin(phase-.9)*.035*moving,.065,-.28+Math.sin(phase-1)*.035*moving)),blend);
+  rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving+stagger, .445+back*.22+Math.cos(phase*2)*.014*moving,-.1-front*.06+Math.sin(phase*2-.9)*.022*moving*(1-front)+pull),blend);
+  rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17-front*.37+Math.sin(phase*2-.5)*.018*strain,Math.sin(phase)*.025*moving+Math.sin(phase*.5-.6)*.055*strain,Math.sin(phase)*.055*moving+(.035+Math.sin(phase-.5)*.035)*strain)),blend);
+  rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+Math.sin(phase-.9)*.035*moving,.065+Math.sin(phase*.5-.7)*.10*strain,-.28+Math.sin(phase-1)*.035*moving-(.14+Math.sin(phase*.5-.8)*.06)*strain)),blend);
   rig.arms[1].position.y=T.MathUtils.lerp(.245,.292,blend);
   const inverse=rig.torso.quaternion.clone().invert();
   for(let i=0;i<2;i++){
@@ -277,7 +283,7 @@ function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearanc
     const handStride=swing?T.MathUtils.lerp(-.2624,.2624,T.MathUtils.smoothstep(u/.36,0,1)):.2624-.82*(u-.36);
     // Forward-facing long nails need their full projected reach behind a wall.
     const hand=walkingHands[i].lerp(new T.Vector3(side*(.34-arms*.15+lift*.025*(1-arms)),.075+lift*.1,.59-front*.60+handStride*(moving>.01?1:0)*(1-front*.86)),blend).sub(rig.torso.position).applyQuaternion(inverse);
-    const crawlPole=new T.Vector3(side*.55,.18,-.55).lerp(new T.Vector3(0,0,-1).applyQuaternion(inverse),arms).normalize();
+    const crawlPole=new T.Vector3(side*(.55+(i===0?.10:-.06)*unease),.18+(i===0?.04:-.025)*unease,-.55+(i===0?.08:-.04)*unease).lerp(new T.Vector3(0,0,-1).applyQuaternion(inverse),arms).normalize();
     const elbowPole=walkingElbows[i].sub(rig.torso.position).applyQuaternion(inverse).sub(rig.arms[i].position).normalize().lerp(crawlPole,blend);
     reach(rig.arms[i],rig.forearms[i],hand,.46,.49,side,elbowPole);
     const armWorld=rig.torso.quaternion.clone().multiply(rig.arms[i].quaternion).multiply(rig.forearms[i].quaternion);

@@ -18,6 +18,16 @@ test('the final drive reveals a seated passenger, collides at the barrier and fr
 });
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){}};
 Object.defineProperty(globalThis,'document',{value:{createElement:()=>({width:0,height:0,getContext:()=>context})},configurable:true});
+test('V115 driving wrists continue the forearm direction while anatomical fingers contact the wheel',()=>{
+ const road=buildRoad(new T.Scene()),camera=new T.PerspectiveCamera(72,16/9,.06,160);try{
+  for(const t of [0,3,12]){road.pose('drive',t,camera,false);road.root.updateMatrixWorld(true);const wheel=road.root.getObjectByName('hero-steering-wheel'),inverse=wheel.matrixWorld.clone().invert();
+   for(const side of ['left','right']){const hand=road.root.getObjectByName('memory-driver-hand-'+side),grip=hand.parent,forearm=grip.children.find(m=>m.isMesh&&m.geometry.type==='CylinderGeometry'&&m.material===hand.material);assert.ok(forearm);
+    const alongHand=new T.Vector3(0,-1,0).applyQuaternion(hand.getWorldQuaternion(new T.Quaternion())),towardWrist=new T.Vector3(0,-1,0).applyQuaternion(forearm.getWorldQuaternion(new T.Quaternion()));assert.ok(alongHand.angleTo(towardWrist)<.52,'wrist cannot kink sideways relative to the forearm: '+side);
+    const p=hand.geometry.attributes.position,v=new T.Vector3();let nearest=Infinity;for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(hand.matrixWorld).applyMatrix4(inverse);nearest=Math.min(nearest,Math.hypot(Math.hypot(v.x,v.y)-.137,v.z));}assert.ok(nearest<.025,'fingers must meet the rim: '+side+' '+nearest);
+   }
+  }
+ }finally{road.dispose();}
+});
 
 test('the driver and pedestrian stay in the same physical scene through impact, stop and escape',()=>{
   const road=buildRoad(new T.Scene()),camera=new T.PerspectiveCamera(68,16/9,.06,160);
