@@ -1,8 +1,8 @@
 import {isExpansion,expansionStages} from './expansion-story.ts';
 import {checkpoint,journal,initialStory,type Action,type Stage,type Story} from './story.ts';
-export const defaultBindings={forward:'KeyW',back:'KeyS',left:'KeyA',right:'KeyD',run:'ShiftLeft',interact:'KeyE',torch:'KeyF',crouch:'KeyC'};
+export const defaultBindings={forward:'KeyW',back:'KeyS',left:'KeyA',right:'KeyD',run:'ShiftLeft',interact:'KeyE',torch:'KeyF',crouch:'KeyC',breath:'ControlLeft'};
 export type Binding=keyof typeof defaultBindings;
-export const bindingLabels:Record<Binding,string>={forward:'앞으로',back:'뒤로',left:'왼쪽',right:'오른쪽',run:'달리기',interact:'상호작용',torch:'손전등',crouch:'몸 낮추기'};
+export const bindingLabels:Record<Binding,string>={forward:'앞으로',back:'뒤로',left:'왼쪽',right:'오른쪽',run:'달리기',interact:'상호작용',torch:'손전등',crouch:'몸 낮추기',breath:'숨 참기'};
 export const defaultSettings={volume:.42,music:.65,effects:.85,voice:.85,brightness:1.25,sensitivity:1,bob:true,fov:72,subtitleScale:1,hints:true,reducedMotion:false,filmGrain:true,bindings:defaultBindings};
 export type Settings=typeof defaultSettings;
 export const SETTINGS_KEY='homecoming.settings.v2',PROGRESS_KEY='homecoming.progress.v2';

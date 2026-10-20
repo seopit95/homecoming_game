@@ -31,6 +31,48 @@ async function officeAgencyInput(saved){
  function use(pos,at){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...at).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
  return {game,data,use,canvas,close(){game.dispose();win.localStorage=previous;}};
 }
+test('V113 hidden breathing can be held, pauses with time, and exposes the real cabinet after release',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(s.approach.x+12,0,s.approach.z+6);
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().breathAvailable,true);
+  ghost.position.set(s.approach.x,0,s.approach.z);event(doc,'keydown',{code:'ControlLeft',repeat:false});tick(1.2);assert.equal(f.game.snapshot().breathHolding,true);assert.equal(breathLevel,0);assert.notEqual(f.game.snapshot().story.stage,'dying');
+  f.game.pause();const air=f.game.snapshot().breathAir;tick(3);assert.equal(f.game.snapshot().breathAir,air);f.game.pause(false);event(doc,'keyup',{code:'ControlLeft'});tick(.15);assert.equal(f.game.snapshot().breathHolding,false);assert.ok(breathLevel>0);
+  tick(4);assert.equal(f.game.snapshot().story.ending,'caught','an audible concealed player must cause a physical inspection and capture');
+ }finally{f.close();}
+});
+test('V113 remapped breath input and touch release do not grant holding outside shelter or across retry',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(s.approach.x+12,0,s.approach.z+6);f.game.configure({bindings:{...f.game.getSettings().bindings,breath:'KeyV'}});
+  event(doc,'keydown',{code:'KeyV',repeat:false});tick(.1);assert.equal(f.game.snapshot().breathHolding,false);event(doc,'keyup',{code:'KeyV'});
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);event(doc,'keydown',{code:'KeyV',repeat:false});tick(.1);assert.equal(f.game.snapshot().breathHolding,true);assert.equal(f.game.snapshot().breathKey,'V');event(doc,'keyup',{code:'KeyV'});tick(.05);assert.equal(f.game.snapshot().breathHolding,false);
+  f.game.key('ControlLeft',true);tick(.1);assert.equal(f.game.snapshot().breathHolding,true);f.game.key('ControlLeft',false);tick(.05);assert.equal(f.game.snapshot().breathHolding,false);f.game.start(true);tick();assert.equal(f.game.snapshot().breathAir,1);assert.equal(f.game.snapshot().breathHolding,false);
+ }finally{f.close();}
+});
+test('V113 the home wardrobe also hides breath and its physical inspection can break concealment',async()=>{
+ const f=await wardrobeFixture();try{
+  f.game.interact();tick(.05);assert.equal(f.game.snapshot().story.stage,'wait');f.ghost.position.set(home.search[0],0,home.search[2]);f.game.key('ControlLeft',true);tick(1.8);assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().breathHolding,true);assert.equal(breathLevel,0);
+  f.game.key('ControlLeft',false);tick(3.8);assert.equal(f.game.snapshot().story.ending,'caught');assert.equal(f.game.snapshot().story.hidden,false);
+ }finally{f.game.dispose();}
+});
+test('V113 the longest linger and return search allows a timed breath strategy without unavoidable capture',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter,g=renderedScene.getObjectByName('resident-remains');g.position.set(s.approach.x+12,0,s.approach.z+6);const random=Math.random;try{Math.random=()=>.999;f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());}finally{Math.random=random;}tick(1.65);g.position.set(s.approach.x,0,s.approach.z);
+  let near=false,away=false,back=false,done=false;for(let i=0;i<800&&!done;i++){
+   const d=Math.hypot(g.position.x-renderedCamera.position.x,g.position.z-renderedCamera.position.z);if(d<2.15){if(away)back=true;near=true;}else if(near&&d>3){if(back)done=true;else away=true;}
+   f.game.key('ControlLeft',d<2.15);tick(.05);assert.notEqual(f.game.snapshot().story.ending,'caught','a correctly timed quiet search must leave a survivable breathing window at '+(i*.05).toFixed(2));
+  }assert.ok(near&&away&&back&&done);
+ }finally{f.close();}
+});
+test('V113 leaving the wardrobe clears held input before another hiding entry',async()=>{
+ const f=await wardrobeFixture();try{f.game.interact();f.game.key('ControlLeft',true);tick(.1);assert.equal(f.game.snapshot().breathHolding,true);f.game.interact();tick(.05);assert.equal(f.game.snapshot().story.hidden,false);f.aim([home.closet[0]-.8,1.65,home.closet[2]],home.closet);f.game.interact();tick(.05);assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().breathHolding,false);}finally{f.game.dispose();}
+});
+test('V113 maximum uninterrupted front linger leaves enough air to survive without rapid tapping',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter,g=renderedScene.getObjectByName('resident-remains');g.position.set(s.approach.x+12,0,s.approach.z+6);const random=Math.random;let roll=0;try{Math.random=()=>roll++===0?.5:.999;f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());}finally{Math.random=random;}tick(1.65);g.position.set(s.approach.x,0,s.approach.z);
+  const trace=[];let left=false;for(let i=0;i<400&&!left;i++){const d=Math.hypot(g.position.x-renderedCamera.position.x,g.position.z-renderedCamera.position.z);f.game.key('ControlLeft',d<2.15);tick(.05);if(i%20===0)trace.push({t:i*.05,d:+d.toFixed(2),air:+f.game.snapshot().breathAir.toFixed(2),holding:f.game.snapshot().breathHolding});assert.notEqual(f.game.snapshot().story.ending,'caught',JSON.stringify(trace));left=i>40&&d>3;}
+  assert.ok(left,'the uninterrupted near-door search must eventually leave the player alive');
+ }finally{f.close();}
+});
 test('V112 the actual pursuer drives proximity and head direction, freezes on pause and falls silent at capture',async()=>{
  const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
   const ghost=renderedScene.getObjectByName('resident-remains');renderedCamera.position.set(0,1.65,9);ghost.position.set(4,0,4);ghost.visible=true;tick(.025);assert.ok(ghostSound&&ghostSound.distance>5);const far=ghostSound.distance;
