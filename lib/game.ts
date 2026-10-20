@@ -55,7 +55,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   let lastSeen:Point|null=null;
   let chaseAt=-1,surging=false;
   let shelter:HidingPlace|null=null,shelterSeen=false,hideSearchAt=-1,hidePassedAt=-1,shelterTorch=false,hideInvestigate=false;
+  let shelterMotion:{kind:'enter'|'exit';time:number;from:T.Vector3;to:T.Vector3;yaw:number;pitch:number}|null=null,hideSweep=0;
   const concealed=()=>story.hidden||shelter!==null;
+  const protectedInShelter=()=>story.hidden||shelter!==null&&!shelterMotion;
   const radioLure=createRadioLure();let radioInterest:Point|null=null,radioUntil=0;
   let recordingAt=-1,recordingSpoken=false,recordingClue:'answerphone'|'annex_call'='answerphone';
   let annexNumber='',annexCallAt=-1,annexCallTo='',annexCallBeat=0,annexCallResult='',annexPressed='',annexPressedUntil=0,annexHeardCall=-1;
@@ -89,7 +91,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function snapshot():GameView{
     const chapter=story.stage.startsWith('service_')?{...chapters.lift,number:'05',title:'관리용 승강기'}:chapters[area];
     const retryLabels:Partial<Record<typeof story.stage,string>>={annex_arrival:'1층 공동시설부터 다시',archive_arrival:'지하 기록보관실부터 다시',plant_arrival:'기계실 입구부터 다시',service_ride:'관리용 승강기부터 다시',lift_call:'28층 외부 복도부터 다시',lift_exit:'24층 엘리베이터부터 다시',lift_button:'엘리베이터 안에서 다시',stairs_loop:'23층 비상계단부터 다시',resident_entry:'1704호 입구부터 다시',car_departure:'주차장 차량 탑승부터 다시',car_escape:'차량 탈출부터 다시',office_record:'17층 관리실부터 다시',parking_gate:'지하 주차장 입구부터 다시',parking_alarm:'주차장 경보기부터 다시'};
-    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='car_crash'?T.MathUtils.smoothstep(stageTime,2.5,5):story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,2.8,5.7):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:(opening[story.stage]??finale[story.stage])?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:(opening[story.stage]??finale[story.stage])?.cues?.findLast(cue=>stageTime>=cue.at)?.text??(opening[story.stage]??finale[story.stage])?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,hidden:concealed(),notes:[...story.notes]},prompt:evidenceReaction?'':concealed()?(shelter?'문틈에서 나가기':'장롱에서 나오기'):hover?(area==='resident'&&story.notes.includes(hover.id)?'확인 완료 · ':'')+hover.label:'',message:controlText(message),objective:evidenceReaction||!settings.hints?'':shelter?'문틈 너머의 움직임과 소리에 귀를 기울인다.':settings.hints?controlText(recordingAt>=0?(recordingClue==='answerphone'?'자동응답기':'통신실 녹음')+' 재생 중 · 주변을 계속 살펴볼 수 있습니다':annexCallAt>=0?annexCallLabel(annexCallTo)+' 호출 중 · 주변의 발소리를 살피세요':courtCallAt>=0?'비상전화 연결 중 · 움직이거나 옆의 종료 버튼으로 끊을 수 있습니다':objectiveFor(story)):'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:area==='stairs'&&['stairs_reverse','stairs_passage'].includes(story.stage)?'17F':chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holdAction:heldInteraction(),holding:holding||keys.has('KeyE')||keys.has('Space'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||(isExpansion(story.resume)?chapters[areaFor({...story,stage:story.resume})].floor+' · 조사 이어하기':'28층 라디오 장면부터 다시')};
+    return {stamina:stamina.value,exhausted:stamina.exhausted,hasFlashlight:hasFlashlight(story),canContinue:!!saved,savedLocation:saved?chapters[areaFor({...initialStory(),stage:saved.stage})].floor:'',saveNotice:elapsed<saveUntil?saveNotice:'',interactKey:keyLabel(settings.bindings.interact),clock:'03:17',noise:noiseRadius/22,started,memoryFade:story.stage==='car_crash'?T.MathUtils.smoothstep(stageTime,2.5,5):story.stage==='sleep'?T.MathUtils.smoothstep(stageTime,2.8,5.7):story.stage==='flee'?T.MathUtils.smoothstep(stageTime,5.5,7):story.stage==='wake_ring'?1-T.MathUtils.smoothstep(stageTime,.4,3.6):0,memoryLabel:(opening[story.stage]??finale[story.stage])?.label||(story.stage==='wake_ring'?'사흘 뒤 · 새벽 03:17':''),memoryText:(opening[story.stage]??finale[story.stage])?.cues?.findLast(cue=>stageTime>=cue.at)?.text??(opening[story.stage]??finale[story.stage])?.text??'',deathProgress:story.stage==='dying'?Math.min(1,stageTime/3.2):0,paused,crouched,whisper,story:{...story,hidden:concealed(),notes:[...story.notes]},prompt:evidenceReaction||shelterMotion?'':concealed()?(shelter?'문틈에서 나가기':'장롱에서 나오기'):hover?(area==='resident'&&story.notes.includes(hover.id)?'확인 완료 · ':'')+hover.label:'',message:controlText(message),objective:evidenceReaction||!settings.hints?'':shelter?'문틈 너머의 움직임과 소리에 귀를 기울인다.':settings.hints?controlText(recordingAt>=0?(recordingClue==='answerphone'?'자동응답기':'통신실 녹음')+' 재생 중 · 주변을 계속 살펴볼 수 있습니다':annexCallAt>=0?annexCallLabel(annexCallTo)+' 호출 중 · 주변의 발소리를 살피세요':courtCallAt>=0?'비상전화 연결 중 · 움직이거나 옆의 종료 버튼으로 끊을 수 있습니다':objectiveFor(story)):'',location:location(),floor:area==='lift'?`${getLiftFloor()}F`:area==='stairs'&&['stairs_reverse','stairs_passage'].includes(story.stage)?'17F':chapter.floor,chapter:chapter.title,chapterNumber:chapter.number,chapterCard:started&&elapsed<chapterUntil,flashlight:torch,threat,elapsed,holdProgress,holdAction:heldInteraction(),holding:holding||keys.has('KeyE')||keys.has('Space'),liftFloor:getLiftFloor(),checkpointLabel:retryLabels[story.resume]||(isExpansion(story.resume)?chapters[areaFor({...story,stage:story.resume})].floor+' · 조사 이어하기':'28층 라디오 장면부터 다시')};
   }
   function heldInteraction():GameView['holdAction']{return story.stage==='pry'?'pry':parkingCanBoard(story.stage)&&hover?.id==='car_board'?'car_board':null;}
   const emit=()=>onChange(snapshot());
@@ -122,7 +124,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function ghostVoice(line:GhostLine,force=false){
     if(!force&&elapsed-lastVoice<12)return;
     const dx=world.figure.position.x-camera.position.x,dz=world.figure.position.z-camera.position.z,distance=Math.hypot(dx,dz),pan=T.MathUtils.clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,distance),-1,1);
-    const blocked=!hasLineOfSight(camera.position,{x:world.figure.position.x,y:world.figure.position.y+(crawling()?.7:1.4),z:world.figure.position.z},world.solids),loud=line==='no'||line==='scream';audio.voice(line,pan,loud?Math.max(.5,Math.min(1,9/Math.max(1,distance)))*(blocked&&line!=='no'?.4:1):Math.max(.08,Math.min(1,5/Math.max(1,distance)))*(blocked?.4:1),line==='no'?false:blocked);lastVoice=elapsed;
+    const blocked=!hasLineOfSight(camera.position,{x:world.figure.position.x,y:world.figure.position.y+(crawling()?.7:1.4),z:world.figure.position.z},world.solids),loud=line==='no'||line==='scream',nearSlit=!!shelter&&distance<3&&line==='where';audio.voice(line,pan,loud?Math.max(.5,Math.min(1,9/Math.max(1,distance)))*(blocked&&line!=='no'?.4:1):Math.max(.08,Math.min(1,5/Math.max(1,distance)))*(blocked?(nearSlit?.72:.4):1),line==='no'||nearSlit?false:blocked);lastVoice=elapsed;
     whisper={where:'「어디 있지…?」',here:'「여기 있었는데…」',found:'「찾았다. 놓치지 않을 거야.」',come:'「나오렴…」',cry:'어둠 속에서 여자가 흐느낀다.',scream:'끄아아아아아악!!!',memory:'「거의 다 왔어. 내일 전화할게.」',no:'「안 돼… 안 돼!!!!!」'}[line];whisperUntil=elapsed+(line==='cry'?5:3.5);emit();
   }
   const free=(x:number,z:number,r=.23)=>canStandAt(x,z,world.solids,r,world.bounds);
@@ -138,7 +140,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(value){audio.pause();if(document.pointerLockElement===canvas)document.exitPointerLock();}else{audio.resume();lock();}emit();
   }
   function loadArea(next:Area){
-    shelter=null;hideSearchAt=-1;hidePassedAt=-1;
+    shelter?.setOpen(0);shelter=null;shelterMotion=null;hideSearchAt=-1;hidePassedAt=-1;
     radioLure.reset();radioInterest=null;radioUntil=0;
     stopRecording();stopAnnexCall();stopCourtCall();annexNumber='';annexCallResult='';annexPressed='';annexHeardCall=-1;courtHeardCall=-1;courtPressed='';evidenceReaction=false;audio.setDrive(null);audio.setDevice('phone',0);audio.setDevice('radio',0);audio.setDevice('alarm',0);
     if(road){road.root.removeFromParent();road=null;}for(const r of roads.values())r.root.removeFromParent();
@@ -168,6 +170,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     story=next;if(area==='office'&&(story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power')))arrivalPursuit=true;if(!keepInvestigationPhase){stageTime=0;scriptBeat=0;voiceBeat=0;enemyPath=[];repathAt=0;}holdProgress=0;
     if(story.stage==='ended'){stopRecording();stopAnnexCall();stopCourtCall();if(story.ending==='crashed'){try{storage?.removeItem(PROGRESS_KEY);}catch{}saved=null;}keys.clear();holding=false;hover=undefined;threat=0;audio.stopVoices();audio.setDrive(null);whisper='';if(document.pointerLockElement===canvas)document.exitPointerLock();audio.sound('dread');emit();return true;}
     if(story.stage==='dying'){
+      shelter=null;shelterMotion=null;
       stopRecording();stopAnnexCall();stopCourtCall();keys.clear();holding=false;dragging=false;hover=undefined;message='';whisper='';threat=1;deathOrigin.copy(camera.position);deathFloor=world.heightAt(camera.position.x,camera.position.z);deathEye=camera.position.y-deathFloor;
       deathDirection.copy(world.figure.position).sub(camera.position);deathDirection.y=0;if(deathDirection.lengthSq()<.001)deathDirection.set(-Math.sin(yaw),0,-Math.cos(yaw));deathDirection.normalize();
       deathGhostOrigin.copy(world.figure.position);deathLightOrigin.copy(flashlight.position);deathLightAim.copy(flashlight.target.position);
@@ -277,14 +280,17 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function interact(){
     if(!started||paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying'||story.stage==='tv'||story.stage==='wake_ring')return;
-    if(contact())return;
+    if(shelterMotion||contact())return;
     if(shelter){leaveShelter();return;}
     findTarget();let action:Action|undefined=concealed()?'closet':hover?.id;if(!action)return;
     if(action==='shelter'){
       const place=world.hidingPlaces.find(p=>p.target===hover);if(!place||Math.abs(camera.position.y-place.eye.y)>.65)return;
+      place.setOpen(1);const pathClear=shelterPathClear(camera.position,place.exit)&&shelterPathClear(place.exit,place.eye);place.setOpen(0);
+      if(!pathClear){say('정면으로 조금 더 다가가야 들어갈 수 있다.',3);return;}
       shelterSeen=detectsPlayer(true);hideInvestigate=shelterSeen||tracking||lastSeen!==null;hiddenPosition.copy(camera.position);shelterTorch=torch;shelter=place;hideSearchAt=-1;hidePassedAt=-1;
-      torch=false;noiseRadius=0;noiseUntil=elapsed;keys.clear();holding=false;hover=undefined;camera.position.copy(place.eye);yaw=place.yaw;pitch=0;
-      audio.sound('door-creak',0,.2);say('철문을 천천히 닫았다. 틈 사이로 통로가 보인다.',4);return;
+      shelterMotion={kind:'enter',time:0,from:camera.position.clone(),to:place.eye.clone(),yaw,pitch};hideSweep=0;
+      torch=false;noiseRadius=2;noiseUntil=elapsed+.4;keys.clear();holding=false;hover=undefined;
+      audio.sound('door-creak',0,.2);say('몸을 낮추고 철문 안으로 들어간다.',2);return;
     }
     if(action==='archive_booth_door'&&world.archiveDoor){
       const requested=world.archiveDoor.actionFrom(camera.position,story);
@@ -410,10 +416,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const keyup=(e:KeyboardEvent)=>{const mapping=Object.entries(settings.bindings).find(([,code])=>code===e.code)?.[0] as keyof typeof settings.bindings|undefined;keys.delete(mapping?defaultSettings.bindings[mapping]:e.code);};
   function pointerdown(e:PointerEvent){if(!started||paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying')return;dragging=true;previousX=e.clientX;previousY=e.clientY;if(e.pointerType==='touch')canvas.setPointerCapture(e.pointerId);else if(document.pointerLockElement!==canvas)lock();}
   function pointermove(e:PointerEvent){
-    if(!started||paused||evidenceReaction||concealed()&&!shelter||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying')return;let dx=0,dy=0;
+    if(!started||paused||evidenceReaction||shelterMotion||concealed()&&!shelter||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying')return;let dx=0,dy=0;
     if(document.pointerLockElement===canvas){dx=e.movementX;dy=e.movementY;}else if(dragging){dx=e.clientX-previousX;dy=e.clientY-previousY;previousX=e.clientX;previousY=e.clientY;}else return;
     yaw-=dx*.0021*settings.sensitivity;pitch=T.MathUtils.clamp(pitch-dy*.0021*settings.sensitivity,-1.25,1.25);
-    if(shelter){yaw=shelter.yaw+T.MathUtils.clamp(T.MathUtils.euclideanModulo(yaw-shelter.yaw+Math.PI,Math.PI*2)-Math.PI,-.55,.55);pitch=T.MathUtils.clamp(pitch,-.25,.25);}
+    if(shelter){const offset=T.MathUtils.euclideanModulo(yaw-shelter.yaw+Math.PI,Math.PI*2)-Math.PI;yaw+=T.MathUtils.clamp(offset,-.55,.55)-offset;pitch=T.MathUtils.clamp(pitch,-.25,.25);}
   }
   const pointerup=()=>{dragging=false;holding=false;};
   function lockchange(){if(document.pointerLockElement!==canvas)blur();}
@@ -492,22 +498,44 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     p.y=world.heightAt(p.x,p.z);
   }
   function contact(){
-    if(concealed()||area==='corridor'&&areaTime<4.2||!world.figure.visible||!chaseStages.includes(story.stage))return false;
+    if(protectedInShelter()||area==='corridor'&&areaTime<4.2||!world.figure.visible||!chaseStages.includes(story.stage))return false;
     const p=world.figure.position;
     return Math.hypot(p.x-camera.position.x,p.z-camera.position.z)<.67&&Math.abs(p.y+(crawling()?.65:1.25)-camera.position.y)<1.2&&hasLineOfSight(camera.position,{x:p.x,y:p.y+(crawling()?.7:1.4),z:p.z},world.solids)?advance('caught'):false;
   }
   function detectsPlayer(visualOnly=false){
-    if(concealed())return false;
+    if(protectedInShelter())return false;
     const p=world.figure.position;
     return perceives({ghost:p,player:camera.position,heading:world.figure.rotation.y,lineOfSight:hasLineOfSight({x:p.x,y:p.y+(crawling()?.7:1.55),z:p.z},camera.position,world.solids,true),torch,crouched,noise:visualOnly?0:area==='parking'&&parkingAlarmActive(story)?Math.min(noiseRadius,3):noiseRadius});
   }
   function leaveShelter(caught=false){
-    if(!shelter)return false;
+    if(!shelter||shelterMotion)return false;
+    if(caught){shelter.setOpen(1);shelter=null;torch=shelterTorch;return true;}
     const p=shelter.exit,exit=free(p.x,p.z)?p:free(hiddenPosition.x,hiddenPosition.z)?hiddenPosition:null;
-    if(!exit&&!caught){say('문 앞이 막혔다. 아직 나갈 틈이 없다.',3);return false;}
-    camera.position.copy(exit??hiddenPosition);camera.position.y=world.heightAt(camera.position.x,camera.position.z)+(crouched?1:1.65);
-    shelter=null;torch=shelterTorch;pitch=0;keys.clear();holding=false;noiseRadius=2;noiseUntil=elapsed+.3;
-    audio.sound('door-creak',0,caught?.7:.18);if(!caught)say('문을 조금 밀고 빠져나왔다.',2);return true;
+    if(!exit){say('문 앞이 막혔다. 아직 나갈 틈이 없다.',3);return false;}
+    shelter.setOpen(1);const clear=shelterPathClear(camera.position,exit);shelter.setOpen(0);if(!clear){say('문 앞이 막혔다. 아직 나갈 틈이 없다.',3);return false;}
+    const to=exit.clone();to.y=world.heightAt(to.x,to.z)+(crouched?1:1.65);shelterMotion={kind:'exit',time:0,from:camera.position.clone(),to,yaw,pitch};
+    keys.clear();holding=false;noiseRadius=2;noiseUntil=elapsed+.5;audio.sound('door-creak',0,.18);return true;
+  }
+  function shelterPathClear(from:T.Vector3,to:T.Vector3){
+    const count=Math.ceil(from.distanceTo(to)/.05);for(let i=0;i<=count;i++){const t=i/Math.max(1,count);if(!free(T.MathUtils.lerp(from.x,to.x,t),T.MathUtils.lerp(from.z,to.z,t)))return false;}return true;
+  }
+  function updateShelterMotion(dt:number){
+    if(!shelter||!shelterMotion)return;const m=shelterMotion;m.time+=dt;const t=m.time,enter=m.kind==='enter',end=enter?1.6:1.45;
+    shelter.setOpen(T.MathUtils.smoothstep(t,0,.35)*(1-T.MathUtils.smoothstep(t,enter?1.2:1.05,end)));
+    if(enter){
+      const approach=shelter.exit.clone();approach.y=m.from.y;
+      camera.position.copy(m.from).lerp(approach,T.MathUtils.smoothstep(t,.35,.65));
+      camera.position.lerp(m.to,T.MathUtils.smoothstep(t,.65,1.2));
+    }else camera.position.copy(m.from).lerp(m.to,T.MathUtils.smoothstep(t,.35,1.05));
+    const turn=T.MathUtils.smoothstep(t,.45,1.2),delta=T.MathUtils.euclideanModulo(shelter.yaw-m.yaw+Math.PI,Math.PI*2)-Math.PI;
+    yaw=m.yaw+(enter?delta*turn:0);pitch=T.MathUtils.lerp(m.pitch,enter?-.12:0,turn);
+    // Only the closed cabinet conceals the player. Opening it or entering in sight is unsafe.
+    if(world.figure.visible&&detectsPlayer(true)){shelterSeen=true;hideInvestigate=true;tracking=true;seenAt=elapsed;lastSeen={x:camera.position.x,z:camera.position.z};}
+    if(t>=end){
+      shelter.setOpen(0);shelterMotion=null;keys.clear();
+      if(enter){noiseRadius=0;noiseUntil=elapsed;say('철문 너머에서 발을 끄는 소리가 난다.',3);}
+      else{shelter=null;torch=shelterTorch;noiseRadius=2;noiseUntil=elapsed+.3;say('문을 조금 밀고 빠져나왔다.',2);}
+    }
   }
   function patrolEnemy(speed:number,dt:number){
     const p=world.figure.position;
@@ -516,12 +544,13 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function searchShelter(speed:number,dt:number){
     if(!shelter)return;
+    if(shelterMotion){if(detectsPlayer()){shelterSeen=true;hideInvestigate=true;}if(hideInvestigate)followEnemy(camera.position,speed,dt);else patrolEnemy(speed,dt);return;}
     const p=world.figure.position,distance=Math.hypot(p.x-shelter.approach.x,p.z-shelter.approach.z);
     surging=false;threat=Math.max(.12,T.MathUtils.clamp(1-distance/14,0,.9));
     if(!hideInvestigate&&distance>7){patrolEnemy(speed,dt);return;}hideInvestigate=true;
     if(hideSearchAt<0){
       if(distance>.65)followEnemy(shelter.approach,Math.max(2.1,speed),dt);
-      else{hideSearchAt=elapsed;enemyPath=[];repathAt=0;audio.sound('drag',0,.4);ghostVoice(shelterSeen?'found':'where');}
+      else{hideSearchAt=elapsed;enemyPath=[];repathAt=0;audio.sound('drag',0,.4);ghostVoice(shelterSeen?'found':'where',true);}
     }else if(elapsed-hideSearchAt<(shelterSeen?1.1:3.2)){
       const turn=T.MathUtils.euclideanModulo(Math.atan2(shelter.eye.x-p.x,shelter.eye.z-p.z)-world.figure.rotation.y+Math.PI,Math.PI*2)-Math.PI;
       world.figure.rotation.y+=T.MathUtils.clamp(turn,-dt*1.5,dt*1.5);
@@ -529,8 +558,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     else{
       tracking=false;lastSeen=null;chaseAt=-1;
       if(hidePassedAt<0){hidePassedAt=elapsed;enemyPath=[];repathAt=0;}
-      followEnemy(shelter.pass,2.15,dt);
-      if(elapsed-hidePassedAt>15){hideSearchAt=-1;hidePassedAt=-1;enemyPath=[];repathAt=0;}
+      const target=shelter.sweep[hideSweep]??shelter.pass;
+      if(Math.hypot(p.x-target.x,p.z-target.z)<.25&&hideSweep<shelter.sweep.length){hideSweep++;enemyPath=[];repathAt=0;}
+      followEnemy(shelter.sweep[hideSweep]??shelter.pass,hideSweep<shelter.sweep.length?1.35:2.15,dt);
+      if(elapsed-hidePassedAt>20){hideSearchAt=-1;hidePassedAt=-1;hideSweep=0;enemyPath=[];repathAt=0;}
     }
   }
   function chaseSpeed(base:number,distance:number){
@@ -925,6 +956,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     else if(!paused&&!document.hidden&&story.stage==='dying'){elapsed+=dt;stageTime+=dt;if(stageTime>=3.2)advance('dead');}
     else if(!paused&&!document.hidden&&story.stage!=='ended'){
       elapsed+=dt;stageTime+=dt;areaTime+=dt;playerMoving=false;playerRunning=false;
+      updateShelterMotion(dt);
       if(!evidenceReaction&&!concealed()&&!isCinematic(story.stage)&&story.stage!=='tv'&&story.stage!=='wake_ring'){if(keys.has('ArrowLeft'))yaw+=dt*1.55;if(keys.has('ArrowRight'))yaw-=dt*1.55;}
       if(!evidenceReaction&&!concealed()&&!isCinematic(story.stage)&&story.stage!=='tv'&&story.stage!=='wake_ring'&&story.stage!=='road_exit'){
         const forward=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown')),side=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));

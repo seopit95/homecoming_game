@@ -34,10 +34,10 @@ async function officeAgencyInput(saved){
 test('V107 unseen outdoor hiding keeps the chapter live while the ghost searches and passes',async()=>{
  const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
   const cabinet=renderedScene.getObjectByName('shelter-parking-0');assert.ok(cabinet,'the shelter must be actual scene geometry');const s=cabinet.userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=false;
-  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());assert.equal(f.game.snapshot().story.hidden,true);const stage=f.game.snapshot().story.stage,elapsed=f.game.snapshot().elapsed;
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);assert.equal(f.game.snapshot().story.hidden,true);const stage=f.game.snapshot().story.stage,elapsed=f.game.snapshot().elapsed;
   ghost.position.set(s.approach.x+3,0,s.approach.z);ghost.visible=true;tick(15);
   assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().story.stage,stage);assert.ok(f.game.snapshot().elapsed>elapsed+14);assert.ok(ghost.position.distanceTo(renderedCamera.position)>3,'the pursuer actually moves away, giving an exit window');
-  f.game.interact();tick();assert.equal(f.game.snapshot().story.hidden,false);assert.equal(f.game.snapshot().story.stage,stage);assert.equal(f.game.snapshot().paused,false);
+  f.game.interact();tick(1.5);assert.equal(f.game.snapshot().story.hidden,false);assert.equal(f.game.snapshot().story.stage,stage);assert.equal(f.game.snapshot().paused,false);
  }finally{f.close();}
 });
 
@@ -45,30 +45,55 @@ test('V107 a gallery shelter remains usable while the lift arrives and preserves
  const f=await officeAgencyInput({stage:'lift_call',notes:[],elapsed:200});try{
   f.use([.2,1.65,-20.65],[.95,1.25,-22.55]);assert.equal(f.game.snapshot().story.stage,'lift_wait');
   const s=renderedScene.getObjectByName('shelter-landing-2').userData.shelter;
-  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().flashlight,false);
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().flashlight,false);
   const before=renderedCamera.position.clone(),yaw=renderedCamera.rotation.y;event(f.canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:2});event(doc,'pointermove',{clientX:800,clientY:0});event(doc,'pointerup',{});tick();
   assert.ok(Math.abs(renderedCamera.rotation.y-yaw)<=.551);f.game.key('KeyW',true);tick(.3);f.game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(before)<.001);
-  tick(6.6);assert.equal(f.game.snapshot().story.stage,'lift_enter','the lift clock continues while concealed');assert.equal(f.game.snapshot().story.hidden,true);f.game.interact();assert.equal(f.game.snapshot().story.hidden,false);assert.equal(f.game.snapshot().flashlight,true);
+  tick(6.6);assert.equal(f.game.snapshot().story.stage,'lift_enter','the lift clock continues while concealed');assert.equal(f.game.snapshot().story.hidden,true);f.game.interact();tick(1.5);assert.equal(f.game.snapshot().story.hidden,false);assert.equal(f.game.snapshot().flashlight,true);
  }finally{f.close();}
 });
 
 test('V107 crouched stair hiding exits at the same supported crouch height',async()=>{
  const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{
-  const s=renderedScene.getObjectByName('shelter-stairs-0').userData.shelter;f.game.crouch();f.use([s.exit.x,s.exit.y+1,s.exit.z],s.target.point.toArray());assert.equal(f.game.snapshot().story.hidden,true);f.game.interact();assert.equal(f.game.snapshot().story.hidden,false);assert.ok(Math.abs(renderedCamera.position.y-(s.exit.y+1))<.001,'leaving cannot stand the camera up for one frame');assert.equal(f.game.snapshot().crouched,true);
+  const s=renderedScene.getObjectByName('shelter-stairs-0').userData.shelter;f.game.crouch();f.use([s.exit.x,s.exit.y+1,s.exit.z],s.target.point.toArray());tick(1.65);assert.equal(f.game.snapshot().story.hidden,true);f.game.interact();tick(1.5);assert.equal(f.game.snapshot().story.hidden,false);assert.ok(Math.abs(renderedCamera.position.y-(s.exit.y+1))<.001,'leaving cannot stand the camera up for one frame');assert.equal(f.game.snapshot().crouched,true);
  }finally{f.close();}
 });
 
 test('V107 hiding keeps the handheld torch off for both keyboard and touch inputs',async()=>{
  const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
   const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter;renderedScene.getObjectByName('resident-remains').visible=false;
-  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());event(doc,'keydown',{code:'KeyF',repeat:false});assert.equal(f.game.snapshot().flashlight,false);f.game.torch();assert.equal(f.game.snapshot().flashlight,false);f.game.interact();assert.equal(f.game.snapshot().flashlight,true);
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);event(doc,'keydown',{code:'KeyF',repeat:false});assert.equal(f.game.snapshot().flashlight,false);f.game.torch();assert.equal(f.game.snapshot().flashlight,false);f.game.interact();tick(1.5);assert.equal(f.game.snapshot().flashlight,true);
  }finally{f.close();}
 });
 
 test('V107 a witnessed hiding entry is searched and cannot grant immunity',async()=>{
  const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
   const cabinet=renderedScene.getObjectByName('shelter-parking-0');assert.ok(cabinet);const s=cabinet.userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.set(s.approach.x+2.5,0,s.approach.z);ghost.rotation.y=-Math.PI/2;
-  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());assert.equal(f.game.snapshot().story.hidden,true);tick(10);assert.equal(f.game.snapshot().story.ending,'caught');assert.equal(f.game.snapshot().story.hidden,false);
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);assert.equal(f.game.snapshot().story.hidden,true);tick(10);assert.equal(f.game.snapshot().story.ending,'caught');assert.equal(f.game.snapshot().story.hidden,false);
+ }finally{f.close();}
+});
+
+test('V108 shelter entry and exit move continuously with the doors and freeze when paused',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter;renderedScene.getObjectByName('resident-remains').visible=false;
+  const origin=new THREE.Vector3(s.exit.x,1.65,s.exit.z);f.use(origin.toArray(),s.target.point.toArray());assert.ok(renderedCamera.position.distanceTo(origin)<.1,'E cannot teleport the camera into the cabinet');
+  tick(.45);assert.ok(s.doorOpen>.8,'the physical doors open before the body crosses');const middle=renderedCamera.position.clone();assert.ok(middle.distanceTo(s.eye)>.15);
+  f.game.interact();f.game.pause();const angle=s.doorOpen;tick(2);assert.ok(renderedCamera.position.distanceTo(middle)<.001);assert.equal(s.doorOpen,angle);f.game.pause(false);tick(1.5);
+  assert.ok(renderedCamera.position.distanceTo(s.eye)<.001);assert.equal(s.doorOpen,0);assert.equal(f.game.snapshot().story.hidden,true);
+  f.game.interact();assert.ok(renderedCamera.position.distanceTo(s.eye)<.001,'exit also starts at the existing eye position');tick(.5);assert.ok(renderedCamera.position.distanceTo(s.eye)>.05);assert.ok(renderedCamera.position.distanceTo(origin)>.05);tick(1.1);
+  assert.equal(f.game.snapshot().story.hidden,false);assert.ok(renderedCamera.position.distanceTo(origin)<.001);assert.equal(s.doorOpen,0);
+ }finally{f.close();}
+});
+
+test('V108 a nearby search speaks once even after a recent voice and visibly crosses the slits',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=false;
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.6);ghost.position.set(s.approach.x+2,0,s.approach.z);ghost.visible=true;voiceCalls.length=0;
+  const ray=new THREE.Raycaster(),head=new THREE.Vector3(),local=new THREE.Vector3();let visible=0,left=false,right=false,previous=ghost.position.clone();
+  for(let i=0;i<150;i++){tick(.1);assert.ok(ghost.position.distanceTo(previous)<.5,'search movement cannot teleport');previous.copy(ghost.position);head.copy(ghost.position);head.y+=.68;local.copy(head);s.root.worldToLocal(local);
+   const d=head.clone().sub(renderedCamera.position),distance=d.length();ray.set(renderedCamera.position,d.normalize());const hits=ray.intersectObject(s.root,true);
+   if(Math.abs(local.x)<1.2&&local.z>.43&&(!hits.length||hits[0].distance>distance)){visible+=.1;if(local.x<-.3)left=true;if(local.x>.3)right=true;}
+  }
+  assert.equal(voiceCalls.filter(v=>v==='where').length,1,'the nearby search line must bypass the generic cooldown exactly once');assert.ok(visible>.4&&left&&right,'the real ghost crosses both sides of the actual louver view '+JSON.stringify({visible,left,right}));
  }finally{f.close();}
 });
 

@@ -6,6 +6,19 @@ import {findPath} from '../lib/navigation.ts';
 import {buildBuilding} from '../lib/building.ts';
 globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},arc(){},fill(){}})})};
 
+test('V108 every inward door clears the continuous body path and has a reachable cross-view search',()=>{
+ for(const area of ['landing','corridor','stairs','resident','office','annex','courtyard','archive','plant','parking']){
+  const w=buildWorld(new T.Scene(),area);try{for(const s of w.hidingPlaces){
+   assert.equal(s.sweep.length,2,s.root.name+' needs two physical pass-by points');
+   for(const p of [s.approach,...s.sweep,s.pass])assert.ok(canStandAt(p.x,p.z,w.solids,.43,w.bounds),s.root.name+' search point');
+   assert.ok(findPath(s.sweep[0],s.sweep[1],w.solids,w.bounds,.43).length,s.root.name+' search crosses without teleporting');
+   s.setOpen(1);for(let i=0;i<=30;i++){const p=s.eye.clone().lerp(s.exit,i/30);assert.ok(canStandAt(p.x,p.z,w.solids,.23,w.bounds),s.root.name+' open doorway clears the body');}
+   for(let i=0;i<=20;i++){s.setOpen(i/20);assert.ok(canStandAt(s.eye.x,s.eye.z,w.solids,.23,w.bounds),s.root.name+' inward leaves cannot clip the hidden body');}
+   w.reset();assert.equal(s.doorOpen,0);assert.ok(canStandAt(s.eye.x,s.eye.z,w.solids,.23,w.bounds));
+  }}finally{disposeWorld(w.root);}
+ }
+});
+
 test('V107 outdoor shelters have supported bodies, free exits and reachable approaches',()=>{
  for(const area of ['landing','corridor','stairs','resident','office','annex','courtyard','archive','plant','parking']){
   const w=buildWorld(new T.Scene(),area);try{

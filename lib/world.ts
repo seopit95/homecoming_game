@@ -58,6 +58,7 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const poses:{object:T.Object3D;position:T.Vector3;quaternion:T.Quaternion;scale:T.Vector3;visible:boolean}[]=[];
   root.traverse(object=>poses.push({object,position:object.position.clone(),quaternion:object.quaternion.clone(),scale:object.scale.clone(),visible:object.visible}));
   function reset(){
+    for(const place of hidingPlaces)place.setOpen(0);
     content.reset?.();Object.assign(content.bounds,bounds);for(const {light,color} of lightColors)light.color.copy(color);
     content.solids.splice(0,content.solids.length,...originalSolids.map(({solid,value})=>{delete solid.yaw;return Object.assign(solid,value);}));
     for(const p of poses){p.object.position.copy(p.position);p.object.quaternion.copy(p.quaternion);p.object.scale.copy(p.scale);p.object.visible=p.visible;delete p.object.userData.openRequested;}
