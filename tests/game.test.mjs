@@ -29,8 +29,49 @@ async function officeAgencyInput(saved){
  const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'office_record',notes:[],elapsed:500,officeSupply:false,...saved})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick();
  function use(pos,at){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...at).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
- return {game,data,use,close(){game.dispose();win.localStorage=previous;}};
+ return {game,data,use,canvas,close(){game.dispose();win.localStorage=previous;}};
 }
+test('V107 unseen outdoor hiding keeps the chapter live while the ghost searches and passes',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const cabinet=renderedScene.getObjectByName('shelter-parking-0');assert.ok(cabinet,'the shelter must be actual scene geometry');const s=cabinet.userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=false;
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());assert.equal(f.game.snapshot().story.hidden,true);const stage=f.game.snapshot().story.stage,elapsed=f.game.snapshot().elapsed;
+  ghost.position.set(s.approach.x+3,0,s.approach.z);ghost.visible=true;tick(15);
+  assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().story.stage,stage);assert.ok(f.game.snapshot().elapsed>elapsed+14);assert.ok(ghost.position.distanceTo(renderedCamera.position)>3,'the pursuer actually moves away, giving an exit window');
+  f.game.interact();tick();assert.equal(f.game.snapshot().story.hidden,false);assert.equal(f.game.snapshot().story.stage,stage);assert.equal(f.game.snapshot().paused,false);
+ }finally{f.close();}
+});
+
+test('V107 a gallery shelter remains usable while the lift arrives and preserves bounded peeking',async()=>{
+ const f=await officeAgencyInput({stage:'lift_call',notes:[],elapsed:200});try{
+  f.use([.2,1.65,-20.65],[.95,1.25,-22.55]);assert.equal(f.game.snapshot().story.stage,'lift_wait');
+  const s=renderedScene.getObjectByName('shelter-landing-2').userData.shelter;
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().flashlight,false);
+  const before=renderedCamera.position.clone(),yaw=renderedCamera.rotation.y;event(f.canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:2});event(doc,'pointermove',{clientX:800,clientY:0});event(doc,'pointerup',{});tick();
+  assert.ok(Math.abs(renderedCamera.rotation.y-yaw)<=.551);f.game.key('KeyW',true);tick(.3);f.game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(before)<.001);
+  tick(6.6);assert.equal(f.game.snapshot().story.stage,'lift_enter','the lift clock continues while concealed');assert.equal(f.game.snapshot().story.hidden,true);f.game.interact();assert.equal(f.game.snapshot().story.hidden,false);assert.equal(f.game.snapshot().flashlight,true);
+ }finally{f.close();}
+});
+
+test('V107 crouched stair hiding exits at the same supported crouch height',async()=>{
+ const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{
+  const s=renderedScene.getObjectByName('shelter-stairs-0').userData.shelter;f.game.crouch();f.use([s.exit.x,s.exit.y+1,s.exit.z],s.target.point.toArray());assert.equal(f.game.snapshot().story.hidden,true);f.game.interact();assert.equal(f.game.snapshot().story.hidden,false);assert.ok(Math.abs(renderedCamera.position.y-(s.exit.y+1))<.001,'leaving cannot stand the camera up for one frame');assert.equal(f.game.snapshot().crouched,true);
+ }finally{f.close();}
+});
+
+test('V107 hiding keeps the handheld torch off for both keyboard and touch inputs',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter;renderedScene.getObjectByName('resident-remains').visible=false;
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());event(doc,'keydown',{code:'KeyF',repeat:false});assert.equal(f.game.snapshot().flashlight,false);f.game.torch();assert.equal(f.game.snapshot().flashlight,false);f.game.interact();assert.equal(f.game.snapshot().flashlight,true);
+ }finally{f.close();}
+});
+
+test('V107 a witnessed hiding entry is searched and cannot grant immunity',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const cabinet=renderedScene.getObjectByName('shelter-parking-0');assert.ok(cabinet);const s=cabinet.userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.set(s.approach.x+2.5,0,s.approach.z);ghost.rotation.y=-Math.PI/2;
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());assert.equal(f.game.snapshot().story.hidden,true);tick(10);assert.equal(f.game.snapshot().story.ending,'caught');assert.equal(f.game.snapshot().story.hidden,false);
+ }finally{f.close();}
+});
+
 test('V106 visible resident key can be picked up across its blade without pixel hunting',async()=>{
  const f=await officeAgencyInput({stage:'resident_entry',notes:['resident_drawer'],elapsed:350});try{
   tick(1.2);const key=renderedScene.getObjectByName('resident-study-key-tag'),aim=key.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(-.12,.005,0));

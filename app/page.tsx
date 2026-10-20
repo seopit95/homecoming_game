@@ -3,7 +3,7 @@ import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import {ArrowRight,Headphones,Pause,Play,RotateCcw,SlidersHorizontal,Volume2,Expand,Flashlight} from '../lib/icons';
 import type {Game,GameView,Settings} from '../lib/game';
 import {registerGameTools} from '../lib/webmcp';
-import {endings,isMemory,isCinematic} from '../lib/story';
+import {endings,isMemory,isCinematic,areaFor} from '../lib/story';
 import {InvestigationNotebook} from './investigation-notebook';
 import {investigation} from '../lib/investigation';
 import {defaultSettings,bindingLabels,keyLabel,allowedKey,type Binding} from '../lib/preferences';
@@ -72,7 +72,7 @@ export default function Home(){
     {began&&!ended&&!dying&&!memory&&<>
       <header className="hud"><div><div className="room-label"><i/>{view?.location}<span>{view?.floor}</span></div><p className={(view?.threat||0)>.2?'urgent':''}>{view?.objective}</p></div><div className="hud-tools"><span className="clock">{view?.clock}</span><button className="notes-trigger" aria-label="수집한 기록 보기" onClick={()=>{setShowNotes(true);game.current?.pause(true);}}>기록 {recordCount}</button><button aria-label="전체 화면" title="전체 화면" onClick={()=>{if(document.fullscreenElement)void document.exitFullscreen();else void root.current?.requestFullscreen().catch(()=>{});}}><Expand size={18}/></button><button aria-label="일시정지" title="일시정지" onClick={()=>game.current?.pause(true)}><Pause size={18}/></button></div></header>
       {!paused&&view?.chapterCard&&<div className="chapter-card"><span>제 {view.chapterNumber} 장 · {view.floor}</span><p>{view.chapter}</p></div>}
-      <output className="save-notice" aria-live="polite">{view?.saveNotice}</output><div className={`crosshair ${view?.prompt?'active':''}`}/>{hidden&&<div className="closet-slats" aria-hidden="true"/>}{!!view?.threat&&<div className="threat-haze" style={{opacity:view.threat*.45}}/>}
+      <output className="save-notice" aria-live="polite">{view?.saveNotice}</output><div className={`crosshair ${view?.prompt?'active':''}`}/>{hidden&&view&&areaFor(view.story)==='apartment'&&<div className="closet-slats" aria-hidden="true"/>}{!!view?.threat&&<div className="threat-haze" style={{opacity:view.threat*.45}}/>}
       {!paused&&<>{view?.prompt&&<button className={`interaction ${view.holdAction?'hold-interaction':''}`} onPointerDown={beginHold} onPointerUp={endHold} onPointerCancel={endHold} onLostPointerCapture={endHold} onClick={()=>{if(!view.holdAction)game.current?.interact();}}><kbd>{view.interactKey}</kbd><span>{view.prompt}</span>{view.holdAction&&<progress className="hold-meter" aria-label={view.holdAction==='car_board'?'운전석 탑승':'문 벌리기'} max={1} value={view.holdProgress}/>}</button>}
         {view?.whisper&&<output className="ghost-whisper">{view.whisper}</output>}<output className="subtitle" aria-live="polite">{view?.message&&<p>{view.message}</p>}</output>
         {view&&(view.exhausted||view.stamina<1)&&<div className={`stamina ${view.exhausted?"exhausted":""}`} aria-label="달리기 체력"><span>{view.exhausted?"숨이 찬다 · 걸으며 회복":"달리기 체력"}</span><progress max={1} value={view.stamina}/></div>}<footer className="play-footer"><span><kbd>ESC</kbd> 설정 · 조작 <kbd>J</kbd> 기록</span><span><Flashlight size={14}/>{!view?.hasFlashlight?'손전등 없음':view?.flashlight?'켜짐':'꺼짐'}{view?.crouched?' · 몸을 낮춤':''}</span></footer>
