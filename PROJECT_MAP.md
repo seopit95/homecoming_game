@@ -6,7 +6,7 @@
 | --- | --- |
 | 플레이 화면·설정·모바일 조작 | `app/page.tsx`, `app/globals.css`; 키·설정·저장: `lib/preferences.ts` |
 | 조사 수첩·획득한 증거 해석 | `app/investigation-notebook.tsx`, `lib/investigation.ts` |
-| 게임 루프·입력·상호작용·장면 이동 | `lib/game.ts`; 통과 판정: `lib/passage.ts` |
+| 게임 루프·입력·상호작용·장면 이동 | `lib/game.ts`; 통과 판정: `lib/passage.ts`; 걸음 거리·발 착지·시점 반동: `lib/player-gait.ts` → 손/손전등 위상 `lib/viewmodel.ts`. 새 설정의 bob 기본 켬, 기존 명시적 끔/화면 흔들림 줄이기는 존중 |
 | 시작 화면 로딩·그래픽 준비 | `app/layout.tsx`의 첫 CSS와 `lib/visual-preloads.json`의 제한된3개 다운로드 힌트 → `app/page.tsx`의 동적 게임 import → `lib/materials.ts`의 `prepareVisuals` → `lib/game.ts`의 `ready`. URL 변경은 `tests/visual-hints.test.mjs`로 확인. 모든 맵 업로드·렌더 준비 유지. SSR 경로 변경은 개발 모드 대신 배포용 빌드에서 HTTP200·실제 시작을 확인 |
 | 미션·단서·체크포인트 | `lib/story.ts`, `lib/expansion-story.ts`; 장 정보: `lib/chapters.ts` |
 | 집 내부·배치·충돌 | `lib/world.ts`, `lib/apartment-layout.ts` |

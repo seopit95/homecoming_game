@@ -4,6 +4,12 @@ import * as T from 'three';
 import {createViewmodel} from '../lib/viewmodel.ts';
 
 const pose={time:2,moving:false,running:false,crouched:false,torch:true,visible:true,reducedMotion:false,aspect:16/9,fov:72};
+test('V110 the handheld torch follows the shared foot phase and settles with its amplitude',()=>{
+ const rig=createViewmodel();rig.update({...pose,moving:true,stepPhase:Math.PI/2,stepAmount:1});const first=rig.root.matrixWorld.toArray();
+ rig.update({...pose,time:100,moving:true,running:true,stepPhase:Math.PI/2,stepAmount:1});assert.deepEqual(rig.root.matrixWorld.toArray(),first,'elapsed time or sprint toggles cannot reset the shared stride');
+ rig.update({...pose,moving:true,stepPhase:3*Math.PI/2,stepAmount:1});assert.notDeepEqual(rig.root.matrixWorld.toArray(),first);
+ rig.update({...pose,stepPhase:1,stepAmount:0});const stopped=rig.root.matrixWorld.toArray();rig.update({...pose,time:200,stepPhase:2,stepAmount:0});assert.deepEqual(rig.root.matrixWorld.toArray(),stopped);
+});
 test('the held torch stays below the aiming point at supported fields of view',()=>{
   const rig=createViewmodel();
   for(const aspect of [390/844,16/9])for(const fov of [58,72,95]){rig.update({...pose,fov,aspect});

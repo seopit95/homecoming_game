@@ -31,6 +31,16 @@ async function officeAgencyInput(saved){
  function use(pos,at){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...at).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
  return {game,data,use,canvas,close(){game.dispose();win.localStorage=previous;}};
 }
+test('V110 actual walking and running recoil settles, pauses and respects the off setting',async()=>{
+ const match=win.matchMedia;win.matchMedia=q=>({matches:q==='(pointer:coarse)'});const f=await officeAgencyInput();try{
+  renderedScene.getObjectByName('resident-remains').visible=false;f.game.configure({bob:true,reducedMotion:false});renderedCamera.position.set(0,1.65,2);
+  event(f.canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:renderedCamera.rotation.x/.0021});event(doc,'pointerup',{});
+  function sample(run){f.game.key('KeyW',true);f.game.key('ShiftLeft',run);const a=[];for(let i=0;i<32;i++){tick(.025);a.push(renderedCamera.position.y);}f.game.key('KeyW',false);f.game.key('ShiftLeft',false);return Math.max(...a)-Math.min(...a);}
+  const walk=sample(false),run=sample(true);assert.ok(walk>.025&&run>walk*1.3,'running needs stronger actual camera recoil '+JSON.stringify({walk,run}));
+  f.game.pause();const p=renderedCamera.matrixWorld.toArray();tick(2);assert.deepEqual(renderedCamera.matrixWorld.toArray(),p);f.game.pause(false);tick(.8);assert.ok(Math.abs(renderedCamera.position.y-1.65)<.001);assert.ok(Math.abs(renderedCamera.rotation.z)<.0001);
+  f.game.configure({bob:false});assert.ok(sample(false)<.0001);f.game.configure({bob:true,reducedMotion:true});assert.ok(sample(false)<.0001);
+ }finally{f.close();win.matchMedia=match;}
+});
 test('V107 unseen outdoor hiding keeps the chapter live while the ghost searches and passes',async()=>{
  const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
   const cabinet=renderedScene.getObjectByName('shelter-parking-0');assert.ok(cabinet,'the shelter must be actual scene geometry');const s=cabinet.userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=false;

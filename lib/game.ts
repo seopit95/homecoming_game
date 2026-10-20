@@ -11,6 +11,7 @@ import {clearPrintedSources} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
 import {shelterSearchPlan} from './shelter-search.ts';
 import {createCaptureScene} from './capture-scene.ts';
+import {createPlayerGait} from './player-gait.ts';
 import {initialStory,checkpoint,transition,objectiveFor,officePowerLoad,officePowerProblem,officeCanWatch,residentEvidence,residentMessageDuration,areaFor,chapters,chaseStages,opening,openingTiming as beats,finale,finaleTiming as endingBeats,isMemory,isFinale,isCinematic,hasFlashlight,parkingDrained,parkingCanBoard,parkingAlarmActive,parkingBoardDuration,tapeTimes,officeReplay,officeReplayDuration,type Story,type Action,type Area} from './story.ts';
 import {findPath,findPursuitPath,pursuerRadius,clearPath,type Point} from './navigation.ts';
 import {setConnectionDoor} from './passage.ts';
@@ -53,7 +54,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   scene.add(flashlight,flashlight.target);const fill=new T.PointLight('#dadde0',.6,3.5);scene.add(fill);
   let stamina=freshStamina(),breathRecovery=false;
   let story=initialStory(),started=false,paused=false,disposed=false,torch=false,elapsed=0,yaw=0,pitch=0,frameId=0;
-  let message='',messageUntil=0,lastFrame=0,lastEmit=0,lastStep=0,stageTime=0,areaTime=0,lastSound=0,lastBreath=0,lastDrip=0,chapterUntil=0;
+  let message='',messageUntil=0,lastFrame=0,lastEmit=0,stageTime=0,areaTime=0,lastSound=0,lastBreath=0,lastDrip=0,chapterUntil=0;
+  const gait=createPlayerGait();
   let crouched=false,walkPhase=0,playerMoving=false,playerRunning=false,whisper='',whisperUntil=0,lastVoice=-20,voiceBeat=0,tracking=false,seenAt=0,patrol=0;
   let lastSeen:Point|null=null;
   let chaseAt=-1,surging=false;
@@ -144,6 +146,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(value){audio.pause();if(document.pointerLockElement===canvas)document.exitPointerLock();}else{audio.resume();lock();}emit();
   }
   function loadArea(next:Area){
+    gait.reset();
     shelter?.setOpen(0);shelter=null;shelterMotion=null;hideSearchAt=-1;hidePassedAt=-1;
     radioLure.reset();radioInterest=null;radioUntil=0;
     stopRecording();stopAnnexCall();stopCourtCall();annexNumber='';annexCallResult='';annexPressed='';annexHeardCall=-1;courtHeardCall=-1;courtPressed='';evidenceReaction=false;audio.setDrive(null);audio.setDevice('phone',0);audio.setDevice('radio',0);audio.setDevice('alarm',0);
@@ -174,6 +177,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     story=next;if(area==='office'&&(story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power')))arrivalPursuit=true;if(!keepInvestigationPhase){stageTime=0;scriptBeat=0;voiceBeat=0;enemyPath=[];repathAt=0;}holdProgress=0;
     if(story.stage==='ended'){stopRecording();stopAnnexCall();stopCourtCall();if(story.ending==='crashed'){try{storage?.removeItem(PROGRESS_KEY);}catch{}saved=null;}keys.clear();holding=false;hover=undefined;threat=0;audio.stopVoices();audio.setDrive(null);whisper='';if(document.pointerLockElement===canvas)document.exitPointerLock();audio.sound('dread');emit();return true;}
     if(story.stage==='dying'){
+      gait.reset();
       shelter=null;shelterMotion=null;
       stopRecording();stopAnnexCall();stopCourtCall();keys.clear();holding=false;dragging=false;hover=undefined;message='';whisper='';threat=1;deathOrigin.copy(camera.position);deathFloor=world.heightAt(camera.position.x,camera.position.z);deathEye=camera.position.y-deathFloor;
       deathDirection.copy(world.figure.position).sub(camera.position);deathDirection.y=0;if(deathDirection.lengthSq()<.001)deathDirection.set(-Math.sin(yaw),0,-Math.cos(yaw));deathDirection.normalize();
@@ -188,6 +192,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     persist();emit();return true;
   }
   function openingScene(){
+    gait.reset();
     keys.clear();holding=false;dragging=false;hover=undefined;torch=false;chapterUntil=0;message='';
     if(isCinematic(story.stage)&&document.pointerLockElement===canvas)document.exitPointerLock();
     if(story.stage==='car_departure'){scene.background=skyBackground??nightBackground;scene.backgroundIntensity=.035;world.carDeparture!.pose(0,camera,reducedMotion);for(const o of world.root.children)if(o.userData.departureRoadSurface)o.visible=false;const r=preparedRoad(true);r.setDepartureFrame(world.carDeparture!.roadFrame);scene.add(r.root);r.root.visible=true;r.root.getObjectByName('memory-car')!.visible=false;audio.sound('click',-.5,.5);}
@@ -207,7 +212,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const resumePursuit=retry?(retry==='continue'?saved?.pursuit:arrivalPursuit):false;
     const resumeWait=retry==='continue'?saved?.pursuitWait??0:Math.max(0,entranceDelay-areaTime);
     if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],officeSupply:saved.officeSupply,code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&story.notes.includes('resident_key'))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathRecovery=false;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
-    lastStep=elapsed;lastEmit=elapsed-1;loadArea(areaFor(story));
+    lastEmit=elapsed-1;loadArea(areaFor(story));
     if(resumePursuit&&area==='office')arrivalPursuit=true;
     if(resumePursuit&&(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'||area==='parking')){carryPursuit(5.2,true,area==='parking'?layout.parking.z:expansionLayout[area].z);entranceDelay=Math.max(entranceDelay,resumeWait);persist();}
     audio.setTV(story.stage==='tv');
@@ -820,7 +825,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function renderWorld(dt:number){
     const time=started?elapsed:performance.now()/1000;
-    const handPose={time:elapsed,moving:playerMoving,running:playerRunning,crouched,torch,visible:started&&hasFlashlight(story)&&!concealed()&&!isCinematic(story.stage)&&!['tv','dying','ended','road_exit'].includes(story.stage),reducedMotion,aspect:camera.aspect,fov:camera.fov};hands.update(handPose);
+    const handPose={time:elapsed,stepPhase:settings.bob&&!reducedMotion?gait.phase:undefined,stepAmount:settings.bob&&!reducedMotion?gait.amount:undefined,moving:playerMoving,running:playerRunning,crouched,torch,visible:started&&hasFlashlight(story)&&!concealed()&&!isCinematic(story.stage)&&!['tv','dying','ended','road_exit'].includes(story.stage),reducedMotion,aspect:camera.aspect,fov:camera.fov};hands.update(handPose);
     const doorOccupants=[{x:camera.position.x,z:camera.position.z,r:.23}];
     if(world.figure.visible)doorOccupants.push({x:world.figure.position.x,z:world.figure.position.z,r:pursuerRadius});
     if(story.stage==='car_departure'){
@@ -846,7 +851,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       pitch=T.MathUtils.lerp(evidencePitch,T.MathUtils.clamp(Math.atan2(delta.y,Math.hypot(delta.x,delta.z)),-1.25,1.25),blend);
     }
     const deathRoll=story.stage==='dying'?deathPose():0;
-    camera.rotation.set(pitch,yaw,story.stage==='dying'?deathRoll:story.stage==='pry'&&stageTime<.7?Math.sin(stageTime*48)*.022:0,'YXZ');camera.updateMatrixWorld();
+    camera.rotation.set(pitch+gait.pitch,yaw,story.stage==='dying'?deathRoll:story.stage==='pry'&&stageTime<.7?Math.sin(stageTime*48)*.022:gait.roll,'YXZ');camera.updateMatrixWorld();
     fireAlarmSound();
     flashlight.position.copy(hands.beamOrigin).applyQuaternion(camera.quaternion).add(camera.position);
     if(story.stage==='dying'){
@@ -972,18 +977,19 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
         const running=area!=='aftermath'&&!crouched&&canSprint(stamina)&&(keys.has('ShiftLeft')||keys.has('ShiftRight')),speed=(crouched?1.25:running?3.5:2)*dt/(Math.hypot(forward,side)||1);
         const px=camera.position.x,pz=camera.position.z;
         move((-Math.sin(yaw)*forward+Math.cos(yaw)*side)*speed,(-Math.cos(yaw)*forward-Math.sin(yaw)*side)*speed);
-        const moving=Math.hypot(camera.position.x-px,camera.position.z-pz)>.001;
+        const distance=Math.hypot(camera.position.x-px,camera.position.z-pz),moving=distance>.001;
         stamina=stepStamina(stamina,dt,running,moving);
         const floor=area==='stairs'?(camera.position.z< -6?'tile':'metal'):area==='resident'?(camera.position.z>5.95?'tile':'wood'):area==='apartment'?'wood':area==='landing'&&camera.position.x<-.9?'wet':'tile';
         playerMoving=moving;playerRunning=moving&&running;
         if(elapsed>noiseUntil)noiseRadius=moving?(crouched?0:running?(floor==='wet'?10:22):floor==='metal'?7:3):0;
-        camera.position.y=world.heightAt(camera.position.x,camera.position.z)+(crouched?1:1.65)+(settings.bob&&!reducedMotion&&moving?Math.sin(elapsed*(running?13:9))*.018:0);
-        if(moving&&elapsed-lastStep>(running?.32:.48)){audio.footstep(floor,Math.sin(elapsed*3)*.2,crouched?.15:running?.65:.35);lastStep=elapsed;}
-      }
+        const footContact=gait.step(distance,dt,running,crouched,settings.bob&&!reducedMotion);
+        camera.position.y=world.heightAt(camera.position.x,camera.position.z)+(crouched?1:1.65)+gait.y;
+        if(moving&&footContact)audio.footstep(floor,Math.floor(gait.phase/Math.PI)%2?-.12:.12,crouched?.15:running?.65:.35);
+      }else gait.reset();
       if(concealed())stamina=stepStamina(stamina,dt,false,false);
       const shove=world.archiveDoor?.pushAside({x:camera.position.x,z:camera.position.z,r:.23},dt)??0;
       for(let remaining=Math.abs(shove);remaining>0;remaining-=.05)move(Math.sign(shove)*Math.min(.05,remaining),0);
-      camera.rotation.set(pitch,yaw,0,'YXZ');camera.updateMatrixWorld();crossThresholds();findTarget();scripted(dt);if(!isCinematic(story.stage))danger(dt);
+      camera.rotation.set(pitch+gait.pitch,yaw,gait.roll,'YXZ');camera.updateMatrixWorld();crossThresholds();findTarget();scripted(dt);if(!isCinematic(story.stage))danger(dt);
       if(message&&elapsed>messageUntil)message='';if(whisper&&elapsed>whisperUntil)whisper='';
     }
     if(stamina.exhausted)breathRecovery=true;else if(stamina.value>.9)breathRecovery=false;
