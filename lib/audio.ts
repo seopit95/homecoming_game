@@ -1,6 +1,7 @@
 import type {ArchiveFrame} from './archive-review.ts';
 import type {FootSurface} from './footsteps.ts';
 import footBank from './footstep-bank.json' with {type:'json'};
+import {heartbeatBuffer,type GhostSoundPosition} from './ghost-sound.ts';
 export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
 const archiveCues={road:[['collision-impact',4.2]],call:[['archive-guard',.2],['archive-denial',8]],gate:[['archive-plea',.8],['archive-lock',5.8]]} as const;
 export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'memory'|'no';
@@ -34,6 +35,10 @@ export class HorrorAudio {
   exertion:GainNode|null=null;exertionSource:AudioBufferSourceNode|null=null;exertionFilter:BiquadFilterNode|null=null;exertionWanted=0;exertionLevel=-1;
   footstepBuffer:AudioBuffer|null=null;
   lastFoot:Partial<Record<keyof typeof footBank,number>>={};
+  ghostPanner:PannerNode|null=null;ghostFilter:BiquadFilterNode|null=null;ghostGain:GainNode|null=null;
+  ghostPosition:GhostSoundPosition|null=null;
+  heartbeat:GainNode|null=null;heartbeatSource:AudioBufferSourceNode|null=null;heartbeatLevel=-1;
+  ghostSounds=new Set<AudioScheduledSourceNode>();
   volume = .42;
   start() {
     this.prepare();void this.context!.resume();this.setVolume(this.volume);
@@ -161,6 +166,27 @@ export class HorrorAudio {
     const t=this.context.currentTime,fade=level>this.chaseLevel?.18:1.25;this.chaseLevel=level;
     this.chase.gain.setTargetAtTime(level*.9,t,fade);this.chasePulse.frequency.setTargetAtTime(2.2+level*1.25,t,.45);this.chaseFilter.frequency.setTargetAtTime(650+level*1300,t,.6);
   }
+  setGhostPosition(position:GhostSoundPosition|null){
+    const ctx=this.context;if(!ctx||!this.effectsBus)return;
+    if(position&&!this.ghostPanner){
+      this.ghostPanner=ctx.createPanner();this.ghostPanner.panningModel='HRTF';this.ghostPanner.distanceModel='inverse';this.ghostPanner.refDistance=1.5;this.ghostPanner.maxDistance=35;this.ghostPanner.rolloffFactor=1;
+      this.ghostFilter=ctx.createBiquadFilter();this.ghostFilter.type='lowpass';this.ghostGain=ctx.createGain();this.ghostGain.gain.value=0;
+      this.ghostFilter.connect(this.ghostGain);this.ghostGain.connect(this.ghostPanner);this.ghostPanner.connect(this.effectsBus);
+      this.heartbeat=ctx.createGain();this.heartbeat.gain.value=0;this.heartbeat.connect(this.effectsBus);
+      this.heartbeatSource=ctx.createBufferSource();this.heartbeatSource.buffer=heartbeatBuffer(ctx);this.heartbeatSource.loop=true;this.heartbeatSource.connect(this.heartbeat);this.heartbeatSource.start();
+    }
+    const old=this.ghostPosition,t=ctx.currentTime;this.ghostPosition=position;
+    if(this.ghostPanner&&position){
+      if(!old||position.x!==old.x||position.y!==old.y||position.z!==old.z){
+        this.ghostPanner.positionX.setTargetAtTime(position.x,t,.035);this.ghostPanner.positionY.setTargetAtTime(position.y,t,.035);this.ghostPanner.positionZ.setTargetAtTime(position.z,t,.035);
+      }
+      if(!old||old.occluded!==position.occluded){this.ghostGain!.gain.setTargetAtTime(position.occluded?.42:1,t,.08);this.ghostFilter!.frequency.setTargetAtTime(position.occluded?850:6500,t,.08);}
+    }else if(old){this.ghostGain?.gain.setTargetAtTime(0,t,.035);for(const source of this.ghostSounds)source.stop();this.ghostSounds.clear();}
+    const proximity=position?Math.max(0,1-position.distance/14)**1.15:0;
+    if(this.heartbeat&&(proximity===0?this.heartbeatLevel!==0:Math.abs(proximity-this.heartbeatLevel)>.008)){
+      this.heartbeatLevel=proximity;this.heartbeat.gain.setTargetAtTime(.48*proximity,t,proximity===0?.12:.22);this.heartbeatSource!.playbackRate.setTargetAtTime((64+88*proximity)/60,t,.3);
+    }
+  }
   mix(levels:{music:number;effects:number;voice:number}){this.levels={music:levels.music,effects:levels.effects,voice:levels.voice};if(!this.context)return;for(const [key,bus] of [['music',this.musicBus],['effects',this.effectsBus],['voice',this.voiceBus]] as const)bus?.gain.setTargetAtTime(this.levels[key],this.context.currentTime,.12);}
   recording(line:GhostLine|'archive-guard'|'archive-denial'='memory',channel:'local'|'intercom'='local'){
     this.stopRecording(channel);const ctx=this.context,buffer=line==='archive-guard'||line==='archive-denial'?this.clips[line]:this.voices[line];if(!ctx||!buffer||!this.voiceBus||ctx.state!=='running')return;
@@ -176,7 +202,7 @@ export class HorrorAudio {
   }
   footstep(surface:FootSurface,pan=0,level=1,actor:'player'|'ghost'='player'){
     const ctx=this.context;if(!ctx||!this.effectsBus||ctx.state!=='running')return;
-    if(actor==='ghost'||!this.footstepBuffer){this.proceduralFootstep(surface,pan,level);return;}
+    if(actor==='ghost'||!this.footstepBuffer){this.proceduralFootstep(surface,pan,level,actor==='ghost');return;}
     const play=(family:keyof typeof footBank,scale:number,cutoff:number)=>{
       const variants=footBank[family],previous=this.lastFoot[family],choice=Math.floor(Math.random()*(variants.length-(previous===undefined?0:1))),index=previous===undefined?choice:choice>=previous?choice+1:choice,clip=variants[index];this.lastFoot[family]=index;
       const rate=(level>.5?1.01:.96)+(Math.random()-.5)*.06;
@@ -192,12 +218,12 @@ export class HorrorAudio {
     play(surface==='wood'?'wood':'concrete',surface==='wet'?.65:1,surface==='wood'?3400:surface==='concrete'?4200:6000);
     if(surface==='metal')play('metal',.2,5800);if(surface==='wet')play('wet',.48,2400);
   }
-  private proceduralFootstep(surface:FootSurface,pan:number,level:number){
+  private proceduralFootstep(surface:FootSurface,pan:number,level:number,spatial=false){
     const ctx=this.context;if(!ctx||!this.effectsBus||ctx.state!=='running')return;
     const t=ctx.currentTime,source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),p=ctx.createStereoPanner();
     source.buffer=this.noise;filter.type='lowpass';filter.frequency.value=surface==='metal'?1700:surface==='wet'?950:surface==='wood'?280:650;filter.Q.value=surface==='metal'?4:1;
-    source.connect(filter);filter.connect(gain);gain.connect(p);p.pan.value=pan;p.connect(this.effectsBus);
-    const duration=surface==='wet'?.23:.12;gain.gain.setValueAtTime(.12*level,t);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);source.start(t,Math.random());source.stop(t+duration);source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();p.disconnect();};this.sound('step',pan,level*.7);
+    source.connect(filter);filter.connect(gain);gain.connect(p);p.pan.value=spatial?0:pan;p.connect(spatial&&this.ghostFilter?this.ghostFilter:this.effectsBus);
+    const duration=surface==='wet'?.23:.12;gain.gain.setValueAtTime(.12*level,t);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);source.start(t,Math.random());source.stop(t+duration);if(spatial)this.ghostSounds.add(source);source.onended=()=>{this.ghostSounds.delete(source);source.disconnect();filter.disconnect();gain.disconnect();p.disconnect();};this.sound('step',pan,level*.7,spatial);
   }
   setVolume(v:number){this.volume=v;if(this.master)this.master.gain.setTargetAtTime(v*.48,this.context!.currentTime,.1);}
   setTV(on:boolean){if(this.tv)this.tv.gain.value=on?.12:0;}
@@ -212,9 +238,9 @@ export class HorrorAudio {
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.voiceBus!);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }
-  sound(kind:'wet-drop'|'door-creak'|'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren'|'wiper'|'vibrate'|'brake'|'crash'|'glass',pan=0,level=1){
+  sound(kind:'wet-drop'|'door-creak'|'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren'|'wiper'|'vibrate'|'brake'|'crash'|'glass',pan=0,level=1,spatial=false){
     const ctx=this.context;if(!ctx||!this.master||ctx.state!=='running')return;
-    const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.effectsBus!);
+    const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=spatial?0:pan;g.connect(p);p.connect(spatial&&this.ghostFilter?this.ghostFilter:this.effectsBus!);
     if(kind==='wet-drop'||kind==='door-creak'){
       const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),body=ctx.createOscillator(),bodyGain=ctx.createGain(),wet=kind==='wet-drop',duration=wet?.65:1.05;
       source.buffer=this.noise;filter.type=wet?'lowpass':'bandpass';filter.frequency.setValueAtTime(wet?1800:420,t);filter.frequency.exponentialRampToValueAtTime(wet?350:105,t+duration);filter.Q.value=wet?.8:9;
@@ -241,15 +267,15 @@ export class HorrorAudio {
     }
     if(kind==='breath'||kind==='drag'||kind==='tap'){
       const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter();src.buffer=this.noise;src.connect(filter);filter.type='bandpass';filter.frequency.setValueAtTime(kind==='tap'?3200:kind==='breath'?620:1500,t);filter.frequency.exponentialRampToValueAtTime(kind==='tap'?1400:kind==='breath'?260:540,t+.65);filter.Q.value=kind==='breath'?.7:1.8;filter.connect(g);
-      const duration=kind==='tap'?3:kind==='breath'?1.45:.72;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((kind==='breath'?.22:.17)*level,t+.12);g.gain.exponentialRampToValueAtTime(.0001,t+duration);src.start(t,Math.random());src.stop(t+duration+.05);src.onended=()=>{src.disconnect();filter.disconnect();g.disconnect();p.disconnect();};return;
+      const duration=kind==='tap'?3:kind==='breath'?1.45:.72;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((kind==='breath'?.22:.17)*level,t+.12);g.gain.exponentialRampToValueAtTime(.0001,t+duration);src.start(t,Math.random());src.stop(t+duration+.05);if(spatial)this.ghostSounds.add(src);src.onended=()=>{this.ghostSounds.delete(src);src.disconnect();filter.disconnect();g.disconnect();p.disconnect();};return;
     }
     const o=ctx.createOscillator();o.connect(g);
     const settings={step:[75,.09,.21],knock:[95,.29,.5],click:[380,.055,.14],phone:[730,.2,.075],dread:[49,2.8,.23],drip:[1250,.28,.08],slam:[66,.8,.5],metal:[850,.38,.065],motor:[38,1.6,.08],chime:[880,.65,.1],alarm:[650,1.1,.13],siren:[560,4,.11]}[kind];
     o.type=kind==='metal'?'sawtooth':kind==='alarm'||kind==='click'?'triangle':'sine';o.frequency.setValueAtTime(settings[0],t);o.frequency.exponentialRampToValueAtTime(Math.max(24,settings[0]*.45),t+settings[1]);
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);if(spatial)this.ghostSounds.add(o);o.onended=()=>{this.ghostSounds.delete(o);o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.setGhostPosition(null);this.heartbeatSource?.stop();this.heartbeatSource=null;for(const node of [this.heartbeat,this.ghostFilter,this.ghostGain,this.ghostPanner])node?.disconnect();this.heartbeat=null;this.heartbeatLevel=-1;this.ghostPanner=null;this.ghostFilter=null;this.ghostGain=null;this.ghostPosition=null;this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }
 
 // A local private exchange: one-second ringback bursts and a shorter busy cadence.

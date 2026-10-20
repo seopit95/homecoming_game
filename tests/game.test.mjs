@@ -9,12 +9,12 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
-let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0,breathLevel=0;const deviceLevels={phone:0,radio:0},deviceStarts={};
+let renderedCamera,renderedScene;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0,breathLevel=0,ghostSound=null;const deviceLevels={phone:0,radio:0},deviceStarts={};
 let pendingCompiles=null,rendererDisposals=0;
 class Renderer{shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{...realLighting,roomReflections:()=>({dispose(){}})}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setArchiveRecord(){}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setGhostPosition(value){ghostSound=value;}setArchiveRecord(){}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){},arc(){},fill(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -31,6 +31,26 @@ async function officeAgencyInput(saved){
  function use(pos,at){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...at).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
  return {game,data,use,canvas,close(){game.dispose();win.localStorage=previous;}};
 }
+test('V112 the actual pursuer drives proximity and head direction, freezes on pause and falls silent at capture',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const ghost=renderedScene.getObjectByName('resident-remains');renderedCamera.position.set(0,1.65,9);ghost.position.set(4,0,4);ghost.visible=true;tick(.025);assert.ok(ghostSound&&ghostSound.distance>5);const far=ghostSound.distance;
+  ghost.position.set(2,0,7);tick(.025);assert.ok(ghostSound.distance<far);const before={...ghostSound};f.game.key('ArrowLeft',true);tick(.1);f.game.key('ArrowLeft',false);assert.notEqual(ghostSound.x,before.x);
+  f.game.pause();const frozen=ghostSound;tick(2);assert.equal(ghostSound,frozen);f.game.pause(false);
+  ghost.position.copy(renderedCamera.position);ghost.position.y=0;tick(.025);assert.equal(f.game.snapshot().story.stage,'dying');assert.equal(ghostSound,null);
+ }finally{f.close();}
+});
+test('V112 hiding retains the real nearby emitter',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(s.approach.x+10,0,s.approach.z+5);
+  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);assert.equal(f.game.snapshot().story.hidden,true);assert.ok(ghostSound&&ghostSound.distance>0,'sheltering cannot disable hearing the moving searcher');
+ }finally{f.close();}
+});
+test('V112 a dormant office cannot announce its unactivated ghost',async()=>{
+ const quiet=await officeAgencyInput();try{renderedCamera.position.set(-2.95,1.65,9.5);tick();assert.equal(ghostSound,null,'the body waiting behind the connection door is not an active sound source');}finally{quiet.close();}
+});
+test('V112 an activated office pursuit restores the moving sound source behind its door',async()=>{
+ const f=await officeAgencyInput({notes:['service_key']});try{renderedCamera.position.set(-2.95,1.65,9.5);tick();assert.ok(ghostSound&&ghostSound.distance>1&&ghostSound.distance<12);}finally{f.close();}
+});
 test('V111 real sprint grows the breath before depletion and fades through walking recovery',async()=>{
  const f=await officeAgencyInput();try{
   renderedScene.getObjectByName('resident-remains').visible=false;renderedCamera.position.set(0,1.65,5);event(f.canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:renderedCamera.rotation.x/.0021});event(doc,'pointerup',{});

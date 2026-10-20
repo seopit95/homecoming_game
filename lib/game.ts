@@ -9,6 +9,7 @@ import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength,
 export {prepareVisuals} from './materials.ts';
 import {clearPrintedSources} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
+import {ghostSoundPosition} from './ghost-sound.ts';
 import {shelterSearchPlan} from './shelter-search.ts';
 import {createCaptureScene} from './capture-scene.ts';
 import {createPlayerGait} from './player-gait.ts';
@@ -147,6 +148,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(value){audio.pause();if(document.pointerLockElement===canvas)document.exitPointerLock();}else{audio.resume();lock();}emit();
   }
   function loadArea(next:Area){
+    audio.setGhostPosition(null);
     gait.reset();
     shelter?.setOpen(0);shelter=null;shelterMotion=null;hideSearchAt=-1;hidePassedAt=-1;
     radioLure.reset();radioInterest=null;radioUntil=0;
@@ -561,7 +563,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(!hideInvestigate&&distance>7){patrolEnemy(speed,dt);return;}hideInvestigate=true;
     if(hideSearchAt<0){
       if(distance>.65)followEnemy(shelter.approach,Math.max(2.1,speed),dt);
-      else{hideSearchAt=elapsed;enemyPath=[];repathAt=0;audio.sound('drag',0,.4);ghostVoice(shelterSeen?'found':'where',true);}
+      else{hideSearchAt=elapsed;enemyPath=[];repathAt=0;audio.sound('drag',0,.4,true);ghostVoice(shelterSeen?'found':'where',true);}
     }else if(elapsed-hideSearchAt<(shelterSeen?1.1:searchPlan.wait)){
       const turn=T.MathUtils.euclideanModulo(Math.atan2(shelter.eye.x-p.x,shelter.eye.z-p.z)-world.figure.rotation.y+Math.PI,Math.PI*2)-Math.PI;
       world.figure.rotation.y+=T.MathUtils.clamp(turn,-dt*1.5,dt*1.5);
@@ -660,14 +662,17 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       world.figure.visible=true;hunt(parkingAlarmActive(story)?2.7:2.2,dt,parkingAlarmActive(story)?layout.parking.alarmApproach:undefined);
     }
     if(contact())return;
-    if(world.figure.visible&&story.stage!=='dying'){
+    const audible=world.figure.visible&&story.stage!=='dying'&&(area!=='office'||arrivalPursuit);
+    if(audible){
       const p=world.figure.position,distance=Math.hypot(p.x-camera.position.x,p.z-camera.position.z),travel=Math.hypot(p.x-lastGhostPosition.x,p.z-lastGhostPosition.z);
       const turn=world.figure.rotation.y-heading,stroke=Math.min(travel,.3)+Math.abs(Math.atan2(Math.sin(turn),Math.cos(turn)))*.25;
       const before=Math.floor(walkPhase/Math.PI);walkPhase+=stroke*Math.PI*2/stride;ghostMotion=T.MathUtils.clamp(stroke/Math.max(dt,.001)/2.5,0,1);lastGhostPosition.copy(p);
-      const pan=T.MathUtils.clamp(((p.x-camera.position.x)*Math.cos(yaw)-(p.z-camera.position.z)*Math.sin(yaw))/Math.max(1,distance),-1,1),level=Math.min(1,4/Math.max(1,distance));
-      if(Math.floor(walkPhase/Math.PI)!==before){audio.footstep(crawling()?'wet':'wood',pan,level*.85,'ghost');if(before%2===0)audio.sound('drag',pan,level*.6);}
-      if(distance<8&&elapsed-lastBreath>4.1){audio.sound('breath',pan,level);lastBreath=elapsed;}
-    }
+      const source={x:p.x,y:p.y+(crawling()?.55:1.1),z:p.z};
+      audio.setGhostPosition(ghostSoundPosition(camera.position,source,yaw,pitch,!hasLineOfSight(camera.position,source,world.solids)));
+      // The moving HRTF emitter handles attenuation once, including while hidden.
+      if(Math.floor(walkPhase/Math.PI)!==before){audio.footstep(crawling()?'wet':'wood',0,.85,'ghost');if(before%2===0)audio.sound('drag',0,.6,true);}
+      if(distance<8&&elapsed-lastBreath>4.1){audio.sound('breath',0,1,true);lastBreath=elapsed;}
+    }else audio.setGhostPosition(null);
   }
   function scripted(dt:number){
     if(recordingAt>=0){
@@ -998,6 +1003,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const recordDx=9-camera.position.x,recordDz=-20-camera.position.z,recordDistance=Math.hypot(recordDx,recordDz);
     audio.setArchiveRecord(archiveFrame??null,recordDistance<14?Math.min(1,2.5/Math.max(1,recordDistance)):0,T.MathUtils.clamp((recordDx*Math.cos(yaw)-recordDz*Math.sin(yaw))/Math.max(1,recordDistance),-1,1));
     audio.setExertion(started&&!isCinematic(story.stage)&&!['ended','dying'].includes(story.stage)?breathLoad:0);
+    if(!started||isCinematic(story.stage)||['ended','dying'].includes(story.stage)||!world.figure.visible)audio.setGhostPosition(null);
     audio.setHaunt(started&&!isCinematic(story.stage)&&story.stage!=='ended'&&area!=='aftermath'?(tracking?Math.min(.9,.2+threat*.7):story.stage==='hide'?.65:world.figure.visible?.1+threat*.22:0):0);
     const chasing=started&&!concealed()&&world.figure.visible&&chaseStages.includes(story.stage)&&(tracking||story.stage==='hide'||area==='landing');
     audio.setChase(chasing?T.MathUtils.clamp(.5+threat*.6+(surging?.12:0),0,1):0);
