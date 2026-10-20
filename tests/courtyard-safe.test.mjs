@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import * as T from 'three';import {buildWorld,disposeWorld,hasLineOfSight} from '../lib/world.ts';import {initialStory,transition} from '../lib/story.ts';import {readProgress} from '../lib/preferences.ts';
 globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}})})};
-test('V69 code opens the safe but a physical key pickup is required before the exit',()=>{
- let s={...initialStory(),stage:'court_code',code:'2617'};s=transition(s,'court_confirm');assert.equal(s.stage,'court_safe_open');assert.equal(transition(s,'court_exit'),s);s=transition(s,'court_key');assert.equal(s.stage,'court_unlocked');assert.ok(s.notes.includes('court_key'));assert.equal(transition(s,'court_exit').stage,'court_departure');
+test('V116 a handover key opens the safe but a physical key pickup is required before the exit',()=>{
+ let s={...initialStory(),stage:'court_search',notes:['court_log']};s=transition(s,'court_confirm');assert.equal(s.stage,'court_safe_open');assert.equal(transition(s,'court_exit'),s);s=transition(s,'court_key');assert.equal(s.stage,'court_unlocked');assert.ok(s.notes.includes('court_key'));assert.equal(transition(s,'court_exit').stage,'court_departure');
 });
 test('V69 an open safe save remains recoverable and legacy unlocked saves retain their key',()=>{
  const save=stage=>readProgress({getItem:()=>JSON.stringify({version:2,stage,notes:['court_confirm'],circuit:[],elapsed:950,code:'2617'})});assert.equal(save('court_safe_open')?.stage,'court_safe_open');assert.equal(save('court_unlocked')?.stage,'court_unlocked');

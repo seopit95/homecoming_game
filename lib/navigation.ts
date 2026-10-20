@@ -3,6 +3,14 @@ import {segmentHitsSolid} from './collision.ts';
 export type Point={x:number;z:number};
 export const pursuerRadius=.43;
 
+// A turning body advances along its own heading. Sweep the complete stroke,
+// including thin/moving doors; separate axis slides would detach the gait.
+export function movePursuer(p:Point,heading:number,distance:number,solids:Solid[],bounds:Bounds){
+  const next={x:p.x+Math.sin(heading)*distance,z:p.z+Math.cos(heading)*distance};
+  if(!clearPath(p,next,solids,bounds,pursuerRadius))return false;
+  p.x=next.x;p.z=next.z;return true;
+}
+
 export function findPursuitPath(start:Point,goal:Point,solids:Solid[],bounds:Bounds){
   let approach=goal;
   if(!canStandAt(goal.x,goal.z,solids,pursuerRadius,bounds)){

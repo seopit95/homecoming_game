@@ -5,7 +5,7 @@ export const archiveCamera={position:[12.95,2.54,-23.65],lookAt:[9,1.1,-19]} as 
 export const archiveClips={
  road:{duration:6,markFrom:3.8,markUntil:4.3,title:'A · 정문 도로 / 03:17',hint:'보행 신호와 제동등이 켜지는 시점을 함께 살피자. 원본만 정지하거나 ±1초씩 대조할 수 있다.',question:'충돌 직전, 화면에서 확인한 사실은?',choices:['보행자가 적색 신호에 진입했다','차가 녹색 보행 신호에 진입했다'],answer:1,retry:'보행 신호와 제동등이 함께 보이는 구간을 다시 보자.',finding:'신호는 녹색이었다. 브레이크를 밟은 건 사람을 치기 직전이다. 갑자기 뛰어든 것이 아니었다.'},
  call:{duration:12,markFrom:9.5,markUntil:10.5,title:'B · 양방향 통화 / 03:20',hint:'양쪽 목소리와 통화 종료음을 대조하자. 대답이 끝난 뒤에도 원본을 되돌려 확인할 수 있다.',question:'이 통화를 먼저 끊은 쪽은?',choices:['수신자 · 등록 휴대전화','발신자 · 정문 비상벨'],answer:0,retry:'「잘못 거셨어요」라는 대답 뒤의 종료 표시를 다시 확인하자.',finding:'「잘못 거셨어요.」 내 대답 뒤 수신자 쪽에서 끊었다. 돌아갈 수 있었는데, 내가 끊었다.'},
- gate:{duration:9,markFrom:5.8,markUntil:7.5,title:'C · 입차 원본 / 누락된 9초',hint:'창문을 두드리는 소리와 차 안에서 일어나는 일을 함께 확인하자.',question:'소리와 영상이 함께 확인한 행동은?',choices:['운전자가 바로 내려 확인했다','운전석에 남아 문을 잠갔다'],answer:1,retry:'잠금음이 날 때 운전석 문과 창문을 다시 보자.',finding:'창문에 손이 닿았다. 문을 열어 달라는 목소리를 듣고도 나는 잠금 버튼을 눌렀다.'},
+ gate:{duration:9,markFrom:5.8,markUntil:7.5,title:'C · 입차 원본 / 누락된 9초',hint:'창밖의 사람과 목소리, 차 안의 잠금음을 함께 확인하자.',question:'03:26, 도움을 청하는 목소리 뒤의 행동은?',choices:['문을 열고 도움을 청한 사람을 확인했다','목소리를 듣고도 운전석에서 문을 잠갔다'],answer:1,retry:'잠금음이 날 때 운전석 문과 창문을 다시 보자.',finding:'충돌 아홉 분 뒤에도 한서연은 살아 있었다. 「문 좀 열어 주세요.」 그 목소리를 듣고도 나는 문을 잠갔다. 삭제해 달라고 했던 것은 이 아홉 초였다.'},
 } as const;
 export type ArchiveSource=keyof typeof archiveClips;
 export type ArchiveFrame={source:ArchiveSource|null;time:number;playing:boolean;question?:boolean};

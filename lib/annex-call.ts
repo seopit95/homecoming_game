@@ -1,8 +1,8 @@
 import type {Stage} from './story.ts';
 
-// Old annex_search saves already have restored power. Evidence is optional;
+// The intercom has its own supply, including old fuse/restore checkpoints. Evidence is optional;
 // knowing a number is enough to try it, including after opening the exit.
-export function annexCanCall(stage:Stage){return ['annex_search','annex_unlock','annex_exit_ready','annex_departure'].includes(stage);}
+export function annexCanCall(stage:Stage){return ['annex_fuse','annex_restore','annex_search','annex_unlock','annex_exit_ready','annex_departure'].includes(stage);}
 const lines={
  home:{kind:'home',answerAt:2.8,duration:4.5,clip:'come',action:'annex_line_home'},
  victim:{kind:'victim',answerAt:2.8,duration:8,clip:'cry',action:'annex_line_victim'},

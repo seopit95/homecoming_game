@@ -47,11 +47,12 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
   const brake=(car.children as T.Mesh[]).map(mesh=>mesh.material as T.MeshPhysicalMaterial).find(material=>material.name==='sedan-tail-lamps')!;
   brake.emissive.set('#d53522');brake.emissiveIntensity=0;
   const driver=createPedestrian(garage,'driver');driver.root.name='cctv-driver';driver.root.visible=false;
+  const survivor=createPedestrian(garage);survivor.root.name='cctv-surviving-victim';survivor.root.visible=false;
   const feet=[driver.root.getObjectByName('memory-shoe')!,driver.root.getObjectByName('memory-other-shoe')!],footBox=new T.Box3();
   const victim=createPedestrian(road);victim.root.position.set(2.25,-.65,1);victim.root.rotation.y=Math.PI/2;victim.pose(0,2);
   victim.root.updateMatrixWorld(true);const floor=new T.Box3().setFromObject(victim.root,true);victim.root.position.y-=floor.min.y-.012;
   const hand=extremity('hand',1,new T.MeshStandardMaterial({color:'#c3c6b7',roughness:.76}),false);hand.name='cctv-passenger-hand';hand.rotation.set(0,Math.PI/2,Math.PI);hand.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),Math.atan(.149/.48)));hand.position.set(.80,1.04,.20);hand.updateMatrix();hand.geometry.applyMatrix4(hand.matrix);
-  // Move the intact hand behind the sloped pane; do not flatten anatomical surfaces.
+  // The earlier edited copy retains only a hand behind the passenger pane.
   const palm=hand.geometry.getAttribute('position');let protrusion=-Infinity;for(let i=0;i<palm.count;i++)protrusion=Math.max(protrusion,palm.getX(i)-(.814-(palm.getY(i)-.923)*(.149/.48)));
   hand.geometry.translate(-protrusion-.008,0,0);hand.position.set(0,0,0);hand.rotation.set(0,0,0);car.add(hand);
   const image=new T.Mesh(crtScreenGeometry(.72,.54),new T.MeshBasicMaterial({map:target.texture,color:'#a2b3a8'}));root.add(image);
@@ -71,12 +72,14 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     const frame=Math.floor(clock*10),next=`${mode}:${active?frame:text}:${preview?review!.playing:''}:${review?.question??false}`;if(next===lastKey)return;lastKey=next;pending=true;
     road.visible=!office&&(mode==='road'||mode==='idle');garage.visible=mode==='gate'||mode==='office';car.visible=active&&mode!=='call'&&mode!=='live';
     intactCar.visible=false;
-    hand.visible=mode==='office'?clock>=3:mode==='gate'&&clock>=14;
+    hand.visible=mode==='office'&&clock>=3;
     driver.root.visible=mode==='office'&&clock>=3;
+    survivor.root.visible=mode==='gate'&&clock>=14;
+    if(survivor.root.visible){survivor.root.position.set(1.15,0,-.13);survivor.root.rotation.y=-Math.PI/2;survivor.pose(0,null,0,{crouched:true,pitch:-.18,leanX:.08+Math.sin(clock*2)*.012});survivor.root.updateMatrixWorld(true);survivor.root.position.y-=new T.Box3().setFromObject(survivor.root,true).min.y;}
     if(mode==='gate'||mode==='office'){
       car.rotation.y=0;
       car.position.set(0,0,office?-2+1.6*T.MathUtils.smoothstep(clock,0,2):-.4);
-      if(office){camera.position.set(4.4,2.42,5.4);camera.lookAt(0,.9,.7);}else{camera.position.set(3.2,2,2.1);camera.lookAt(.65,1.05,-.2);}brake.emissiveIntensity=.8;
+      if(office){camera.position.set(4.4,2.42,5.4);camera.lookAt(0,.9,.7);}else{camera.position.set(3.2,2,2.1);camera.lookAt(.95,.88,-.1);}brake.emissiveIntensity=.8;
       if(driver.root.visible){
         const walking=Math.min(4,clock-3);driver.root.position.set(-1.27,0,.7+walking*.4);driver.root.rotation.y=0;driver.pose(walking,null,.4);driver.root.updateMatrixWorld(true);
         let bottom=Infinity;for(const foot of feet)bottom=Math.min(bottom,footBox.setFromObject(foot).min.y);driver.root.position.y-=bottom;
@@ -90,7 +93,7 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
       else{victim.root.position.set(2.15+.14*wrap+1.05*slide,-.12*wrap-.6*slide,-1.85-1.4*wrap-.55*slide);victim.root.rotation.y=Math.PI/2-.18*slide;victim.pose(4.2,hit);victim.root.updateMatrixWorld(true);victim.root.position.y+=Math.max(0,.002-new T.Box3().setFromObject(victim.root,true).min.y);}
       camera.position.set(4.4,3.8,6.8);camera.lookAt(0,.8,-.6);
     }
-    const fov=mode==='road'?56:mode==='gate'?40:49;if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix();}
+    const fov=mode==='road'?56:mode==='gate'?48:49;if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix();}
     ctx.globalCompositeOperation='copy';ctx.fillStyle=image.visible?'rgba(0,0,0,0)':'#0b1512';ctx.fillRect(0,0,640,480);ctx.globalCompositeOperation='source-over';
     ctx.fillStyle='rgba(4,14,10,.72)';ctx.fillRect(0,0,640,48);ctx.fillRect(0,398,640,82);
     ctx.fillStyle='#c0d2bd';ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='21px monospace';
@@ -103,8 +106,8 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     }
     if(mode==='office'&&clock>=3&&clock<3.4){ctx.fillStyle='rgba(95,113,103,.4)';for(let y=75;y<380;y+=26)ctx.fillRect(0,y,640,9);}
     ctx.fillStyle='#c0d2bd';ctx.font='24px sans-serif';ctx.textAlign='center';
-    const caption=preview?(mode==='road'?(review!.time<3.8?'녹색 보행 신호 / CAM-01':review!.time<4.2?'제동등 점등 / 충돌 직전':'충돌 후 / 제동 유지'):mode==='call'?(review!.time<8?'「현장에 사람이 아직 있어요. 돌아와 주세요.」':review!.time<9.5?'「잘못 거셨어요.」':'수신자 통화 종료'):review!.time<5.8?'「문 좀 열어 주세요.」':'잠금음 / 운전석 미하차'):
-     mode==='idle'||mode==='road'?text:mode==='office'?(clock<3?'2803 등록 차량 · 입차':clock<7?'03:26:03–11 / 기록 9초 누락':'귀가자 2명 / 2803호'):mode==='call'?'「잘못 거셨어요.」':mode==='gate'?`복원 구간 ${Math.min(9,Math.floor(clock-12)+1)} / 9초 · 동시 녹음` :clock<27?'현재 영상 · 기록 작성 중':'네 뒤에 있어';
+    const caption=preview?(mode==='road'?(review!.time<3.8?'녹색 보행 신호 / CAM-01':review!.time<4.2?'제동등 점등 / 충돌 직전':'충돌 후 / 제동 유지'):mode==='call'?(review!.time<8?'「현장에 사람이 아직 있어요. 돌아와 주세요.」':review!.time<9.5?'「잘못 거셨어요.」':'수신자 통화 종료'):review!.time<5.8?'03:26 · 「문 좀 열어 주세요.」':'잠금음 / 운전석 미하차'):
+     mode==='idle'||mode==='road'?text:mode==='office'?(clock<3?'2803 등록 차량 · 입차':clock<7?'03:26:03–11 / 기록 9초 누락':'귀가자 2명 / 2803호'):mode==='call'?'「잘못 거셨어요.」':mode==='gate'?clock<17.8?'03:26 · 「문 좀 열어 주세요.」':'잠금음 / 운전석 미하차' :clock<27?'현재 영상 · 기록 작성 중':'네 뒤에 있어';
     const lines=caption.split('\n');lines.forEach((line,i)=>ctx.fillText(line,320,(mode==='idle'?220:425)+i*29));
     if(preview){ctx.textAlign='right';ctx.font='17px monospace';ctx.fillText(`${review!.playing?'▶':'Ⅱ'} ${review!.time.toFixed(1)}s`,621,70);}
     if(preview&&review?.question&&review.source){
@@ -122,10 +125,10 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     finally{if(observed)observed.resources.add(observed.root);renderer.setRenderTarget(previous);renderer.shadowMap.autoUpdate=shadows;root.visible=visible;}
   }
   const feed:Surveillance={update,render,async prepare(renderer:T.WebGLRenderer,liveScene:T.Scene){
-    const a=road.visible,b=garage.visible,c=car.visible,h=hand.visible,d=driver.root.visible,intact=intactCar.visible,saved=mode;
-    road.visible=garage.visible=car.visible=hand.visible=driver.root.visible=intactCar.visible=true;recording.environment=liveScene.environment;
+    const survivorVisible=survivor.root.visible,a=road.visible,b=garage.visible,c=car.visible,h=hand.visible,d=driver.root.visible,intact=intactCar.visible,saved=mode;
+    road.visible=garage.visible=car.visible=hand.visible=driver.root.visible=intactCar.visible=survivor.root.visible=true;recording.environment=liveScene.environment;
     try{await renderer.compileAsync?.(recording,camera);render(renderer,liveScene,true);if(observed){mode='live';liveScene.add(observed.root);await renderer.compileAsync?.(liveScene,liveCamera);render(renderer,liveScene,true);}}
-    finally{if(observed)observed.resources.add(observed.root);road.visible=a;garage.visible=b;car.visible=c;hand.visible=h;driver.root.visible=d;intactCar.visible=intact;mode=saved;pending=true;}
+    finally{if(observed)observed.resources.add(observed.root);road.visible=a;garage.visible=b;car.visible=c;hand.visible=h;driver.root.visible=d;survivor.root.visible=survivorVisible;intactCar.visible=intact;mode=saved;pending=true;}
   },dispose(){if(disposed)return;disposed=true;target.dispose();disposeWorld(recording);}};
   root.userData.surveillance=feed;update(kind==='office'?'office_record':'archive_reveal',0,kind==='office'?'신호 없음':'회수한 원본부터 검토하세요\n장면 표시 → 4·5 사실 대조');return root;
 }

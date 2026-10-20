@@ -184,16 +184,17 @@ export function buildCourtyard(root:T.Group){
   for(const dx of [-.24,0,.24])roundPipe(root,[x+1.9+dx,1.52,z-2.73],[x+1.9+dx,1.52,z-2.65],.012,steel);
   box(x-1.6,1.5,z-2.86,1.35,.94,.1,wood);
   box(x-1.6,1.5,z-2.802,1.21,.8,.015,white);
-  const board=sign(x<0?'정기점검 완료: 26일\n열쇠함: 점검일 + 당직 내선\n03:26 / 2803호 입차':'야간 근무표\n순찰 · 열쇠 반납',x-1.6,1.5,z-2.794,1.15,.72,0,'#020202');
+  const board=sign(x<0?'인계: 원본 폐기 요청 접수 거절\n동측 보관함 열쇠: 이 판 뒤\n03:26 / 2803호 입차':'야간 근무표\n순찰 · 열쇠 반납',x-1.6,1.5,z-2.794,1.15,.72,0,'#020202');
   box(x,2.38,z,.8,.08,.22,white);
   return board;
  }
  const log=booth(-25,30,'서측 경비초소');booth(25,30,'동측 열쇠 보관 초소');
- target('court_log','인계판의 근무·입차 기록',log,[-26.6,1.5,27.206],[-26.6,28.4]);
+ target('court_log','인계서와 보관함 열쇠 챙기기',log,[-26.6,1.5,27.206],[-26.6,28.4]);
+ const handoverKey=new T.Group();handoverKey.name='courtyard-handover-key';handoverKey.position.set(-26.6,1.19,27.23);root.add(handoverKey);
+ const handoverRing=new T.Mesh(new T.TorusGeometry(.032,.005,8,20),steel);handoverKey.add(handoverRing);for(const [x,y,w,h] of [[0,-.07,.012,.09],[.02,-.10,.04,.012]]){const part=new T.Mesh(new T.BoxGeometry(w,h,.012),steel);part.position.set(x,y,0);handoverKey.add(part);}
  const logMaterial=log.material as T.MeshStandardMaterial;log.material=new T.MeshLambertMaterial({map:logMaterial.map});logMaterial.dispose();
  const courtSafe=createCourtyardSafe();root.add(courtSafe.root);solids.push(courtSafe.block);root.updateMatrixWorld(true);
- for(let i=0;i<4;i++){const wheel=courtSafe.wheels[i],p=wheel.getWorldPosition(new T.Vector3());p.z+=.052;target(`court_digit_${i}` as Action,`${i+1}번째 숫자 올리기`,wheel,[p.x,p.y,p.z],[25,31.65]);targets.at(-1)!.precise=true;}
- const handle=courtSafe.handle.getWorldPosition(new T.Vector3());target('court_confirm','번호 확인 · 금고 손잡이 돌리기',courtSafe.handle,[handle.x,handle.y,handle.z+.02],[25,31.65]);
+ const handle=courtSafe.handle.getWorldPosition(new T.Vector3());target('court_confirm','인계 열쇠로 보관함 열기',courtSafe.handle,[handle.x,handle.y,handle.z+.02],[25,31.65]);
  const keyPoint=courtSafe.key.getWorldPosition(new T.Vector3());target('court_key','금고 안 지하문 열쇠 집기',courtSafe.key,[keyPoint.x,keyPoint.y,keyPoint.z],[25,31.65]);
  // Weather-protected hands-free emergency station, mounted to its steel backing.
  box(25,1.24,-32,1.5,2.48,.14,steel,true);box(25,2.52,-31.3,1.7,.12,1.6,steel);
@@ -252,7 +253,7 @@ export function buildCourtyard(root:T.Group){
  function updateStory(stage:Stage,time:number,reduced=false,story?:Story,occupants:Occupant[]=[]){
   if(stage==='court_departure'&&opened<0)opened=time;if(opened>=0)setDoorAngle(hinge,block,1.5*T.MathUtils.smoothstep(time-opened,0,.9),.7,0,occupants);
   swing.rotation.x=reduced?0:Math.sin(time*.7)*.055;
-  if(story)courtSafe.update(stage,time,story,occupants);
+  if(story){courtSafe.update(stage,time,story,occupants);handoverKey.visible=!story.notes.includes('court_log');}
  }
- return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:31.8,z:58},spawn:new T.Vector3(0,1.65,44.5),heading:0,heightAt:(x:number,z:number)=>z<=-51&&x>doorX-1.2&&x<doorX+4.3?-2.8:Math.abs(x-doorX)<1.4&&z<doorZ? -Math.min(2.8,Math.max(0,(-z+doorZ-.2)/.34)*.14):0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,courtPhone,courtSafe,updateStory,reset(){opened=-1;courtSafe.reset();courtPhone.setState('idle');}};
+ return {solids,targets,lamps,figure,shoes:new T.Group(),phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds:{x:31.8,z:58},spawn:new T.Vector3(0,1.65,44.5),heading:0,heightAt:(x:number,z:number)=>z<=-51&&x>doorX-1.2&&x<doorX+4.3?-2.8:Math.abs(x-doorX)<1.4&&z<doorZ? -Math.min(2.8,Math.max(0,(-z+doorZ-.2)/.34)*.14):0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,courtPhone,courtSafe,updateStory,reset(){opened=-1;handoverKey.visible=true;courtSafe.reset();courtPhone.setState('idle');}};
 }

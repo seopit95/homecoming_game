@@ -15,7 +15,7 @@ export const opening:Partial<Record<Stage,{duration:number;action:Action;label:s
   impact:{duration:23.5,action:'fled',label:'03:17 · 백로아파트 앞 횡단보도',text:'',cues:[
     {at:2.2,text:'…사람이었다.'},
     {at:5.9,text:'차에서 내렸다.\n비가 얼굴에 쏟아졌다.'},
-    {at:10.5,text:'쓰러진 몸 옆에 가방이 떨어져 있었다.\n움직임이 없었다.'},
+    {at:10.5,text:'쓰러진 몸 옆에 가방이 떨어져 있었다.\n움직임이 없었다. 즉사했다고 생각했다.'},
     {at:12.7,text:'신고해야 했다.'},
     {at:15.2,text:'그런데 나는 차로 돌아갔다.'},
     {at:22.7,text:'문을 잠갔다.'},
@@ -35,10 +35,12 @@ export function hasFlashlight(s:Pick<Story,'stage'>){return !['drive','impact','
 export const carDepartureDuration=24;
 export const finale:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={
   car_departure:{duration:carDepartureDuration,action:'car_departed',label:'B1 · 운전석',text:'문을 연다.',cues:[{at:5.5,text:'문이 잠겼다.'},{at:6,text:'시동이 걸렸다. 차량 셔터가 올라간다.'},{at:10,text:'경사로를 따라 밖으로.'},{at:20,text:''}]},
-  car_escape:{duration:10,action:'passenger',label:'제 11장 · 동승자',text:'경사로 끝. 도로가 보인다.',cues:[{at:3,text:'경사로가 뒤로 멀어졌다.'},{at:6,text:'이제… 빠져나왔다.'},{at:8.5,text:''}]},
+  car_escape:{duration:10,action:'passenger',label:'제 11장 · 동승자',text:'경사로 끝. 도로가 보인다.',cues:[{at:3,text:'경사로가 뒤로 멀어졌다.'},{at:6,text:'이제… 빠져나왔다.'},{at:6.4,text:'딸깍. 처음 전화에서 들었던 잠금음.\n수화기 속 빗소리와 와이퍼… 이 차 안의 소리였다.'},{at:8.5,text:'처음부터 나를 밖으로 부른 것이 아니었다.\n다시 이 자리에 앉히고 있었다.'}]},
   car_voice:{duration:5,action:'wreck',label:'03:17 · 조수석',text:'「이번에도… 혼자 가려고?」',cues:[{at:4.1,text:''}]},
   car_crash:{duration:5.5,action:'fatal',label:'03:17',text:'',cues:[{at:3,text:'브레이크를 밟기에는 늦었다.'}]},
 };
+// Reuse the same bank clip at the first phone and after the final escape.
+export const phoneCallback={clip:'archive-lock',finalStage:'car_escape',at:6.4} as const;
 export const finaleTiming={turn:1.2,reveal:3.2,impact:.55} as const;
 export function isFinale(stage:Stage){return finale[stage]!==undefined;}
 export function isCinematic(stage:Stage){return isMemory(stage)||isFinale(stage);}
@@ -89,6 +91,7 @@ export const parkingBoardDuration=.9;
 export function parkingCanBoard(stage:Stage){return stage==='parking_alarm'||stage==='parking_run';}
 export function parkingAlarmActive(s:Pick<Story,'stage'|'notes'>){return s.notes.includes('alarm')||s.stage==='parking_run';}
 export function retryStage(stage:Stage):Stage{
+  if(['annex_fuse','annex_restore','annex_search'].includes(stage))return 'annex_unlock';
   if(stage==='car_departure')return stage;
   if(stage==='parking_alarm')return stage;
   if(stage==='archive_playback')return 'archive_reveal';
@@ -108,6 +111,8 @@ export function checkpoint(state?:Story):Story{
   if(state?.stage==='parking_run')stage='parking_alarm';
   if(stage==='parking_gate'&&state?.notes.includes('car_search'))stage=parkingAfterKey(state);
   else if(stage==='parking_gate'&&state?.notes.includes('car_passenger'))stage='parking_key';
+  if(['court_search','court_code','court_safe_open'].includes(stage)&&state?.notes.includes('court_key'))stage='court_unlocked';
+  else if(['court_search','court_code'].includes(stage)&&state?.notes.includes('court_confirm'))stage='court_safe_open';
   if(stage==='resident_entry'&&state?.notes.includes('resident_key'))stage='resident_return';
   if(stage==='office_record'&&state)stage=officePhase({...state,stage});
   return {...initialStory(),stage,resume:stage,notes:[...(state?.notes||[])],circuit:isExpansion(stage)||stage.startsWith('office')?[...(state?.circuit||[])]:[],officeSupply:state?.officeSupply??false,code:state?.code??'0000'};
@@ -241,8 +246,8 @@ export const journal:Partial<Record<Action,{title:string;text:string}>>={
   belongings:{title:'1704호 · 젖지 않은 신발 한 짝',text:'현관에는 검은 신발 한 짝과 접힌 우산이 있다. 찻잔은 식었고, 자동응답기의 녹음 표시만 깜박인다.\n\n신발장 위의 관리비 봉투. 1704호 / 한서연. 매일 이 문으로 돌아오던 사람이었다.\n\n벽에는 쪽지가 붙어 있다. 「야간 당직 한서연 / 내선 17. 외벽 공사 중 1703호를 임시 관리실로 사용합니다. 퇴근 후 연결문을 잠가 주세요. 여벌 열쇠 위치는 서재의 당직 수첩에 적어 두었습니다.」'},
   portrait:{title:'1704호 · 냉장고의 약속',text:'비가 갠 강변에서 두 사람이 등을 보인 사진. 냉장고 문에 사진과 손으로 쓴 쪽지가 나란히 붙어 있다. 「다음에는 맑은 날에. 내일 오후 두 시.」\n\n누군가와 만나기로 한 약속. 사흘 전 그 사람에게는, 돌아와서 기다릴 내일이 있었다.'},
   answerphone:{title:'1704호 · 마지막 음성메시지',text:'03:16. 「비가 너무 오네. 거의 다 왔어. 문 열어두지 말고 먼저 자. 내일 전화할게.」\n\n메시지는 끝났지만 테이프는 계속 돌아간다. 횡단보도 신호음. 타이어가 미끄러지는 소리.\n\n그 소리를 듣자 그날이 떠올랐다. 차에서 내려 쓰러진 사람을 봤다. 신고해야 한다는 걸 알면서도 다시 차로 돌아갔다. 문을 잠그고, 그 사람을 도로에 남겨 두었다.'},
-  wake:{title:'사흘 전 · 내가 외면한 밤',text:'술을 마신 채 차를 몰았다. 백로아파트 앞 횡단보도에서 여성을 치었다. 새벽 03:17.\n\n차에서 내려 쓰러진 여자를 확인했다. 신고해야 했다. 그런데 나는 다시 차에 탔다. 문을 잠그고 현장을 떠나 2803호로 돌아왔다. 아무에게도 말하지 않았다.\n\n사흘이 지났다. 매일 그 시각에 눈이 떠진다. 오늘은 전화벨에 잠이 깼다. 스위치를 눌러도 불이 들어오지 않는다.'},
-  phone:{title:'28층 · 정전 뒤의 전화',text:'차단기는 올라갔지만 불은 돌아오지 않았다. 전화기에서 빗소리와 와이퍼 소리가 들렸다.\n「문 잠가도… 소용없어.」\n\n현관에는 젖은 검은 신발이 놓여 있었다. 그날 차 앞에 떨어졌던 신발. 분명 도로에 두고 왔다.'},
+  wake:{title:'사흘 전 · 내가 외면한 밤',text:'술을 마신 채 차를 몰았다. 백로아파트 앞 횡단보도에서 여성을 치었다. 새벽 03:17.\n\n차에서 내려 쓰러진 여자를 확인했다. 신고해야 했다. 그런데 나는 다시 차에 탔다. 문을 잠그고 현장을 떠나 2803호로 돌아왔다. 그 자리에서 죽었다고 생각했다. 숨을 확인하지도 않았으면서. 아무에게도 말하지 않았다.\n\n사흘이 지났다. 매일 그 시각에 눈이 떠진다. 오늘은 전화벨에 잠이 깼다. 스위치를 눌러도 불이 들어오지 않는다.'},
+  phone:{title:'28층 · 정전 뒤의 전화',text:'차단기는 올라갔지만 불은 돌아오지 않았다. 전화기에서 빗소리와 와이퍼 소리, 문이 잠기는 소리가 들렸다.\n「문 잠가도… 소용없어.」\n\n현관에는 젖은 검은 신발이 놓여 있었다. 그날 차 앞에 떨어졌던 신발. 분명 도로에 두고 왔다.'},
   stair_note:{title:'23층 · 지워지지 않는 시각',text:'같은 층으로 돌아왔다면 계단 표지 아래를 보세요.\n23 위에 덧칠된 숫자가 벗겨진다. 그 아래에는 17.\n방화문 너머에서 사고 현장의 전화벨이 들린다.\n1704호 문 옆 명패에는 한서연이라고 적혀 있다.\n\n종이 아래쪽에 내 차 번호와 03:17이 반복해서 적혀 있다.\n「그때 멈췄어야지.」'},
   record:{title:'17층 · 사흘 전의 사고 기록',text:'백로아파트 임시 관리실 / 사고 다음 날 06:40\n인계 작성: 박정호. 전임 야간 당직: 한서연.\n17층 외벽 공사로 옮겨 쓰던 1703호는 이 인계를 끝으로 폐쇄됐다.\n03:17. 건물 앞 횡단보도에서 보행자 사망 사고. 검은 승용차가 현장을 이탈.\n03:26. 파손 차량 입차. 관리실 열람 영상에서 정차 직후 아홉 초가 누락됨. 다음 장면에는 문이 이미 닫혀 있고 운전자가 혼자 걸어감.\n\n아홉 초. 숫자를 보는 순간 손끝이 차가워졌다. 그 사이에 내가 무엇을 했는지 떠올리고 싶지 않다.\n\n시설 인계: 「관리용 승강기 열쇠는 CCTV 오른쪽 책상에 보관. 전원이 끊기면 서고의 예비 퓨즈를 사용할 것. 비상전원은 6A까지만 공급한다. 구역 조명 4A / 기록장치 2A / 승강기 제어 4A. 서고의 퓨즈를 배전반 빈 홀더에 설치하고 필요한 부하만 선택해 전원을 투입할 것. 탈출에는 승강기 제어 전원이 필요하다. CCTV를 열람한다면 입차 시각을 선택할 것. 누락 구간은 지하 기록보관실 원본과 대조 필요.」'},
   monitor:{title:'CCTV · 빠진 아홉 초',text:'사흘 전 03:26. 앞부분이 찌그러진 내 차가 멈춘다. 시간이 아홉 초를 건너뛴다. 다음 장면에서 차 문은 이미 닫혀 있고, 나는 혼자 걸어간다.\n\n조수석 유리에 흰 소매 같은 것이 비친다. 화면이 깨져 얼굴은 보이지 않는다. 아래쪽 숫자만 선명하다.\n「귀가자 2명 / 2803호」\n\n함께 내린 사람은 보이지 않는데 왜 둘이라고 적혀 있을까. CCTV 옆에 관리용 승강기 열쇠가 있다. 우선 1층으로 내려가야 한다.'},
@@ -257,7 +262,7 @@ export function journalEntry(id:Action,story:Pick<Story,'notes'>){
 }
 export const endings={
   crashed:'차는 아파트 앞 도로의 콘크리트 방호벽을 들이받았다.\n운전자는 현장에서 사망했다.\n\n차량에서 발견된 탑승자는 한 명.\n블랙박스에는 충돌 직전, 여자의 목소리가 남아 있었다.\n\n「이번에도… 혼자 가려고?」',
-  caught:'그날 도로에 두고 왔다고 생각했다.\n그녀는 처음부터 나와 함께 귀가했다.',
+  caught:'숨을 죽였다.\n발소리도 멎었다.\n\n바로 뒤에서 젖은 숨이 들렸다.',
 };
 
 // Original memory.wav length at its native playback rate; captions work if audio is unavailable.

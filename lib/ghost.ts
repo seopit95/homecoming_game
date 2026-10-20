@@ -123,7 +123,9 @@ function plantContacts(figure:T.Group,rig:Rig,time:number,phase:number,crawl:num
       if(tightening||old.withdrawing&&(!stance||old.stance)){
         const blend=1-Math.exp(-Math.max(0,time-previous!.time)*16);
         contact.point.lerpVectors(old.point,point,blend);contact.rotation.slerpQuaternions(old.rotation,rotation,blend);
-        contact.point.sub(old.point).clampLength(0,Math.max(0,time-previous!.time)*1.5).add(old.point);
+        // Withdrawal is relative to the moving body. A world-space 1.5 m/s
+        // cap leaves the target behind a faster root, beyond anatomical reach.
+        contact.point.sub(old.point).clampLength(0,Math.max(0,time-previous!.time)*1.5+figure.position.distanceTo(previous!.position)).add(old.point);
         contact.withdrawing=contact.point.distanceToSquared(point)>.000004||contact.rotation.angleTo(rotation)>.01;
         contact.from.copy(contact.point);contact.fromRotation.copy(contact.rotation);
       }

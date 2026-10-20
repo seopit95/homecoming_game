@@ -109,7 +109,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  let water:T.Mesh|undefined;
  let filterCloth:T.Group|undefined,routeHandle:T.Group|undefined,fan:T.Group|undefined,pumpMotor:T.Group|undefined;
  let suctionNeedle:T.Group|undefined,pressureNeedle:T.Group|undefined,suctionLast:T.Group|undefined,pressureLast:T.Group|undefined;
- let looseFuse:T.Group|undefined,installedFuse:T.Group|undefined,badge:T.Group|undefined,lureRadio:ReturnType<typeof portableRadio>|undefined;
+ let installedFuse:T.Group|undefined,badge:T.Group|undefined,lureRadio:ReturnType<typeof portableRadio>|undefined;
  const recordings:{id:Action;mesh:T.Group}[]=[];
  if(area==='annex'){
   box(0,-.1,bz+1.35,2.2,.2,2.7,floor);box(0,2.83,bz+1.35,2.2,.12,2.7,metal);
@@ -122,11 +122,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   // Mail slots, laundry machines, employee lockers and the abandoned switchboard.
   buildAnnexWestWing(root,solids);
   evidenceDesk('annex_notice','2803호 · 반송 안내문',-X,20);
-  evidenceDesk('annex_fuse','통신용 퓨즈 · 정비표',-X,0);
-  box(-X+.49,.8205,0,.12,.001,.075,paper);
-  looseFuse=cartridgeFuse(metal);looseFuse.name='annex-fuse-pickup';looseFuse.position.set(-X+.49,.8248,0);root.add(looseFuse);
-  const fuseTarget=targets.find(t=>t.id==='annex_fuse')!;fuseTarget.mesh=looseFuse;fuseTarget.point.set(-X+.49,.83,0);looseFuse.userData.approach={x:-X+.49,z:1};
-  const fuseLabel=label('6A · 통신 예비',-X+.49,.8211,-.025,.1,.018);fuseLabel.rotation.x=-Math.PI/2;
+  table(-X,0);const checklist=label('야간 설비 점검 · 한서연\n비상통신: 축전지 공급 유지\n침수 시 외부조명만 차단',-X,.821,0,.6,.35);checklist.rotation.x=-Math.PI/2;
   for(let i=0;i<5;i++){const x=X-2.4+i*.9;box(x,1.04,23,.82,2.08,.58,metal,true);box(x,1.06,23.305,.75,1.96,.027,blue);box(x+.23,1.14,23.338,.028,.16,.034,dark);for(const y of [.32,.36,.40,1.89,1.93])box(x,y,23.324,.46,.012,.016,dark);for(const y of [.40,1.65])box(x-.36,y,23.328,.026,.11,.025,metal);box(x,.08,23,.86,.16,.62,dark);label(i===2?'한서연':'당직',x,1.77,23.325,.42,.18);}
   evidenceDesk('annex_badge','한서연 · 야간 당직 명찰',X,20);const shoe=createLeatherShoe('#242a27',false);shoe.position.set(X+1.3,0,23.5);root.add(shoe);
   lureRadio=portableRadio();lureRadio.root.position.set(annexRadio.source.x,.8205,annexRadio.source.z);root.add(lureRadio.root);
@@ -139,11 +135,11 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   // The open source cabinet meets the actual corridor wall; the door and body
   // have separate collision volumes so the open cavity remains usable.
   const restore=facilityModel('power_box_01');restore.name='annex-power-cabinet';restore.scale.setScalar(1.868);restore.rotation.y=Math.PI/2;restore.position.set(2.165,1.42,-2);root.add(restore);
-  target('annex_restore','통신 전원함 · 퓨즈 연결',restore,[2.265,1.08,-1.82],[3.6,-2]);restore.userData.approach={x:3.6,z:-2};
+  restore.userData.approach={x:3.6,z:-2};
   solids.push({x:2.165,z:-2.004,w:.177,d:.646,y:1.42,h:.94},{x:2.531,z:-1.583,w:.583,d:.236,y:1.42,h:.92});
   box(2.2075,1.08,-1.82,.033,.075,.045,dark);for(const y of [1.064,1.096])box(2.226,y,-1.82,.01,.008,.017,metal);
   installedFuse=cartridgeFuse(metal);installedFuse.name='annex-fuse-installed';installedFuse.position.set(2.234,1.08,-1.82);installedFuse.rotation.z=Math.PI/2;root.add(installedFuse);
-  label('통신 / 6A',2.245,1.015,-1.82,.075,.02,Math.PI/2);
+  label('비상통신 · 공급 중',2.245,1.015,-1.82,.075,.02,Math.PI/2);
   evidenceDesk('annex_call','03:20 · 비상벨 녹음기',X,-5);
   const recorder=facilityModel('cassette_player');recorder.name='annex-call-recorder';recorder.rotation.x=-Math.PI/2;recorder.position.set(X+.57,.8205,-5);root.add(recorder);
   const callTarget=targets.find(t=>t.id==='annex_call')!;callTarget.mesh=recorder;callTarget.point.set(X+.57,.86,-5);recorder.userData.approach={x:X+.57,z:-4};
@@ -311,7 +307,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
   const leaving=stage===`${area}_departure`;if(leaving&&opened<0)opened=time;
   if(opened>=0)setDoorAngle(hinge,doorBlock,1.5*T.MathUtils.smoothstep(time-opened,0,reduced?.2:.9),.7,0,occupants);
   const notes=story?.notes??[];
-  if(looseFuse)looseFuse.visible=!notes.includes('annex_fuse');if(installedFuse)installedFuse.visible=notes.includes('annex_fuse')&&!['annex_arrival','annex_fuse','annex_restore'].includes(stage);if(badge)badge.visible=!notes.includes('annex_badge');
+  if(installedFuse)installedFuse.visible=true;if(badge)badge.visible=!notes.includes('annex_badge');
   for(const {id,mesh} of recordings)mesh.visible=!notes.includes(id);
   for(const id of ['plant_valve_west','plant_valve_east']){const wheel=root.getObjectByName(id);if(wheel&&notes.includes(id))wheel.rotation.z=-Math.PI*.6;}
   for(const id of ['plant_circuit_pump','plant_circuit_air','plant_circuit_lights']){const lever=root.getObjectByName(id);if(lever)lever.rotation.x=story?.circuit.includes(id as Action)?-.5:.5;}

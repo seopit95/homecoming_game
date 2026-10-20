@@ -17,7 +17,7 @@ export function investigation(story:Pick<Story,'notes'>){
   const confirmed=has('archive_sequence_call');timeline.push({id:'call',time:'03:20',title:confirmed?'내가 끊은 통화':has('annex_call','annex_line_office')?'현장으로 돌아와 달라는 호출':'양방향 통화 원본',text:confirmed?'「잘못 거셨어요.」 내 대답 뒤, 수신자 쪽에서 통화가 끊겼다. 돌아와 달라는 말을 못 들은 것이 아니었다.':has('annex_call','annex_line_office')?'경비원은 차량 번호를 확인하고 현장으로 돌아와 달라고 했다. 통신실의 보조 녹음에는 수신자 쪽 대답이 없다.':'정문 비상벨에서 등록 휴대전화로 연결된 양방향 원본이다. 아직 양쪽의 말과 통화 종료음을 대조하지 않았다.',confirmed,source:confirmed?'양방향 통화 원본 · 대조 완료':has('archive_call')?'양방향 원본 확보 · 아직 미대조':'발신측 보조 녹음'});
  }
  if(has('record','monitor','court_log','archive_gate','archive_sequence_gate')){
-  const confirmed=has('archive_sequence_gate'),missing=has('record','monitor');timeline.push({id:'gate',time:'03:26',title:confirmed?'다시 잠근 문':'지하 입차',text:confirmed?'창문에 손이 닿고 문을 열어 달라는 목소리가 났다. 나는 운전석에 남아 잠금 버튼을 눌렀다.':missing?'내 차가 돌아왔다. 열람본에서 정차 뒤 아홉 초가 빠져 있다. 다음 화면에는 문이 이미 닫혀 있다.':has('archive_gate')?'CAM-04 / 03:26. 누락된 아홉 초의 영상과 소리를 함께 보존한 원본이다. 아직 내용을 대조하지 않았다.':'2803호 등록 차량의 입차 기록이 남아 있다. 현장을 떠나 이 건물로 돌아왔던 시각이다.',confirmed,source:confirmed?'입차 원본 · 대조 완료':has('archive_gate')?'입차 원본 확보 · 아직 미대조':'관리실 · 인계 기록'});
+  const confirmed=has('archive_sequence_gate'),missing=has('record','monitor');timeline.push({id:'gate',time:'03:26',title:confirmed?'아직 살아 있던 목소리':'지하 입차',text:confirmed?'충돌 아홉 분 뒤, 한서연은 창밖에서 문을 열어 달라고 했다. 아직 살아 있었다. 나는 운전석에 남아 문을 잠갔다.':missing?'내 차가 돌아왔다. 열람본에서 정차 뒤 아홉 초가 빠져 있다. 다음 화면에는 문이 이미 닫혀 있다.':has('archive_gate')?'CAM-04 / 03:26. 누락된 아홉 초의 영상과 소리를 함께 보존한 원본이다. 아직 내용을 대조하지 않았다.':'2803호 등록 차량의 입차 기록이 남아 있다. 현장을 떠나 이 건물로 돌아왔던 시각이다.',confirmed,source:confirmed?'입차 원본 · 대조 완료':has('archive_gate')?'입차 원본 확보 · 아직 미대조':'관리실 · 인계 기록'});
  }
  const name=has('belongings','annex_badge')?'한서연':null;
  const person={name,text:has('portrait')?'「다음에는 맑은 날에. 내일 오후 두 시.」 냉장고에는 끝내 지키지 못한 약속이 남아 있다.':has('answerphone')?'일상이 계속될 거라고 믿었던 목소리다.':name?'내가 살던 건물의 야간 당직이었다. 얼굴도 모르는 사람이 아니었다.':null};
@@ -25,6 +25,6 @@ export function investigation(story:Pick<Story,'notes'>){
  if(has('archive_road')&&!has('archive_sequence_road'))questions.push('충돌 직전의 보행 신호와 제동등은 언제 바뀌었을까? 도로 원본을 대조해야 한다.');
  if(has('annex_call','annex_line_office','archive_call')&&!has('archive_sequence_call'))questions.push('03:20, 수신자 쪽에서는 무슨 말을 했을까? 발신측 녹음만으로는 알 수 없다.');
  if(has('record','monitor','archive_gate')&&!has('archive_sequence_gate'))questions.push('입차 뒤 빠진 아홉 초에는 무슨 일이 있었을까? 열람본의 빈 구간만으로 단정할 수 없다.');
- const pattern=has('archive_sequence_road')&&has('archive_sequence_call')&&has('archive_sequence_gate')?'충돌 뒤 현장을 떠났다. 돌아와 달라는 전화를 끊었다. 문을 두드리는 소리를 듣고도 잠갔다. 기록에서 반복되는 것은 내가 외면한 순간들이다.':null;
+ const pattern=has('archive_sequence_road')&&has('archive_sequence_call')&&has('archive_sequence_gate')?'충돌 뒤 현장을 떠났다. 돌아와 달라는 전화를 끊었다. 살아 있는 사람의 구조 요청을 듣고도 문을 잠갔다. 충돌 장면이 아니라 그 뒤의 아홉 초를 삭제해 달라고 했다. 기록에서 반복되는 것은 내가 외면한 순간들이다.':null;
  return {count:records.length,sections,timeline,person,questions,pattern};
 }

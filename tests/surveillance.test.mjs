@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
 import {buildWorld,disposeWorld} from '../lib/world.ts';
+import {initialStory} from '../lib/story.ts';
 import {archiveReplay} from '../lib/expansion-story.ts';
 
 globalThis.document={createElement:()=>{const text=[],context={fillRect(){},fillText(value){text.push(value);},beginPath(){},moveTo(){},lineTo(){},stroke(){}};return {width:0,height:0,text,getContext:()=>context};}};
@@ -15,7 +16,7 @@ test('archive replay renders the restored nine seconds before switching to the r
     assert.notEqual(r.calls[0].scene,scene,'recorded footage must not show the current room');
     const recorded=r.calls[0].scene,car=recorded.getObjectByName('cctv-car'),first=car.position.clone();
     world.updateStory('archive_playback',100.03,false);world.surveillance.render(r,scene);assert.equal(r.calls.length,1,'paused or sub-frame updates do not upload/redraw footage');
-    const hand=recorded.getObjectByName('cctv-passenger-hand');assert.equal(hand.visible,false);world.updateStory('archive_playback',102,false);world.surveillance.render(r,scene);assert.equal(hand.visible,true,'the restored interval reveals a real hand behind the passenger pane');
+    const survivor=recorded.getObjectByName('cctv-surviving-victim');assert.equal(survivor.visible,false);world.updateStory('archive_playback',102,false);world.surveillance.render(r,scene);assert.equal(survivor.visible,true,'the restored interval reveals the living victim outside the passenger pane');recorded.updateMatrixWorld(true);assert.ok(new T.Box3().setFromObject(survivor,true).min.y>=-.001,'the living victim remains grounded');
     world.updateStory('archive_playback',108.9,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,recorded,'the complete nine-second parking interval remains on screen');
     world.updateStory('archive_playback',109,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,scene,'the last feed is this physical room');
     const beforeEscape=r.calls.length;world.updateStory('archive_escape',132,false);world.surveillance.render(r,scene);assert.equal(r.calls.length,beforeEscape+1,'the current-room warning remains on the monitor when the chase starts');assert.equal(r.calls.at(-1).scene,scene);
@@ -43,17 +44,17 @@ test('disposing an archive releases the private recording scene and render targe
 
 
 test('office footage shows arrival, the missing interval and a lone walking driver, then rewinds on retry',()=>{
-  const scene=new T.Scene(),world=buildWorld(scene,'office'),r=renderer();
+  const scene=new T.Scene(),world=buildWorld(scene,'office'),r=renderer(),powered={...initialStory(),stage:'office_playback',notes:['fuse','office_install'],circuit:['circuit_b','circuit_c'],officeSupply:true};
   try{
     assert.ok(world.surveillance,'office CCTV must show the actual recording');
-    world.updateStory('office_playback',100,false);world.surveillance.render(r,scene);
+    world.updateStory('office_playback',100,false,powered);world.surveillance.render(r,scene);
     const footage=r.calls.at(-1).scene,car=footage.getObjectByName('cctv-car'),driver=footage.getObjectByName('cctv-driver'),first=car.position.clone();
     assert.equal(driver.visible,false,'driver is still seated before the missing interval');
-    world.updateStory('office_playback',101.5,false);world.surveillance.render(r,scene);assert.ok(car.position.distanceTo(first)>.5);
-    world.updateStory('office_playback',103.3,false);world.surveillance.render(r,scene);assert.equal(driver.visible,true,'the cut reveals the driver already outside the closed door');const steppedOut=driver.position.clone();
-    world.updateStory('office_playback',107,false);world.surveillance.render(r,scene);assert.ok(driver.position.distanceTo(steppedOut)>1,'the driver walks away rather than remaining a standing mannequin');
-    const last=driver.position.clone();world.updateStory('office_leave',111,false);world.surveillance.render(r,scene);world.updateStory('office_leave',120,false);world.surveillance.render(r,scene);assert.ok(driver.position.distanceTo(last)<.001,'the evidence freezes on its last frame');
-    world.reset();world.updateStory('office_playback',200,false);world.surveillance.render(r,scene);assert.equal(driver.visible,false);assert.ok(car.position.distanceTo(first)<.0001);
+    world.updateStory('office_playback',101.5,false,powered);world.surveillance.render(r,scene);assert.ok(car.position.distanceTo(first)>.5);
+    world.updateStory('office_playback',103.3,false,powered);world.surveillance.render(r,scene);assert.equal(driver.visible,true,'the cut reveals the driver already outside the closed door');const steppedOut=driver.position.clone();
+    world.updateStory('office_playback',107,false,powered);world.surveillance.render(r,scene);assert.ok(driver.position.distanceTo(steppedOut)>1,'the driver walks away rather than remaining a standing mannequin');
+    const last=driver.position.clone();world.updateStory('office_leave',111,false,powered);world.surveillance.render(r,scene);world.updateStory('office_leave',120,false,powered);world.surveillance.render(r,scene);assert.ok(driver.position.distanceTo(last)<.001,'the evidence freezes on its last frame');
+    world.reset();world.updateStory('office_playback',200,false,powered);world.surveillance.render(r,scene);assert.equal(driver.visible,false);assert.ok(car.position.distanceTo(first)<.0001);
   }finally{disposeWorld(world.root);}
 });
 
