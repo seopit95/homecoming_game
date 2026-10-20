@@ -4,7 +4,7 @@ import {HorrorAudio} from '../lib/audio.ts';
 
 test('the apparition crossfades a connected music layer through volume and pause controls',()=>{
   class Param{value=0;targets=[];setTargetAtTime(...args){this.targets.push(args);}setValueAtTime(){}linearRampToValueAtTime(){}exponentialRampToValueAtTime(){}}
-  class Node{gain=new Param();frequency=new Param();Q=new Param();pan=new Param();delayTime=new Param();connections=[];connect(destination){this.connections.push(destination);return destination;}disconnect(){this.connections=[];}start(){}stop(...args){this.stopArgs=args;}}
+  class Node{gain=new Param();frequency=new Param();Q=new Param();pan=new Param();delayTime=new Param();playbackRate=new Param();connections=[];connect(destination){this.connections.push(destination);return destination;}disconnect(){this.connections=[];}start(){}stop(...args){this.stopArgs=args;}}
   class Context{sampleRate=22050;currentTime=17;state='running';destination=new Node();nodes=[];make(){const n=new Node();this.nodes.push(n);return n;}createGain(){return this.make();}createBufferSource(){return this.make();}createBiquadFilter(){return this.make();}createOscillator(){return this.make();}createStereoPanner(){return this.make();}createBuffer(_channels,length){const data=new Float32Array(length);return {getChannelData:()=>data};}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}}
   const previousFetch=globalThis.fetch,previousContext=globalThis.AudioContext;globalThis.AudioContext=Context;globalThis.fetch=async()=>({ok:false});
   const audio=new HorrorAudio();try{

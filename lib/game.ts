@@ -20,7 +20,8 @@ import {buildRoad} from './prologue.ts';
 import {departureFrame} from './car-departure.ts';
 import {accidentCar} from './chapters.ts';
 import {landing,buildingLayout as layout} from './building.ts';
-import {freshStamina,stepStamina,canSprint} from './stamina.ts';
+import {freshStamina,stepStamina,canSprint,stepBreathing} from './stamina.ts';
+import {playerFootSurface} from './footsteps.ts';
 import {perceives} from './perception.ts';
 import {pursuitPace} from './pursuit.ts';
 import type {HidingPlace} from './hiding-places.ts';
@@ -52,7 +53,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const flashlight=new T.SpotLight('#f0e9d9',42,24,Math.PI/7,.83,1.7);configureShadow(flashlight);flashlight.shadow.mapSize.set(window.matchMedia('(pointer:coarse)').matches?1024:2048,window.matchMedia('(pointer:coarse)').matches?1024:2048);
   flashlight.shadow.camera.near=.02;flashlight.shadow.camera.updateProjectionMatrix();
   scene.add(flashlight,flashlight.target);const fill=new T.PointLight('#dadde0',.6,3.5);scene.add(fill);
-  let stamina=freshStamina(),breathRecovery=false;
+  let stamina=freshStamina(),breathLoad=0;
   let story=initialStory(),started=false,paused=false,disposed=false,torch=false,elapsed=0,yaw=0,pitch=0,frameId=0;
   let message='',messageUntil=0,lastFrame=0,lastEmit=0,stageTime=0,areaTime=0,lastSound=0,lastBreath=0,lastDrip=0,chapterUntil=0;
   const gait=createPlayerGait();
@@ -211,7 +212,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     try{audio.start();audio.setVolume(settings.volume);audio.mix(settings);}catch{onError('소리를 시작하지 못했습니다. 소리 없이도 플레이할 수 있습니다.');}
     const resumePursuit=retry?(retry==='continue'?saved?.pursuit:arrivalPursuit):false;
     const resumeWait=retry==='continue'?saved?.pursuitWait??0:Math.max(0,entranceDelay-areaTime);
-    if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],officeSupply:saved.officeSupply,code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&story.notes.includes('resident_key'))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathRecovery=false;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
+    if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],officeSupply:saved.officeSupply,code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&story.notes.includes('resident_key'))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathLoad=0;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
     lastEmit=elapsed-1;loadArea(areaFor(story));
     if(resumePursuit&&area==='office')arrivalPursuit=true;
     if(resumePursuit&&(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'||area==='parking')){carryPursuit(5.2,true,area==='parking'?layout.parking.z:expansionLayout[area].z);entranceDelay=Math.max(entranceDelay,resumeWait);persist();}
@@ -664,7 +665,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       const turn=world.figure.rotation.y-heading,stroke=Math.min(travel,.3)+Math.abs(Math.atan2(Math.sin(turn),Math.cos(turn)))*.25;
       const before=Math.floor(walkPhase/Math.PI);walkPhase+=stroke*Math.PI*2/stride;ghostMotion=T.MathUtils.clamp(stroke/Math.max(dt,.001)/2.5,0,1);lastGhostPosition.copy(p);
       const pan=T.MathUtils.clamp(((p.x-camera.position.x)*Math.cos(yaw)-(p.z-camera.position.z)*Math.sin(yaw))/Math.max(1,distance),-1,1),level=Math.min(1,4/Math.max(1,distance));
-      if(Math.floor(walkPhase/Math.PI)!==before){audio.footstep(crawling()?'wet':'wood',pan,level*.85);if(before%2===0)audio.sound('drag',pan,level*.6);}
+      if(Math.floor(walkPhase/Math.PI)!==before){audio.footstep(crawling()?'wet':'wood',pan,level*.85,'ghost');if(before%2===0)audio.sound('drag',pan,level*.6);}
       if(distance<8&&elapsed-lastBreath>4.1){audio.sound('breath',pan,level);lastBreath=elapsed;}
     }
   }
@@ -979,24 +980,24 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
         move((-Math.sin(yaw)*forward+Math.cos(yaw)*side)*speed,(-Math.cos(yaw)*forward-Math.sin(yaw)*side)*speed);
         const distance=Math.hypot(camera.position.x-px,camera.position.z-pz),moving=distance>.001;
         stamina=stepStamina(stamina,dt,running,moving);
-        const floor=area==='stairs'?(camera.position.z< -6?'tile':'metal'):area==='resident'?(camera.position.z>5.95?'tile':'wood'):area==='apartment'?'wood':area==='landing'&&camera.position.x<-.9?'wet':'tile';
+        const floor=playerFootSurface(area,camera.position.x,camera.position.z,story.notes.includes('plant_drained')||parkingDrained(story));
         playerMoving=moving;playerRunning=moving&&running;
-        if(elapsed>noiseUntil)noiseRadius=moving?(crouched?0:running?(floor==='wet'?10:22):floor==='metal'?7:3):0;
+        if(elapsed>noiseUntil)noiseRadius=moving?(crouched?0:running?(area==='landing'&&camera.position.x<-.9?10:22):area==='stairs'&&camera.position.z>=-6?7:3):0;
         const footContact=gait.step(distance,dt,running,crouched,settings.bob&&!reducedMotion);
         camera.position.y=world.heightAt(camera.position.x,camera.position.z)+(crouched?1:1.65)+gait.y;
         if(moving&&footContact)audio.footstep(floor,Math.floor(gait.phase/Math.PI)%2?-.12:.12,crouched?.15:running?.65:.35);
       }else gait.reset();
       if(concealed())stamina=stepStamina(stamina,dt,false,false);
+      breathLoad=stepBreathing(breathLoad,dt,stamina,playerRunning);
       const shove=world.archiveDoor?.pushAside({x:camera.position.x,z:camera.position.z,r:.23},dt)??0;
       for(let remaining=Math.abs(shove);remaining>0;remaining-=.05)move(Math.sign(shove)*Math.min(.05,remaining),0);
       camera.rotation.set(pitch+gait.pitch,yaw,gait.roll,'YXZ');camera.updateMatrixWorld();crossThresholds();findTarget();scripted(dt);if(!isCinematic(story.stage))danger(dt);
       if(message&&elapsed>messageUntil)message='';if(whisper&&elapsed>whisperUntil)whisper='';
     }
-    if(stamina.exhausted)breathRecovery=true;else if(stamina.value>.9)breathRecovery=false;
     const archiveFrame=started&&archiveReviewing(story.stage)?world.archiveReview?.read(elapsed):started&&story.stage==='archive_playback'&&stageTime<9?{source:'gate' as const,time:stageTime,playing:true}:null;
     const recordDx=9-camera.position.x,recordDz=-20-camera.position.z,recordDistance=Math.hypot(recordDx,recordDz);
     audio.setArchiveRecord(archiveFrame??null,recordDistance<14?Math.min(1,2.5/Math.max(1,recordDistance)):0,T.MathUtils.clamp((recordDx*Math.cos(yaw)-recordDz*Math.sin(yaw))/Math.max(1,recordDistance),-1,1));
-    audio.setExertion(started&&!isCinematic(story.stage)&&!['ended','dying'].includes(story.stage)&&breathRecovery?Math.min(1,(1-stamina.value)/.75):0);
+    audio.setExertion(started&&!isCinematic(story.stage)&&!['ended','dying'].includes(story.stage)?breathLoad:0);
     audio.setHaunt(started&&!isCinematic(story.stage)&&story.stage!=='ended'&&area!=='aftermath'?(tracking?Math.min(.9,.2+threat*.7):story.stage==='hide'?.65:world.figure.visible?.1+threat*.22:0):0);
     const chasing=started&&!concealed()&&world.figure.visible&&chaseStages.includes(story.stage)&&(tracking||story.stage==='hide'||area==='landing');
     audio.setChase(chasing?T.MathUtils.clamp(.5+threat*.6+(surging?.12:0),0,1):0);

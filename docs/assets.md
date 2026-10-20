@@ -193,3 +193,9 @@ photographic paving, plaster and weathered concrete are reused.
 - public/textures/pbr/asphalt-color.jpg · [source](https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_03/asphalt_03_diff_1k.jpg) · SHA256 95ad02e2631c41cf9fdd6a37596cf75adb4fb8a8b6880567cc78ed1c41dc5681
 - public/textures/pbr/asphalt-normal.jpg · [source](https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_03/asphalt_03_nor_gl_1k.jpg) · SHA256 978de8349ce2e9989325099a6fd1f5ea6b2826528e1264606a5c51296b1e2888
 - public/textures/pbr/asphalt-arm.jpg · [source](https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_03/asphalt_03_arm_1k.jpg) · SHA256 36e898a43fd828e71f5bc08fa0f86dc2c7338194c87eb6a2b30d7216318b9f31
+
+### Player footstep bank (V111)
+
+`public/audio/footsteps/bank.wav` derives 16 short variants from Kenney's [Impact Sounds](https://kenney.nl/assets/impact-sounds), licensed CC0 1.0. The original licence is retained beside the bank. `sources.json` records each original ZIP path/hash and the derived bank hash. Wood and concrete are sole-contact samples; light metal impacts and snow/slush foley provide quiet material layers for metal and wet surfaces. Tile uses a brighter concrete contact plus a short reflection. These are designed foley samples; no claim of site-specific location recording is made.
+
+`python3 scripts/import-footsteps.py /path/to/kenney_impact-sounds.zip` reproduces the 24 kHz mono PCM bank with macOS `afconvert`. Trimmed clips have normalized peaks and faded edges; the bank is 155,682 bytes. `lib/footstep-bank.json` stores offset/duration regions. Playback avoids immediate variant repeats and slightly varies pitch; actor footsteps retain the existing procedural ghost sounds. Existing `player-breath.wav` is reused with gradually changing level, playback rate and filtering. No new voice recording or external runtime dependency was added.

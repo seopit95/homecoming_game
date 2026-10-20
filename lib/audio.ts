@@ -1,4 +1,6 @@
 import type {ArchiveFrame} from './archive-review.ts';
+import type {FootSurface} from './footsteps.ts';
+import footBank from './footstep-bank.json' with {type:'json'};
 export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
 const archiveCues={road:[['collision-impact',4.2]],call:[['archive-guard',.2],['archive-denial',8]],gate:[['archive-plea',.8],['archive-lock',5.8]]} as const;
 export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'memory'|'no';
@@ -29,7 +31,9 @@ export class HorrorAudio {
   archiveGain:GainNode|null=null;archivePan:StereoPannerNode|null=null;
   deviceLoops=new Map<string,{source:AudioBufferSourceNode;gain:GainNode;pan:StereoPannerNode;level:number}>();
   deviceWanted={phone:0,radio:0,alarm:0,ringback:0,busy:0};
-  exertion:GainNode|null=null;exertionSource:AudioBufferSourceNode|null=null;exertionWanted=0;exertionLevel=-1;
+  exertion:GainNode|null=null;exertionSource:AudioBufferSourceNode|null=null;exertionFilter:BiquadFilterNode|null=null;exertionWanted=0;exertionLevel=-1;
+  footstepBuffer:AudioBuffer|null=null;
+  lastFoot:Partial<Record<keyof typeof footBank,number>>={};
   volume = .42;
   start() {
     this.prepare();void this.context!.resume();this.setVolume(this.volume);
@@ -81,6 +85,7 @@ export class HorrorAudio {
     for(let i=0;i<lockData.length;i++){const t=i/ctx.sampleRate;lockData[i]=Math.sin(t*2300)*Math.exp(-t*90)*.4;}
     for(const clip of ['fire-bell','player-breath','passenger-line','male-surprise','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast','archive-guard','archive-denial','archive-plea'] as RecordedClip[])void fetch(`/audio/overhaul/${clip}.${clip.startsWith('archive-')?'mp3':'wav'}`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setExertion(this.exertionWanted);this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);this.setDevice('alarm',this.deviceWanted.alarm);}}).catch(()=>{});
     this.clips['intercom-ringback']=intercomTone(ctx,false);this.clips['intercom-busy']=intercomTone(ctx,true);
+    void fetch('/audio/footsteps/bank.wav').then(r=>{if(!r.ok)throw new Error('Footsteps unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.footstepBuffer=buffer;}).catch(()=>{});
     for(const line of ['where','here','found','come','cry','scream','memory','no'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
   recorded(clip:RecordedClip,level=1,pan=0){
@@ -122,10 +127,12 @@ export class HorrorAudio {
     const ctx=this.context,buffer=this.clips['player-breath'];if(!ctx||!buffer)return;
     if(!this.exertion){
       this.exertion=ctx.createGain();this.exertion.gain.value=0;this.exertion.connect(this.effectsBus!);
-      const source=this.exertionSource=ctx.createBufferSource();source.buffer=buffer;source.loop=true;source.connect(this.exertion);source.start();
+      const source=this.exertionSource=ctx.createBufferSource(),filter=this.exertionFilter=ctx.createBiquadFilter();source.buffer=buffer;source.loop=true;filter.type='lowpass';source.connect(filter);filter.connect(this.exertion);source.start();
     }
-    if(Math.abs(this.exertionLevel-this.exertionWanted)<.015)return;
-    this.exertionLevel=this.exertionWanted;this.exertion.gain.setTargetAtTime(this.exertionWanted*.8,ctx.currentTime,.25);
+    if(this.exertionWanted===this.exertionLevel||this.exertionWanted>0&&Math.abs(this.exertionLevel-this.exertionWanted)<.015)return;
+    this.exertionLevel=this.exertionWanted;this.exertion.gain.setTargetAtTime(.12*this.exertionWanted+.68*this.exertionWanted**1.3,ctx.currentTime,.25);
+    this.exertionSource!.playbackRate.setTargetAtTime(.9+this.exertionWanted*.22,ctx.currentTime,.6);
+    this.exertionFilter!.frequency.setTargetAtTime(1600+this.exertionWanted*3200,ctx.currentTime,.4);
   }
   setDevice(device:'phone'|'radio'|'alarm'|'ringback'|'busy',level:number,pan=0){
     this.deviceWanted[device]=level;
@@ -167,10 +174,28 @@ export class HorrorAudio {
   stopRecording(channel?:'local'|'intercom'){
     for(const key of channel?[channel]:[...this.recordings.keys()]){const playing=this.recordings.get(key);if(!playing)continue;playing.source.onended=null;try{playing.source.stop();}catch{}playing.nodes.forEach(n=>n.disconnect());this.recordings.delete(key);}
   }
-  footstep(surface:'wood'|'tile'|'metal'|'wet',pan=0,level=1){
+  footstep(surface:FootSurface,pan=0,level=1,actor:'player'|'ghost'='player'){
+    const ctx=this.context;if(!ctx||!this.effectsBus||ctx.state!=='running')return;
+    if(actor==='ghost'||!this.footstepBuffer){this.proceduralFootstep(surface,pan,level);return;}
+    const play=(family:keyof typeof footBank,scale:number,cutoff:number)=>{
+      const variants=footBank[family],previous=this.lastFoot[family],choice=Math.floor(Math.random()*(variants.length-(previous===undefined?0:1))),index=previous===undefined?choice:choice>=previous?choice+1:choice,clip=variants[index];this.lastFoot[family]=index;
+      const rate=(level>.5?1.01:.96)+(Math.random()-.5)*.06;
+      const emit=(delay:number,volume:number)=>{
+        const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),p=ctx.createStereoPanner(),nodes:AudioNode[]=[source,filter,gain,p];
+        source.buffer=this.footstepBuffer;source.playbackRate.value=rate;filter.type='lowpass';filter.frequency.value=delay?cutoff*.7:cutoff;gain.gain.value=Math.max(0,Math.min(1,level))*.7*scale*volume;p.pan.value=Math.max(-1,Math.min(1,pan));source.connect(filter);filter.connect(gain);gain.connect(p);p.connect(this.effectsBus!);
+        source.onended=()=>nodes.forEach(n=>n.disconnect());source.start(ctx.currentTime+delay,clip.offset,clip.duration);
+      };
+      emit(0,1);
+      // A scheduled quiet copy owns its tail independently of the dry contact.
+      if(surface==='tile'||surface==='metal')emit(surface==='metal'?.085:.055,surface==='metal'?.18:.11);
+    };
+    play(surface==='wood'?'wood':'concrete',surface==='wet'?.65:1,surface==='wood'?3400:surface==='concrete'?4200:6000);
+    if(surface==='metal')play('metal',.2,5800);if(surface==='wet')play('wet',.48,2400);
+  }
+  private proceduralFootstep(surface:FootSurface,pan:number,level:number){
     const ctx=this.context;if(!ctx||!this.effectsBus||ctx.state!=='running')return;
     const t=ctx.currentTime,source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),p=ctx.createStereoPanner();
-    source.buffer=this.noise;filter.type='lowpass';filter.frequency.value=surface==='metal'?1700:surface==='wet'?950:surface==='tile'?650:280;filter.Q.value=surface==='metal'?4:1;
+    source.buffer=this.noise;filter.type='lowpass';filter.frequency.value=surface==='metal'?1700:surface==='wet'?950:surface==='wood'?280:650;filter.Q.value=surface==='metal'?4:1;
     source.connect(filter);filter.connect(gain);gain.connect(p);p.pan.value=pan;p.connect(this.effectsBus);
     const duration=surface==='wet'?.23:.12;gain.gain.setValueAtTime(.12*level,t);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);source.start(t,Math.random());source.stop(t+duration);source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();p.disconnect();};this.sound('step',pan,level*.7);
   }
@@ -224,7 +249,7 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);o.onended=()=>{o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }
 
 // A local private exchange: one-second ringback bursts and a shorter busy cadence.

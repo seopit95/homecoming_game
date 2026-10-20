@@ -1,0 +1,90 @@
+{
+  "author": "Kenney",
+  "license": "CC0-1.0",
+  "page": "https://kenney.nl/assets/impact-sounds",
+  "archiveSha256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8",
+  "bankSha256": "9812860d8e08d5a6e6c0fd4b072c76456c6a4a034eb6eb5b1c580c22ea1e271d",
+  "processing": "24kHz mono PCM, trimmed, peak-normalized with faded edges; wet layer uses snow/slush foley; metal layer uses light metal impacts",
+  "samples": [
+    {
+      "family": "wood",
+      "source": "Audio/footstep_wood_000.ogg",
+      "sourceSha256": "5f1c252942a220d658121bd9417448cd19649ded9fff2ff15f6e50899373ce8e"
+    },
+    {
+      "family": "wood",
+      "source": "Audio/footstep_wood_001.ogg",
+      "sourceSha256": "e4f68e1c9fd55b4dc8ca89ed2bbab6f200171bc54bdc18aa96b80d8e7336f462"
+    },
+    {
+      "family": "wood",
+      "source": "Audio/footstep_wood_002.ogg",
+      "sourceSha256": "9ff095b05cee5eec40b081defe3f0eef7232bb16d4865ce03b9f6dbab875cfdd"
+    },
+    {
+      "family": "wood",
+      "source": "Audio/footstep_wood_003.ogg",
+      "sourceSha256": "2a68a083daa9eda08fed0ea5da5280dfbe0de226196c576be02f95259dd139d9"
+    },
+    {
+      "family": "concrete",
+      "source": "Audio/footstep_concrete_000.ogg",
+      "sourceSha256": "d7267e183067757c92c169de2a379abea592cfca6b39bb2e8feea15221ad79fe"
+    },
+    {
+      "family": "concrete",
+      "source": "Audio/footstep_concrete_001.ogg",
+      "sourceSha256": "507a75eb19b897087855a3be3cf11a12d7fa37d143ad535eeebe0b8031c7325d"
+    },
+    {
+      "family": "concrete",
+      "source": "Audio/footstep_concrete_002.ogg",
+      "sourceSha256": "b21fa546d74941196b25da8a20b7010abd8c05c4fcf93545d1f344e66a664e13"
+    },
+    {
+      "family": "concrete",
+      "source": "Audio/footstep_concrete_003.ogg",
+      "sourceSha256": "8b513c2f0316324060b9174b8f28df6c2147418c506e6a53b77f18e149a5547b"
+    },
+    {
+      "family": "metal",
+      "source": "Audio/impactMetal_light_000.ogg",
+      "sourceSha256": "33b5e6e37c6e9d54e07bf5a89b12c76e879f40c1ea83cdd82714df1d6f9fec6d"
+    },
+    {
+      "family": "metal",
+      "source": "Audio/impactMetal_light_001.ogg",
+      "sourceSha256": "fba69c467ddd85da7b1d82e259f936b876d9ba6a3d6f1b24bdd10468e46bfe08"
+    },
+    {
+      "family": "metal",
+      "source": "Audio/impactMetal_light_002.ogg",
+      "sourceSha256": "25a96f90a9a1f88a531e824e126f0519504625e5635e65a72e4f31611428db29"
+    },
+    {
+      "family": "metal",
+      "source": "Audio/impactMetal_light_003.ogg",
+      "sourceSha256": "92d5db6bfc672d9dc1b4f390b2900504f013187fa36335472554fafefa9050b1"
+    },
+    {
+      "family": "wet",
+      "source": "Audio/footstep_snow_000.ogg",
+      "sourceSha256": "c05fa4a9dc9a7aabc04996466fb589537e49af76de9998d8f9e6270ec92dcef7"
+    },
+    {
+      "family": "wet",
+      "source": "Audio/footstep_snow_001.ogg",
+      "sourceSha256": "980fb9a1c9227aed7995067b0357f373053337f2416316db8ea0438418542fb4"
+    },
+    {
+      "family": "wet",
+      "source": "Audio/footstep_snow_002.ogg",
+      "sourceSha256": "db52bafdc66304f3b999f2c29227826c65993916e630ac2ffbca17d07b263178"
+    },
+    {
+      "family": "wet",
+      "source": "Audio/footstep_snow_003.ogg",
+      "sourceSha256": "68272e3f1cabcabd02d328fd344454d7c04cb58b5a86972fcdd858f845e3d007"
+    }
+  ]
+}

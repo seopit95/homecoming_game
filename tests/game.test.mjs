@@ -31,6 +31,14 @@ async function officeAgencyInput(saved){
  function use(pos,at){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...at).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
  return {game,data,use,canvas,close(){game.dispose();win.localStorage=previous;}};
 }
+test('V111 real sprint grows the breath before depletion and fades through walking recovery',async()=>{
+ const f=await officeAgencyInput();try{
+  renderedScene.getObjectByName('resident-remains').visible=false;renderedCamera.position.set(0,1.65,5);event(f.canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:renderedCamera.rotation.x/.0021});event(doc,'pointerup',{});
+  f.game.key('KeyW',true);f.game.key('ShiftLeft',true);tick(1);const early=breathLevel;assert.ok(early>.05,'breathing starts while stamina remains');tick(2);assert.ok(breathLevel>early+.15);f.game.key('ShiftLeft',false);f.game.key('KeyW',false);const high=breathLevel;tick(.1);assert.ok(breathLevel>high-.1,'stopping cannot cut off the breath');
+  f.game.pause();const frozen=breathLevel;tick(4);assert.equal(breathLevel,frozen);f.game.pause(false);tick(16);assert.equal(breathLevel,0);
+ }finally{f.close();}
+});
+
 test('V110 actual walking and running recoil settles, pauses and respects the off setting',async()=>{
  const match=win.matchMedia;win.matchMedia=q=>({matches:q==='(pointer:coarse)'});const f=await officeAgencyInput();try{
   renderedScene.getObjectByName('resident-remains').visible=false;f.game.configure({bob:true,reducedMotion:false});renderedCamera.position.set(0,1.65,2);
