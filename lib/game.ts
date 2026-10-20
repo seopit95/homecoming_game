@@ -9,6 +9,8 @@ import {animateGhost,animateGhostAttack,animateGhostEmergence,ghostStrideLength,
 export {prepareVisuals} from './materials.ts';
 import {clearPrintedSources} from './materials.ts';
 import {HorrorAudio,type GhostLine} from './audio.ts';
+import {shelterSearchPlan} from './shelter-search.ts';
+import {createCaptureScene} from './capture-scene.ts';
 import {initialStory,checkpoint,transition,objectiveFor,officePowerLoad,officePowerProblem,officeCanWatch,residentEvidence,residentMessageDuration,areaFor,chapters,chaseStages,opening,openingTiming as beats,finale,finaleTiming as endingBeats,isMemory,isFinale,isCinematic,hasFlashlight,parkingDrained,parkingCanBoard,parkingAlarmActive,parkingBoardDuration,tapeTimes,officeReplay,officeReplayDuration,type Story,type Action,type Area} from './story.ts';
 import {findPath,findPursuitPath,pursuerRadius,clearPath,type Point} from './navigation.ts';
 import {setConnectionDoor} from './passage.ts';
@@ -41,6 +43,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const camera=new T.PerspectiveCamera(68,1,.06,85);camera.rotation.order='YXZ';const hands=createViewmodel();
   let road:ReturnType<typeof buildRoad>|null=null;
   let area:Area='apartment',world=buildWorld(scene);const audio=new HorrorAudio();
+  const capture=createCaptureScene(world.figure.getObjectByName('ghost-head')!);capture.scene.environment=scene.environment;capture.scene.environmentIntensity=scene.environmentIntensity;
   const worlds=new Map<Area,ReturnType<typeof buildWorld>>([['apartment',world]]);
   const roads=new Map<boolean,ReturnType<typeof buildRoad>>();let preparing=false;
   function preparedWorld(next:Area){let value=worlds.get(next);if(!value){value=buildWorld(scene,next);worlds.set(next,value);}return value;}
@@ -56,6 +59,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   let chaseAt=-1,surging=false;
   let shelter:HidingPlace|null=null,shelterSeen=false,hideSearchAt=-1,hidePassedAt=-1,shelterTorch=false,hideInvestigate=false;
   let shelterMotion:{kind:'enter'|'exit';time:number;from:T.Vector3;to:T.Vector3;yaw:number;pitch:number}|null=null,hideSweep=0;
+  let previousSearch=-1,searchPlan=shelterSearchPlan(),hideStopAt=-1;
   const concealed=()=>story.hidden||shelter!==null;
   const protectedInShelter=()=>story.hidden||shelter!==null&&!shelterMotion;
   const radioLure=createRadioLure();let radioInterest:Point|null=null,radioUntil=0;
@@ -289,6 +293,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(!pathClear){say('정면으로 조금 더 다가가야 들어갈 수 있다.',3);return;}
       shelterSeen=detectsPlayer(true);hideInvestigate=shelterSeen||tracking||lastSeen!==null;hiddenPosition.copy(camera.position);shelterTorch=torch;shelter=place;hideSearchAt=-1;hidePassedAt=-1;
       shelterMotion={kind:'enter',time:0,from:camera.position.clone(),to:place.eye.clone(),yaw,pitch};hideSweep=0;
+      searchPlan=shelterSearchPlan(previousSearch);previousSearch=searchPlan.kind;hideStopAt=-1;
       torch=false;noiseRadius=2;noiseUntil=elapsed+.4;keys.clear();holding=false;hover=undefined;
       audio.sound('door-creak',0,.2);say('몸을 낮추고 철문 안으로 들어간다.',2);return;
     }
@@ -551,17 +556,21 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(hideSearchAt<0){
       if(distance>.65)followEnemy(shelter.approach,Math.max(2.1,speed),dt);
       else{hideSearchAt=elapsed;enemyPath=[];repathAt=0;audio.sound('drag',0,.4);ghostVoice(shelterSeen?'found':'where',true);}
-    }else if(elapsed-hideSearchAt<(shelterSeen?1.1:3.2)){
+    }else if(elapsed-hideSearchAt<(shelterSeen?1.1:searchPlan.wait)){
       const turn=T.MathUtils.euclideanModulo(Math.atan2(shelter.eye.x-p.x,shelter.eye.z-p.z)-world.figure.rotation.y+Math.PI,Math.PI*2)-Math.PI;
       world.figure.rotation.y+=T.MathUtils.clamp(turn,-dt*1.5,dt*1.5);
     }else if(shelterSeen){leaveShelter(true);advance('caught');}
     else{
       tracking=false;lastSeen=null;chaseAt=-1;
       if(hidePassedAt<0){hidePassedAt=elapsed;enemyPath=[];repathAt=0;}
-      const target=shelter.sweep[hideSweep]??shelter.pass;
-      if(Math.hypot(p.x-target.x,p.z-target.z)<.25&&hideSweep<shelter.sweep.length){hideSweep++;enemyPath=[];repathAt=0;}
-      followEnemy(shelter.sweep[hideSweep]??shelter.pass,hideSweep<shelter.sweep.length?1.35:2.15,dt);
-      if(elapsed-hidePassedAt>20){hideSearchAt=-1;hidePassedAt=-1;hideSweep=0;enemyPath=[];repathAt=0;}
+      const step=searchPlan.steps[hideSweep],target=step?.point==='front'?shelter.exit:step?.point==='cross'?shelter.sweep[1]??shelter.pass:shelter.pass;
+      if(step){
+        if(Math.hypot(p.x-target.x,p.z-target.z)<.28){
+          if(hideStopAt<0){hideStopAt=elapsed;if(step.voice)ghostVoice(step.voice,true);}
+          if(step.point==='front'){const turn=T.MathUtils.euclideanModulo(Math.atan2(shelter.eye.x-p.x,shelter.eye.z-p.z)-world.figure.rotation.y+Math.PI,Math.PI*2)-Math.PI;world.figure.rotation.y+=T.MathUtils.clamp(turn,-dt*1.5,dt*1.5);}
+          if(elapsed-hideStopAt>=step.pause){hideSweep++;hideStopAt=-1;enemyPath=[];repathAt=0;}
+        }else followEnemy(target,step.point==='away'?2.15:1.35,dt);
+      }else if(elapsed-hidePassedAt>28){hideSearchAt=-1;hidePassedAt=-1;hideSweep=0;hideStopAt=-1;searchPlan=shelterSearchPlan(previousSearch);previousSearch=searchPlan.kind;enemyPath=[];repathAt=0;}
     }
   }
   function chaseSpeed(base:number,distance:number){
@@ -616,7 +625,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       world.figure.visible=true;
       if(searchTime>5&&stageTime<16&&!tracking&&!detectsPlayer())followEnemy(home.bath,1.1,dt);
       else{hunt(2.65,dt);if(scriptBeat===0){scriptBeat=1;say('그것이 고개를 돌렸다. 나를 찾고 있다!',5);audio.sound('slam');}}
-    }else if(story.stage==='hide'){world.figure.visible=true;followEnemy(camera.position,stageTime<4?1.2:1.8,dt);threat=Math.min(.8,stageTime/15);}
+    }else if(story.stage==='hide'){world.figure.visible=true;followEnemy(camera.position,stageTime<4?1.25:1.88,dt);threat=Math.min(.8,stageTime/15);}
     else if(area==='landing'){
       world.figure.visible=areaTime>=entranceDelay;
       if(world.figure.visible){
@@ -1003,12 +1012,13 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(started&&!paused&&elapsed-lastEmit>.09){lastEmit=elapsed;emit();}
     if(road)road.renderMirror(renderer);
     world.surveillance?.render(renderer,scene,false,area==='archive'?{position:camera.position,floor:world.heightAt(camera.position.x,camera.position.z),yaw,pitch,crouched,torch,time:elapsed,solids:world.solids}:undefined);
-    renderer.render(scene,camera);
+    if(story.stage==='dying'){capture.pose(world.figure.getObjectByName('ghost-head')!,stageTime,reducedMotion,camera.aspect);renderer.render(capture.scene,capture.camera);}
+    else renderer.render(scene,camera);
     if(hands.root.visible){renderer.autoClear=false;renderer.clearDepth();renderer.render(hands.scene,hands.camera);renderer.autoClear=true;}
   }
   // Compile the hidden apparition and mouth materials on the loading screen too.
   // Otherwise their first visible frame can synchronously compile a new shader.
-  const compilation=[renderer.compileAsync?.(scene,camera),renderer.compileAsync?.(hands.scene,hands.camera)];
+  const compilation=[renderer.compileAsync?.(scene,camera),renderer.compileAsync?.(hands.scene,hands.camera),capture.prepare(renderer)];
   const ready=Promise.all(compilation).then(async()=>{
     if(disposed||started)return;preparing=true;world.root.removeFromParent();
     try{audio.prepare();}catch{audio.dispose();} // Retry from the start gesture on restricted devices.

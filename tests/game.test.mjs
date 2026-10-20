@@ -35,8 +35,8 @@ test('V107 unseen outdoor hiding keeps the chapter live while the ghost searches
  const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
   const cabinet=renderedScene.getObjectByName('shelter-parking-0');assert.ok(cabinet,'the shelter must be actual scene geometry');const s=cabinet.userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=false;
   f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);assert.equal(f.game.snapshot().story.hidden,true);const stage=f.game.snapshot().story.stage,elapsed=f.game.snapshot().elapsed;
-  ghost.position.set(s.approach.x+3,0,s.approach.z);ghost.visible=true;tick(15);
-  assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().story.stage,stage);assert.ok(f.game.snapshot().elapsed>elapsed+14);assert.ok(ghost.position.distanceTo(renderedCamera.position)>3,'the pursuer actually moves away, giving an exit window');
+  ghost.position.set(s.approach.x+3,0,s.approach.z);ghost.visible=true;let searched=false;for(let i=0;i<400;i++){tick(.1);const d=ghost.position.distanceTo(renderedCamera.position);if(d<2.6)searched=true;if(searched&&d>3)break;}assert.ok(searched);
+  assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().story.stage,stage);assert.ok(f.game.snapshot().elapsed>elapsed+4);assert.ok(ghost.position.distanceTo(renderedCamera.position)>3,'the pursuer actually moves away, giving an exit window');
   f.game.interact();tick(1.5);assert.equal(f.game.snapshot().story.hidden,false);assert.equal(f.game.snapshot().story.stage,stage);assert.equal(f.game.snapshot().paused,false);
  }finally{f.close();}
 });
@@ -70,6 +70,32 @@ test('V107 a witnessed hiding entry is searched and cannot grant immunity',async
   const cabinet=renderedScene.getObjectByName('shelter-parking-0');assert.ok(cabinet);const s=cabinet.userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.set(s.approach.x+2.5,0,s.approach.z);ghost.rotation.y=-Math.PI/2;
   f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);assert.equal(f.game.snapshot().story.hidden,true);tick(10);assert.equal(f.game.snapshot().story.ending,'caught');assert.equal(f.game.snapshot().story.hidden,false);
  }finally{f.close();}
+});
+
+test('V109 a real search can walk away, return, pause and leave again without revealing an unseen player',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
+  const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter,ghost=renderedScene.getObjectByName('resident-remains');ghost.visible=false;
+  const random=Math.random;try{Math.random=()=>.99;f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());}finally{Math.random=random;}tick(1.65);
+  ghost.position.set(s.approach.x+2,0,s.approach.z);ghost.visible=true;voiceCalls.length=0;
+  let near=false,away=false,returned=false,leftAgain=false,still=0,maxStill=0,last=ghost.position.clone();
+  for(let i=0;i<360&&!leftAgain;i++){tick(.1);const d=Math.hypot(ghost.position.x-renderedCamera.position.x,ghost.position.z-renderedCamera.position.z);
+   if(!near&&d<2.3)near=true;else if(near&&!away&&d>3.8)away=true;else if(away&&!returned&&d<2.2)returned=true;else if(returned&&d>3.8)leftAgain=true;
+   still=returned&&d<2.2&&ghost.position.distanceTo(last)<.005?still+.1:0;maxStill=Math.max(maxStill,still);last.copy(ghost.position);
+  }
+  assert.ok(near&&away&&returned&&leftAgain,'the same physical pursuer must double back before finally leaving');assert.ok(maxStill>1,'the return includes a real stop near the cabinet');
+  assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.equal(voiceCalls.filter(v=>v==='where').length,1);assert.ok(voiceCalls.includes('here'));
+ }finally{f.close();}
+});
+
+test('V109 capture uses a full-screen face in different chapters, freezes on pause and returns to retry',async()=>{
+ for(const [stage,notes] of [['parking_alarm',['plant_drained','car_search']],['lift_call',[]],['archive_escape',['archive_play']]]){
+  const f=await officeAgencyInput({stage,notes,elapsed:1400});try{
+   const worldScene=renderedScene,ghost=worldScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.copy(renderedCamera.position);ghost.position.z+=.3;ghost.position.y=renderedCamera.position.y-1.65;voiceCalls.length=0;tick(.1);
+   assert.equal(f.game.snapshot().story.stage,'dying',stage);tick(.65);assert.equal(renderedScene.name,'capture-face',stage+' cannot let room walls cover the face');assert.ok(renderedScene.getObjectByName('ghost-attack-mouth').visible);assert.equal(voiceCalls.filter(v=>v==='scream').length,1);
+   f.game.pause();const pose=renderedCamera.matrixWorld.toArray(),progress=f.game.snapshot().deathProgress;tick(2);assert.deepEqual(renderedCamera.matrixWorld.toArray(),pose);assert.equal(f.game.snapshot().deathProgress,progress);f.game.pause(false);tick(2.6);assert.equal(f.game.snapshot().story.ending,'caught');assert.equal(f.game.snapshot().story.stage,'ended');
+   f.game.start(true);tick();assert.notEqual(renderedScene.name,'capture-face');assert.equal(f.game.snapshot().deathProgress,0);
+  }finally{f.close();}
+ }
 });
 
 test('V108 shelter entry and exit move continuously with the doors and freeze when paused',async()=>{
@@ -186,27 +212,27 @@ test('V75 a new optional record after key restore does not restart the entrance 
  try{await game.ready;tick();game.continueGame();tick();const page=renderedScene.getObjectByName('resident-shift-page'),at=page.getWorldPosition(new THREE.Vector3()),pos=[2.45,1.65,-3.1];renderedCamera.position.set(...pos);const d=at.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();soundCalls.length=0;game.interact();assert.ok(game.snapshot().story.notes.includes('resident_shift'));assert.equal(soundCalls.includes('knock'),false,'an optional record is not another key pickup');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the original remaining entrance delay is retained');}finally{game.dispose();win.localStorage=previous;}
 });
 
-test('leaving while shaders compile stops frames and defers GPU disposal until both scenes finish',async()=>{
+test('leaving while shaders compile stops frames and defers GPU disposal until all scenes finish',async()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   pendingCompiles=[];const game=createGame(canvas,()=>{},()=>{}),jobs=pendingCompiles;pendingCompiles=null;
-  const before=rendererDisposals;assert.equal(jobs.length,2);game.dispose();game.dispose();
+  const before=rendererDisposals;assert.equal(jobs.length,3);game.dispose();game.dispose();
   assert.equal(nextFrame,undefined);assert.equal(rendererDisposals,before);
   jobs[0]();await Promise.resolve();assert.equal(rendererDisposals,before,'hands compilation still owns its materials');
-  jobs[1]();await game.ready;await Promise.resolve();assert.equal(rendererDisposals,before+1);
+  jobs[1]();jobs[2]();await game.ready;await Promise.resolve();assert.equal(rendererDisposals,before+1);
 });
 
 function laterShadersQueued(jobs){
  return new Promise((resolve,reject)=>{
   const timeout=setTimeout(()=>reject(Error('later room shader submissions are still serialized')),3000),push=jobs.push;
-  jobs.push=function(...calls){const size=push.apply(this,calls);if(size>3){clearTimeout(timeout);resolve();}return size;};
+  jobs.push=function(...calls){const size=push.apply(this,calls);if(size>4){clearTimeout(timeout);resolve();}return size;};
  });
 }
 test('startup queues later scene shaders before waiting for the first later scene',async()=>{
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
  pendingCompiles=[];const game=createGame(canvas,()=>{},e=>assert.fail(e)),jobs=pendingCompiles;
  try{
-  assert.equal(jobs.length,2);const queued=laterShadersQueued(jobs);jobs[0]();jobs[1]();await queued;
-  assert.ok(jobs.length>3,'a slow shader from the first later room must not serialize all other rooms');
+  assert.equal(jobs.length,3);const queued=laterShadersQueued(jobs);jobs[0]();jobs[1]();jobs[2]();await queued;
+  assert.ok(jobs.length>4,'a slow shader from the first later room must not serialize all other rooms');
  }finally{
   pendingCompiles=null;for(const resolve of jobs)resolve();await game.ready;game.dispose();
  }
@@ -216,7 +242,7 @@ test('leaving during the startup shader batch retains GPU resources until the en
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
  pendingCompiles=[];const game=createGame(canvas,()=>{},e=>assert.fail(e)),jobs=pendingCompiles,before=rendererDisposals;
  try{
-  const queued=laterShadersQueued(jobs);jobs[0]();jobs[1]();await queued;assert.ok(jobs.length>3);
+  const queued=laterShadersQueued(jobs);jobs[0]();jobs[1]();jobs[2]();await queued;assert.ok(jobs.length>4);
   game.dispose();pendingCompiles=null;
   for(const resolve of jobs.slice(0,-1))resolve();await new Promise(resolve=>setImmediate(resolve));
   assert.equal(rendererDisposals,before,'the last shader still owns its GPU resources');
@@ -419,7 +445,7 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   tick(7.1);game.key('KeyW',true);tick(.5);game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(new THREE.Vector3(...home.wakeStand))>.5,'the player can walk after waking');game.dispose();
 });
 
-test('contact screams once, locks controls and falls before death; manual pause freezes it',()=>{
+test('contact screams once, locks controls and consumes the view before death; manual pause freezes it',()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();game.start(true);tick();
   voiceCalls.length=0;
@@ -430,13 +456,13 @@ test('contact screams once, locks controls and falls before death; manual pause 
   const desiredPitch=Math.atan2(-.45,1.16);
   event(doc,'pointermove',{clientX:renderedCamera.rotation.y/.0021,clientY:-(desiredPitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.key('KeyW',true);for(let i=0;i<60&&game.snapshot().story.stage==='hide';i++)tick(.025);game.key('KeyW',false);
   assert.equal(game.snapshot().story.stage,'lift_call');
-  for(let i=0;i<1000&&game.snapshot().story.stage!=='dying';i++)tick(.025);
-  assert.equal(game.snapshot().story.stage,'dying');assert.equal(game.snapshot().paused,false);assert.equal(voiceCalls.filter(l=>l==='scream').length,1);
-  const root=renderedScene.getObjectByName('resident-remains'),initialY=renderedCamera.position.y;
+  const root=renderedScene.getObjectByName('resident-remains');let screamsBeforeContact=0;for(let i=0;i<1000&&game.snapshot().story.stage!=='dying';i++){screamsBeforeContact=voiceCalls.filter(l=>l==='scream').length;tick(.025);}
+  assert.equal(game.snapshot().story.stage,'dying');assert.equal(game.snapshot().paused,false);assert.equal(voiceCalls.filter(l=>l==='scream').length-screamsBeforeContact,1);
+  const initialZ=renderedCamera.position.z;
   assert.ok(root.getObjectByName('ghost-attack-mouth').visible);const progress=game.snapshot().deathProgress;
   const torch=game.snapshot().flashlight;game.torch();game.crouch();game.interact();game.key('KeyW',true);assert.equal(game.snapshot().flashlight,torch);assert.equal(game.snapshot().crouched,false);
   game.pause();const pose=renderedCamera.matrixWorld.toArray();tick(5);assert.equal(game.snapshot().deathProgress,progress);assert.deepEqual(renderedCamera.matrixWorld.toArray(),pose);game.pause(false);
-  tick(2.6);assert.equal(game.snapshot().story.stage,'dying');assert.ok(renderedCamera.position.y<initialY-1);assert.ok(game.snapshot().deathProgress>.8);assert.equal(renderedScene.getObjectByName('resident-remains'),root,'death stays in the place of contact');
+  tick(2.6);assert.equal(game.snapshot().story.stage,'dying');assert.ok(renderedCamera.position.z<initialZ-.1);assert.ok(game.snapshot().deathProgress>.8);assert.equal(renderedScene.name,'capture-face','the face fills the viewport regardless of the place of contact');
   tick(.7);assert.equal(game.snapshot().story.stage,'ended');assert.equal(game.snapshot().story.ending,'caught');
   game.start(true);tick();assert.equal(game.snapshot().story.stage,'lift_call');assert.equal(game.snapshot().deathProgress,0);assert.equal(renderedCamera.position.y,1.65);game.dispose();
 });
