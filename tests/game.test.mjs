@@ -32,6 +32,30 @@ async function officeAgencyInput(saved){
  function use(pos,at){aim(pos,at);assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
  return {game,data,use,aim,canvas,close(){game.dispose();win.localStorage=previous;}};
 }
+test('V122 a stair checkpoint restart approaches around the real blind corner instead of waiting at the player back',async()=>{
+ const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{
+  const {hasLineOfSight,canStandAt}=await import('../lib/world.ts');
+  const {buildWorld,disposeWorld}=await import('../lib/world.ts');
+  const w=buildWorld(new THREE.Scene(),'stairs');
+  try{const g=renderedScene.getObjectByName('resident-remains');
+   // Exercise the user's death -> retry path, not just a hand-placed studio pose.
+   g.visible=true;g.position.copy(renderedCamera.position);g.position.y=0;tick(.025);
+   assert.equal(f.game.snapshot().story.stage,'dying');tick(1.3);f.game.skipDeath();assert.equal(f.game.snapshot().story.stage,'ended');f.game.start(true);tick(.025);
+   assert.equal(f.game.snapshot().story.stage,'stairs_loop');
+   assert.ok(g.position.distanceTo(renderedCamera.position)>5,'retry cannot put a waiting body directly behind the player');
+   assert.equal(hasLineOfSight(renderedCamera.position,{x:g.position.x,y:.8,z:g.position.z},w.solids),false,'the existing two-turn passage must conceal the starting body');
+   const initial=g.position.clone();tick(.45);assert.ok(g.position.distanceTo(initial)>.15,'the approach starts physically, without a visible five-second freeze');
+   let revealed=false;let largestStep=0,previous=g.position.clone();
+   for(let i=0;i<360;i++){tick(.025);const step=g.position.distanceTo(previous);largestStep=Math.max(largestStep,step);previous.copy(g.position);
+    assert.ok(canStandAt(g.position.x,g.position.z,w.solids,.3,w.bounds),'the entry path cannot cross the corner wall');
+    if(hasLineOfSight(renderedCamera.position,{x:g.position.x,y:.8,z:g.position.z},w.solids)){revealed=true;break;}}
+   assert.ok(revealed,'the pursuer actually rounds the corner into view');assert.ok(largestStep<.12,'the reveal cannot teleport');
+   const before=g.position.clone();tick(.15);assert.ok(g.position.distanceTo(before)>.04,'the revealed pursuer keeps moving');
+   f.game.pause();const frozen=g.position.clone();tick(1);assert.deepEqual(g.position.toArray(),frozen.toArray());
+   f.game.pause(false);tick(8);assert.ok(['dying','ended'].includes(f.game.snapshot().story.stage),'rounding the corner must still lead to an actual capture if the player waits');
+  }finally{disposeWorld(w.root);}
+ }finally{f.close();}
+});
 test('V120 an unlocked upper stair door opens while looking at its real leaf at eye height from close range',async()=>{
  const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{f.use([1,-1.15,-4.8],[1,-1.55,-5.65]);tick(1);renderedCamera.position.set(4,-1.15,-12.2);tick();f.use([5.25,-1.15,-13.35],[5.25,-1.15,-12.15]);assert.equal(f.game.snapshot().story.stage,'stairs_reverse');f.use([3,1.65,-23.12],[3,1.65,-23.7]);assert.equal(f.game.snapshot().story.stage,'stairs_passage');tick(1.2);assert.ok(renderedScene.getObjectByName('stairs-passage-door').rotation.y>1.2);}finally{f.close();}
 });
@@ -819,7 +843,7 @@ test('the lower stair door opens in place and the repeated floor begins only aft
   try{
     await game.ready;tick();game.continueGame();tick();
     // One placement isolates the lower door; every crossing below uses physical input.
-    tick(5); // The stair pursuer's authored arrival delay has elapsed.
+    // Isolate the lower door immediately; the old five-second frozen arrival is gone.
     renderedCamera.position.set(1,-1.15,-4.8);aim([1,-1.55,-5.65]);assert.ok(game.snapshot().prompt);
     const before=renderedCamera.position.toArray(),heading=renderedCamera.rotation.y;game.interact();
     assert.deepEqual(renderedCamera.position.toArray(),before,'opening a leaf cannot relocate the player');
@@ -842,7 +866,7 @@ test('the lower stair door opens in place and the repeated floor begins only aft
     assert.ok(game.snapshot().message.includes('23'),'the repeated floor is revealed after reaching the physical landing');
     tick(45);
     assert.ok(ghost.position.distanceTo(pursuitStart)>8,`the pursuer actually follows through the opened doorway: ${pursuitStart.toArray()} -> ${ghost.position.toArray()}`);
-    assert.ok(['dying','ended'].includes(game.snapshot().story.stage),'a player waiting on the repeated landing remains catchable');
+    assert.ok(['dying','ended'].includes(game.snapshot().story.stage),'a player waiting on the repeated landing remains catchable '+JSON.stringify({ghost:ghost.position.toArray(),player:renderedCamera.position.toArray(),stage:game.snapshot().story.stage}));
   }finally{game.dispose();win.localStorage=previous;}
 });
 

@@ -164,7 +164,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     areaTime=0;entranceDelay=0;arrivalPursuit=false;arrivalDoor=undefined;arrivalDoorRelease=-1;lureUsed=false;crouched=false;walkPhase=0;lastSeen=null;inspectAt=-1;tracking=false;seenAt=elapsed;patrol=0;voiceBeat=0;noiseRadius=0;noiseUntil=0;whisper='';lastVoice=elapsed-8;audio.stopVoices();
     chaseAt=-1;surging=false;chapterUntil=elapsed+4.5;ambient.intensity=area==='parking'?.06:area==='resident'?.035:area==='aftermath'?.24:.075;lastGhostPosition.copy(world.figure.position);ghostMotion=0;
     (scene.fog as T.FogExp2).density=area==='corridor'?.026:area==='parking'?.021:.016;
-    if(['landing','corridor','stairs'].includes(area)){world.figure.visible=true;const z=area==='landing'?landing.homeZ:area==='corridor'?19.2:area==='stairs'?5.25:7.1;world.figure.position.set(area==='landing'?3.7:area==='corridor'?.95:0,0,z);world.figure.lookAt(camera.position.x,0,camera.position.z);chapterUntil=elapsed+1.7;}
+    if(area==='landing'||area==='corridor'){world.figure.visible=true;world.figure.position.set(area==='landing'?3.7:.95,0,area==='landing'?landing.homeZ:19.2);world.figure.lookAt(camera.position.x,0,camera.position.z);chapterUntil=elapsed+1.7;}
+    // Retry uses the same two-turn entrance as the continuous corridor arrival.
+    // The body approaches behind real walls rather than waiting at the player's back.
+    if(area==='stairs'){world.figure.position.set(-2.95,0,10);world.figure.rotation.y=Math.PI/2;world.figure.visible=true;chapterUntil=elapsed+1.7;}
     if(area==='corridor'){world.figure.position.set(0,2.35,20.8);world.figure.rotation.y=Math.PI;}
     if(area==='office'){arrivalPursuit=story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power');world.figure.position.set(-2.95,0,13.35);world.figure.rotation.y=Math.PI;world.figure.visible=true;arrivalDoor=world.root.getObjectByName('connection-fire-door');}
     if(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'){ambient.intensity=area==='annex'?.045:.038;(scene.fog as T.FogExp2).density=.019;}
@@ -507,7 +510,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(repathAt===0||(elapsed>=repathAt&&(changed||!enemyPath.length||!clearPath(p,enemyPath[0],routeSolids,world.bounds,pursuerRadius)))){
       enemyPath=findPursuitPath(p,target,routeSolids,world.bounds);pathGoal.x=target.x;pathGoal.z=target.z;repathAt=elapsed+.55;
     }
-    while(enemyPath.length&&Math.hypot(p.x-enemyPath[0].x,p.z-enemyPath[0].z)<.12)enemyPath.shift();
+    // A near corner is not yet cleared: skipping it can strand a turning body
+    // against the newel even though the planned route itself is collision-free.
+    while(enemyPath.length&&Math.hypot(p.x-enemyPath[0].x,p.z-enemyPath[0].z)<.12&&(enemyPath.length===1||clearPath(p,enemyPath[1],routeSolids,world.bounds,pursuerRadius)))enemyPath.shift();
     if(enemyPath.length>1&&clearPath(p,enemyPath[1],routeSolids,world.bounds,pursuerRadius))enemyPath.shift();
     const next=enemyPath[0];if(!next)return;
     const pressure=world.archiveDoor?.press(p,next,elapsed,story);
@@ -684,7 +689,15 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(areaTime<4.2){const release=T.MathUtils.smoothstep(areaTime,1.2,4.2);world.figure.position.set(0,2.35*(1-release),20.8-2*T.MathUtils.smoothstep(areaTime,0,4.2));world.figure.rotation.y=Math.PI;}
       else hunt(2.7,dt);threat=Math.max(.25,threat);
     }
-    else if(area==='stairs'){world.figure.visible=areaTime>=entranceDelay;if(areaTime>Math.max(5,entranceDelay))hunt(1.65,dt);}
+    else if(area==='stairs'){
+      world.figure.visible=areaTime>=entranceDelay;
+      if(world.figure.visible){
+        if(world.figure.position.z>6)followEnemy({x:0,z:5.25},1.65,dt);
+        // After the lower door opens, investigate the footsteps along that
+        // connected flight instead of cycling only around the first landing.
+        else hunt(1.65,dt,story.stage==='stairs_loop'?undefined:['stairs_reverse','stairs_passage'].includes(story.stage)?{x:3,z:-22.8}:{x:4,z:-13.8});
+      }
+    }
     else if(area==='resident'){if(arrivalPursuit||story.stage==='resident_departure'||story.stage==='resident_return'&&stageTime>4){world.figure.visible=true;hunt(1.4,dt);}}
     else if(area==='office'){if(world.figure.visible&&(arrivalPursuit||story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power'))){if(arrivalDoorRelease<0)arrivalDoorRelease=areaTime;hunt(1.8,dt);}}
     else if(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'){
