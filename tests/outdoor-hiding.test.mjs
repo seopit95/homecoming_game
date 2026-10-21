@@ -1,53 +1,9 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import * as T from 'three';
+import test from 'node:test';import assert from 'node:assert/strict';import * as T from 'three';
 import {buildWorld,disposeWorld,canStandAt} from '../lib/world.ts';
-import {findPath} from '../lib/navigation.ts';
-import {buildBuilding} from '../lib/building.ts';
 globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},arc(){},fill(){}})})};
-
-test('V108 every inward door clears the continuous body path and has a reachable cross-view search',()=>{
- for(const area of ['landing','corridor','stairs','resident','office','annex','courtyard','archive','plant','parking']){
-  const w=buildWorld(new T.Scene(),area);try{for(const s of w.hidingPlaces){
-   assert.equal(s.sweep.length,2,s.root.name+' needs two physical pass-by points');
-   for(const p of [s.approach,...s.sweep,s.pass])assert.ok(canStandAt(p.x,p.z,w.solids,.43,w.bounds),s.root.name+' search point');
-   assert.ok(findPath(s.sweep[0],s.sweep[1],w.solids,w.bounds,.43).length,s.root.name+' search crosses without teleporting');
-   s.setOpen(1);for(let i=0;i<=30;i++){const p=s.eye.clone().lerp(s.exit,i/30);assert.ok(canStandAt(p.x,p.z,w.solids,.23,w.bounds),s.root.name+' open doorway clears the body');}
-   for(let i=0;i<=20;i++){s.setOpen(i/20);assert.ok(canStandAt(s.eye.x,s.eye.z,w.solids,.23,w.bounds),s.root.name+' inward leaves cannot clip the hidden body');}
-   w.reset();assert.equal(s.doorOpen,0);assert.ok(canStandAt(s.eye.x,s.eye.z,w.solids,.23,w.bounds));
-  }}finally{disposeWorld(w.root);}
- }
-});
-
-test('V107 outdoor shelters have supported bodies, free exits and reachable approaches',()=>{
- for(const area of ['corridor','stairs','resident','office','annex','courtyard','archive','plant','parking']){
-  const w=buildWorld(new T.Scene(),area);try{
-   assert.ok(w.hidingPlaces?.length,area+' needs a real hiding place');
-   for(const s of w.hidingPlaces){
-    assert.ok(s.root.getObjectByName('shelter-peek-slats'),'a real slatted view must be visible');
-    assert.ok(canStandAt(s.exit.x,s.exit.z,w.solids,.23,w.bounds),area+' player exit');
-    assert.ok(canStandAt(s.approach.x,s.approach.z,w.solids,.43,w.bounds),area+' pursuer approach');
-    assert.ok(canStandAt(s.eye.x,s.eye.z,w.solids,.23,w.bounds),area+' body fits inside the shell');
-    assert.ok(findPath(w.spawn,s.exit,w.solids,w.bounds,.23).length,area+' approach is reachable');
-    assert.ok(Math.abs(s.eye.y-(w.heightAt(s.eye.x,s.eye.z)+1.25))<.08,area+' rests on this floor');
-   }
-  }finally{disposeWorld(w.root);}
- }
-});
-
-function overlap(a,b){
- if(a.y-a.h/2>=(b.y??1.5)+(b.h??3)/2-.002||a.y+a.h/2<=(b.y??1.5)-(b.h??3)/2+.002)return false;
- const corners=o=>{const c=Math.cos(o.yaw??0),s=Math.sin(o.yaw??0);return [-1,1].flatMap(i=>[-1,1].map(j=>[o.x+i*o.w/2*c+j*o.d/2*s,o.z-i*o.w/2*s+j*o.d/2*c]));},aa=corners(a),bb=corners(b);
- for(const angle of [a.yaw??0,b.yaw??0])for(const axis of [[Math.cos(angle),-Math.sin(angle)],[Math.sin(angle),Math.cos(angle)]]){const av=aa.map(p=>p[0]*axis[0]+p[1]*axis[1]),bv=bb.map(p=>p[0]*axis[0]+p[1]*axis[1]);if(Math.max(...av)<=Math.min(...bv)+.002||Math.max(...bv)<=Math.min(...av)+.002)return false;}
- return true;
-}
-test('V107 cabinets do not intersect existing solid furniture or obstruct previously usable controls',()=>{
- const failures=[];
- for(const area of ['landing','corridor','stairs','resident','office','annex','courtyard','archive','plant','parking']){
-  const w=buildWorld(new T.Scene(),area),baseRoot=new T.Group(),base=buildBuilding(baseRoot,area);try{
-   for(const s of w.hidingPlaces){const a={x:s.root.position.x,z:s.root.position.z,y:s.root.position.y+1.04,w:1.12,d:.86,h:2.08,yaw:s.root.rotation.y};for(const b of base.solids)if(overlap(a,b))failures.push({area,place:s.root.name,solid:b});assert.ok(s.pass.distanceTo(s.exit)>3,'the pursuer needs a real pass-by route');}
-   for(const t of base.targets){const p=t.mesh.userData.approach;if(p&&canStandAt(p.x,p.z,base.solids,.23,base.bounds)&&!canStandAt(p.x,p.z,w.solids,.23,w.bounds))failures.push({area,blockedControl:t.id});}
-  }finally{disposeWorld(w.root);disposeWorld(baseRoot);}
- }
- assert.deepEqual(failures,[]);
+// The removed seventeen footprints must become real walkable floor, including
+// after a cached world's reset. Quest safes are not hiding cabinets.
+const removed={corridor:[[2.8,0],[-2.8,17]],stairs:[[-.5,-4.6]],resident:[[3.75,-1.2]],office:[[-5.1,4.8],[5.1,-6]],annex:[[-16.25,4],[16.25,-13]],courtyard:[[-30.7,12],[30.7,-12]],archive:[[-14.25,3],[14.25,-14]],plant:[[-16.25,3],[16.25,-14]],parking:[[-11.2,7],[11.2,-6],[-11.2,-20]]};
+for(const [area,footprints] of Object.entries(removed))test(`V119 ${area} has no hiding cabinet, prompt or invisible shell after build/reset`,()=>{
+ const w=buildWorld(new T.Scene(),area);try{for(const reset of [false,true]){if(reset)w.reset();assert.equal(w.hidingPlaces.length,0);assert.ok(!w.targets.some(t=>t.id==='shelter'));w.root.traverse(o=>{assert.ok(!o.name.startsWith('shelter-')&&!o.userData.shelter,'the cabinet geometry must also be removed');});for(const [x,z] of footprints)assert.ok(canStandAt(x,z,w.solids,.23,w.bounds),`${area}: removed shell still blocks ${x},${z}`);}}finally{disposeWorld(w.root);}
 });

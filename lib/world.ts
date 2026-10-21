@@ -10,7 +10,7 @@ import {dressApartment} from './japan.ts';
 import {dressLivingSpace} from './room-dressing.ts';
 import {createDomesticKitchen,createDomesticFridge,createDiningSet,createRepairEstimate,createKitchenTimer,placeDomestic} from './domestic-kitchen.ts';
 import {batchStaticGeometry} from './static-geometry.ts';
-import {addHidingPlaces} from './hiding-places.ts';
+import type {HidingPlace} from './hiding-places.ts';
 import {solidContainsPoint,type Occupant} from './collision.ts';
 import {setDoorAngle} from './passage.ts';
 import type {Surveillance} from './surveillance.ts';
@@ -50,7 +50,7 @@ export type Target = { precise?:boolean; id: Action; point: T.Vector3; label: st
 export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
   const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,carDeparture:undefined}:{...buildBuilding(root,area),setTV:undefined};
-  const hidingPlaces=addHidingPlaces(root,area,content.solids,content.targets,content.bounds,content.heightAt);
+  const hidingPlaces:HidingPlace[]=[];
   batchStaticGeometry(root,content.targets.map(t=>t.mesh));
   const updateStory:((stage:import('./story').Stage,time:number,reduced:boolean,story?:import('./story').Story,occupants?:Occupant[])=>void)|undefined=content.updateStory;
   const lightColors=content.lamps.map(light=>({light,color:light.color.clone()}));
