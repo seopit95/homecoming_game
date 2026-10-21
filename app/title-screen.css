@@ -1,0 +1,49 @@
+.entrance-screen{position:absolute;inset:0;z-index:2;isolation:isolate;display:flex;flex-direction:column;overflow:auto;overscroll-behavior:contain;padding:34px clamp(24px,6.4vw,110px) 25px;background:#050709;color:#cbd0d2;scrollbar-color:#41484d #080c0f}
+.entrance-scenery{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,#050709f5 0%,#050709cf 29%,#05070940 61%,#05070915),linear-gradient(0deg,#030507e8,transparent 35%,transparent 80%,#03050780),url('/images/title-corridor.webp') center/cover no-repeat;box-shadow:inset 0 0 160px #0008}
+.entrance-header{display:flex;justify-content:space-between;align-items:center;gap:20px;border-bottom:1px solid #a3b6c21f;padding-bottom:17px;color:#9aa5ac;font-size:11px;letter-spacing:.2em;flex-shrink:0}
+.entrance-header>span:last-child{display:flex;align-items:center;gap:14px;font-variant-numeric:tabular-nums}
+.entrance-header i{height:1px;width:21px;background:#727e8660}
+.entrance-content{width:min(380px,100%);margin:auto 0;padding:42px 0 40px;flex-shrink:0}
+.entrance-kicker{display:flex;align-items:center;gap:11px;color:#929da5;font-size:11px;letter-spacing:.24em;margin:0 0 19px}
+.entrance-kicker:before{content:'';height:1px;width:26px;background:#a64d40}
+.entrance-screen .entrance-title{font-family:'Nanum Myeongjo','Batang','Songti SC',serif;font-size:clamp(90px,10vw,144px);line-height:1.12;letter-spacing:.22em;font-weight:400;white-space:nowrap;color:#dce0de;margin:0;text-shadow:1px 3px 16px #000,0 0 32px #b7c4c113}
+.entrance-screen .entrance-title>span{display:block;margin:14px 0 0 5px;font:12px ui-monospace,SFMono-Regular,monospace;letter-spacing:.5em;color:#8e9ba3}
+.entrance-tagline{font-family:Batang,'Songti SC',serif;font-size:14px;line-height:1.8;letter-spacing:.09em;color:#aeb6b8;margin:31px 0 29px}
+.entrance-actions{min-height:168px;width:min(300px,100%)}
+.entrance-loading{padding:20px 0 0}
+.entrance-loading-line{height:1px;overflow:hidden;background:#a3b5c12b;position:relative}
+.entrance-loading-line>i{position:absolute;inset:0 auto 0 0;width:38%;background:linear-gradient(90deg,transparent,#b0bfc4,transparent);animation:entrance-load 2.4s ease-in-out infinite}
+.entrance-loading p{margin:17px 0 0;font-size:12px;line-height:1.8;letter-spacing:.04em;color:#a6b0b6}
+.entrance-menu{display:grid;gap:3px}
+.entrance-option{display:flex;align-items:center;justify-content:space-between;gap:15px;width:100%;min-height:46px;background:transparent;border-left:1px solid transparent;padding:12px 14px;color:#a6b0b6;font-size:15px;letter-spacing:.12em;text-align:left;transition:background .18s,color .18s,border-color .18s}
+.entrance-option svg{opacity:0;transform:translateX(-4px);transition:opacity .18s,transform .18s}
+.entrance-option.primary{color:#e0e3de;border-left-color:#b46452;background:linear-gradient(90deg,#b7c4ce0e,transparent)}
+.entrance-option.primary svg,.entrance-option:hover svg,.entrance-option:focus-visible svg{opacity:.85;transform:none}
+.entrance-option:hover,.entrance-option:focus-visible{color:#f0f0e9;background:linear-gradient(90deg,#c8d6dd17,transparent);border-left-color:#b46452}
+.entrance-screen button:focus-visible{outline:1px solid #b4c5cd;outline-offset:3px}
+.entrance-config{font-size:13px;margin-top:9px;color:#929fa7}
+.entrance-config svg{opacity:.6;transform:none}
+.entrance-save{font-size:11px;color:#8f9ca5;line-height:1.7;margin:4px 14px 12px;overflow-wrap:anywhere}
+.entrance-footer{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-shrink:0;border-top:1px solid #a3b6c21f;padding-top:17px;color:#8d9aa3;font-size:11px;letter-spacing:.08em}
+.entrance-footer>span:first-child{display:flex;align-items:center;gap:8px}
+.entrance-footer svg{color:#a1adb3}
+.entrance-failure p{font-size:13px;line-height:1.85;color:#c3b3ac;margin:8px 0 15px;letter-spacing:.015em}
+.entrance-failure .entrance-option{font-size:13px;border-left-color:#b46452}
+.entrance-failure svg{opacity:.8;transform:none}
+.entrance-settings .entrance-back{padding:8px 0;background:none;color:#a2afb7;font-size:12px;letter-spacing:.05em;margin-bottom:16px}
+.entrance-settings h2{font:20px Batang,serif;color:#d0d7d9;margin:0 0 18px}
+.entrance-settings .settings-panel{width:100%;margin:0 0 10px}
+.entrance-screen.has-settings .entrance-content{padding-top:28px;padding-bottom:28px;margin:0;width:min(380px,100%)}
+.entrance-screen.has-settings .entrance-title{font-size:64px}
+.entrance-screen.has-settings .entrance-title>span{font-size:10px;margin-top:9px}
+.entrance-screen.has-settings .entrance-kicker{margin-bottom:10px}
+.entrance-screen.has-settings .entrance-tagline{display:none}
+.entrance-screen.has-settings .entrance-actions{margin-top:22px;width:100%}
+.entrance-screen.has-settings .entrance-footer{margin-top:auto}
+@keyframes entrance-load{from{transform:translateX(-100%)}to{transform:translateX(365%)}}
+@media(max-width:600px){.entrance-screen{padding:22px 25px 20px}.entrance-header{font-size:10px;letter-spacing:.1em}.entrance-header>span:last-child{gap:9px}.entrance-content{padding-top:38px;padding-bottom:32px}.entrance-scenery{background-position:center,center,63% center}.entrance-screen .entrance-title{font-size:100px}.entrance-tagline{margin-top:26px}.entrance-footer{font-size:10px;letter-spacing:0;gap:10px}.entrance-screen.has-settings .entrance-title{font-size:58px}}
+@media(max-height:560px){.entrance-screen{padding-top:18px;padding-bottom:16px}.entrance-content{padding-top:25px;padding-bottom:25px}.entrance-screen .entrance-title{font-size:76px}.entrance-kicker{margin-bottom:10px}.entrance-tagline{margin-top:20px;margin-bottom:14px}.entrance-actions{min-height:120px}}
+@media(prefers-reduced-motion:reduce){.entrance-loading-line>i{animation:none;inset:0;width:100%;background:#9aabb18c}}
+.reduce-motion .entrance-loading-line>i{animation:none;inset:0;width:100%;background:#9aabb18c}
+.game-shell:not(.is-playing){min-height:0}
+@media(max-height:560px) and (min-width:601px){.entrance-screen:not(.has-settings) .entrance-content{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(200px,1fr);column-gap:30px;width:min(740px,100%);padding:18px 0}.entrance-screen:not(.has-settings) .entrance-kicker,.entrance-screen:not(.has-settings) .entrance-title,.entrance-screen:not(.has-settings) .entrance-tagline{grid-column:1}.entrance-screen:not(.has-settings) .entrance-actions{grid-column:2;grid-row:1/4;align-self:center}.entrance-screen:not(.has-settings) .entrance-tagline{font-size:12px;margin-bottom:0}}

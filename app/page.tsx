@@ -1,20 +1,22 @@
 'use client';
 import {useEffect,useRef,useState,type CSSProperties} from 'react';
-import {ArrowRight,Headphones,Pause,Play,RotateCcw,SlidersHorizontal,Volume2,Expand,Flashlight} from '../lib/icons';
+import {Pause,Play,RotateCcw,Volume2,Expand,Flashlight} from '../lib/icons';
 import type {Game,GameView,Settings} from '../lib/game';
 import {registerGameTools} from '../lib/webmcp';
 import {endings,isMemory,isCinematic,areaFor} from '../lib/story';
 import {InvestigationNotebook} from './investigation-notebook';
 import {BreathControl} from './breath-control';
+import {TitleScreen} from './title-screen';
 import {investigation} from '../lib/investigation';
 import {defaultSettings,bindingLabels,keyLabel,allowedKey,type Binding} from '../lib/preferences';
 const initialSettings:Settings=defaultSettings;
 export default function Home(){
   const canvas=useRef<HTMLCanvasElement>(null),root=useRef<HTMLElement>(null),game=useRef<Game|null>(null);
   const [view,setView]=useState<GameView|null>(null),[error,setError]=useState(''),[settings,setSettings]=useState(initialSettings),[showSettings,setShowSettings]=useState(false),[ready,setReady]=useState(false),[showNotes,setShowNotes]=useState(false),[binding,setBinding]=useState<Binding|null>(null),[bindingError,setBindingError]=useState('');
+  const [bootPhase,setBootPhase]=useState('게임 자료를 불러오는 중');
   useEffect(()=>{
     let dead=false;let instance:Game|null=null;let unregister=()=>{};
-    import('../lib/game').then(async({createGame,prepareVisuals})=>{await prepareVisuals();if(dead||!canvas.current)return;try{instance=createGame(canvas.current,setView,setError);game.current=instance;setSettings(instance.getSettings());unregister=registerGameTools(instance);await instance.ready;if(!dead)setReady(true);}catch(e){console.error(e);setError('화면을 열 수 없습니다. 하드웨어 가속을 지원하는 최신 브라우저에서 다시 열어주세요.');}}).catch(()=>setError('게임을 불러오지 못했습니다. 연결을 확인하고 새로고침해 주세요.'));
+    import('../lib/game').then(async({createGame,prepareVisuals})=>{if(dead)return;setBootPhase('공간의 질감을 준비하는 중');await prepareVisuals();if(dead||!canvas.current)return;setBootPhase('공간과 조명을 준비하는 중');try{instance=createGame(canvas.current,setView,setError);game.current=instance;setSettings(instance.getSettings());unregister=registerGameTools(instance);await instance.ready;if(!dead)setReady(true);}catch(e){console.error(e);if(!dead)setError('화면을 열 수 없습니다. 하드웨어 가속을 지원하는 최신 브라우저에서 다시 열어주세요.');}}).catch(()=>{if(!dead)setError('게임을 불러오지 못했습니다. 연결을 확인하고 다시 불러와 주세요.');});
     return()=>{dead=true;unregister();instance?.dispose();game.current=null;};
   },[]);
   useEffect(()=>{const key=(e:KeyboardEvent)=>{const state=game.current?.snapshot();if(e.code==='KeyJ'&&!e.repeat&&state?.started&&state.story.stage!=='ended'){e.preventDefault();if(state.paused&&showNotes){setShowNotes(false);game.current?.pause(false);}else{setShowNotes(true);game.current?.pause(true);}}};document.addEventListener('keydown',key);return()=>document.removeEventListener('keydown',key);},[showNotes]);
@@ -57,19 +59,7 @@ export default function Home(){
   return <main className={`game-shell ${began?'is-playing':''} ${hidden?'is-hidden':''} ${!settings.filmGrain?'no-grain':''} ${settings.reducedMotion?'reduce-motion':''}`} style={{'--subtitle-scale':settings.subtitleScale} as CSSProperties} ref={root}>
     <canvas ref={canvas} className="world" style={{filter:view?.breathBlur?`blur(${view.breathBlur.toFixed(2)}px)`:undefined,transition:paused?'none':'filter .12s linear'}} aria-label="정전된 아파트를 탐색하는 1인칭 공포게임 화면"/>
     <div className="vignette"/><div className="film-grain"/><div className="lens-edge"/>
-    {!began&&<section className="title-screen" aria-label="게임 시작 화면">
-      <div className="topline"><span className="edition">백로아파트 · 야간 기록</span><span className="address">2803호<span/>03:17</span></div>
-      <div className="title-content"><p className="overline"><i/>돌아온 것은, 누구인가.</p><h1>귀가<span>귀가 ─ 백로아파트</span></h1>
-        <div className="story-intro"><p>비 오는 새벽 3시 17분.<br/>백로아파트, 28층 2803호.<br/>사흘 전, 나는 사람을 죽이고 달아났다.</p><p>집에 돌아와 잠들면 잊을 줄 알았다.<br/>그날 밤, 혼자 돌아온 게 아니었다.</p></div>
-        {view?.canContinue&&<><button className="start-button continue-button" disabled={!ready} onClick={()=>game.current?.continueGame()}><span>이어서 귀가하기</span><Play size={19}/></button><p className="save-location">{view.savedLocation} · 이 기기에 남은 기록</p></>}
-        <button className="start-button" disabled={!ready} onClick={()=>game.current?.start()}><span>{ready?(view?.canContinue?'처음부터 시작':'그날 밤으로'):'공간을 준비하는 중'}</span><ArrowRight size={21}/></button>
-        <div className="start-meta"><span><Headphones size={15}/>헤드폰 권장</span><span>열한 장의 귀가 기록 · 혼자 플레이</span></div>
-        <button className="settings-toggle" aria-expanded={showSettings} onClick={()=>setShowSettings(!showSettings)}><SlidersHorizontal size={15}/>밝기 · 소리 · 시점 설정</button>{showSettings&&settingsPanel}
-      </div>
-      <div className="title-caption"><span lang="ja">귀 가 기 록</span><p>28층에서 시작된 밤.<br/>1층은 아직 멀다.</p></div>
-      <div className="controls-strip"><span><kbd>{[settings.bindings.forward,settings.bindings.left,settings.bindings.back,settings.bindings.right].map(keyLabel).join(" ")}</kbd> 이동</span><span><kbd>마우스</kbd> 둘러보기</span><span><kbd>{keyLabel(settings.bindings.run)}</kbd> 달리기</span><span><kbd>{keyLabel(settings.bindings.interact)}</kbd> 확인 · 숨기</span><span><kbd>{keyLabel(settings.bindings.torch)}</kbd> 손전등</span><span><kbd>{keyLabel(settings.bindings.crouch)}</kbd> 몸 낮추기</span><span><kbd>ESC</kbd> 일시정지</span><small>화살표 키 / 화면 드래그로도 조작 가능</small></div>
-      <div className="touch-intro">화면을 드래그해 둘러보고, 이동 버튼으로 걸으세요. 「달리기 ↑」를 누른 채 이동할 수 있습니다.</div>
-    </section>}
+    {!began&&<TitleScreen ready={ready} phase={bootPhase} error={!ready?error:''} canContinue={!!view?.canContinue} savedLocation={view?.savedLocation} showSettings={showSettings} settingsPanel={settingsPanel} onStart={()=>game.current?.start()} onContinue={()=>game.current?.continueGame()} onSettings={()=>setShowSettings(!showSettings)} onRetry={()=>window.location.reload()}/>}
     {began&&!ended&&!dying&&!memory&&<>
       <header className="hud"><div><div className="room-label"><i/>{view?.location}<span>{view?.floor}</span></div><p className={(view?.threat||0)>.2?'urgent':''}>{view?.objective}</p></div><div className="hud-tools"><span className="clock">{view?.clock}</span><button className="notes-trigger" aria-label="수집한 기록 보기" onClick={()=>{setShowNotes(true);game.current?.pause(true);}}>기록 {recordCount}</button><button aria-label="전체 화면" title="전체 화면" onClick={()=>{if(document.fullscreenElement)void document.exitFullscreen();else void root.current?.requestFullscreen().catch(()=>{});}}><Expand size={18}/></button><button aria-label="일시정지" title="일시정지" onClick={()=>game.current?.pause(true)}><Pause size={18}/></button></div></header>
       {!paused&&view?.chapterCard&&<div className="chapter-card"><span>제 {view.chapterNumber} 장 · {view.floor}</span><p>{view.chapter}</p></div>}
@@ -91,6 +81,6 @@ export default function Home(){
     {dying&&<div className="death-vignette" aria-hidden="true"><div style={{opacity:Math.max(0,((view?.deathProgress||0)-.42)/.18)}}/></div>}
     {dying&&(view?.deathProgress||0)>.4&&!paused&&<button className="skip-death" onClick={()=>game.current?.skipDeath()}>재시도 화면으로</button>}
     {ended&&<section className="ending-screen"><div><p className="overline">귀가 기록 / {view?.story.ending==='crashed'?'배드 엔딩 · 동승자':'미완'}</p><h2>{view?.story.ending==='crashed'?'끝내, 혼자가 아니었다.':'발소리가 멎었다.'}</h2><p className="ending-copy">{view?.story.ending==='crashed'?endings.crashed:endings.caught}</p><p className="end-time">{minutes}분 {seconds}초의 기록</p><button className="start-button" onClick={()=>game.current?.start(view?.story.ending==='caught')}><span>{view?.story.ending==='caught'?view.checkpointLabel:'다시 귀가하기'}</span><RotateCcw size={18}/></button><p className="ending-note">{view?.story.ending==='caught'?'발소리와 시선을 살피세요. 해당 구간부터 다시 시작하며, 읽은 기록은 남습니다.':'〈귀가〉를 플레이해 주셔서 감사합니다.'}</p></div></section>}
-    {error&&<div className="error-note" role="alert"><Volume2 size={18}/><p>{error}</p><button aria-label="알림 닫기" onClick={()=>setError('')}>×</button></div>}
+    {error&&(ready||began)&&<div className="error-note" role="alert"><Volume2 size={18}/><p>{error}</p><button aria-label="알림 닫기" onClick={()=>setError('')}>×</button></div>}
   </main>;
 }

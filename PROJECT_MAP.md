@@ -7,7 +7,7 @@
 | 플레이 화면·설정·모바일 조작 | `app/page.tsx`, `app/globals.css`; 키·설정·저장: `lib/preferences.ts` |
 | 조사 수첩·획득한 증거 해석 | `app/investigation-notebook.tsx`, `lib/investigation.ts` |
 | 게임 루프·입력·상호작용·장면 이동 | `lib/game.ts`; 진행용 문은 `doorActions`/`findTarget`에서 실제 문짝을 raycast한다. 틈은 기존 점 판정으로 보완하고, 실제 표면은 `world.hasLineOfSight`의 끝 여유 .04로 가림 검사(일반 기본 .15 유지). 통과 판정: `lib/passage.ts`; 걸음 거리·발 착지·시점 반동: `lib/player-gait.ts` → 손/손전등 위상 `lib/viewmodel.ts`. 새 설정의 bob 기본 켬, 기존 명시적 끔/화면 흔들림 줄이기는 존중 |
-| 시작 화면 로딩·그래픽 준비 | `app/layout.tsx`의 첫 CSS와 `lib/visual-preloads.json`의 제한된3개 다운로드 힌트 → `app/page.tsx`의 동적 게임 import → `lib/materials.ts`의 `prepareVisuals` → `lib/game.ts`의 `ready`. URL 변경은 `tests/visual-hints.test.mjs`로 확인. 모든 맵 업로드·렌더 준비 유지. SSR 경로 변경은 개발 모드 대신 배포용 빌드에서 HTTP200·실제 시작을 확인 |
+| 시작 화면 로딩·그래픽 준비 | `app/title-screen.tsx`·`app/title-screen.css`의 SSR 제목/실제 복도 8KB WebP → `app/page.tsx`의 실제 import/질감/공간 준비 단계 → 준비 후 새 게임·이어하기·설정. 초기 실패는 닫는 대신 재로드 안내. UI 상태 계약: `tests/title-screen.test.mjs`. `app/layout.tsx`의 첫 CSS와 `lib/visual-preloads.json`의 기존3개 힌트·동적 게임 import·`prepareVisuals`·`Game.ready` 유지. URL 변경 시에만 `tests/visual-hints.test.mjs` 재검증. 배포용 HTTP200·JS 실행 전 제목 포함 여부 확인. 가짜 진행률·최소 대기·스플래시 때문에 기다리는 자산 없음 |
 | 미션·단서·체크포인트 | `lib/story.ts`, `lib/expansion-story.ts`; 1층 재차 퓨즈 운반 없음, 중정은 인계 열쇠→실제 보관함→지하문 열쇠. 레거시 확장 단계는 `preferences.readProgress`→`checkpoint`에서 보정. 장 정보: `lib/chapters.ts` |
 | 집 내부·배치·충돌 | `lib/world.ts`, `lib/apartment-layout.ts` |
 | 복도·승강기·계단·관리실·주차장 | `lib/building.ts`에서 해당 공간 제작 함수 확인. 계단의 첫 윗층/반복층 아래쪽은 받는 공간이 없는 폐쇄문으로 표식, 실제 진행은 첫 아래문→반복층 메모→윗층 연결문. 폐쇄 표식은 복제 뒤에 추가해 실제 통로에 섞이지 않음 |
