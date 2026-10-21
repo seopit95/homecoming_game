@@ -7,9 +7,8 @@ import {findPath,pursuerRadius} from './navigation.ts';
 import {batchStaticGeometry} from './static-geometry.ts';
 
 export type HidingPlace={root:T.Group;target:Target;eye:T.Vector3;exit:T.Vector3;approach:T.Vector3;pass:T.Vector3;sweep:T.Vector3[];yaw:number;doorOpen:number;setOpen:(value:number)=>void};
-// Backed against existing walls; no cabinets in the lift or its boarding space.
+// Backed against existing walls. The straight 28F gallery is a dedicated escape runway.
 const placements:Partial<Record<Area,readonly [number,number,number][]>>={
- landing:[[.75,17,-Math.PI/2],[.75,7,-Math.PI/2],[.75,-17,-Math.PI/2]],
  corridor:[[2.8,0,-Math.PI/2],[-2.8,17,Math.PI/2]],
  stairs:[[-.5,-4.6,-Math.PI/2]],resident:[[3.75,-1.2,-Math.PI/2]],
  office:[[-5.1,4.8,Math.PI/2],[5.1,-6, -Math.PI/2]],

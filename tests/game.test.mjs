@@ -60,6 +60,15 @@ test('V116 the real 1F intercom opens the way without a second fuse errand',asyn
 test('V116 an already-confirmed legacy safe reopens and its basement key can actually be collected',async()=>{
  const f=await officeAgencyInput({stage:'court_code',notes:['court_confirm'],elapsed:950});try{assert.equal(f.game.snapshot().story.stage,'court_safe_open');tick(1.3);const safe=renderedScene.getObjectByName('courtyard-key-safe'),key=safe.getObjectByName('courtyard-basement-key').getWorldPosition(new THREE.Vector3());f.use([25,1.65,31.65],key.toArray());assert.equal(f.game.snapshot().story.stage,'court_unlocked');assert.ok(f.game.snapshot().story.notes.includes('court_key'));}finally{f.close();}
 });
+test('V117 the straight gallery has no misleading cabinet and a clear route to its lift',async()=>{
+ const {buildWorld,disposeWorld,canStandAt}=await import('../lib/world.ts');const w=buildWorld(new THREE.Scene(),'landing');try{assert.equal(w.hidingPlaces.length,0,'a visible straight-line chase cannot sell a false hiding choice');assert.ok(!w.targets.some(t=>t.id==='shelter'));for(let z=20;z>-22;z-=.25)assert.ok(canStandAt(0,z,w.solids,.23,w.bounds),'the player lane stays clear');}finally{disposeWorld(w.root);}
+});
+test('V117 running the whole gallery reaches the arriving lift without a hidden call interaction',async()=>{
+ const f=await officeAgencyInput({stage:'lift_call',notes:[],elapsed:200});try{f.game.key('KeyW',true);f.game.key('ShiftLeft',true);let open=false,boarded=false,min=Infinity,lastAt=[],raceTime=0;for(let i=0;i<1100&&!['lift_button','dying','ended'].includes(f.game.snapshot().story.stage);i++){lastAt=renderedCamera.position.toArray();raceTime=i*.025;tick(.025);if(f.game.snapshot().story.stage==='lift_enter')open=renderedScene.getObjectByName('lift-door-left').position.x<-.8||open;if(f.game.snapshot().story.stage==='lift_boarding')boarded=true;const g=renderedScene.getObjectByName('resident-remains');if(g?.visible)min=Math.min(min,Math.hypot(g.position.x-renderedCamera.position.x,g.position.z-renderedCamera.position.z));}f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.equal(f.game.snapshot().story.stage,'lift_button',JSON.stringify({stage:f.game.snapshot().story.stage,at:renderedCamera.position.toArray(),lastAt,raceTime,min,stamina:f.game.snapshot().stamina}));assert.ok(open&&boarded,'actual leaves open before walking inside and then close');assert.equal(f.game.snapshot().paused,false);}finally{f.close();}
+});
+test('V117 the gallery chase allows sprint recovery instead of requiring fresh stamina at the home exit',async()=>{
+ const f=await officeAgencyInput({stage:'lift_call',notes:[],elapsed:200});try{const g=renderedScene.getObjectByName('resident-remains');g.position.set(3.7,0,40);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);tick(6.55);assert.ok(f.game.snapshot().exhausted,'deplete stamina with actual running input');renderedCamera.position.set(0,1.65,20.5);g.position.set(3.7,0,20.5);g.rotation.y=-Math.PI/2;let lastAt=[];for(let i=0;i<1100&&!['lift_button','dying','ended'].includes(f.game.snapshot().story.stage);i++){lastAt=renderedCamera.position.toArray();tick(.025);}f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.equal(f.game.snapshot().story.stage,'lift_button',JSON.stringify({stage:f.game.snapshot().story.stage,lastAt,stamina:f.game.snapshot().stamina}));}finally{f.close();}
+});
 test('V114 actual hidden input builds vision and pulse strain, reveals an unlit trembling grip, freezes and respects reduced motion',async()=>{
  const media=win.matchMedia;win.matchMedia=q=>({matches:q==='(pointer:coarse)'});const f=await officeAgencyInput({stage:'parking_alarm',notes:['plant_drained','car_search'],elapsed:1400});try{
   const s=renderedScene.getObjectByName('shelter-parking-0').userData.shelter,g=renderedScene.getObjectByName('resident-remains');g.position.set(s.approach.x+20,0,s.approach.z+10);f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);f.game.key('ControlLeft',true);tick(3);assert.equal(f.game.snapshot().breathBlur,0);tick(7.5);
@@ -156,17 +165,6 @@ test('V107 unseen outdoor hiding keeps the chapter live while the ghost searches
   ghost.position.set(s.approach.x+3,0,s.approach.z);ghost.visible=true;let searched=false;for(let i=0;i<400;i++){tick(.1);const d=ghost.position.distanceTo(renderedCamera.position);if(d<2.6)searched=true;if(searched&&d>3)break;}assert.ok(searched);
   assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().story.stage,stage);assert.ok(f.game.snapshot().elapsed>elapsed+4);assert.ok(ghost.position.distanceTo(renderedCamera.position)>3,'the pursuer actually moves away, giving an exit window');
   f.game.interact();tick(1.5);assert.equal(f.game.snapshot().story.hidden,false);assert.equal(f.game.snapshot().story.stage,stage);assert.equal(f.game.snapshot().paused,false);
- }finally{f.close();}
-});
-
-test('V107 a gallery shelter remains usable while the lift arrives and preserves bounded peeking',async()=>{
- const f=await officeAgencyInput({stage:'lift_call',notes:[],elapsed:200});try{
-  f.use([.2,1.65,-20.65],[.95,1.25,-22.55]);assert.equal(f.game.snapshot().story.stage,'lift_wait');
-  const s=renderedScene.getObjectByName('shelter-landing-2').userData.shelter;
-  f.use([s.exit.x,1.65,s.exit.z],s.target.point.toArray());tick(1.65);assert.equal(f.game.snapshot().story.hidden,true);assert.equal(f.game.snapshot().flashlight,false);
-  const before=renderedCamera.position.clone(),yaw=renderedCamera.rotation.y;event(f.canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:2});event(doc,'pointermove',{clientX:800,clientY:0});event(doc,'pointerup',{});tick();
-  assert.ok(Math.abs(renderedCamera.rotation.y-yaw)<=.551);f.game.key('KeyW',true);tick(.3);f.game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(before)<.001);
-  tick(6.6);assert.equal(f.game.snapshot().story.stage,'lift_enter','the lift clock continues while concealed');assert.equal(f.game.snapshot().story.hidden,true);f.game.interact();tick(1.5);assert.equal(f.game.snapshot().story.hidden,false);assert.equal(f.game.snapshot().flashlight,true);
  }finally{f.close();}
 });
 

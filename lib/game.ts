@@ -783,6 +783,11 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(stageTime>=2.8){advance('heard');say('현관은 닫혀 있다. 소리는 다용도실 안에서 난다.\n이미 집 안에 있었다. 장롱에 숨어야 한다.',7);}
     }
     if(area!=='lift'&&elapsed-lastDrip>7.8){audio.sound('drip',Math.sin(elapsed*.37)*.8,area==='stairs'||area==='parking'?.8:.35);lastDrip=elapsed;}
+    // The 28F gallery offers no occluded escape branch. Its elevator was already
+    // called before we arrived; reaching it must not require a hidden extra input.
+    if(story.stage==='lift_call'&&areaTime>.25){
+      advance('call');audio.sound('motor',0,.3);say('호출등이 이미 켜져 있다. 누가 불러 놓은 거지… 승강기가 올라온다.',5);
+    }
     if(story.stage==='lift_wait'){
       if(stageTime>2.5&&scriptBeat===0){scriptBeat=1;audio.sound('knock',.9);say('젖은 손이 바닥을 짚는 소리가 가까워진다.\n엘리베이터는 아직 오지 않았다.',4);}
       if(stageTime>4.8){advance('arrived');audio.sound('chime');say('문이 열렸다. 바로 들어가자.',5);}

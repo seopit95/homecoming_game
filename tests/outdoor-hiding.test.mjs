@@ -20,7 +20,7 @@ test('V108 every inward door clears the continuous body path and has a reachable
 });
 
 test('V107 outdoor shelters have supported bodies, free exits and reachable approaches',()=>{
- for(const area of ['landing','corridor','stairs','resident','office','annex','courtyard','archive','plant','parking']){
+ for(const area of ['corridor','stairs','resident','office','annex','courtyard','archive','plant','parking']){
   const w=buildWorld(new T.Scene(),area);try{
    assert.ok(w.hidingPlaces?.length,area+' needs a real hiding place');
    for(const s of w.hidingPlaces){
