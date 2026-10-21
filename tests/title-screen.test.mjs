@@ -18,7 +18,7 @@ const render=props=>renderToStaticMarkup(createElement(TitleScreen,{...defaults,
 
 test('initial server markup exposes the title and real loading status before game readiness',()=>{
   const html=render({});
-  assert.match(html,/귀가<span>03 : 17/);
+  assert.match(html,/<h1[^>]*>귀가<small[^>]*lang="zh-Hant"[^>]*>\(歸家\)<\/small><span>03 : 17/);
   assert.match(html,/role="status"[^>]*>.*게임 자료를 불러오는 중/s);
   assert.doesNotMatch(html,/aria-busy="true"/,'loading announcements must not be queued behind a busy ancestor');
   assert.doesNotMatch(html,/<button|<canvas|<progress/);

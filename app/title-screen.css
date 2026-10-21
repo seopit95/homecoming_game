@@ -1,5 +1,5 @@
 .entrance-screen{position:absolute;inset:0;z-index:2;isolation:isolate;display:flex;flex-direction:column;overflow:auto;overscroll-behavior:contain;padding:34px clamp(24px,6.4vw,110px) 25px;background:#050709;color:#cbd0d2;scrollbar-color:#41484d #080c0f}
-.entrance-scenery{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,#050709f5 0%,#050709cf 29%,#05070940 61%,#05070915),linear-gradient(0deg,#030507e8,transparent 35%,transparent 80%,#03050780),url('/images/title-corridor.webp') center/cover no-repeat;box-shadow:inset 0 0 160px #0008}
+.entrance-scenery{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,#050709f5 0%,#050709cf 29%,#05070940 61%,#05070915),linear-gradient(0deg,#030507e8,transparent 35%,transparent 80%,#03050780),url('/images/title-corridor.webp') center/cover no-repeat;box-shadow:inset 0 0 160px #0008;animation:entrance-lights 9.2s steps(1,end) infinite}
 .entrance-header{display:flex;justify-content:space-between;align-items:center;gap:20px;border-bottom:1px solid #a3b6c21f;padding-bottom:17px;color:#9aa5ac;font-size:11px;letter-spacing:.2em;flex-shrink:0}
 .entrance-header>span:last-child{display:flex;align-items:center;gap:14px;font-variant-numeric:tabular-nums}
 .entrance-header i{height:1px;width:21px;background:#727e8660}
@@ -7,6 +7,7 @@
 .entrance-kicker{display:flex;align-items:center;gap:11px;color:#929da5;font-size:11px;letter-spacing:.24em;margin:0 0 19px}
 .entrance-kicker:before{content:'';height:1px;width:26px;background:#a64d40}
 .entrance-screen .entrance-title{font-family:'Nanum Myeongjo','Batang','Songti SC',serif;font-size:clamp(90px,10vw,144px);line-height:1.12;letter-spacing:.22em;font-weight:400;white-space:nowrap;color:#dce0de;margin:0;text-shadow:1px 3px 16px #000,0 0 32px #b7c4c113}
+.entrance-screen .entrance-title>.entrance-hanja{display:inline-block;vertical-align:middle;margin-left:.45em;font-size:clamp(16px,.22em,30px);font-weight:400;letter-spacing:.05em;color:#8e9999}
 .entrance-screen .entrance-title>span{display:block;margin:14px 0 0 5px;font:12px ui-monospace,SFMono-Regular,monospace;letter-spacing:.5em;color:#8e9ba3}
 .entrance-tagline{font-family:Batang,'Songti SC',serif;font-size:14px;line-height:1.8;letter-spacing:.09em;color:#aeb6b8;margin:31px 0 29px}
 .entrance-actions{min-height:168px;width:min(300px,100%)}
@@ -40,10 +41,14 @@
 .entrance-screen.has-settings .entrance-tagline{display:none}
 .entrance-screen.has-settings .entrance-actions{margin-top:22px;width:100%}
 .entrance-screen.has-settings .entrance-footer{margin-top:auto}
+@keyframes entrance-lights{0%,24%,29%,68%,73%,100%{filter:brightness(1)}25%,27%,69%,71%{filter:brightness(.24)}}
 @keyframes entrance-load{from{transform:translateX(-100%)}to{transform:translateX(365%)}}
-@media(max-width:600px){.entrance-screen{padding:22px 25px 20px}.entrance-header{font-size:10px;letter-spacing:.1em}.entrance-header>span:last-child{gap:9px}.entrance-content{padding-top:38px;padding-bottom:32px}.entrance-scenery{background-position:center,center,63% center}.entrance-screen .entrance-title{font-size:100px}.entrance-tagline{margin-top:26px}.entrance-footer{font-size:10px;letter-spacing:0;gap:10px}.entrance-screen.has-settings .entrance-title{font-size:58px}}
+@media(max-width:600px){.entrance-screen{padding:22px 25px 20px}.entrance-header{font-size:10px;letter-spacing:.1em}.entrance-header>span:last-child{gap:9px}.entrance-content{padding-top:38px;padding-bottom:32px}.entrance-scenery{background-position:center,center,63% center}.entrance-screen .entrance-title{font-size:clamp(80px,20vw,100px)}.entrance-tagline{margin-top:26px}.entrance-footer{font-size:10px;letter-spacing:0;gap:10px}.entrance-screen.has-settings .entrance-title{font-size:58px}}
 @media(max-height:560px){.entrance-screen{padding-top:18px;padding-bottom:16px}.entrance-content{padding-top:25px;padding-bottom:25px}.entrance-screen .entrance-title{font-size:76px}.entrance-kicker{margin-bottom:10px}.entrance-tagline{margin-top:20px;margin-bottom:14px}.entrance-actions{min-height:120px}}
 @media(prefers-reduced-motion:reduce){.entrance-loading-line>i{animation:none;inset:0;width:100%;background:#9aabb18c}}
 .reduce-motion .entrance-loading-line>i{animation:none;inset:0;width:100%;background:#9aabb18c}
 .game-shell:not(.is-playing){min-height:0}
 @media(max-height:560px) and (min-width:601px){.entrance-screen:not(.has-settings) .entrance-content{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(200px,1fr);column-gap:30px;width:min(740px,100%);padding:18px 0}.entrance-screen:not(.has-settings) .entrance-kicker,.entrance-screen:not(.has-settings) .entrance-title,.entrance-screen:not(.has-settings) .entrance-tagline{grid-column:1}.entrance-screen:not(.has-settings) .entrance-actions{grid-column:2;grid-row:1/4;align-self:center}.entrance-screen:not(.has-settings) .entrance-tagline{font-size:12px;margin-bottom:0}}
+
+@media(prefers-reduced-motion:reduce){.entrance-scenery{animation:none}}
+.reduce-motion .entrance-scenery{animation:none}

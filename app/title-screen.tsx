@@ -14,7 +14,7 @@ export function TitleScreen({ready,phase,error,canContinue,savedLocation,showSet
     <header className="entrance-header"><span>백로아파트</span><span>28층 <i/> 2803호</span></header>
     <div className="entrance-content">
       <p className="entrance-kicker">한밤의 귀가 기록</p>
-      <h1 className="entrance-title">귀가<span>03 : 17</span></h1>
+      <h1 className="entrance-title">귀가<small className="entrance-hanja" lang="zh-Hant">(歸家)</small><span>03 : 17</span></h1>
       <p className="entrance-tagline">분명, 혼자 돌아왔는데.</p>
       <div className="entrance-actions">
         {error?<div className="entrance-failure"><p role="alert">{error}</p><button type="button" className="entrance-option" onClick={onRetry}><span>다시 불러오기</span><ArrowRight size={18}/></button></div>
