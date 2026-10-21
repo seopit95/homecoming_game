@@ -98,7 +98,7 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
     ctx.fillStyle='rgba(4,14,10,.72)';ctx.fillRect(0,0,640,48);ctx.fillRect(0,398,640,82);
     ctx.fillStyle='#c0d2bd';ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='21px monospace';
     const timecode=mode==='office'?`03:26:${String(Math.floor(clock)+(clock>=3?9:0)).padStart(2,'0')}`:mode==='road'?`03:17:${String(12+Math.floor(clock)).padStart(2,'0')}`:mode==='call'?`03:20:${String(Math.floor(clock-5)).padStart(2,'0')}`:mode==='gate'?`03:26:${String(Math.floor(clock-12)+3).padStart(2,'0')}`:`03:17:${String(Math.floor(Math.max(0,clock-21))%60).padStart(2,'0')}`;
-    ctx.fillText(mode==='live'?`LIVE  CAM-08  편집실  ${timecode}`:mode==='idle'?'BAEKRO / 감시 기록 장치':`${office?'저장':'원본'}  ${mode==='road'?'CAM-01':mode==='gate'||mode==='office'?'CAM-04':'AUDIO-17'}  ${timecode}`,20,25);
+    ctx.fillText(mode==='live'?`LIVE  CAM-08  관리실 서고  ${timecode}`:mode==='idle'?'BAEKRO / 감시 기록 장치':`${office?'저장':'원본'}  ${mode==='road'?'CAM-01':mode==='gate'||mode==='office'?'CAM-04':'AUDIO-17'}  ${timecode}`,20,25);
     if(mode==='call'){
       ctx.font='26px sans-serif';ctx.fillText('정문 비상벨 → 2803 등록 휴대전화',36,132);
       for(let i=0;i<116;i++){const x=32+i*5,level=clock<14.5?(9+Math.abs(Math.sin(i*1.31+frame*.7)*Math.sin(i*.19-frame*.12))*54):2;ctx.fillRect(x,240-level,2,level*2);}

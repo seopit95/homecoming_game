@@ -1,0 +1,71 @@
+{
+  "version": "ghost-voice-v126",
+  "createdDate": "2026-10-22",
+  "origin": "AI-generated through the user's connected Runway account. These are synthetic performances, not recordings of a real actress; no person was cloned or imitated.",
+  "rights": {
+    "classification": "Generated output under Runway user terms; not a CC0 source recording.",
+    "commercialUseSource": "https://help.runwayml.com/hc/en-us/articles/21668707517587-Can-I-use-the-content-I-made-in-Runway-for-commercial-purposes",
+    "usageRightsSource": "https://help.runwayml.com/hc/en-us/articles/18927776141715-Usage-rights",
+    "terms": "https://runway.com/terms-of-use",
+    "checkedDate": "2026-10-22",
+    "summary": "Runway states that users retain rights to their generated content and may use it commercially, subject to the terms and usage policy."
+  },
+  "generation": {
+    "provider": "Runway",
+    "totalCreditsUsed": 5,
+    "purchasedCredits": false,
+    "subscriptionChanged": false,
+    "attemptsPerClip": 1
+  },
+  "production": {
+    "decodedBy": "macOS afconvert",
+    "format": "Mono 44100 Hz signed 16-bit PCM WAV",
+    "edits": [
+      "8 ms onset fade; 10 ms end fade",
+      "Peak normalization to -6 dBFS"
+    ],
+    "notApplied": [
+      "Pitch or speed shift",
+      "Vocal layering",
+      "Oscillator or synthetic tone overlay",
+      "Music",
+      "Distortion"
+    ],
+    "runtime": "Original playback speed, 11 kHz lowpass when unoccluded; quiet 35 ms / 4% early reflection; existing wall occlusion and voice mixer preserved."
+  },
+  "files": [
+    {
+      "file": "capture-scream.wav",
+      "use": "Existing scream GhostLine: capture and active chase",
+      "taskId": "da1764f4-28c8-4764-95ff-0b2ea773ade0",
+      "model": "sound-effects",
+      "promptText": "Adult woman's raw nonverbal scream of agonized terror, close and dry. A sudden breath catches, strained chest voice rises into a piercing broken head-voice cry, falters and exhales shakily. One continuous realistic human performance, severe distress and panic. Subtle small-room reflection only; no words, music, instruments, monsters, robotic tones, layering or distortion.",
+      "requestedSeconds": 4,
+      "durationSeconds": 4,
+      "sha256": "acc756e3c1c7242fd79f2afcc78a34a94580052e4e6094ab82dac87371394ebf",
+      "sourceMp3Sha256": "58bac13398005a35725f5f6025187f769ff3912968da847df6ce1e96b344c69e"
+    },
+    {
+      "file": "refusal-ko.wav",
+      "use": "Existing no GhostLine; intended words 안 돼!!!",
+      "taskId": "e01ae723-f95a-4142-b1b1-44d558576f1c",
+      "model": "eleven_v3",
+      "presetVoice": "Ella",
+      "languageCode": "ko",
+      "speed": 0.95,
+      "text": "[screaming] [panicked] 안 돼!!!",
+      "durationSeconds": 2.5861224489795918,
+      "sha256": "270f0c707cb75026f556197bd64e943e279b0f1c3b30d04a157b5fcfb059c3bc",
+      "sourceMp3Sha256": "15052dc10c2d5ca18b0c58bfeaea57417524b038ffc033029a993803700c7d60"
+    }
+  ],
+  "verification": {
+    "pcmDecode": true,
+    "nonzeroSignal": true,
+    "zeroClippedSamples": true,
+    "edgeSamplesZero": true,
+    "focusedRoutingTests": 2,
+    "subjectiveListeningVerified": false,
+    "limitation": "The agent cannot consume audio input. Emotional naturalness, apparent adult female timbre, Korean intelligibility, and the final in-game mix have not been approved by listening."
+  }
+}

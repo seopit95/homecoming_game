@@ -1,3 +1,4 @@
+import {buildApartmentEscape} from './apartment-escape.ts';
 import {buildGarageStructure,garageMarking} from './garage-structure.ts';
 import * as T from 'three';
 import {buildCarDeparture,type CarDeparture} from './car-departure.ts';
@@ -26,7 +27,7 @@ export const landing={halfWidth:1.3,halfLength:23,spawnZ:20.5,homeZ:20.5,homeX:1
 export const buildingLayout={corridor:{x:3.5,z:20,spawnZ:18},lift:{x:1.1,z:1.45,spawnZ:.7},stairs:{x:2,z:6,flightX:1,run:4,spawnZ:3.8},office:{x:5.8,z:7.8,spawnZ:6.5},parking:{x:12,z:22,spawnZ:20,alarm:{x:-10.8,z:16},alarmApproach:{x:-10.8,z:16.5},car:{x:5,z:-18}}} as const;
 export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
   if(area==='courtyard')return {...buildCourtyard(root),carDeparture:undefined};
-  if(area==='annex'||area==='archive'||area==='plant')return {...buildExpansion(root,area),carDeparture:undefined};
+  if(area==='annex'||area==='archive'||area==='plant')return {...buildApartmentEscape(root,area),carDeparture:undefined};
   if(area==='resident'||area==='aftermath')return {...buildStoryRoom(root,area),carDeparture:undefined};
   const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
   const size=area==='landing'?{x:landing.halfWidth,z:landing.halfLength}:buildingLayout[area];

@@ -1,3 +1,4 @@
+import {apartmentEscapeLayout} from './escape-layout.ts';
 import * as T from 'three';
 import {connectionPassage,setDoorAngle} from './passage.ts';
 import type {Occupant} from './collision.ts';
@@ -24,9 +25,9 @@ import {createArchiveDoor} from './archive-door.ts';
 
 export const expansionLayout={
  courtyard:courtyardLayout,
- annex:{x:17,z:34,name:'1F · 공동시설',exit:'1F 외부 중정',rooms:['우편실','세탁실','경비 휴게실','통신실'],patrol:[{x:0,z:26},{x:-14,z:18},{x:-14,z:-18},{x:0,z:-27},{x:14,z:-18},{x:14,z:18}]},
- archive:{x:15,z:32,name:'B1 · 기록보관실',exit:'기계실 연결통로',rooms:['A · 도로 영상','C · 입차 영상','B · 비상 통화','편집실'],patrol:[{x:0,z:25},{x:-12,z:18},{x:-12,z:-18},{x:0,z:-27},{x:12,z:-18},{x:12,z:18}]},
- plant:{x:17,z:36,name:'B1 · 배수 기계실',exit:'B1 주차장',rooms:['서측 저장탱크','배수 펌프','동측 급수관','전기실'],patrol:[{x:0,z:26},{x:-14,z:18},{x:-14,z:-18},{x:0,z:-29},{x:14,z:-18},{x:14,z:18}]},
+ annex:apartmentEscapeLayout.annex,
+ archive:apartmentEscapeLayout.archive,
+ plant:apartmentEscapeLayout.plant,
 } as const;
 
 export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyard'>){

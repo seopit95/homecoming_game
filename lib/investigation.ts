@@ -4,8 +4,8 @@ import {journalEntry,type Action,type Story} from './story.ts';
 // recovered tapes are not proof until the player has compared their contents.
 export function investigation(story:Pick<Story,'notes'>){
  const notes=new Set(story.notes),has=(...ids:string[])=>ids.some(id=>notes.has(id));
- const groups=[['memory','사흘 전의 기억'],['home','28층과 비상계단'],['resident','1704호 · 남겨진 생활'],['office','임시 관리실'],['annex','1층 · 비상 호출'],['court','중정 · 인계 기록'],['archive','지하 · 원본 대조'],['plant','기계실'],['parking','주차장'],['other','그 밖의 기록']] as const;
- const sectionFor=(id:string)=>id==='wake'?'memory':id==='phone'||id.startsWith('home_')||id==='gallery_notice'||id==='core_notice'||id==='stair_note'?'home':id==='belongings'||id==='portrait'||id==='answerphone'||id.startsWith('resident_')?'resident':id.startsWith('annex_')?'annex':id.startsWith('court_')?'court':id.startsWith('archive_')?'archive':id.startsWith('plant_')?'plant':id==='exit'||id==='car_search'?'parking':['record','monitor','fuse','office_install','security_power','service_key'].includes(id)?'office':'other';
+ const groups=[['memory','사흘 전의 기억'],['home','28층과 비상계단'],['resident','1704호 · 남겨진 생활'],['office','임시 관리실'],['annex','1층 · 공동현관'],['court','중정 · 인계 기록'],['archive','관리실 · 세 기록'],['plant','지하계단 · 출입 홀'],['parking','주차장'],['other','그 밖의 기록']] as const;
+ const sectionFor=(id:string)=>id==='wake'?'memory':id==='phone'||id.startsWith('home_')||id==='gallery_notice'||id==='core_notice'||id==='stair_note'?'home':id==='belongings'||id==='portrait'||id==='answerphone'||id.startsWith('resident_')?'resident':id.startsWith('annex_')?'annex':id.startsWith('court_')?'court':id.startsWith('archive_')?'archive':id.startsWith('plant_')||id==='basement_route'?'plant':id==='exit'||id==='car_search'?'parking':['record','monitor','fuse','office_install','security_power','service_key'].includes(id)?'office':'other';
  const records=[...notes].flatMap(id=>{const entry=journalEntry(id as Action,story);return typeof entry?.title==='string'&&typeof entry?.text==='string'?[{id,title:entry.title,text:entry.text}]:[];});
  const sections=groups.map(([id,title])=>({id,title,records:records.filter(r=>sectionFor(r.id)===id)})).filter(s=>s.records.length);
  const timeline:{id:string;time:string;title:string;text:string;confirmed:boolean;source:string}[]=[];
@@ -22,9 +22,9 @@ export function investigation(story:Pick<Story,'notes'>){
  const name=has('belongings','annex_badge')?'한서연':null;
  const person={name,text:has('portrait')?'「다음에는 맑은 날에. 내일 오후 두 시.」 냉장고에는 끝내 지키지 못한 약속이 남아 있다.':has('answerphone')?'일상이 계속될 거라고 믿었던 목소리다.':name?'내가 살던 건물의 야간 당직이었다. 얼굴도 모르는 사람이 아니었다.':null};
  const questions:string[]=[];
- if(has('archive_road')&&!has('archive_sequence_road'))questions.push('충돌 직전의 보행 신호와 제동등은 언제 바뀌었을까? 도로 원본을 대조해야 한다.');
- if(has('annex_call','annex_line_office','archive_call')&&!has('archive_sequence_call'))questions.push('03:20, 수신자 쪽에서는 무슨 말을 했을까? 발신측 녹음만으로는 알 수 없다.');
- if(has('record','monitor','archive_gate')&&!has('archive_sequence_gate'))questions.push('입차 뒤 빠진 아홉 초에는 무슨 일이 있었을까? 열람본의 빈 구간만으로 단정할 수 없다.');
+ if(has('archive_road')&&!has('archive_sequence_road'))questions.push('충돌 직전의 보행 신호와 제동등은 언제 바뀌었을까? 세 기록을 확인하고 CCTV에서 누락 영상을 재생해야 한다.');
+ if(has('annex_call','annex_line_office','archive_call')&&!has('archive_sequence_call'))questions.push('03:20, 수신자 쪽에서는 무슨 말을 했을까? 세 기록을 확인하고 CCTV 원본을 이어 봐야 한다.');
+ if(has('record','monitor','archive_gate')&&!has('archive_sequence_gate'))questions.push('입차 뒤 빠진 아홉 초에는 무슨 일이 있었을까? CCTV에서 누락 영상을 재생하면 확인할 수 있다.');
  const pattern=has('archive_sequence_road')&&has('archive_sequence_call')&&has('archive_sequence_gate')?'충돌 뒤 현장을 떠났다. 돌아와 달라는 전화를 끊었다. 살아 있는 사람의 구조 요청을 듣고도 문을 잠갔다. 충돌 장면이 아니라 그 뒤의 아홉 초를 삭제해 달라고 했다. 기록에서 반복되는 것은 내가 외면한 순간들이다.':null;
  return {count:records.length,sections,timeline,person,questions,pattern};
 }

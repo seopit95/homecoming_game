@@ -5,6 +5,7 @@ import {heartbeatBuffer,type GhostSoundPosition} from './ghost-sound.ts';
 export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'mobile-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
 const archiveCues={road:[['collision-impact',4.2]],call:[['archive-guard',.2],['archive-denial',8]],gate:[['archive-plea',.8],['archive-lock',5.8]]} as const;
 export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'memory'|'no';
+const ghostVoiceFiles:Partial<Record<GhostLine,string>>={scream:'/audio/ghost-v126/capture-scream.wav',no:'/audio/ghost-v126/refusal-ko.wav'};
 // Local voice clips and procedural effects share a bounded master volume.
 export class HorrorAudio {
   context: AudioContext | null = null;
@@ -91,7 +92,7 @@ export class HorrorAudio {
     for(const clip of ['fire-bell','player-breath','passenger-line','male-surprise','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast','archive-guard','archive-denial','archive-plea'] as RecordedClip[])void fetch(`/audio/overhaul/${clip}.${clip.startsWith('archive-')?'mp3':'wav'}`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setExertion(this.exertionWanted);this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);this.setDevice('alarm',this.deviceWanted.alarm);}}).catch(()=>{});
     this.clips['intercom-ringback']=intercomTone(ctx,false);this.clips['intercom-busy']=intercomTone(ctx,true);this.clips['mobile-ring']=smartphoneRing(ctx);
     void fetch('/audio/footsteps/bank.wav').then(r=>{if(!r.ok)throw new Error('Footsteps unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.footstepBuffer=buffer;}).catch(()=>{});
-    for(const line of ['where','here','found','come','cry','scream','memory','no'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
+    for(const line of ['where','here','found','come','cry','scream','memory','no'] as GhostLine[])void fetch(ghostVoiceFiles[line]??`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
   recorded(clip:RecordedClip,level=1,pan=0){
     const ctx=this.context,buffer=this.clips[clip];if(!ctx||!buffer||ctx.state!=='running')return;
@@ -242,7 +243,9 @@ export class HorrorAudio {
     const ctx=this.context,buffer=this.voices[line];if(!ctx||!this.master||ctx.state!=='running')return;
     if(!buffer){this.sound('breath',pan,level);return;}
     this.stopVoices();const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),panner=ctx.createStereoPanner(),delay=ctx.createDelay(.5),echo=ctx.createGain();
-    source.buffer=buffer;source.playbackRate.value=line==='scream'||line==='memory'||line==='no'?1:line==='cry'?.94:.86;filter.type='lowpass';filter.frequency.value=occluded?650:line==='scream'||line==='no'?5200:line==='memory'?2800:2400;gain.gain.value=.64*level;panner.pan.value=Math.max(-1,Math.min(1,pan));delay.delayTime.value=.23;echo.gain.value=.22;
+    // Keep the distress performance intact; only a quiet early room reflection follows it.
+    const distress=line==='scream'||line==='no';
+    source.buffer=buffer;source.playbackRate.value=distress||line==='memory'?1:line==='cry'?.94:.86;filter.type='lowpass';filter.frequency.value=occluded?650:distress?11000:line==='memory'?2800:2400;gain.gain.value=.64*level;panner.pan.value=Math.max(-1,Math.min(1,pan));delay.delayTime.value=distress?.035:.23;echo.gain.value=distress?.04:.22;
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.voiceBus!);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }

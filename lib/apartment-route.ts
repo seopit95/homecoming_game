@@ -1,0 +1,57 @@
+import type {Action,Stage,Story} from './story.ts';
+
+const records=['archive_road','archive_call','archive_gate'] as const;
+const labels=['사고 기록','통화 기록','입차 기록'];
+const readyFoyer=(s:Pick<Story,'notes'>):Stage=>['annex_map','annex_badge'].every(id=>s.notes.includes(id))?'annex_exit_ready':s.notes.some(id=>id==='annex_map'||id==='annex_badge')?'annex_unlock':'annex_arrival';
+const note=(s:Story,id:string,stage:Stage=s.stage):Story=>({...s,stage,notes:[...new Set([...s.notes,id])]});
+export function apartmentRouteTransition(s:Story,a:Action):Story|undefined{
+ if(s.stage==='stairs_passage'&&a==='stair_exit')return {...s,stage:'stairs_ground'};
+ if(s.stage==='stairs_ground')return a==='ground_arrived'?{...s,stage:'annex_arrival'}:s;
+ if(s.stage.startsWith('annex_')){
+  if(a==='annex_map'||a==='annex_badge'){if(s.notes.includes(a))return s;const next=note(s,a);return {...next,stage:readyFoyer(next)};}
+  if(a==='annex_front_exit')return note(s,a);
+  if(a==='annex_exit')return readyFoyer(s)==='annex_exit_ready'?{...s,stage:'annex_departure'}:s;
+  if(a==='archive_enter'&&s.stage==='annex_departure')return {...s,stage:'archive_arrival'};
+  return s;
+ }
+ if(s.stage.startsWith('archive_')){
+  if(records.includes(a as typeof records[number])&&['archive_arrival','archive_search','archive_edit'].includes(s.stage)){
+   if(s.notes.includes(a))return s;const next=note(s,a);return {...next,stage:records.every(id=>next.notes.includes(id))?'archive_reveal':'archive_search'};
+  }
+  if(a==='archive_ledger')return note(s,a,s.stage==='archive_arrival'?'archive_search':s.stage);
+  if(a==='archive_play'&&s.stage==='archive_reveal')return note(s,a,'archive_playback');
+  if(a==='archive_finish'&&s.stage==='archive_playback')return {...s,stage:'archive_escape',notes:[...new Set([...s.notes,...records.map(id=>id.replace('archive_','archive_sequence_'))])]};
+  if(a==='archive_exit'&&s.stage==='archive_escape')return {...s,stage:'archive_departure'};
+  if(a==='plant_enter'&&s.stage==='archive_departure')return {...s,stage:'plant_exit_ready'};
+  return s;
+ }
+ if(s.stage.startsWith('plant_')){
+  if(a==='plant_exit')return note(s,'basement_route','plant_departure');
+  if(a==='parking_enter'&&s.stage==='plant_departure')return {...s,stage:'parking_gate'};
+  return s;
+ }
+ return undefined;
+}
+export function apartmentRouteObjective(s:Story):string|undefined{
+ if(s.stage==='stairs_ground')return '비상계단을 따라 1층까지 계속 내려간다.';
+ if(s.stage.startsWith('annex_'))return s.stage==='annex_departure'?'관리실 옆 문서보관실로. 지하주차장 출입 기록이 남아 있다.':!s.notes.includes('annex_map')?'1층 공동현관. 안내판에서 주차장으로 가는 길을 확인한다.':!s.notes.includes('annex_badge')?'정문 앞 작업대가 무너져 있다. 옆 경비실 책상에서 관리용 열쇠를 챙긴다.':'열쇠를 챙겼다. 「문서보관실 · 지하출입」 표지의 문을 연다.';
+ if(['archive_arrival','archive_search','archive_edit'].includes(s.stage)){
+  const count=records.filter(id=>s.notes.includes(id)).length,missing=labels.filter((_,i)=>!s.notes.includes(records[i]));
+  return `기록 확인 ${count}/3 · ${missing.join(' · ')}. 책상에 놓인 세 기록을 확인한다.`;
+ }
+ if(s.stage==='archive_reveal')return '세 기록의 시각이 이어졌다. 책상 CCTV의 「누락 영상 재생」을 누른다.';
+ if(s.stage==='archive_playback')return 'CCTV 재생 중 · 문을 잠갔던 아홉 초. 아직 살아 있었다.';
+ if(s.stage==='archive_escape')return '문밖에서 긁는 소리. 「B1 주차장」 방화문을 열어 내려간다.';
+ if(s.stage==='archive_departure')return '뒤돌아보지 말고 지하계단으로!';
+ if(s.stage==='plant_exit_ready')return '지하계단. 노란 「B1 주차장」 표지를 따라 내려간다.';
+ if(s.stage==='plant_departure')return '방화문 너머가 주차장이다. 내 차로 가야 한다.';
+ return undefined;
+}
+export function normalizeApartmentRoute(s:Story):Story{
+ const stage=s.stage;
+ if(stage.startsWith('resident')||stage.startsWith('office')||stage.startsWith('service_')||stage.startsWith('court_'))return {...s,stage:readyFoyer(s),circuit:[],officeSupply:false};
+ if(stage.startsWith('annex_'))return {...s,stage:stage==='annex_departure'?stage:readyFoyer(s),circuit:[]};
+ if(stage.startsWith('archive_')&&!['archive_playback','archive_escape','archive_departure'].includes(stage))return {...s,stage:records.every(id=>s.notes.includes(id))?'archive_reveal':s.notes.some(id=>records.includes(id as typeof records[number]))?'archive_search':'archive_arrival',circuit:[]};
+ if(stage.startsWith('plant_'))return {...s,stage:stage==='plant_departure'?stage:'plant_exit_ready',circuit:[]};
+ return s;
+}
