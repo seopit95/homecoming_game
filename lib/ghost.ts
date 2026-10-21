@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {surface} from './materials.ts';
+import {victimDressMaterial} from './victim-outfit.ts';
 import {createAnatomicalArm,poseAnatomicalArm} from './ghost-arms.ts';
 import {createAnatomicalLeg} from './ghost-legs.ts';
 import {createHair,settleHair} from './ghost-hair.ts';
@@ -18,7 +19,7 @@ type Rig={pursuit:number;steps?:Steps;crawl:number;kneel:number;tuck:Clearance;d
 const rigs=new WeakMap<T.Group,Rig>();
 export function createGhost(parent:T.Object3D){
   const figure=new T.Group();figure.name='resident-remains';figure.rotation.order='YXZ';parent.add(figure);figure.visible=false;
-  const skin=surface('skin','#bfc7c3',{roughness:.62}),cloth=surface('cloth','#aeb5b0',{side:T.DoubleSide,roughness:.82,bumpScale:.00035,vertexColors:true});
+  const skin=surface('skin','#bfc7c3',{roughness:.62}),cloth=victimDressMaterial(true);
   const torso=new T.Group();torso.position.set(.035,1.16,.02);figure.add(torso);
   const {gown,hem}=createDress(torso,cloth);
   const head=new T.Group();head.name='ghost-head';head.position.set(0,.502,.00816);head.scale.set(.67,.68,.68);torso.add(head);

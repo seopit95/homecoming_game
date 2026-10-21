@@ -2,7 +2,7 @@ import type {ArchiveFrame} from './archive-review.ts';
 import type {FootSurface} from './footsteps.ts';
 import footBank from './footstep-bank.json' with {type:'json'};
 import {heartbeatBuffer,type GhostSoundPosition} from './ghost-sound.ts';
-export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
+export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'mobile-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
 const archiveCues={road:[['collision-impact',4.2]],call:[['archive-guard',.2],['archive-denial',8]],gate:[['archive-plea',.8],['archive-lock',5.8]]} as const;
 export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'memory'|'no';
 // Local voice clips and procedural effects share a bounded master volume.
@@ -31,7 +31,7 @@ export class HorrorAudio {
   archivePosition:{source:ArchiveFrame['source'];time:number;contextTime:number}|null=null;
   archiveGain:GainNode|null=null;archivePan:StereoPannerNode|null=null;
   deviceLoops=new Map<string,{source:AudioBufferSourceNode;gain:GainNode;pan:StereoPannerNode;level:number}>();
-  deviceWanted={phone:0,radio:0,alarm:0,ringback:0,busy:0};
+  deviceWanted={phone:0,mobile:0,radio:0,alarm:0,ringback:0,busy:0};
   exertion:GainNode|null=null;exertionSource:AudioBufferSourceNode|null=null;exertionFilter:BiquadFilterNode|null=null;exertionWanted=0;exertionLevel=-1;
   footstepBuffer:AudioBuffer|null=null;
   lastFoot:Partial<Record<keyof typeof footBank,number>>={};
@@ -89,7 +89,7 @@ export class HorrorAudio {
     const lock=this.clips['archive-lock']=ctx.createBuffer(1,Math.round(ctx.sampleRate*.1),ctx.sampleRate),lockData=lock.getChannelData(0);
     for(let i=0;i<lockData.length;i++){const t=i/ctx.sampleRate;lockData[i]=Math.sin(t*2300)*Math.exp(-t*90)*.4;}
     for(const clip of ['fire-bell','player-breath','passenger-line','male-surprise','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast','archive-guard','archive-denial','archive-plea'] as RecordedClip[])void fetch(`/audio/overhaul/${clip}.${clip.startsWith('archive-')?'mp3':'wav'}`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setExertion(this.exertionWanted);this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);this.setDevice('alarm',this.deviceWanted.alarm);}}).catch(()=>{});
-    this.clips['intercom-ringback']=intercomTone(ctx,false);this.clips['intercom-busy']=intercomTone(ctx,true);
+    this.clips['intercom-ringback']=intercomTone(ctx,false);this.clips['intercom-busy']=intercomTone(ctx,true);this.clips['mobile-ring']=smartphoneRing(ctx);
     void fetch('/audio/footsteps/bank.wav').then(r=>{if(!r.ok)throw new Error('Footsteps unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.footstepBuffer=buffer;}).catch(()=>{});
     for(const line of ['where','here','found','come','cry','scream','memory','no'] as GhostLine[])void fetch(`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
@@ -139,12 +139,12 @@ export class HorrorAudio {
     this.exertionSource!.playbackRate.setTargetAtTime(.9+this.exertionWanted*.22,ctx.currentTime,.6);
     this.exertionFilter!.frequency.setTargetAtTime(1600+this.exertionWanted*3200,ctx.currentTime,.4);
   }
-  setDevice(device:'phone'|'radio'|'alarm'|'ringback'|'busy',level:number,pan=0){
+  setDevice(device:'phone'|'mobile'|'radio'|'alarm'|'ringback'|'busy',level:number,pan=0){
     this.deviceWanted[device]=level;
     const ctx=this.context,old=this.deviceLoops.get(device);if(!ctx)return;
     if(level<=0){if(old){old.source.stop();old.source.disconnect();old.gain.disconnect();old.pan.disconnect();this.deviceLoops.delete(device);}return;}
     if(old){if(Math.abs(old.level-level)>.015){old.level=level;old.gain.gain.setTargetAtTime(level*.55,ctx.currentTime,.15);}old.pan.pan.value=pan;return;}
-    const buffer=this.clips[device==='phone'?'phone-ring':device==='alarm'?'fire-bell':device==='ringback'?'intercom-ringback':device==='busy'?'intercom-busy':'radio-tuning-broadcast'];if(!buffer)return;
+    const buffer=this.clips[device==='mobile'?'mobile-ring':device==='phone'?'phone-ring':device==='alarm'?'fire-bell':device==='ringback'?'intercom-ringback':device==='busy'?'intercom-busy':'radio-tuning-broadcast'];if(!buffer)return;
     const source=ctx.createBufferSource(),gain=ctx.createGain(),p=ctx.createStereoPanner();source.buffer=buffer;source.loop=true;gain.gain.value=level*.55;p.pan.value=pan;
     source.connect(gain);gain.connect(p);p.connect(this.effectsBus!);source.start();this.deviceLoops.set(device,{source,gain,pan:p,level});
   }
@@ -283,7 +283,7 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);if(spatial)this.ghostSounds.add(o);o.onended=()=>{this.ghostSounds.delete(o);o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.breathStrain=0;this.setGhostPosition(null);this.heartbeatSource?.stop();this.heartbeatSource=null;for(const node of [this.heartbeat,this.ghostFilter,this.ghostGain,this.ghostPanner])node?.disconnect();this.heartbeat=null;this.heartbeatLevel=-1;this.heartbeatBpm=-1;this.ghostPanner=null;this.ghostFilter=null;this.ghostGain=null;this.ghostPosition=null;this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.breathStrain=0;this.setGhostPosition(null);this.heartbeatSource?.stop();this.heartbeatSource=null;for(const node of [this.heartbeat,this.ghostFilter,this.ghostGain,this.ghostPanner])node?.disconnect();this.heartbeat=null;this.heartbeatLevel=-1;this.heartbeatBpm=-1;this.ghostPanner=null;this.ghostFilter=null;this.ghostGain=null;this.ghostPosition=null;this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('mobile',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }
 
 // A local private exchange: one-second ringback bursts and a shorter busy cadence.
@@ -291,4 +291,11 @@ export function intercomTone(ctx:BaseAudioContext,busy:boolean){
   const period=busy?.5:3,on=busy?.25:1,buffer=ctx.createBuffer(1,Math.round(ctx.sampleRate*period),ctx.sampleRate),data=buffer.getChannelData(0);
   for(let i=0;i<on*ctx.sampleRate;i++){const t=i/ctx.sampleRate,envelope=Math.min(1,t/.006,(on-t)/.006);data[i]=envelope*.12*(Math.sin(2*Math.PI*440*t)+Math.sin(2*Math.PI*(busy?620:480)*t));}
   return buffer;
+}
+
+// A short original digital ringtone, distinct from the building emergency bell.
+export function smartphoneRing(ctx:Pick<AudioContext,'sampleRate'|'createBuffer'>){
+ const buffer=ctx.createBuffer(1,Math.round(ctx.sampleRate*3),ctx.sampleRate),data=buffer.getChannelData(0),notes=[880,1174.66,1318.51,1174.66];
+ for(let i=0;i<data.length;i++){const t=i/ctx.sampleRate,beat=Math.floor(t/.18);if(beat>=8)continue;const u=t% .18;if(u>.125)continue;const envelope=Math.min(1,u/.008,(.125-u)/.025),f=notes[beat%4];data[i]=envelope*(Math.sin(2*Math.PI*f*t)*.12+Math.sin(2*Math.PI*f*2*t)*.025);}
+ return buffer;
 }

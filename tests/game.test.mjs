@@ -32,6 +32,21 @@ async function officeAgencyInput(saved){
  function use(pos,at){aim(pos,at);assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
  return {game,data,use,aim,canvas,close(){game.dispose();win.localStorage=previous;}};
 }
+test('V123 the bedside smartphone becomes the carried caller and flashlight without a second device',async()=>{
+ const f=await officeAgencyInput({stage:'light_switch',notes:['wake'],elapsed:25});try{
+  assert.ok(deviceLevels.mobile>0,'the incoming call rings at the bedside before pickup');
+  f.use([home.switch[0]+.8,1.65,home.switch[2]],home.switch);assert.equal(f.game.snapshot().story.stage,'find_torch');
+  f.use([home.flashlight[0],1.65,home.flashlight[2]-1],home.flashlight);
+  assert.equal(f.game.snapshot().story.stage,'phone');assert.equal(f.game.snapshot().hasFlashlight,true);
+  assert.equal(renderedScene.getObjectByName('smartphone-pickup').visible,false);
+  assert.ok(renderedHands.getObjectByName('held-smartphone'));
+  renderedCamera.position.set(...home.stand);tick();assert.match(f.game.snapshot().prompt,/수신 전화/);
+  const drops=soundCalls.filter(s=>s==='wet-drop').length;f.game.interact();tick();
+  assert.equal(f.game.snapshot().story.stage,'power');assert.equal(deviceLevels.mobile,0);assert.equal(soundCalls.filter(s=>s==='wet-drop').length,drops);
+  f.use([home.breaker[0]+1,1.65,home.breaker[2]],home.breaker);assert.equal(f.game.snapshot().story.stage,'shoes');assert.equal(soundCalls.filter(s=>s==='wet-drop').length,drops+1);
+  f.game.torch();tick();assert.equal(f.game.snapshot().flashlight,false);f.game.torch();tick();assert.equal(f.game.snapshot().flashlight,true);
+ }finally{f.close();}
+});
 test('V122 a stair checkpoint restart approaches around the real blind corner instead of waiting at the player back',async()=>{
  const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{
   const {hasLineOfSight,canStandAt}=await import('../lib/world.ts');

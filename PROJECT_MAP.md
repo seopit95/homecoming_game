@@ -5,6 +5,8 @@
 | 작업 영역 | 첫 진입점 / 연결 파일 |
 | --- | --- |
 | 플레이 화면·설정·모바일 조작 | `app/page.tsx`, `app/globals.css`; 키·설정·저장: `lib/preferences.ts` |
+| 스마트폰 전화·플래시 | V123 `lib/smartphone.ts` 공통 기기 → `world.ts` 침대 협탁 픽업, `viewmodel.ts` 후면 LED 광원/실사 손(`smartphone-hand-v1.webp`), `observed-player.ts` CCTV 속 기기, `chapters.ts` 한서연 음성메시지/사고 현장 폰. 공용 비상전화·인터폰은 유지. 새 도입: 스위치→폰 픽업→손 안의 전화 받기→차단기→신발. `game.findTarget`의 phone은 들고 있는 대상이며 협탁을 다시 조준하지 않는다. `preferences.ts`의 phone/shoes 체크포인트와 `smartphone` 노트가 새/기존 저장 흐름을 구별. 내부 torch/flashlight 액션·저장 이름은 호환성 때문에 유지. `audio.ts`의 mobile 루프는 건물 전화벨과 구분되며 들고 이동/통화 종료/장면 변경에 맞춰 갱신 |
+| 사고 여성·귀신 공통 의상 | V123 `lib/victim-outfit.ts`의 단색 회색 공통 재질(젖은 정도만 구분), `pedestrian-art.ts`의 기존 소매 바인딩, `pedestrian.ts`의 긴 치마. 치마는 hip/knee/ankle을 따라 곡선 길이 기준으로 분할해 허리 링의 겹침/버킷 모양을 방지. 귀신은 기존 gown/관절/상처 유지. `tests/victim-outfit.test.mjs`와 `pedestrian-clothing.test.mjs`; 실제 사고 접지는 `opening-staging.test.mjs` |
 | 조사 수첩·획득한 증거 해석 | `app/investigation-notebook.tsx`, `lib/investigation.ts` |
 | 게임 루프·입력·상호작용·장면 이동 | `lib/game.ts`; 진행용 문은 `doorActions`/`findTarget`에서 실제 문짝을 raycast한다. 틈은 기존 점 판정으로 보완하고, 실제 표면은 `world.hasLineOfSight`의 끝 여유 .04로 가림 검사(일반 기본 .15 유지). 통과 판정: `lib/passage.ts`; 걸음 거리·발 착지·시점 반동: `lib/player-gait.ts` → 손/손전등 위상 `lib/viewmodel.ts`. 새 설정의 bob 기본 켬, 기존 명시적 끔/화면 흔들림 줄이기는 존중 |
 | 시작 화면 로딩·그래픽 준비 | `app/title-screen.tsx`·`app/title-screen.css`의 SSR 제목/실제 복도 8KB WebP → `app/page.tsx`의 실제 import/질감/공간 준비 단계 → 준비 후 새 게임·이어하기·설정. 초기 실패는 닫는 대신 재로드 안내. UI 상태 계약: `tests/title-screen.test.mjs`. `app/layout.tsx`의 첫 CSS와 `lib/visual-preloads.json`의 기존3개 힌트·동적 게임 import·`prepareVisuals`·`Game.ready` 유지. URL 변경 시에만 `tests/visual-hints.test.mjs` 재검증. 배포용 HTTP200·JS 실행 전 제목 포함 여부 확인. 가짜 진행률·최소 대기·스플래시 때문에 기다리는 자산 없음 |

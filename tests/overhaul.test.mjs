@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initialStory,transition,hasFlashlight} from '../lib/story.ts';
 import {freshStamina,stepStamina,canSprint} from '../lib/stamina.ts';
-test('wake-up requires a failed switch and physical flashlight pickup before escape',()=>{
+test('wake-up requires a failed switch and physical smartphone pickup before escape',()=>{
  let s=transition(initialStory(),'skip_memory');assert.equal(s.stage,'wake_ring');assert.equal(hasFlashlight(s),false);
- for(const [a,next] of [['awake','light_switch'],['switch','find_torch'],['flashlight','power'],['breaker','phone']]){assert.equal(transition(s,'door'),s);s=transition(s,a);assert.equal(s.stage,next);}
+ for(const [a,next] of [['awake','light_switch'],['switch','find_torch'],['flashlight','phone'],['phone','power'],['breaker','shoes']]){assert.equal(transition(s,'door'),s);s=transition(s,a);assert.equal(s.stage,next);}
  assert.equal(hasFlashlight(s),true);assert.equal(transition({...s,stage:'hide'},'door').stage,'lift_call');
 });
 test('office requires installed backup power and the correct tape timestamp',()=>{

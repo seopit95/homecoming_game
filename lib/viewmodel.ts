@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {handSkinMaterial,cutoutMaterial} from './materials.ts';
+import {createSmartphone} from './smartphone.ts';
 
 // A separate depth pass keeps the forearm out of walls without drawing through its own fingers.
 export function createViewmodel(){
@@ -12,9 +13,7 @@ export function createViewmodel(){
   const crease=new T.MeshStandardMaterial({color:'#6d4a37',roughness:.9,transparent:true,opacity:.28});
   const nail=new T.MeshPhysicalMaterial({color:'#947d69',roughness:.55});
   const sleeve=new T.MeshStandardMaterial({color:'#272e30',roughness:.96});
-  const metal=new T.MeshStandardMaterial({color:'#242b2c',metalness:.72,roughness:.34});
   const rubber=new T.MeshStandardMaterial({color:'#11191b',roughness:.7});
-  const silver=new T.MeshStandardMaterial({color:'#979e9a',metalness:.9,roughness:.24});
   function ellipsoid(parent:T.Object3D,p:number[],scale:number[],material:T.Material){const m=new T.Mesh(new T.SphereGeometry(1,20,14),material);m.position.set(...p as [number,number,number]);m.scale.set(...scale as [number,number,number]);parent.add(m);return m;}
   function curve(parent:T.Object3D,points:number[][],radius:number,material:T.Material){const path=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p as [number,number,number])));const m=new T.Mesh(new T.TubeGeometry(path,20,radius,8,false),material);parent.add(m);return m;}
   function section(parent:T.Object3D,a:number[],b:number[],r1:number,r2:number,material:T.Material){
@@ -33,29 +32,21 @@ export function createViewmodel(){
   ellipsoid(hand,[.035,-.033,.025],[.04,.035,.067],skin);
   ellipsoid(hand,[.045,-.019,.073],[.027,.034,.034],skin);
   for(let i=0;i<4;i++){
-    const z=-.048+i*.028,r=.0125-i*.0008;
-    curve(hand,[[.053,-.028,z],[.05,.006,z],[.026,.029,z],[-.006,.028,z],[-.03,.007,z],[-.026,-.015,z]],r,skin);
-    ellipsoid(hand,[-.026,-.015,z],[r*.97,r,r],skin);
-    const n=ellipsoid(hand,[-.035,-.011,z],[.0025,.007,.0085],nail);n.rotation.z=-.5;
-    curve(hand,[[.027,.04,z-.006],[.025,.041,z],[.026,.04,z+.006]],.0006,crease);
+    const y=-.023+i*.020,r=.008-i*.0003;
+    curve(hand,[[.052,y,.015],[.056,y,-.024],[.037,y,-.038],[-.014,y,-.039],[-.03,y,-.029]],r,skin);
+    ellipsoid(hand,[-.03,y,-.026],[r,r,.009],skin);
+    ellipsoid(hand,[-.03,y,-.017],[.006,.007,.0015],nail);
+    curve(hand,[[.047,y-.004,-.017],[.049,y,-.019],[.047,y+.004,-.017]],.0005,crease);
   }
   curve(hand,[[.058,-.008,.076],[.057,.025,.058],[.032,.051,.027],[.008,.037,.004]],.015,skin);
   ellipsoid(hand,[.008,.037,.004],[.014,.014,.017],skin);
   const thumbNail=ellipsoid(hand,[.005,.047,.003],[.009,.0025,.011],nail);thumbNail.rotation.z=.2;
-  const torch=new T.Group();torch.name='held-flashlight';root.add(torch);
-  section(torch,[0,0,.105],[0,0,-.13],.029,.029,metal);
-  for(let i=0;i<12;i++)section(torch,[0,0,.089-i*.012],[0,0,.086-i*.012],.0305,.0305,rubber);
-  section(torch,[0,0,-.10],[0,0,-.17],.03,.045,metal);
-  section(torch,[0,0,-.168],[0,0,-.184],.045,.045,rubber);
-  section(torch,[0,0,-.184],[0,0,-.188],.037,.037,silver);
-  const lens=new T.Mesh(new T.CircleGeometry(.032,32),new T.MeshStandardMaterial({color:'#a8b9b5',metalness:.2,roughness:.12,emissive:'#e5e5ce',emissiveIntensity:1,side:T.DoubleSide}));lens.position.z=-.19;torch.add(lens);
-  ellipsoid(torch,[0,.031,.078],[.009,.0025,.015],rubber);
-  curve(torch,[[.016,-.012,.103],[.06,-.095,.17],[.055,-.13,.145],[-.004,-.025,.1]],.0025,rubber);
+  const phone=createSmartphone(),torch=phone.root,lens=phone.led;torch.name='held-smartphone';torch.position.set(.012,.018,-.025);root.add(torch);
   const photographic=cutoutMaterial('hand-view');
   let handPlate:T.Mesh|undefined;
-  if(photographic){arm.visible=false;hand.visible=false;torch.visible=false;handPlate=new T.Mesh(new T.PlaneGeometry(.61,.61),photographic);handPlate.name='natural-hand-cutout';handPlate.position.set(.05,-.14,.04);root.add(handPlate);}
+  if(photographic){arm.visible=false;hand.visible=false;torch.visible=false;torch.position.set(.045,-.047,.0485);torch.scale.setScalar(1.25);handPlate=new T.Mesh(new T.PlaneGeometry(.5,.5),photographic);handPlate.name='natural-hand-cutout';handPlate.position.set(.035,-.14,.04);root.add(handPlate);}
   const beamOrigin=new T.Vector3();
-  function update(p:{time:number;stepPhase?:number;stepAmount?:number;strain?:number;moving:boolean;running:boolean;crouched:boolean;torch:boolean;visible:boolean;reducedMotion:boolean;aspect:number;fov:number;obstructed?:boolean}){
+  function update(p:{time:number;stepPhase?:number;stepAmount?:number;strain?:number;calling?:boolean;moving:boolean;running:boolean;crouched:boolean;torch:boolean;visible:boolean;reducedMotion:boolean;aspect:number;fov:number;obstructed?:boolean}){
     root.visible=p.visible;
     const phase=p.stepPhase??p.time*(p.running?12:8),motion=p.reducedMotion?0:p.stepAmount!==undefined?p.stepAmount*.006:p.moving?(p.running?.012:.004):.0015;
     root.position.set(.285*Math.min(1,p.aspect/(16/9))+Math.sin(phase)*motion,-.105+(p.torch?0:-.085)+(p.crouched?-.025:0)+(p.obstructed?-.13:0)+Math.cos(phase*2)*motion*.55,p.obstructed?-.34:-.56);
@@ -64,6 +55,7 @@ export function createViewmodel(){
     const pulse=Math.sin(p.time*54.7)*.7+Math.sin(p.time*82.3)*.3;
     root.position.x+=pulse*tremor*.0018;root.position.y+=Math.sin(p.time*67.1)*tremor*.0012;
     root.rotation.x+=Math.sin(p.time*61.3)*tremor*.003;root.rotation.z+=pulse*tremor*.006;
+    phone.setState(p.calling?'ringing':p.torch?'torch':'idle');
     lens.material.emissiveIntensity=p.torch?.7:0;
     if(photographic)photographic.color.setScalar(p.torch?.62:.22);
     key.intensity=p.torch?1.7:.35;ambient.intensity=p.torch?1:.45;

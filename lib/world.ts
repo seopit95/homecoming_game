@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {createSmartphone} from './smartphone.ts';
 import {configureShadow} from './lighting.ts';
 import {apartment as home,apartmentScale as S,spaceFurniture} from './apartment-layout.ts';
 import type { Action, Area } from './story';
@@ -142,13 +143,6 @@ function buildApartment(scene:T.Group) {
   const couch=sofa(3.2,1.1,wood,fabric);couch.name='home-sofa';couch.rotation.y=-Math.PI/2;couch.position.set(-1.2,0,2.5);scene.add(couch);solids.push({x:-1.2,z:2.5,w:1.1,d:3.2,y:.53,h:1.06});
   at(-3.15,2.4);
   const phoneTable=writingTable(1.2,.535,1.8,wood);phoneTable.name='home-phone-table';phoneTable.position.set(-3.15,0,2.4);scene.add(phoneTable);solids.push({x:-3.15,z:2.4,w:1.2,d:1.8,y:.2675,h:.535});
-  const phone=box(-3.15,.595,2.4,.37,.12,.42,cream);
-  box(-3.15,.705,2.23,.4,.085,.1,dark);for(const x of [-3.3,-3])box(x,.675,2.25,.12,.12,.16,dark);
-  for(let i=0;i<9;i++)box(-3.23+(i%3)*.07,.663,2.4+Math.floor(i/3)*.05,.045,.014,.03,dark);
-  const cord=[];for(let i=0;i<80;i++)cord.push(new T.Vector3(-3.39+Math.sin(i*.7)*.018,.615-i*.003,2.27+i*.009));
-  scene.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(cord),80,.007,5,false),dark));
-  const ps=new T.Mesh(new T.PlaneGeometry(.15,.07),new T.MeshBasicMaterial({map:print('03:17','#c3d9c8','#24483e',45,256,512)}));ps.position.set(-3.15,.662,2.32);ps.rotation.x=-Math.PI/2;scene.add(ps);
-  targets.push({id:'phone',point:new T.Vector3(...home.phone),label:'전화 받기',mesh:phone});const phoneGlow=new T.PointLight('#8cbf9f',.6,2);phoneGlow.position.set(-3.15,.795,2.4);scene.add(phoneGlow);
   box(-3.1,.545,1.91,.45,.02,.33,cream);
   at(-6.12,2.4);
   const tvCabinet=drawerUnit(2.8,.86,.62,wood);tvCabinet.name='home-tv-cabinet';tvCabinet.rotation.y=Math.PI/2;tvCabinet.position.set(-6.12,0,2.4);scene.add(tvCabinet);solids.push({x:-6.12,z:2.4,w:.62,d:2.8,y:.43,h:.86});box(-6.39,1.43,2.4,.13,1.13,2.3,dark);
@@ -200,11 +194,10 @@ function buildApartment(scene:T.Group) {
   targets.push({id:'switch',point:new T.Vector3(...home.switch),label:'전등 스위치 켜기',mesh:lightSwitch});
   at(3.75,5.43);
   const bedside=drawerUnit(.55,.68,.62,wood);bedside.name='home-nightstand';bedside.rotation.y=Math.PI;bedside.position.set(3.75,0,5.43);scene.add(bedside);solids.push({x:3.75,z:5.43,w:.55,d:.62,y:.34,h:.68});
-  const torchPickup=new T.Group();torchPickup.name='flashlight-pickup';scene.add(torchPickup);
-  const torchBody=cyl(3.75,.730,5.43,.035,.24,dark,torchPickup);torchBody.rotation.x=Math.PI/2;
-  const torchHead=cyl(3.75,.730,5.30,.05,.065,metal,torchPickup);torchHead.rotation.x=Math.PI/2;
-  const torchCap=cyl(3.75,.730,5.54,.05,.025,dark,torchPickup);torchCap.rotation.x=Math.PI/2;
-  targets.push({id:'flashlight',point:new T.Vector3(...home.flashlight),label:'손전등 집어 들기',mesh:torchPickup});
+  const handset=createSmartphone(),torchPickup=handset.root;torchPickup.name='smartphone-pickup';torchPickup.rotation.x=-Math.PI/2;torchPickup.position.set(3.75,.688,5.43);scene.add(torchPickup);handset.setState('ringing');
+  const phoneGlow=new T.PointLight('#8ca9bd',.2,1.4);phoneGlow.position.set(3.75,.75,5.43);scene.add(phoneGlow);
+  targets.push({id:'flashlight',point:new T.Vector3(...home.flashlight),label:'스마트폰 집어 들기',mesh:torchPickup});
+  targets.push({id:'phone',point:new T.Vector3(...home.phone),label:'수신 전화 받기',mesh:torchPickup});
   at(6.08,1.55);
   const closet=box(6.08,1.2,1.55,.95,2.4,2.1,wood,true);box(5.59,1.22,1.55,.045,2.26,2,mat('#544333'));targets.push({id:'closet',point:new T.Vector3(...home.closet),label:'장롱에 숨기',mesh:closet});
   at(2.9,-5.5);

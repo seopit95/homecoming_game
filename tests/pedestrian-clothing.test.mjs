@@ -4,9 +4,9 @@ import * as T from 'three';
 import {createPedestrian} from '../lib/pedestrian.ts';
 import data from '../lib/assets/pedestrian-art.json' with {type:'json'};
 
-test('clothing covers the waist continuously between the blouse and trousers',()=>{
+test('the plain long dress covers the waist continuously between its bodice and skirt',()=>{
  const p=createPedestrian(new T.Group()),shirt=p.root.getObjectByName('pedestrian-authored-shirt'),torso=shirt.parent,clothes=[];
- p.root.traverse(o=>{if(o.isMesh&&(o.name==='pedestrian-authored-shirt'||o.name.startsWith('pedestrian-trouser-')))clothes.push(o);});
+ p.root.traverse(o=>{if(o.isMesh&&['pedestrian-authored-shirt','pedestrian-dress-skirt'].includes(o.name))clothes.push(o);});
  for(const hit of [null,.2,.4,1.5]){
   p.pose(20,hit);p.root.updateMatrixWorld(true);
   for(let i=0;i<16;i++){

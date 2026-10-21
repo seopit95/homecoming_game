@@ -211,15 +211,13 @@ test('entry shoes have human dimensions and rest on the tile, with no box-shaped
 });
 
 
-test('V65 resident phone has supported feet, a cord outside the cabinet, an exposed play key and attached photo',()=>{
-  const w=buildWorld(new THREE.Scene(),'resident');w.root.updateMatrixWorld(true);
-  const machine=w.root.getObjectByName('resident-answering-machine'),box=new THREE.Box3().setFromObject(w.root.getObjectByName('answerphone-case')),size=box.getSize(new THREE.Vector3());
-  assert.ok(size.x>.3&&size.x<.4&&size.z<.3,'the ordinary telephone is human scale');
-  let feet=0;machine.traverse(o=>{if(o.name==='answerphone-foot'){feet++;const b=new THREE.Box3().setFromObject(o);assert.ok(Math.abs(b.min.y-.7)<.001);assert.ok(b.min.x>=-4.2&&b.max.x<=-3.4&&b.min.z>=3.29&&b.max.z<=3.91);}});assert.equal(feet,4);
-  const cord=new THREE.Box3().setFromObject(machine.getObjectByName('answerphone-coiled-cord'));assert.ok(cord.max.x< -4.2,'the hanging coil must not run through the cabinet');
-  const target=w.targets.find(t=>t.id==='answerphone'),button=w.root.getObjectByName('answerphone-play');assert.ok(target.point.distanceTo(button.getWorldPosition(new THREE.Vector3()))<.001);assert.ok(hasLineOfSight({x:-2.4,y:1.65,z:4.6},target.point,w.solids));
-  const photo=w.root.getObjectByName('resident-memory-photo'),photoBox=new THREE.Box3().setFromObject(photo);assert.ok(Math.abs(photoBox.max.z-3.9615)<.001,'the photo backing touches the refrigerator door');
-  const reels=machine.children.filter(o=>o instanceof THREE.Group);w.answeringMachine.setPlayback(2);assert.ok(reels.some(o=>Math.abs(o.rotation.y)>1));const angle=reels[0].rotation.y;w.answeringMachine.setPlayback(null);assert.equal(reels[0].rotation.y,angle,'stopping the tape must not snap the reels back');
+test('V123 the resident smartphone rests on the cabinet and its screen plays the preserved voice message',()=>{
+ const w=buildWorld(new THREE.Scene(),'resident');w.root.updateMatrixWorld(true);
+ const phone=w.root.getObjectByName('resident-smartphone'),box=new THREE.Box3().setFromObject(phone),size=box.getSize(new THREE.Vector3());
+ assert.ok(size.x>.07&&size.x<.09&&size.z>.14&&size.z<.17);assert.ok(Math.abs(box.min.y-.7)<.002,'rear camera rests on the cabinet top');
+ assert.equal(w.root.getObjectByName('resident-answering-machine'),undefined);
+ const target=w.targets.find(t=>t.id==='answerphone'),screen=phone.getObjectByName('smartphone-screen');assert.ok(target.point.distanceTo(screen.getWorldPosition(new THREE.Vector3()))<.001);assert.ok(hasLineOfSight({x:-2.4,y:1.65,z:4.6},target.point,w.solids));
+ w.answeringMachine.setPlayback(2);assert.equal(phone.userData.phoneState,'playing');w.answeringMachine.setPlayback(null);assert.equal(phone.userData.phoneState,'voicemail');
 });
 
 test('V66 annex phone feet meet the desk and its dial targets coincide with physical keys',()=>{

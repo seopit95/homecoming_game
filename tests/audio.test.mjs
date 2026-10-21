@@ -26,6 +26,10 @@ test('the apparition crossfades a connected music layer through volume and pause
     audio.setDevice('phone',.8,-.3);const ring=audio.deviceLoops.get('phone');assert.equal(ring.source.loop,true);assert.ok(ring.pan.connections.includes(audio.effectsBus));
     audio.setDevice('phone',.2,.4);assert.equal(audio.deviceLoops.get('phone'),ring,'position changes keep the same ringing loop');assert.equal(ring.pan.pan.value,.4);
     audio.pause();assert.equal(ctx.state,'suspended');audio.resume();audio.setDevice('phone',0);assert.equal(audio.deviceLoops.size,0);assert.deepEqual(ring.source.stopArgs,[]);
+    audio.setDevice('mobile',.8,.1);const mobile=audio.deviceLoops.get('mobile');assert.equal(mobile.source.buffer,audio.clips['mobile-ring']);
+    audio.setDevice('mobile',.4,-.2);assert.equal(audio.deviceLoops.get('mobile'),mobile,'a carried caller updates rather than starting another ringtone');
+    audio.pause();assert.equal(ctx.state,'suspended');audio.resume();audio.setDevice('phone',0);assert.equal(audio.deviceLoops.get('mobile'),mobile,'a building bell cannot stop the smartphone');
+    audio.setDevice('mobile',0);assert.deepEqual(mobile.source.stopArgs,[]);assert.equal(audio.deviceLoops.size,0);
     audio.setDevice('radio',.5);audio.recorded('male-surprise');const gasp=[...audio.roadSounds][0];audio.setDrive(null);assert.deepEqual(gasp.stopArgs,[],'skip also cancels recorded opening voices');
     audio.clips['passenger-line']={duration:2.16};audio.recorded('passenger-line');const reaction=[...audio.roadSounds][0];
     assert.equal(reaction.connections[0].connections[0].connections[0],audio.voiceBus,'the passenger line follows dialogue volume');

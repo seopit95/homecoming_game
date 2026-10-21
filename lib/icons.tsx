@@ -9,3 +9,4 @@ export const SlidersHorizontal=icon('M3 6h6m4 0h8M9 3v6M3 12h12m4 0h2m-6-3v6M3 1
 export const Volume2=icon('M3 9h4l5-5v16l-5-5H3Zm13-2a7 7 0 0 1 0 10m3-13a11 11 0 0 1 0 16');
 export const Expand=icon('M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5');
 export const Flashlight=icon('M7 3h10v5l-3 4v9h-4v-9L7 8Zm0 5h10m-7 7h4');
+export const Smartphone=icon('M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Zm3 3h4m-3 14h2');

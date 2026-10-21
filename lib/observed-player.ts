@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {createPedestrian} from './pedestrian.ts';
+import {createSmartphone} from './smartphone.ts';
 import {solidContainsPoint} from './collision.ts';
 import type {Solid} from './world.ts';
 
@@ -15,10 +16,7 @@ export function createObservedPlayer(){
   const angle=Math.min(2.8,(-y-.055)/.035);fingers.setXYZ(i,fingers.getX(i),-.055-.035*Math.sin(angle),fingers.getZ(i)+.035*(1-Math.cos(angle)));
  }
  hand.geometry.computeVertexNormals();
- const grip=new T.Group();grip.name='observed-held-flashlight';grip.position.set(0,-.088,.025);wrist.add(grip);
- const metal=new T.MeshStandardMaterial({color:'#242b2c',roughness:.4,metalness:.7});
- for(const [x,length,radius] of [[0,.19,.025],[.115,.065,.039]] as const){const m=new T.Mesh(new T.CylinderGeometry(radius,radius,length,20),metal);m.rotation.z=-Math.PI/2;m.position.x=x;m.castShadow=true;grip.add(m);}
- const lens=new T.Mesh(new T.CircleGeometry(.032,24),new T.MeshStandardMaterial({color:'#a8b9b5',emissive:'#e5e5ce',emissiveIntensity:.7}));lens.rotation.y=Math.PI/2;lens.position.x=.149;grip.add(lens);
+ const device=createSmartphone(),grip=device.root,lens=device.led;grip.name='observed-held-smartphone';grip.position.set(0,-.088,.025);grip.rotation.set(0,-Math.PI/2,Math.PI/2);wrist.add(grip);
  const previous=new T.Vector3(),bounds=new T.Box3(),eye=new T.Vector3(),point=new T.Vector3(),head=actor.root.getObjectByName('pedestrian-head')!;
  const meshes:T.Mesh[]=[];actor.root.traverse(o=>{if(o instanceof T.Mesh)meshes.push(o);});
  // ponytail: finite spine poses for this fixed CCTV room; use limb IK if the room or rig expands.

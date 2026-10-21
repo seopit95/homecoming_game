@@ -31,10 +31,10 @@ test('leaving the wardrobe early creates a real escape attempt instead of forcin
   assert.equal(transition(out,'caught').stage,'dying');
 });
 import {initialStory, transition, checkpoint} from '../lib/story.ts';
-function apartmentExit(){let s=transition(initialStory(),'skip_memory');for(const a of ['awake','switch','flashlight','breaker','phone','shoes','radio','heard','closet','survived','closet','door'])s=transition(s,a);return s;}
-test('waking and finding a flashlight precede checking the breaker, and the radio goes silent before the threat',()=>{
+function apartmentExit(){let s=transition(initialStory(),'skip_memory');for(const a of ['awake','switch','flashlight','phone','breaker','shoes','radio','heard','closet','survived','closet','door'])s=transition(s,a);return s;}
+test('waking and answering the smartphone precede checking the breaker, and the radio goes silent before the threat',()=>{
   let s=transition(initialStory(),'skip_memory');assert.equal(s.stage,'wake_ring');assert.deepEqual(transition(s,'breaker'),s);
-  for(const [action,stage] of [['awake','light_switch'],['switch','find_torch'],['flashlight','power'],['breaker','phone'],['phone','shoes'],['shoes','radio'],['radio','listen'],['heard','hide']]){s=transition(s,action);assert.equal(s.stage,stage,action);}
+  for(const [action,stage] of [['awake','light_switch'],['switch','find_torch'],['flashlight','phone'],['phone','power'],['breaker','shoes'],['shoes','radio'],['radio','listen'],['heard','hide']]){s=transition(s,action);assert.equal(s.stage,stage,action);}
 });
 test('leaving home continues instead of awarding the ending',()=>{const s=apartmentExit();assert.equal(s.stage,'lift_call');assert.equal(s.ending,null);});
 test('the complete route requires the lift, stairs, investigation and alarm',()=>{

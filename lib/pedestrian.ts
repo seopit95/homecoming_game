@@ -5,6 +5,7 @@ import {livingHead,createLivingHair,createLivingShirt,poseLivingShirt} from './p
 import {skinArm,poseSkinArm} from './ghost-limbs.ts';
 import {extremity} from './ghost-anatomy.ts';
 import {createLeatherShoe} from './entry-props.ts';
+import {createVictimSkirt,poseVictimSkirt} from './victim-outfit.ts';
 
 export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='victim'){
  const root=new T.Group();root.name='memory-pedestrian';parent.add(root);
@@ -45,10 +46,10 @@ export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='vi
   const leg=new T.Group();leg.position.set(side*.093,.87,0);body.add(leg);legs.push(leg);
   const knee=new T.Group();knee.position.y=-.405;leg.add(knee);knees.push(knee);
   const ankle=new T.Group();ankle.position.y=-.405;knee.add(ankle);ankles.push(ankle);
-  const legMesh=skinArm(body,pants);legMesh.name='pedestrian-trouser-leg';legMesh.userData.radii=[.096,.085,.062,.062,.039];trousers.push(legMesh);
+  const legMesh=skinArm(body,appearance==='victim'?skin:pants);legMesh.name=appearance==='victim'?'pedestrian-leg-skin':'pedestrian-trouser-leg';legMesh.userData.radii=appearance==='victim'?[.078,.067,.045,.046,.03]:[.096,.085,.062,.062,.039];trousers.push(legMesh);
   const shoe=createLeatherShoe();shoe.name=side===1?'memory-shoe':'memory-other-shoe';shoe.position.y=-.06;ankle.add(shoe);
  }
- const clothes=appearance==='victim'?createLivingShirt(torso,pants):null;
+ const clothes=appearance==='victim'?createLivingShirt(torso):null,skirt=clothes?createVictimSkirt(torso,clothes.shirt.material):null,supportBounds=new T.Box3();
  const observerLook=new T.Quaternion(),observerAngles=new T.Euler();
  function pose(clock:number,hit:number|null,speed=1.37,observer?:{crouched:boolean;pitch:number;leanX?:number;leanZ?:number}){
   const phase=(observer&&speed===0?0:clock)/.92,beat=phase*Math.PI*2,impact=hit!==null,wrap=impact?T.MathUtils.smoothstep(hit,0,.44):0,slide=impact?T.MathUtils.smoothstep(hit,.45,1.55):0;
@@ -91,7 +92,11 @@ export function createPedestrian(parent:T.Group,appearance:'victim'|'driver'='vi
    }
    if(sleeves[i])poseSkinArm(sleeves[i],arms[i],elbows[i],wrists[i]);poseSkinArm(trousers[i],legs[i],knees[i],ankles[i]);
   }
-  if(clothes)poseLivingShirt(clothes,torso,arms,elbows,head);
+  if(clothes){
+   poseLivingShirt(clothes,torso,arms,elbows,head);
+   const floor=Math.min(...[clothes.shirt,...wrists,...ankles].map(object=>supportBounds.setFromObject(object,true).min.y));
+   poseVictimSkirt(skirt!,torso,knees,ankles,floor+.001);
+  }
  }
  if(appearance==='driver'){root.scale.set(1.08,1.06,1.05);head.scale.set(1.06,1.02,1.03);}
  pose(0,null);return {root,pose,pivot};

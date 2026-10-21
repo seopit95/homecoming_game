@@ -1,6 +1,7 @@
 import * as T from 'three';
 import asset from './assets/pedestrian-art.json' with {type:'json'};
 import {livingMaterial} from './materials.ts';
+import {victimDressMaterial} from './victim-outfit.ts';
 export const livingHead=asset.head;
 
 function mesh(data:{position:number[];uv:number[];index:number[]},material:T.Material,parent:T.Object3D,name:string){
@@ -8,10 +9,9 @@ function mesh(data:{position:number[];uv:number[];index:number[]},material:T.Mat
  const m=new T.Mesh(g,material);m.name=name;m.castShadow=m.receiveShadow=true;parent.add(m);return m;
 }
 export function createLivingHair(head:T.Group){return mesh(asset.hair,livingMaterial('hair'),head,'pedestrian-authored-hair');}
-export function createLivingShirt(torso:T.Group,pants:T.Material){
+export function createLivingShirt(torso:T.Group){
  const chest=mesh(asset.chest,livingMaterial('skin'),torso,'pedestrian-clavicle');
- const shirt=mesh(asset.shirt,livingMaterial('shirt'),torso,'pedestrian-authored-shirt');
- mesh(asset.seat,pants,torso,'pedestrian-trouser-seat');
+ const shirt=mesh(asset.shirt,victimDressMaterial(),torso,'pedestrian-authored-shirt');
  const down=new T.Vector3(0,-1,0),references=[0,1].map(side=>[0,1].map(j=>{
   const a=new T.Vector3(...asset.references[j][side] as [number,number,number]),b=new T.Vector3(...asset.references[j+1][side] as [number,number,number]);
   const direction=b.sub(a),length=direction.length(),q=new T.Quaternion().setFromUnitVectors(down,direction.normalize());
