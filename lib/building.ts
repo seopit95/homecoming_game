@@ -287,7 +287,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const zoneLightStart=lamps.length;fixture(0,4);fixture(0,-4,false);light(-3,2.5,1,'#b49f7d',4);light(-3,2.5,-4,'#8b9b85',3);light(3.5,2.5,-4,'#839c96',3);const zoneLights=lamps.slice(zoneLightStart).map(l=>({light:l,base:l.intensity}));
     const serviceHinge=new T.Group();serviceHinge.name='office-service-door';serviceHinge.position.set(-.6,0,-bz+.12);root.add(serviceHinge);
     const serviceLeaf=box(0,1.1,-bz+.12,1.18,2.2,.09,metal);serviceHinge.attach(serviceLeaf);doorHardware(serviceLeaf,1.18);target('service_exit','관리용 승강기 열기',serviceLeaf,0,1.25,-bz+.32);
-    const serviceBlock={x:0,z:-bz+.12,w:1.2,d:.12,y:1.1,h:2.2};solids.push(serviceBlock);let serviceAt=-1,playAt=-1;reset=()=>{serviceAt=-1;playAt=-1;};bounds.z=bz+6.2;
+    const serviceBlock={x:0,z:-bz+.12,w:1.2,d:.12,y:1.1,h:2.2};solids.push(serviceBlock);let serviceAt=-1,sealAt=-1,playAt=-1;reset=()=>{serviceAt=-1;sealAt=-1;playAt=-1;delete serviceHinge.userData.impactAt;setDoorAngle(serviceHinge,serviceBlock,0,.6);};bounds.z=bz+6.2;
     box(0,-.09,-bz-1.35,2.2,.18,2.7,floorMat);box(0,2.8,-bz-1.35,2.2,.12,2.7,metal);for(const x of [-1.1,1.1])box(x,1.4,-bz-1.35,.12,2.8,2.7,metal,true);box(0,1.4,-bz-2.7,2.2,2.8,.12,metal,true);light(0,2.5,-bz-1.3,'#98ad9b',3,4);label('관리용 승강기 · 1F',0,2.5,-bz+.094,0,1.8,.2);
     label('17층 · 구 관리사무소',0,2.57,bz-.094,Math.PI,1.65,.2);puddle(2.6,5,.45,1);
     updateStory=(stage,time,_reduced,story,occupants)=>{
@@ -299,7 +299,13 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
       for(const {light,base} of zoneLights)light.userData.base=base*(supply&&state.circuit.includes('circuit_a')?1:.3);
       const caption=installed?`선택 ${officePowerLoad(state)} / 6A · ${supply?'공급 중':'전원 대기'}`:'퓨즈 없음';if(caption!==powerCaption){loadDisplay.update(caption);powerCaption=caption;}
       exitKey.visible=!state.notes.includes('service_key');
-      if(stage==='office_departure'&&serviceAt<0)serviceAt=time;if(serviceAt>=0)setDoorAngle(serviceHinge,serviceBlock,1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85),.6,0,occupants);
+      if(stage==='office_departure'&&serviceAt<0)serviceAt=time;
+      if(stage==='office_boarding'&&sealAt<0)sealAt=time;
+      if(serviceAt>=0){
+        const hit=time-(serviceHinge.userData.impactAt??-100),jolt=_reduced||hit<0?0:.018*Math.abs(Math.sin(hit*42))*Math.exp(-hit*7);
+        const angle=sealAt>=0?1.5*(1-T.MathUtils.smoothstep(time-sealAt,0,.75))+jolt:1.5*T.MathUtils.smoothstep(time-serviceAt,0,.85);
+        setDoorAngle(serviceHinge,serviceBlock,angle,.6,0,occupants);
+      }
     };
   }
   if(area==='parking'){

@@ -139,7 +139,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     whisper={where:'「어디 있지…?」',here:'「여기 있었는데…」',found:'「찾았다. 놓치지 않을 거야.」',come:'「나오렴…」',cry:'어둠 속에서 여자가 흐느낀다.',scream:'끄아아아아아악!!!',memory:'「거의 다 왔어. 내일 전화할게.」',no:'「안 돼… 안 돼!!!!!」'}[line];whisperUntil=elapsed+(line==='cry'?5:3.5);emit();
   }
   const free=(x:number,z:number,r=.23)=>canStandAt(x,z,world.solids,r,world.bounds);
-  function move(dx:number,dz:number){if(story.stage==='lift_boarding')dz=Math.min(dz,landing.boardZ-camera.position.z);if(free(camera.position.x+dx,camera.position.z))camera.position.x+=dx;if(free(camera.position.x,camera.position.z+dz))camera.position.z+=dz;}
+  function move(dx:number,dz:number){if(story.stage==='office_boarding')dz=Math.min(dz,-layout.office.z-1.35-camera.position.z);if(story.stage==='lift_boarding')dz=Math.min(dz,landing.boardZ-camera.position.z);if(free(camera.position.x+dx,camera.position.z))camera.position.x+=dx;if(free(camera.position.x,camera.position.z+dz))camera.position.z+=dz;}
   function resize(){const w=Math.max(1,canvas.clientWidth),h=Math.max(1,canvas.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
   const observer=new ResizeObserver(resize);observer.observe(canvas);resize();
   function lock(){
@@ -169,7 +169,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     // The body approaches behind real walls rather than waiting at the player's back.
     if(area==='stairs'){world.figure.position.set(-2.95,0,10);world.figure.rotation.y=Math.PI/2;world.figure.visible=true;chapterUntil=elapsed+1.7;}
     if(area==='corridor'){world.figure.position.set(0,2.35,20.8);world.figure.rotation.y=Math.PI;}
-    if(area==='office'){arrivalPursuit=story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power');world.figure.position.set(-2.95,0,13.35);world.figure.rotation.y=Math.PI;world.figure.visible=true;arrivalDoor=world.root.getObjectByName('connection-fire-door');}
+    if(area==='office'){arrivalPursuit=story.stage==='office_departure';world.figure.position.set(-2.95,0,13.35);world.figure.rotation.y=Math.PI;world.figure.visible=arrivalPursuit;arrivalDoor=world.root.getObjectByName('connection-fire-door');}
     if(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'){ambient.intensity=area==='annex'?.045:.038;(scene.fog as T.FogExp2).density=.019;}
     if(area==='courtyard'){world.figure.position.set(-2.95,0,53.55);world.figure.rotation.y=Math.PI;world.figure.visible=false;arrivalDoor=world.root.children.find(o=>o.name==='continuous-connection'&&o.position.z===54)?.getObjectByName('connection-fire-door');}
     if(area==='parking'){world.figure.position.set(0,0,21.3);world.figure.rotation.y=Math.PI;world.figure.visible=true;}
@@ -184,7 +184,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const next=transition(story,action);if(next===story)return false;
     if(next.stage==='wait'&&story.stage!=='wait'){searchTime=-1;lastSeen=null;tracking=false;}
     const keepInvestigationPhase=(area==='resident'||area==='office'||area==='annex'||action.startsWith('archive_booth_')||action==='home_repair'||action==='gallery_notice'||action==='core_notice')&&next.stage===story.stage;
-    story=next;if(area==='office'&&(story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power')))arrivalPursuit=true;if(!keepInvestigationPhase){stageTime=0;scriptBeat=0;voiceBeat=0;enemyPath=[];repathAt=0;}holdProgress=0;
+    story=next;if(area==='office')arrivalPursuit=['office_departure','office_boarding'].includes(story.stage);if(!keepInvestigationPhase){stageTime=0;scriptBeat=0;voiceBeat=0;enemyPath=[];repathAt=0;}holdProgress=0;
     if(story.stage==='ended'){stopRecording();stopAnnexCall();stopCourtCall();if(story.ending==='crashed'){try{storage?.removeItem(PROGRESS_KEY);}catch{}saved=null;}keys.clear();holding=false;hover=undefined;threat=0;audio.stopVoices();audio.setDrive(null);whisper='';if(document.pointerLockElement===canvas)document.exitPointerLock();audio.sound('dread');emit();return true;}
     if(story.stage==='dying'){
       gait.reset();
@@ -224,7 +224,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const resumeWait=retry==='continue'?saved?.pursuitWait??0:Math.max(0,entranceDelay-areaTime);
     if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],officeSupply:saved.officeSupply,code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&story.notes.includes('resident_key'))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathLoad=0;heldBreath=freshHeldBreath();breathStrain=0;breathNotice=0;homeBreathCheck=-1;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
     lastEmit=elapsed-1;loadArea(areaFor(story));
-    if(resumePursuit&&area==='office')arrivalPursuit=true;
+    // Legacy pursuit flags never override the office preparation phase.
     if(resumePursuit&&(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'||area==='parking')){carryPursuit(5.2,true,area==='parking'?layout.parking.z:expansionLayout[area].z);entranceDelay=Math.max(entranceDelay,resumeWait);persist();}
     audio.setTV(story.stage==='tv');
     if(isCinematic(story.stage)||story.stage==='tv'||story.stage==='wake_ring')openingScene();
@@ -335,7 +335,6 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if((action.startsWith('annex_')||action.startsWith('court_')||action.startsWith('archive_')||action.startsWith('plant_'))&&story.notes.includes(action)&&action in expansionJournal&&!(action==='archive_play'&&story.stage==='archive_reveal')){say(expansionJournal[action as keyof typeof expansionJournal].text.split('\n\n')[0],10);return;}
     const wasHidden=concealed(),officeWasOn=story.officeSupply,plantFault=action==='plant_start'?plantProblem(story):null,officeFault=action==='security_power'&&area==='office'?officePowerProblem(story):null;
     if(action==='stay'){say(stageTime<12?'전화 너머에서 주소를 확인한다. 사이렌이 가까워진다.':'통화를 유지한 채 잠시 기다리자.',5);return;}
-    if(area==='office'&&action==='security_power'&&officeFault!=='fuse'&&officeFault!=='empty')arrivalPursuit=true;
     if(!advance(action)){
       if(action==='security_power'&&area==='office'){audio.sound('click',.5,.3);const faults={fuse:'빈 퓨즈 홀더에 예비 퓨즈를 먼저 설치하자.',empty:'선택한 회로가 없다. 승강기 C 4A, CCTV B 2A 중 필요한 회로를 선택하자.',overload:'선택한 부하가 6A를 넘는다.'};say(officeFault?faults[officeFault]:'이미 전원을 연결했다.',6);return;}
       if(action==='office_install'){say('서고에서 예비 퓨즈를 먼저 챙겨야 한다.',5);return;}
@@ -374,7 +373,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       evidenceReaction=true;evidenceYaw=yaw;evidencePitch=pitch;keys.clear();holding=false;dragging=false;hover=undefined;torch=true;
       message='';audio.sound('drip',0,.55);emit();return;
     }
-    audio.sound(action==='door'||action==='stairs'||action==='service_exit'?'slam':'click');
+    audio.sound(action==='door'||action==='stairs'?'slam':'click');
+    if(action==='service_exit'){world.figure.visible=true;arrivalDoorRelease=areaTime;chaseAt=elapsed;ghostVoice('no',true);audio.sound('door-creak',0,.6);chapterUntil=0;}
     if(action==='resident_drawer')audio.sound('door-creak',.2,.35);
     if(action==='resident_key'){audio.sound('metal',0,.25);audio.sound('knock',.3,.55);audio.sound('dread',0,.3);world.figure.visible=true;}
     if(action==='closet'){
@@ -455,7 +455,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     });
   }
   function findTarget(){
-    hover=undefined;if(evidenceReaction||concealed()||isCinematic(story.stage)||story.stage==='tv'||story.stage==='dying'||story.stage==='ended')return;camera.getWorldDirection(direction);
+    hover=undefined;if(area==='office'&&['office_departure','office_boarding'].includes(story.stage))return;if(evidenceReaction||concealed()||isCinematic(story.stage)||story.stage==='tv'||story.stage==='dying'||story.stage==='ended')return;camera.getWorldDirection(direction);
     // The ringing phone is in the player's hand, not back on its bedside table.
     if(area==='apartment'&&story.stage==='phone'){hover=world.targets.find(t=>t.id==='phone');return;}
     let best=Infinity;
@@ -510,6 +510,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
   }
   function followEnemy(target:Point,speed:number,dt:number){
+    const officeExit=area==='office'&&['office_departure','office_boarding'].includes(story.stage);
+    if(officeExit)target={x:target.x,z:Math.max(target.z,-6.8)};
     const p=world.figure.position,routeSolids=world.archiveDoor?.planningSolids(world.solids)??world.solids;
     const changed=Math.hypot(target.x-pathGoal.x,target.z-pathGoal.z)>.45;
     if(repathAt===0||(elapsed>=repathAt&&(changed||!enemyPath.length||!clearPath(p,enemyPath[0],routeSolids,world.bounds,pursuerRadius)))){
@@ -525,8 +527,11 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
 
     const dx=next.x-p.x,dz=next.z-p.z,distance=Math.hypot(dx,dz);
     const turn=T.MathUtils.euclideanModulo(Math.atan2(dx,dz)-world.figure.rotation.y+Math.PI,Math.PI*2)-Math.PI;
-    const stride=ghostStrideLength(world.figure,world.solids,crawling()),motion=ghostStep(turn,speed,dt,stride,crawling()),step=Math.min(motion.distance,distance);
-    world.figure.rotation.y+=motion.turn;
+    const stride=ghostStrideLength(world.figure,world.solids,crawling()),motion=ghostStep(turn,speed,dt,stride,crawling());
+    let step=Math.min(motion.distance,distance);world.figure.rotation.y+=motion.turn;
+    // Stop the actual stroke outside the cab; never snap a late pursuer back.
+    const towardDoor=Math.cos(world.figure.rotation.y);
+    if(officeExit&&towardDoor<0)step=Math.min(step,Math.max(0,p.z+6.8)/-towardDoor);
     movePursuer(p,world.figure.rotation.y,step,world.solids,world.bounds);
     p.y=world.heightAt(p.x,p.z);
   }
@@ -704,7 +709,12 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       }
     }
     else if(area==='resident'){if(arrivalPursuit||story.stage==='resident_departure'||story.stage==='resident_return'&&stageTime>4){world.figure.visible=true;hunt(1.4,dt);}}
-    else if(area==='office'){if(world.figure.visible&&(arrivalPursuit||story.notes.includes('service_key')||story.notes.includes('monitor')||story.notes.includes('security_power'))){if(arrivalDoorRelease<0)arrivalDoorRelease=areaTime;hunt(1.8,dt);}}
+    else if(area==='office'&&arrivalPursuit){
+      if(story.stage==='office_boarding'){
+        if(scriptBeat<2)followEnemy({x:0,z:-6.8},5.2,dt);
+        threat=.75;
+      }else hunt(4.2,dt,{x:0,z:-6.8});
+    }
     else if(area==='annex'||area==='courtyard'||area==='archive'||area==='plant'){
       const active=arrivalPursuit|| (area==='annex'?annexCanCall(story.stage)||story.notes.includes('annex_badge')&&story.notes.includes('annex_notice'):area==='courtyard'?courtyardPursuitActive(story,arrivalPursuit):area==='archive'?['archive_escape','archive_departure'].includes(story.stage):story.notes.includes('plant_valve_west')||story.notes.includes('plant_valve_east'));
       if(active&&arrivalDoor&&arrivalDoorRelease<0){arrivalDoorRelease=areaTime;if(area==='courtyard'&&!arrivalPursuit)entranceDelay=areaTime+3;audio.sound('door-creak',0,.5);}
@@ -755,6 +765,17 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='archive_playback'){
       if(scriptBeat<archiveReplay.length&&stageTime>=archiveReplay[scriptBeat].at){say(archiveReplay[scriptBeat].text,9);audio.sound(scriptBeat===archiveReplay.length-1?'drag':'dread',.4,.6);scriptBeat++;}
       if(stageTime>=archiveReplayDuration){advance('archive_finish');world.figure.visible=true;ghostVoice('found',true);}
+    }
+    if(story.stage==='office_boarding'){
+      const door=world.root.getObjectByName('office-service-door')!;
+      if(stageTime>=.85&&door.rotation.y<.035&&scriptBeat===0){scriptBeat=1;audio.sound('slam',0,.4);}
+      if(scriptBeat===1&&Math.hypot(world.figure.position.x,world.figure.position.z+6.8)<.55){
+        scriptBeat=2;door.userData.impactAt=elapsed;audio.sound('slam',0,.9);audio.sound('metal',0,.9);say('쾅! 철문 바로 너머에서 손톱이 긁힌다.',3);
+      }
+      // A door/path obstruction must not strand an already boarded player.
+      if((scriptBeat===2&&elapsed-door.userData.impactAt>=.9)||stageTime>=12){
+        const p=camera.position.clone(),ry=yaw,rx=pitch;advance('sealed');camera.position.set(-p.x,p.y,-(p.z+layout.office.z)-1.35);yaw=ry+Math.PI;pitch=rx;doorOpen=0;chapterUntil=0;audio.sound('motor',0,.45);return;
+      }
     }
     if(story.stage==='service_ride'){
       if(elapsed-lastSound>1.8){audio.sound('motor',0,.45);lastSound=elapsed;}
@@ -852,7 +873,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     if(story.stage==='office_playback'){
       const cue=officeReplay[scriptBeat];if(cue&&stageTime>=cue.at){scriptBeat++;say(cue.text,4);if(cue.at===3)audio.sound('click',0,.35);}
-      if(stageTime>=officeReplayDuration){advance('office_finish');if(arrivalDoorRelease<0)arrivalDoorRelease=areaTime;lastSeen={x:camera.position.x,z:camera.position.z};seenAt=elapsed;tracking=true;audio.sound('drag',.3,.6);ghostVoice('here',true);say(story.notes.includes('service_key')?'뒤쪽 연결문에서 긁는 소리가 난다. 열쇠는 챙겼다.\n'+objectiveFor(story):'뒤쪽 연결문에서 긁는 소리가 난다.\nCCTV 오른쪽의 승강기 열쇠를 챙겨야 한다.',8);}
+      if(stageTime>=officeReplayDuration){advance('office_finish');audio.sound('dread',.3,.3);say('영상이 끝났다. 화면에 비친 사람은 여전히 둘이다.\n'+objectiveFor(story),7);}
     }
     if(story.stage==='shoes'&&stageTime>1.4&&scriptBeat===0){scriptBeat=1;audio.sound('drip',-.6,.9);}
   }
@@ -985,8 +1006,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='corridor_departure'&&camera.position.x>1.5&&camera.position.z<-21&&camera.position.z>-23){
       const p=camera.position.clone(),ry=yaw,rx=pitch,distance=world.figure.position.distanceTo(p);advance('stair_enter');camera.position.set(p.x-3,p.y,p.z+32);yaw=ry;pitch=rx;chapterUntil=0;entranceDelay=Math.max(0,(distance-1.6)/(2.7*.85));world.figure.position.set(-2.95,0,10);world.figure.rotation.y=Math.PI/2;world.figure.visible=entranceDelay===0;lastGhostPosition.copy(world.figure.position);return;
     }
-    if(story.stage==='office_departure'&&camera.position.z<-layout.office.z-.65&&Math.abs(camera.position.x)<.48){
-      const p=camera.position.clone(),ry=yaw,rx=pitch;advance('service_board');camera.position.set(-p.x,p.y,-(p.z+layout.office.z)-1.35);yaw=ry+Math.PI;pitch=rx;doorOpen=1;chapterUntil=0;audio.sound('slam',0,.4);return;
+    if(story.stage==='office_departure'&&camera.position.z<-layout.office.z-1.35&&Math.abs(camera.position.x)<.48){
+      advance('service_board');chapterUntil=0;audio.sound('door-creak',0,.45);say('철문이 닫힌다. 바깥에서 기어오는 소리가 빨라진다.',4);return;
     }
     if(story.stage==='service_open'&&doorOpen>.75&&camera.position.z<-1.6&&Math.abs(camera.position.x)<.48){const p=camera.position.clone(),ry=yaw,rx=pitch;advance('annex_enter');camera.position.set(p.x,p.y,expansionLayout.annex.z+p.z+1.35);yaw=ry;pitch=rx;chapterUntil=0;say('1층. 오른쪽 창 너머에 로비 정문이 보인다.\n왼쪽 안내판에서 나갈 길을 확인하자.',8);return;}
     if(area==='courtyard'&&story.stage==='court_departure'&&camera.position.x>15.5&&camera.position.z<-52&&camera.position.z>-54){

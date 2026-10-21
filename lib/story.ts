@@ -62,7 +62,7 @@ function officePhase(s:Story):Stage{
   return s.notes.includes('fuse')||s.notes.includes('office_install')?'office_power':s.notes.includes('record')?'office_fuse':'office_record';
 }
 export function objectiveFor(story:Story){
-  if(story.stage.startsWith('office')&&story.stage!=='office_departure'&&story.stage!=='office_playback'){
+  if(story.stage.startsWith('office')&&!['office_departure','office_boarding','office_playback'].includes(story.stage)){
     if(officeCanLeave(story))return '관리용 승강기에서 모터 소리가 돌아온다. 오래 기다릴 수는 없다.';
     if(officeCanWatch(story)&&!story.notes.includes('monitor'))return 'CCTV 화면이 켜졌다. 내 차가 돌아왔던 시간은 기억한다.';
     if(!story.notes.includes('fuse'))return '관리실은 비상전원을 쓰고 있다. 인계 기록에 남은 고장 흔적.';
@@ -153,7 +153,7 @@ export function transition(state:Story,action:Action):Story{
       return {...state,notes:[...state.notes,action],stage:state.notes.includes('resident_key')?'resident_return':'resident_memory'};
     }
   }
-  if(state.stage.startsWith('office')&&state.stage!=='office_departure'){
+  if(state.stage.startsWith('office')&&!['office_departure','office_boarding'].includes(state.stage)){
     let next:Story|undefined;
     if(['record','fuse','service_key'].includes(action)){
       if(state.notes.includes(action))return state;

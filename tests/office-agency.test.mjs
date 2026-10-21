@@ -28,3 +28,12 @@ test('V91 the photographed office desk supports its CRT and the break-room mug m
  try{w.root.updateMatrixWorld(true);const desk=w.root.getObjectByName('office-duty-desk'),mug=w.root.getObjectByName('office-break-mug');assert.ok(desk&&mug);const b=new T.Box3().setFromObject(desk),crt=new T.Box3().setFromObject(w.root.getObjectByName('office-crt-monitor'));assert.ok(Math.abs(b.min.y)<.001);assert.ok(Math.abs(b.max.y-.8)<.001);assert.ok(Math.abs(crt.min.y-b.max.y)<.002);assert.ok(Math.abs(new T.Box3().setFromObject(mug).min.y-.8)<.001);let photographic=false;desk.traverse(o=>{if(o.isMesh&&o.material.userData.facilityTextures)photographic=true;});assert.ok(photographic,'the desk uses the retained source model and its mapped surfaces');
  }finally{disposeWorld(w.root);}
 });
+
+test('V124 boarding keeps the office door in view until it seals before the lift ride',()=>{
+ let s=setup();s=S.transition(S.transition(s,'circuit_c'),'security_power');
+ s=S.transition(s,'service_exit');assert.equal(s.stage,'office_departure');
+ s=S.transition(s,'service_board');assert.equal(s.stage,'office_boarding');assert.equal(S.areaFor(s),'office');assert.match(S.objectiveFor(s),/철문/,'boarding displays the closing-door objective');
+ assert.equal(S.transition(s,'caught'),s,'crossing into the cab completes the escape');
+ assert.equal(S.checkpoint(s).stage,'office_leave','retry keeps the completed preparation');
+ s=S.transition(s,'sealed');assert.equal(s.stage,'service_ride');assert.equal(S.areaFor(s),'lift');
+});

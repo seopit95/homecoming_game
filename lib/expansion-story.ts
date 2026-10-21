@@ -3,7 +3,8 @@ import {annexCanCall} from './annex-call.ts';
 import {archiveReviewing} from './archive-review.ts';
 
 export const expansionObjectives={
- office_departure:'승강기 문이 열렸다. 바닥에서 진동이 올라온다.',
+ office_departure:'잠금장치가 풀렸다. 열린 승강기 안으로!',
+ office_boarding:'철문이 닫히고 있다. 문밖에서 기어오는 소리가 빨라진다.',
  service_ride:'관리용 승강기가 1층으로 내려가고 있다',service_open:'1층. 문 너머 공기가 차갑다.',
  annex_arrival:'정문까지 왔다. 밖은 보이는데 셔터는 내려가 있다.',
  annex_fuse:'교환기는 켜져 있다. 우편실에 마지막 호출의 수신자가 남아 있다.',
@@ -65,7 +66,7 @@ export const courtEvidence:Action[]=['court_log','court_phone'];
 export const expansionStages=Object.keys(expansionObjectives) as ExpansionStage[];
 export const isExpansion=(stage:Stage)=>stage.startsWith('annex_')||stage.startsWith('court_')||stage.startsWith('archive_')||stage.startsWith('plant_');
 const steps:Partial<Record<Stage,[Action,Stage]>>={
- office_departure:['service_board','service_ride'],service_ride:['service_arrive','service_open'],service_open:['annex_enter','annex_arrival'],
+ office_departure:['service_board','office_boarding'],office_boarding:['sealed','service_ride'],service_ride:['service_arrive','service_open'],service_open:['annex_enter','annex_arrival'],
  annex_arrival:['annex_map','annex_unlock'],
  annex_unlock:['annex_line_home','annex_exit_ready'],annex_exit_ready:['annex_exit','annex_departure'],annex_departure:['court_enter','court_arrival'],
  court_arrival:['court_gate','court_search'],court_safe_open:['court_key','court_unlocked'],court_unlocked:['court_exit','court_departure'],court_departure:['archive_enter','archive_arrival'],

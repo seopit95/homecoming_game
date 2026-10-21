@@ -12,7 +12,8 @@ test('archive playback prompt is available only when the assembled record can ac
 
 test('the management exit goes through a service lift before the communal facilities',()=>{
  let s=act({...state('office_leave'),notes:['fuse','office_install','service_key'],circuit:['circuit_c'],officeSupply:true},'service_exit');assert.equal(s.stage,'office_departure');
- s=act(s,'service_board');assert.equal(s.stage,'service_ride');assert.equal(areaFor(s),'lift');
+ s=act(s,'service_board');assert.equal(s.stage,'office_boarding');assert.equal(areaFor(s),'office');
+ s=act(s,'sealed');assert.equal(s.stage,'service_ride');assert.equal(areaFor(s),'lift');
  s=act(s,'service_arrive','annex_enter');assert.equal(s.stage,'annex_arrival');assert.equal(areaFor(s),'annex');
 });
 test('V83 a powered intercom accepts a known home number without an arbitrary reading checklist',()=>{

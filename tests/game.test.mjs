@@ -437,15 +437,12 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   use([-1.95,1.65,2.6],[-1.95,.9,1.8],'office_tape');
   use([-2.65,1.65,2.6],[-2.65,1.17,1.79],'office_playback');
   assert.equal(game.snapshot().prompt,'');const playbackAt=game.snapshot().elapsed;game.pause();tick(5);assert.equal(game.snapshot().elapsed,playbackAt);game.pause(false);tick(5);assert.equal(game.snapshot().story.stage,'office_playback');tick(6.1);assert.equal(game.snapshot().story.stage,'office_key');assert.ok(game.snapshot().story.notes.includes('monitor'));
-  const waitingGhost=renderedScene.getObjectByName('resident-remains').position.clone();
-  renderedScene.getObjectByName('resident-remains').position.set(0,0,-5);aim([-2.5,1.65,-5],[-2.5,1.65,-7],false);
-  game.key('ShiftLeft',true);tick(6.1);assert.ok(game.snapshot().threat<.2,'holding Shift behind a wall is silent');
-  game.key('KeyW',true);tick(.3);game.key('KeyW',false);game.key('ShiftLeft',false);assert.ok(game.snapshot().threat>.5,'actual running behind the wall attracts the ghost');renderedScene.getObjectByName('resident-remains').position.copy(waitingGhost);
+  assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'preparation stays safe until the exit is released');
   use([-2.13,1.65,2.6],[-2.13,.82,1.28],'office_leave');assert.equal(renderedScene.getObjectByName('office-exit-key').visible,false);
 
   use([0,1.65,-6.3],[0,1.25,-7.48],'office_departure');
   function cross(stage,next,z,x=0){tick(1);aim(renderedCamera.position.toArray(),[x,renderedCamera.position.y,z],false);game.key('KeyW',true);for(let i=0;i<600&&game.snapshot().story.stage===stage;i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,next);}
-  cross('office_departure','service_ride',-10);tick(11.3);assert.equal(game.snapshot().story.stage,'service_open');cross('service_open','annex_arrival',-4);
+  cross('office_departure','office_boarding',-10);tick(12.1);assert.equal(game.snapshot().story.stage,'service_ride');tick(11.3);assert.equal(game.snapshot().story.stage,'service_open');cross('service_open','annex_arrival',-4);
   const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{findPath}=await import('../lib/navigation.ts'),{expansionLayout}=await import('../lib/expansion-world.ts');
   const expansionStart=game.snapshot().elapsed;
   for(const [area,actions,nextStage] of [
@@ -837,16 +834,12 @@ for(const [from,crossing,area,newZ,activation] of [
  }finally{game.dispose();disposeWorld(reference.root);win.localStorage=previousStorage;}
 });
 
-test('office pursuer is already physically waiting before the recording, rather than appearing on its final frame',()=>{
-  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'office_record',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
-  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  const game=createGame(canvas,()=>{},e=>assert.fail(e));
-  try{tick();game.continueGame();tick();const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,true,'returning to the passage must reveal the existing pursuer');const waiting=ghost.position.clone();tick(4);assert.ok(ghost.position.distanceTo(waiting)<.001,'it waits behind the fire door while the records are investigated');assert.equal(game.snapshot().story.stage,'office_record');
-    function use(id,pos){renderedCamera.position.set(...pos);const points={record:[-3.7,.86,1.8],fuse:[-2.1,1.17,-5.7],office_install:[5.39,1.02,-4.55],security_power:[5.415,.95,-3.45],circuit_b:[5.34,1.45,-4],circuit_a:[5.34,1.45,-4.55],circuit_c:[5.34,1.45,-3.45],tape_next:[-1.95,.9,1.8],monitor:[-2.65,1.17,1.79]},point=points[id],dx=point[0]-pos[0],dy=point[1]-pos[1],dz=point[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,id);game.interact();tick();}
-    for(const [id,pos] of [['record',[-3.7,1.65,2.8]],['fuse',[-2.1,1.65,-4.95]],['office_install',[4.55,1.65,-4.55]],['circuit_b',[4.55,1.65,-4]],['circuit_c',[4.55,1.65,-3.45]],['security_power',[4.55,1.65,-3.45]],['tape_next',[-1.95,1.65,2.6]],['monitor',[-2.65,1.65,2.6]]])use(id,pos);
-    tick(13);assert.equal(game.snapshot().story.stage,'office_key');assert.ok(ghost.position.distanceTo(waiting)>1,'the pursuer must leave its waiting point after playback');assert.ok(renderedScene.getObjectByName('connection-fire-door').rotation.y<-1.4,'the waiting body must not jam the opening door');
-  }
-  finally{game.dispose();win.localStorage=previous;}
+test('V124 office power restoration and CCTV playback do not start the chase',async()=>{
+ const f=await officeAgencyInput({stage:'office_record',notes:[],officeSupply:false});try{
+  const ghost=renderedScene.getObjectByName('resident-remains'),waiting=ghost.position.clone();
+  for(const [pos,at] of [[[-3.7,1.65,2.8],[-3.7,.86,1.8]],[[-2.1,1.65,-4.95],[-2.1,1.17,-5.7]],[[4.55,1.65,-4.55],[5.39,1.02,-4.55]],[[4.55,1.65,-4],[5.34,1.45,-4]],[[4.55,1.65,-3.45],[5.34,1.45,-3.45]],[[4.55,1.65,-3.45],[5.415,.95,-3.45]],[[-1.95,1.65,2.6],[-1.95,.9,1.8]],[[-2.65,1.65,2.6],[-2.65,1.17,1.79]]])f.use(pos,at);
+  assert.equal(f.game.snapshot().story.stage,'office_playback');tick(13);assert.equal(f.game.snapshot().story.stage,'office_key');assert.ok(f.game.snapshot().story.notes.includes('monitor'));assert.equal(ghost.visible,false);assert.ok(ghost.position.distanceTo(waiting)<.001);assert.equal(chaseLevel,0);
+ }finally{f.close();}
 });
 
 test('the lower stair door opens in place and the repeated floor begins only after walking around its corner',async()=>{
@@ -1372,5 +1365,38 @@ test('V100 occupied forced opening cannot become an indefinite body-block refuge
   const result={angle:hinge.rotation.y,player:renderedCamera.position.toArray(),ghost:ghost.position.toArray(),stage:f.game.snapshot().story.stage};console.log('occupied force result',JSON.stringify(result));
   assert.ok(Math.abs(hinge.rotation.y)>1.35||['dying','dead'].includes(result.stage),'physical forced opening must recover from the occupied swing instead of leaving a permanent shelter');
   assert.ok(f.game.snapshot().story.circuit.includes('archive_sequence_road'),'earned findings survive the recovery');
+ }finally{f.close();}
+});
+
+test('V124 office preparation stays safe, then one exit action starts the rush and physical door seal',async()=>{
+ const f=await officeAgencyInput({stage:'office_key',notes:['fuse','office_install','security_power','monitor'],circuit:['circuit_b','circuit_c'],officeSupply:true,pursuit:true});
+ try{
+  const ghost=renderedScene.getObjectByName('resident-remains'),waiting=ghost.position.clone();
+  tick(15);assert.equal(f.game.snapshot().story.stage,'office_key');assert.equal(ghost.visible,false,'legacy pursuit flags cannot chase a player still collecting the exit key');assert.ok(ghost.position.distanceTo(waiting)<.001);assert.equal(chaseLevel,0);
+  f.use([-2.13,1.65,2.5],[-2.13,.82,1.28]);assert.equal(f.game.snapshot().story.stage,'office_leave');tick(6);assert.equal(ghost.visible,false,'all preparation is complete before the player releases the exit');
+  const voiceAt=voiceCalls.length;f.use([0,1.65,-6.3],[0,1.25,-7.48]);assert.equal(f.game.snapshot().story.stage,'office_departure');tick(1);assert.ok(ghost.visible);assert.ok(ghost.position.distanceTo(waiting)>.05,JSON.stringify({position:ghost.position.toArray(),door:renderedScene.getObjectByName('connection-fire-door').rotation.y}));assert.ok(voiceCalls.slice(voiceAt).includes('no'),'the exit release announces the final rush');
+  f.aim(renderedCamera.position.toArray(),[0,1.65,-10]);f.game.key('KeyW',true);for(let i=0;i<160&&f.game.snapshot().story.stage==='office_departure';i++)tick(.025);f.game.key('KeyW',false);
+  assert.equal(f.game.snapshot().story.stage,'office_boarding');assert.ok(renderedScene.getObjectByName('office-service-door'),'the same room and door remain while closing');assert.ok(renderedCamera.position.z<-9.15);
+  const door=renderedScene.getObjectByName('office-service-door'),at=f.game.snapshot().elapsed,angle=door.rotation.y,gp=ghost.position.clone();f.game.pause();tick(2);assert.equal(f.game.snapshot().elapsed,at);assert.equal(door.rotation.y,angle);assert.ok(ghost.position.distanceTo(gp)<.001);f.game.pause(false);
+  const hits=soundCalls.filter(s=>s==='metal').length;f.game.key('KeyS',true);tick(1);f.game.key('KeyS',false);assert.ok(renderedCamera.position.z<-9.14,'boarding cannot walk back through the sealing door');assert.ok(door.rotation.y<.05,'the door physically closes before the scene changes');
+  for(let i=0;i<400&&f.game.snapshot().story.stage==='office_boarding';i++){tick(.025);assert.ok(ghost.position.z>=-7.02,'the rushing body remains on the room side of the closed door');}
+  assert.equal(f.game.snapshot().story.stage,'service_ride');assert.ok(soundCalls.filter(s=>s==='metal').length>hits,'the pursuer reaches and hits the closed metal door');
+  tick(11.3);assert.equal(f.game.snapshot().story.stage,'service_open','the ride still reaches the next chapter');
+ }finally{f.close();}
+});
+
+test('V124 delaying outside the open office lift is lethal and retry retains preparation with a closed exit',async()=>{
+ const f=await officeAgencyInput({stage:'office_leave',notes:['fuse','office_install','security_power','service_key'],circuit:['circuit_c'],officeSupply:true});try{
+  f.use([0,1.65,-6.3],[0,1.25,-7.48]);assert.equal(f.game.snapshot().story.stage,'office_departure');tick(18);assert.equal(f.game.snapshot().story.stage,'ended');assert.equal(f.game.snapshot().story.ending,'caught');
+  f.game.start(true);tick();assert.equal(f.game.snapshot().story.stage,'office_leave');assert.ok(f.game.snapshot().story.notes.includes('service_key'));assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);assert.ok(renderedScene.getObjectByName('office-service-door').rotation.y<.001,'reset restores the locked door and its collision');
+ }finally{f.close();}
+});
+
+test('V124 a late boarding player cannot draw the pursuer into the cab or teleport it on sealing',async()=>{
+ const f=await officeAgencyInput({stage:'office_leave',notes:['fuse','office_install','security_power','service_key'],circuit:['circuit_c'],officeSupply:true});try{
+  f.use([0,1.65,-6.3],[0,1.25,-7.48]);tick(1);
+  f.aim([.65,1.65,-9.2],[.65,1.65,-10.2]);const ghost=renderedScene.getObjectByName('resident-remains');ghost.position.set(.4,0,-6.7);ghost.rotation.y=Math.PI;tick(.7);
+  assert.equal(f.game.snapshot().story.stage,'office_departure');assert.ok(ghost.position.z>=-6.801,'the approaching body must stop outside the cab before boarding');
+  f.game.key('KeyA',true);let previous=ghost.position.clone();for(let i=0;i<12&&f.game.snapshot().story.stage==='office_departure';i++){tick(.025);assert.ok(ghost.position.distanceTo(previous)<.18,'boarding preserves a continuous pursuer position');previous.copy(ghost.position);}f.game.key('KeyA',false);assert.equal(f.game.snapshot().story.stage,'office_boarding');
  }finally{f.close();}
 });
