@@ -32,6 +32,26 @@ async function officeAgencyInput(saved){
  function use(pos,at){aim(pos,at);assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
  return {game,data,use,aim,canvas,close(){game.dispose();win.localStorage=previous;}};
 }
+test('V120 an unlocked upper stair door opens while looking at its real leaf at eye height from close range',async()=>{
+ const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{f.use([1,-1.15,-4.8],[1,-1.55,-5.65]);tick(1);renderedCamera.position.set(4,-1.15,-12.2);tick();f.use([5.25,-1.15,-13.35],[5.25,-1.15,-12.15]);assert.equal(f.game.snapshot().story.stage,'stairs_reverse');f.use([3,1.65,-23.12],[3,1.65,-23.7]);assert.equal(f.game.snapshot().story.stage,'stairs_passage');tick(1.2);assert.ok(renderedScene.getObjectByName('stairs-passage-door').rotation.y>1.2);}finally{f.close();}
+});
+for(const [stage,id,next,notes,circuit,officeSupply] of [
+ ['lift_exit','stairs','corridor_departure'],['stairs_loop','down','stairs_descent'],['resident_arrival','resident_open','resident_entry'],
+ ['resident_entry','resident_leave','resident_departure',['resident_key']],
+ ['office_leave','service_exit','office_departure',['service_key','fuse','office_install','security_power'],['circuit_c'],true],
+ ['annex_exit_ready','annex_exit','annex_departure'],['court_unlocked','court_exit','court_departure',['court_key']],['archive_escape','archive_exit','archive_departure'],['plant_exit_ready','plant_exit','plant_departure']
+])test(`V120 ${id} accepts the visible door face from close range without aiming below the player's eyes`,async()=>{
+ const f=await officeAgencyInput({stage,notes:notes??[],circuit:circuit??[],officeSupply:officeSupply??false,elapsed:800});const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{areaFor}=await import('../lib/story.ts');if(id==='stairs'){renderedCamera.position.set(0,1.65,-1.8);tick(.1);assert.equal(f.game.snapshot().story.stage,'corridor_run');}const w=buildWorld(new THREE.Scene(),areaFor(f.game.snapshot().story));try{const t=w.targets.find(t=>t.id===id);assert.ok(t);const z=t.point.z+.35,y=w.heightAt(t.point.x,z)+1.65;f.use([t.point.x,y,z],[t.point.x,y,z-1]);assert.equal(f.game.snapshot().story.stage,next,JSON.stringify({id,state:f.game.snapshot().story.stage,prompt:f.game.snapshot().prompt,message:f.game.snapshot().message}));}finally{f.close();disposeWorld(w.root);}
+});
+test('V120 the stopped lift can be pried by holding while looking at its actual leaf at close eye height',async()=>{
+ const f=await officeAgencyInput({stage:'lift_button',notes:[],elapsed:220});const {buildWorld,disposeWorld}=await import('../lib/world.ts'),w=buildWorld(new THREE.Scene(),'lift');try{f.use([0,1.65,.2],w.targets.find(t=>t.id==='panel').point.toArray());tick(16.1);assert.equal(f.game.snapshot().story.stage,'pry');f.aim([-.25,1.65,-.95],[-.25,1.65,-1.4]);assert.match(f.game.snapshot().prompt,/문 벌리기/);f.game.hold(true);tick(.5);assert.ok(f.game.snapshot().holdProgress>.05);}finally{f.close();disposeWorld(w.root);}
+});
+test('V120 a close visible door cannot bypass the annex story lock',async()=>{
+ const f=await officeAgencyInput({stage:'annex_arrival',notes:[],elapsed:800});try{f.aim([0,1.65,-33.18],[0,1.65,-34]);f.game.interact();tick();assert.equal(f.game.snapshot().story.stage,'annex_arrival');assert.doesNotMatch(f.game.snapshot().prompt,/중정.*열기/);}finally{f.close();}
+});
+test('V120 unlit building ambient and fixture energy are lower while the usable flashlight remains unchanged',async()=>{
+ const f=await officeAgencyInput({stage:'parking_gate',notes:[],elapsed:800});try{const ambient=renderedScene.children.find(o=>o.isHemisphereLight),beam=renderedScene.children.find(o=>o.isSpotLight);assert.ok(ambient.intensity<=.07);assert.equal(beam.intensity,42);const point=renderedScene.children.find(o=>o.isPointLight);assert.ok(point.intensity<=.04);}finally{f.close();}
+});
 test('V116 actual pursuit travels in the direction of its turning body instead of sliding sideways',async()=>{
  const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{clearPath}=await import('../lib/navigation.ts');const w=buildWorld(new THREE.Scene(),'parking');let start,goal;
  for(let z=-18;z<18&&!start;z+=2)for(let x=-8;x<8&&!start;x+=2){const a={x,z},b={x,z:z+6};if(clearPath(a,b,w.solids,w.bounds,.5)){start=a;goal=b;}}assert.ok(start,'actual parking has a clear six-metre aisle');disposeWorld(w.root);

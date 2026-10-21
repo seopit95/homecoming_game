@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import {buildWorld,canStandAt,hasLineOfSight,clampLightOrigin} from '../lib/world.ts';
+import {buildWorld,disposeWorld,canStandAt,hasLineOfSight,clampLightOrigin} from '../lib/world.ts';
 import {clearPath} from '../lib/navigation.ts';
 
 // Canvas text is the only platform boundary; all door geometry and collision are real.
@@ -64,4 +64,12 @@ test('incoming passages support the crawling pursuer while it waits behind the d
    assert.ok(hits.some(h=>h.point.y>=-.01),`${area}: the trailing toe at ${toe.toArray()} has a floor beneath it`);
   }
  }
+});
+
+test('V120 surface targeting ignores only the leaf thickness and still blocks an adjacent intervening wall',()=>{
+ const from={x:0,y:1.65,z:1},face={x:0,y:1.65,z:.04};assert.equal(hasLineOfSight(from,face,[{x:0,z:.12,w:2,d:.08,y:1.4,h:2.8}],false,.04),false);assert.equal(hasLineOfSight(from,face,[{x:0,z:0,w:1.2,d:.12,y:1.15,h:2.3}],false,.04),true);
+});
+
+test('V120 non-route stair exits are visibly closed without boarding the actual progression doors',()=>{
+ const w=buildWorld(new T.Scene(),'stairs');try{const upper=w.root.getObjectByName('stairs-upper-closure-notice'),lower=w.root.getObjectByName('stairs-lower-closure-notice');assert.ok(upper&&lower);assert.equal(w.root.getObjectByName('repeated-stair-well').getObjectByName('stairs-lower-direction').visible,false);assert.ok(w.targets.find(t=>t.id==='up').point.x>2.9);assert.ok(w.targets.find(t=>t.id==='down').point.x<1.1);w.reset();assert.equal(upper.visible,true);assert.equal(lower.visible,true);}finally{disposeWorld(w.root);}
 });

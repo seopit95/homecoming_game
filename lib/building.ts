@@ -183,9 +183,9 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const side of [-1,1]){roundPipe(root,[side*.16,.92,0],[side*.16,.92-side*2.8,-4],.023,rust);}
     bounds.z=29.75;bounds.x=6.3;
     const {hinge,leaf,block:closed}=buildStairDoor(root,solids,-1,2.8,-5.85,'stairs-first-upper-door');leaf.name='stairs-upper-leaf';
-    label('연결 복도',-1,5.26,-5.906,0,.9,.18);target('up','방화문 열기',leaf,-1,4.05,-5.65);
+    const firstUpperLabel=label('연결 복도',-1,5.26,-5.906,0,.9,.18);target('up','방화문 열기',leaf,-1,4.05,-5.65);
     const {hinge:lowerHinge,leaf:lowerLeaf,block:lowerClosed}=buildStairDoor(root,solids,1,-2.8,-5.85,'stairs-loop-door');
-    label('아래층',1,-.32,-5.906,0,.9,.18);target('down','아래층 방화문 열기',lowerLeaf,1,-1.55,-5.65);
+    const lowerLabel=label('아래층',1,-.32,-5.906,0,.9,.18);lowerLabel.mesh.name='stairs-lower-direction';target('down','아래층 방화문 열기',lowerLeaf,1,-1.55,-5.65);
     box(1.25,1.65,5.907,.325,.455,.002,mat('#a59b83'));
     const note=label('백로아파트 · 시설 연락 메모\n\n같은 층으로 돌아왔다면\n계단 표지 아래를 확인하세요.\n\n17층 외벽 공사 / 임시 관리실 1703호\n야간 당직 한서연 · 내선 17\n부재 시 1704호로 연락 바랍니다.\n\n28 가 0317   /   03:17\n03:17   03:17   03:17\n\n그때 멈췄어야지.',1.25,1.65,5.904,Math.PI,.297,.42,'#34392e','#c6bfa6');note.mesh.name='stairs-clue-panel';
     for(const x of [1.14,1.36])box(x,1.865,5.903,.026,.02,.014,metal);
@@ -204,6 +204,16 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const repeatClosed=repeatSolids[solids.indexOf(closed)-solidStart];solids.push(...repeatSolids);
     const repeatHinge=repeated.getObjectByName('stairs-first-upper-door')!;repeatHinge.name='stairs-passage-door';repeated.getObjectByName('stairs-loop-door')!.name='stairs-repeat-lower-door';
     for(const id of ['up','stair_note'] as const){const t=targets.find(t=>t.id===id)!;t.point.add(offset);t.mesh=repeated.getObjectByName(id==='up'?'stairs-upper-leaf':'stairs-clue-panel')!;}
+    // These two decorative exits have no receiving corridor. Mark them only
+    // after cloning so the real lower and repeated upper route stay unobstructed.
+    firstUpperLabel.mesh.visible=false;repeated.getObjectByName('stairs-lower-direction')!.visible=false;
+    function closedExit(x:number,y:number,z:number,text:string,name:string){
+      for(const offset of [.75,1.35,1.95]){const brace=box(x,y+offset,z+.09,1.27,.12,.045,wood);brace.rotation.z=.12;brace.name='stairs-construction-brace';}
+      const notice=label(text,x,y+1.5,z+.126,0,.84,.37,'#080908','#b3a88b');notice.mesh.name=name;
+      const paper=notice.mesh.material as T.MeshStandardMaterial;(notice.mesh as T.Mesh).material=new T.MeshLambertMaterial({map:paper.map});paper.dispose();
+    }
+    closedExit(-1,2.8,-5.85,'외벽 공사로 폐쇄\n아래층 계단 이용 ↓','stairs-upper-closure-notice');
+    closedExit(5,-5.6,-23.7,'하부층 침수로 폐쇄\n위층 연결 복도 이용 ↑','stairs-lower-closure-notice');
     repeated.traverse(o=>{if(o instanceof T.PointLight)lamps.push(o);});
     connectionPassage(root,solids,lamps,-3,12);connectionPassage(root,solids,lamps,1,-5.85,-2.8);
     const galleryRoot=new T.Group();galleryRoot.position.set(3,0,-35.5);root.add(galleryRoot);

@@ -32,9 +32,9 @@ export function clampLightOrigin(eye:T.Vector3,lens:T.Vector3,solids:Solid[]){
 }
 export function canStandAt(x:number,z:number,solids:Solid[],r=.23,bounds:Bounds=home.bounds){return x>(bounds.minX??-bounds.x)&&x<bounds.x&&Math.abs(z)<bounds.z&&!solids.some(s=>solidContainsPoint(s,x,z,r));}
 const sightRay=new T.Ray(),sightBox=new T.Box3(),sightHit=new T.Vector3();
-export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:number;z:number},solids:Solid[],throughGlass=false){
-  const dx=to.x-from.x,dy=to.y-from.y,dz=to.z-from.z,distance=Math.hypot(dx,dy,dz);if(distance<=.25)return true;
-  const nx=dx/distance,ny=dy/distance,nz=dz/distance,limitSq=(distance-.25)**2,epsilon=1e-7;
+export function hasLineOfSight(from:{x:number;y:number;z:number},to:{x:number;y:number;z:number},solids:Solid[],throughGlass=false,endMargin=.15){
+  const dx=to.x-from.x,dy=to.y-from.y,dz=to.z-from.z,distance=Math.hypot(dx,dy,dz),margin=.1+endMargin;if(distance<=margin)return true;
+  const nx=dx/distance,ny=dy/distance,nz=dz/distance,limitSq=(distance-margin)**2,epsilon=1e-7;
   for(const b of solids){
     const h=b.h??3;if(throughGlass&&b.seeThrough||b.w<=2*epsilon||b.d<=2*epsilon||h<=2*epsilon)continue;
     const y=b.y??1.5,c=Math.cos(b.yaw??0),n=Math.sin(b.yaw??0),x=from.x+nx*.1-b.x,z=from.z+nz*.1-b.z;
