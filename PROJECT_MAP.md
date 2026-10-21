@@ -13,8 +13,8 @@
 | 복도·승강기·계단·관리실·주차장 | `lib/building.ts`에서 해당 공간 제작 함수 확인 |
 | 중정·별관·지하 | `lib/courtyard.ts`, `lib/annex-lobby.ts`, `lib/annex-west-wing.ts`, `lib/expansion-world.ts` |
 | 도입 사고·차량·마지막 탈출 | `lib/story.ts.phoneCallback`의 첫 전화/차량 잠금음 회수 → `game.ts`의 시뮬레이션 시간별 1회 재생. `lib/prologue.ts` → 핸들·손목 공통 그립/손가락 감기 `lib/driving-hands.ts`, `lib/road-street.ts`, `lib/car-departure.ts`, `lib/sedan.ts` |
-| 귀신 외형·관절·걷기·기기 | `lib/ghost.ts`의 비대칭 어깨 당김·지연된 머리 회전(거리 위상), 접지 시 팔꿈치 방향 보존. 추가 뒤틀림은 좁은 공간/모션 줄이기에서 완화. `ghost-arms`, `ghost-legs`, `ghost-dress`, `ghost-face`, `ghost-hair` 등 필요한 부위로 이동 |
-| 28층 승강기 도주 | `game.ts.scripted`의 이미 호출된 승강기(입장 후 .25초 자동 대기 시작) → 4.8초 도착 → 실제 문 열림/걷기 탑승/닫힘. 보관함 없음. `pursuit.ts`의 landing 속도는 체력 회복 가능한 선형 도주용 |
+| 귀신 외형·관절·걷기·기기 | `lib/ghost.ts`의 비대칭 어깨 당김·지연된 머리 회전(거리 위상), 접지 시 팔꿈치 방향 보존. `animateGhost` 마지막 pursuit 입력은 기는 추격자의 상체/목/턱을 점진 변형한다. 벽 근처에서는 자세를 모으고, 모션 줄이기는 경련을 줄이되 높은 실루엣은 유지한다. root/머리 확대 없음. `ghost-arms`, `ghost-legs`, `ghost-dress`, `ghost-face`, `ghost-hair` 등 필요한 부위로 이동 |
+| 28층 승강기 도주 | V118: 문 오른쪽 실제 호출 버튼을 눌러야 `lift_wait` 시작 → 이미 28층인 승강기의 .65초 문 해제 → 실제 문 열림/걷기 탑승/닫힘. `building.ts`의 버튼과 호출등 피드백. 자동 호출/보관함 없음. `pursuit.ts`의 landing 속도는 체력 회복 가능한 선형 도주용 |
 | 추적·시야·소리·문 충돌 | `lib/navigation.ts`의 `movePursuer`(몸의 방향·전체 이동 구간 검사), `game.ts.followEnemy`(막힌 경로 재계획)·`hunt`(마지막 목격 위치 도착 후 조사), `lib/perception.ts`, `lib/collision.ts`; 단계별 속도·가속: `lib/pursuit.ts`; 자료실 문: `lib/archive-door.ts` |
 | 은신 중 숨 참기·호흡 발각 | `lib/held-breath.ts`의 공기/회복/청취 누적 → `game.ts.hearsHiddenBreath`·`searchShelter` 및 집 장롱 검사. 기본 Ctrl(재지정 가능), `app/breath-control.tsx` 표시/터치 해제. 입력 해제는 잠금·은신 종료·컴포넌트 제거 때 보장. `stepBreathStrain` → 게임 화면만 `breathBlur`, 공유 심장 음량 `setBreathStrain`, 불 꺼진 손의 한계 떨림 `viewmodel.update.strain`; 모션 줄이기는 떨림 제거/흐림 완화 |
 | 집 밖 은신처·문틈 관찰·수색 후 지나가기 | `lib/hiding-places.ts`의 17개 배치(일직선 28층 복도는 제외)·접이문 `setOpen`·문틈 수색 경로 → `lib/world.ts`에서 등록/닫힌 상태 복원 → `lib/game.ts`의 `updateShelterMotion`(시뮬레이션 시간 출입), `protectedInShelter`, `searchShelter`, `leaveShelter`. 수색 경로·정지/재방문 선택은 `lib/shelter-search.ts`에서 한 번 결정한다. 집 장롱의 스토리 hidden과 집 밖의 로컬 은신 상태를 분리해 자동 미션 시간이 계속 흐름 |

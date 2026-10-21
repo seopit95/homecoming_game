@@ -253,7 +253,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     breaker:'차단기를 올려도 불은 돌아오지 않는다. 건물 전체가 정전된 모양이다.\n어둠 속 거실에서 전화벨이 끊이지 않는다.',
     radio:'와이퍼 같은 소리가 나던 라디오를 껐다.\n…창밖의 빗소리만 남았다.',
     door:'낡은 외부 복도로 나왔다. 난간 너머로 빗소리가 쏟아진다.\n난간을 때리는 비가 발소리를 삼킨다. 끝에 엘리베이터 불빛이 보인다.',
-    call:'24 … 25 …\n아직 멀었다. 뒤를 살피며 거리를 벌려야 한다!',
+    call:'호출등이 들어왔다. 문이 벌어질 때까지 버텨야 한다.',
     enter:'문이 닫힌다.\n오른쪽 조작반에서 1층을 누르자.',
     panel:'1층. 제발, 멈추지 마.\n천장에서 내 것보다 한 박자 늦은 숨소리가 들린다.',
     pry:'문이 벌어졌다. 24층 복도가 보인다.\n밖으로 나갈 수 있다.',
@@ -783,14 +783,10 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(stageTime>=2.8){advance('heard');say('현관은 닫혀 있다. 소리는 다용도실 안에서 난다.\n이미 집 안에 있었다. 장롱에 숨어야 한다.',7);}
     }
     if(area!=='lift'&&elapsed-lastDrip>7.8){audio.sound('drip',Math.sin(elapsed*.37)*.8,area==='stairs'||area==='parking'?.8:.35);lastDrip=elapsed;}
-    // The 28F gallery offers no occluded escape branch. Its elevator was already
-    // called before we arrived; reaching it must not require a hidden extra input.
-    if(story.stage==='lift_call'&&areaTime>.25){
-      advance('call');audio.sound('motor',0,.3);say('호출등이 이미 켜져 있다. 누가 불러 놓은 거지… 승강기가 올라온다.',5);
-    }
     if(story.stage==='lift_wait'){
-      if(stageTime>2.5&&scriptBeat===0){scriptBeat=1;audio.sound('knock',.9);say('젖은 손이 바닥을 짚는 소리가 가까워진다.\n엘리베이터는 아직 오지 않았다.',4);}
-      if(stageTime>4.8){advance('arrived');audio.sound('chime');say('문이 열렸다. 바로 들어가자.',5);}
+      // The cab is already on 28F. A deliberate call releases its closed doors;
+      // a four-floor wait here left a depleted runner no way to survive.
+      if(stageTime>.65){advance('arrived');audio.sound('chime');say('문이 열렸다. 바로 들어가자.',5);}
     }
     if(story.stage==='lift_boarding'&&stageTime>1.4&&doorOpen<.035){
       const old=camera.position.clone(),oldYaw=yaw,oldPitch=pitch,oldCrouched=crouched;
@@ -880,7 +876,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='sleep'){camera.position.set(...home.sleep);pitch=.85+T.MathUtils.smoothstep(stageTime,0,5)*.15;yaw=0;}
     if(area==='apartment')(scene.fog as T.FogExp2).density=.016;
     if(area==='stairs')ambient.intensity=T.MathUtils.lerp(.16,.055,T.MathUtils.smoothstep(-camera.position.z,4.8,6.2));
-    if(world.figure.visible&&story.stage!=='dying'&&story.stage!=='ended')animateGhost(world.figure,time,ghostMotion,threat,reducedMotion,walkPhase,crawling()?(area==='landing'?T.MathUtils.smoothstep(areaTime-entranceDelay,0,.5):1):0,area==='stairs'||area==='courtyard'||area==='resident'&&arrivalPursuit?world.heightAt:undefined,world.solids);
+    if(world.figure.visible&&story.stage!=='dying'&&story.stage!=='ended')animateGhost(world.figure,time,ghostMotion,threat,reducedMotion,walkPhase,crawling()?(area==='landing'?T.MathUtils.smoothstep(areaTime-entranceDelay,0,.5):1):0,area==='stairs'||area==='courtyard'||area==='resident'&&arrivalPursuit?world.heightAt:undefined,world.solids,!concealed()&&chaseStages.includes(story.stage)&&(tracking||area==='landing')?1:0);
     if(area==='corridor'&&areaTime<4.2&&world.figure.visible)animateGhostEmergence(world.figure,areaTime,reducedMotion);
     if(evidenceReaction&&!reducedMotion){
       // Remain at the evidence: follow the leather toe, then the first wet print.
@@ -932,7 +928,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(area==='lift'&&doorOpen>.05){const shaft=world.root.getObjectByName('lift-shaft-darkness');if(shaft)shaft.visible=false;}
       world.liftDoors.left.position.x=-.315-doorOpen*.64;world.liftDoors.right.position.x=.315+doorOpen*.64;
       world.liftDoors.blocks[0].x=world.liftDoors.left.position.x;world.liftDoors.blocks[1].x=world.liftDoors.right.position.x;
-      const display=story.stage==='lift_wait'?String(Math.min(28,24+Math.floor(stageTime/1.2))):`${getLiftFloor()}${story.stage==='descent'?' ↓':story.stage==='pry'?' —':''}`;
+      const display=`${getLiftFloor()}${story.stage==='descent'?' ↓':story.stage==='pry'?' —':''}`;
       if(display!==lastDisplay){world.setDisplay?.(display);lastDisplay=display;}
     }
   }

@@ -14,7 +14,7 @@ type Contact={point:T.Vector3;rotation:T.Quaternion;stance:boolean;withdrawing:b
 type Steps={position:T.Vector3;yaw:number;time:number;phase:number;crawl:number;tuck:Clearance;live:boolean;contacts:Contact[]};
 const openClearance:Clearance={side:0,front:0,back:0};
 const armTuck=(t:Clearance)=>T.MathUtils.smoothstep(Math.max(t.side,t.front),0,.65);
-type Rig={steps?:Steps;crawl:number;kneel:number;tuck:Clearance;drips:T.InstancedMesh;neck:T.Mesh;headOffset:T.Vector3;face:FaceRig;skinArms:T.Mesh[];skinLegs:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
+type Rig={pursuit:number;steps?:Steps;crawl:number;kneel:number;tuck:Clearance;drips:T.InstancedMesh;neck:T.Mesh;headOffset:T.Vector3;face:FaceRig;skinArms:T.Mesh[];skinLegs:T.Mesh[];body:T.Group;mouth:T.Group;tails:T.Group;torso:T.Group;head:T.Group;arms:T.Group[];forearms:T.Group[];palms:T.Group[];legs:T.Group[];knees:T.Group[];ankles:T.Group[];hair:T.Group;gown:T.Mesh;hem:Float32Array};
 const rigs=new WeakMap<T.Group,Rig>();
 export function createGhost(parent:T.Object3D){
   const figure=new T.Group();figure.name='resident-remains';figure.rotation.order='YXZ';parent.add(figure);figure.visible=false;
@@ -39,9 +39,9 @@ export function createGhost(parent:T.Object3D){
   const skinArms=arms.map((_,i)=>createAnatomicalArm(body,i===0?-1:1,skin,palms[i].children[0] as T.Mesh));
   const skinLegs=legs.map((_,i)=>createAnatomicalLeg(body,i===0?-1:1,skin,ankles[i].children[0] as T.Mesh));
   const drips=new T.InstancedMesh(new T.SphereGeometry(.003,6,5),new T.MeshPhysicalMaterial({color:'#39090c',roughness:.25,clearcoat:.7}),6);drips.name='ghost-blood-drips';drips.frustumCulled=false;body.add(drips);
-  rigs.set(figure,{crawl:0,kneel:0,tuck:openClearance,drips,neck,headOffset:new T.Vector3(),face,skinArms,skinLegs,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
+  rigs.set(figure,{pursuit:0,crawl:0,kneel:0,tuck:openClearance,drips,neck,headOffset:new T.Vector3(),face,skinArms,skinLegs,body,mouth,tails,torso,head,arms,forearms,palms,legs,knees,ankles,hair,gown,hem});animateGhost(figure,0,0,0,false);return figure;
 }
-function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,tuck:Clearance=openClearance,walking=false,kneeGround=1){
+function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,tuck:Clearance=openClearance,walking=false,kneeGround=1,menace=0){
   const rig=rigs.get(figure);if(!rig)return;
   rig.tuck=tuck;rig.crawl=crawl;rig.kneel=0;
   rig.body.position.set(0,0,0);rig.body.quaternion.identity();
@@ -87,21 +87,27 @@ function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,red
     }
   }
   if(crawl>0){
-    crawlPose(rig,phase,moving,T.MathUtils.clamp(crawl,0,1),tuck,kneeGround,reducedMotion?0:1);
+    crawlPose(rig,phase,moving,T.MathUtils.clamp(crawl,0,1),tuck,kneeGround,reducedMotion?0:1,menace);
     const twitch=reducedMotion?0:Math.pow(Math.max(0,Math.sin(time*1.43)),20)*.085;
     rig.head.rotation.y+=twitch*crawl;rig.head.rotation.z-=twitch*.6*crawl;
   }
   anchorHeadAtNeck(rig.head,rig.headOffset);return rig;
 }
-export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,heightAt?:(x:number,z:number)=>number,solids:Solid[]=[]){
+export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,heightAt?:(x:number,z:number)=>number,solids:Solid[]=[],pursuit=0){
   const tuck=crawlClearance(figure,solids);
   const previous=rigs.get(figure)?.steps,dt=previous?time-previous.time:0;
   const turned=previous?Math.abs(Math.atan2(Math.sin(figure.rotation.y-previous.yaw),Math.cos(figure.rotation.y-previous.yaw))):0;
   const continuous=!!previous&&dt>=0&&dt<=.12&&figure.position.distanceTo(previous.position)<.35&&turned<.5&&(crawl<.05&&previous.crawl<.05||crawl>.95&&previous.crawl>.95)&&(dt>0||phase===previous.phase);
   const live=continuous&&(previous!.live||dt>0&&(figure.position.distanceToSquared(previous!.position)>1e-10||turned>1e-6));
   const kneeGround=heightAt?1-T.MathUtils.smoothstep(Math.abs(groundSlope(figure,heightAt)),0,.05):1;
-  const rig=poseGhost(figure,time,moving,proximity,reducedMotion,phase,crawl,tuck,moving>.01||live,kneeGround);if(!rig)return;
-  poseFace(rig.face,0);rig.mouth.visible=false;
+  const state=rigs.get(figure);if(!state)return;
+  state.pursuit=T.MathUtils.damp(state.pursuit,T.MathUtils.clamp(pursuit,0,1),3.5,Math.min(.05,Math.max(0,dt)));
+  // Keep the adult limb lengths and navigation envelope. The spine unfolds
+  // during pursuit, then gathers before a wall or a narrow doorway.
+  const menace=state.pursuit*crawl*(1-T.MathUtils.smoothstep(Math.max(tuck.side,tuck.front,tuck.back),.05,.4));
+  const rig=poseGhost(figure,time,moving,proximity,reducedMotion,phase,crawl,tuck,moving>.01||live,kneeGround,menace);if(!rig)return;
+  // Quantized tissue poses avoid recomputing the face normals every chase frame.
+  poseFace(rig.face,Math.round(menace*.8*12)/12);rig.mouth.visible=menace>.02;
   if(heightAt)groundGhost(figure,heightAt,false);
   plantContacts(figure,rig,time,phase,crawl,moving,live,continuous?previous:undefined);
   poseDress(rig.gown,rig.hem,rig.torso,rig.knees,crawl,false,tuck.back,tuck.side,tuck.front);
@@ -263,7 +269,7 @@ function reach(upper:T.Group,lower:T.Group,target:T.Vector3,l1:number,l2:number,
   lower.quaternion.setFromUnitVectors(new T.Vector3(0,-1,0),fore);
 }
 
-function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearance=openClearance,kneeGround=1,unease=1){
+function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearance=openClearance,kneeGround=1,unease=1,menace=0){
   const front=tuck.front,back=tuck.back,arms=armTuck(tuck);
   const room=1-Math.max(front,back,tuck.side),strain=unease*moving*room;
   // Shoulder-led dragging lags behind the alternating planted hands. The root
@@ -275,9 +281,9 @@ function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearanc
   const walkingHands=rig.arms.map((arm,i)=>new T.Vector3(0,-.49,0).applyQuaternion(rig.forearms[i].quaternion).add(rig.forearms[i].position).applyQuaternion(arm.quaternion).add(arm.position).applyQuaternion(rig.torso.quaternion).add(rig.torso.position));
   const walkingElbows=rig.arms.map((arm,i)=>rig.forearms[i].position.clone().applyQuaternion(arm.quaternion).add(arm.position).applyQuaternion(rig.torso.quaternion).add(rig.torso.position));
   const walkingPalms=rig.arms.map((arm,i)=>rig.torso.quaternion.clone().multiply(arm.quaternion).multiply(rig.forearms[i].quaternion).multiply(rig.palms[i].quaternion));
-  rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving+stagger, .445+back*.22+Math.cos(phase*2)*.014*moving,-.1-front*.06+Math.sin(phase*2-.9)*.022*moving*(1-front)+pull),blend);
-  rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17-front*.37+Math.sin(phase*2-.5)*.018*strain,Math.sin(phase)*.025*moving+Math.sin(phase*.5-.6)*.055*strain,Math.sin(phase)*.055*moving+(.035+Math.sin(phase-.5)*.035)*strain)),blend);
-  rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+Math.sin(phase-.9)*.035*moving,.065+Math.sin(phase*.5-.7)*.10*strain,-.28+Math.sin(phase-1)*.035*moving-(.14+Math.sin(phase*.5-.8)*.06)*strain)),blend);
+  rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving+stagger, .445+menace*.23+back*.22+Math.cos(phase*2)*.014*moving,-.1+menace*.35-front*.06+Math.sin(phase*2-.9)*.022*moving*(1-front)+pull),blend);
+  rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17-menace*.65-front*.37+Math.sin(phase*2-.5)*.018*strain,Math.sin(phase)*.025*moving+Math.sin(phase*.5-.6)*.055*strain,menace*.10+Math.sin(phase)*.055*moving+(.035+Math.sin(phase-.5)*.035)*strain)),blend);
+  rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+menace*.65+Math.sin(phase-.9)*.035*moving,.065-menace*.16+Math.sin(phase*.5-.7)*.10*strain,-.28-menace*.34+Math.sin(phase-1)*.035*moving-(.14+Math.sin(phase*.5-.8)*.06)*strain)),blend);
   rig.arms[1].position.y=T.MathUtils.lerp(.245,.292,blend);
   const inverse=rig.torso.quaternion.clone().invert();
   for(let i=0;i<2;i++){

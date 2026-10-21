@@ -100,7 +100,11 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     box(0,.012,dz,1.35,.023,.22,metal);
     for(const x of [-.3,-.1,.1,.3])box(x,.026,dz,.012,.006,.22,dark);
     if(area==='landing'){
-      const call=box(.95,1.25,-22.874,.13,.28,.07,metal);call.name='mounted-lift-call-panel';label('▽',.95,1.25,-22.834,0,.09,.12,'#d6985c');target('call','엘리베이터 호출',call,.95,1.25,dz+.2);
+      const call=box(.95,1.25,-22.874,.18,.34,.07,metal);call.name='mounted-lift-call-panel';
+      const callLight=mat('#b8864b',{emissive:'#eab471',emissiveIntensity:.25,roughness:.4});
+      const button=new T.Mesh(new T.CylinderGeometry(.052,.052,.014,24),callLight);button.name='landing-call-button';button.rotation.x=Math.PI/2;button.position.set(.95,1.25,-22.826);root.add(button);
+      label('▽',.95,1.25,-22.815,0,.075,.08,'#231e16');target('call','승강기 호출 버튼 누르기',call,.95,1.25,dz+.2);
+      updateStory=stage=>{callLight.emissiveIntensity=stage==='lift_call'?.25:1.5;};
       label('28층',-.9,2.65,-bz+.094,0,.25,.17);
       // A complete cab behind the threshold is visible while the doors open.
       box(0,-.09,dz-1.45,2.18,.18,2.7,floorMat);box(0,2.8,dz-1.45,2.2,.1,2.7,metal);
