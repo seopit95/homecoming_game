@@ -3,9 +3,10 @@ import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import {Pause,Play,RotateCcw,Volume2,Expand,Smartphone} from '../lib/icons';
 import type {Game,GameView,Settings} from '../lib/game';
 import {registerGameTools} from '../lib/webmcp';
-import {endings,isMemory,isCinematic,areaFor} from '../lib/story';
+import {isMemory,isCinematic,areaFor} from '../lib/story';
 import {InvestigationNotebook} from './investigation-notebook';
 import {TitleScreen} from './title-screen';
+import {EndingScreen} from './ending-screen';
 import {investigation} from '../lib/investigation';
 import {defaultSettings,bindingLabels,keyLabel,allowedKey,type Binding} from '../lib/preferences';
 const initialSettings:Settings=defaultSettings;
@@ -24,7 +25,6 @@ export default function Home(){
   function change<K extends keyof Settings>(key:K,value:Settings[K]){const next={...settings,[key]:value};setSettings(next);game.current?.configure(next);}
   const began=!!view?.started,ended=view?.story.stage==='ended',dying=view?.story.stage==='dying',memory=!!view&&isCinematic(view.story.stage),hidden=!!view?.story.hidden,paused=!!view?.paused;
   const recordCount=view?investigation(view.story).count:0;
-  const minutes=Math.floor((view?.elapsed||0)/60),seconds=Math.floor((view?.elapsed||0)%60);
   const controlsHelp=<section className="pause-controls" role="group" aria-label="조작 안내">
     <h3>조작 안내</h3><dl>{[
       ['이동',[settings.bindings.forward,settings.bindings.left,settings.bindings.back,settings.bindings.right].map(keyLabel).join(' ')],
@@ -79,7 +79,7 @@ export default function Home(){
     {began&&paused&&!ended&&<section className="modal-backdrop" aria-label="일시정지 메뉴"><div className={`pause-card${showNotes?" has-notebook":""}`}><p className="overline">일시정지</p><h2>{showNotes?'조사 수첩':'일시정지'}</h2><p className="muted">건물 안의 시간도 멈춰 있습니다.</p><button className="start-button" onClick={()=>game.current?.pause(false)}><span>계속하기</span><Play size={18}/></button>{!showNotes&&controlsHelp}<div className="pause-tabs"><button aria-pressed={!showNotes} onClick={()=>setShowNotes(false)}>설정</button><button aria-pressed={showNotes} onClick={()=>setShowNotes(true)}>조사 수첩</button></div>{showNotes&&view?<InvestigationNotebook story={view.story} onClose={()=>game.current?.pause(false)}/>:settingsPanel}<button className="quiet-button" onClick={()=>game.current?.start()}><RotateCcw size={15}/>처음부터 다시</button></div></section>}
     {dying&&<div className="death-vignette" aria-hidden="true"><div style={{opacity:Math.max(0,((view?.deathProgress||0)-.42)/.18)}}/></div>}
     {dying&&(view?.deathProgress||0)>.4&&!paused&&<button className="skip-death" onClick={()=>game.current?.skipDeath()}>재시도 화면으로</button>}
-    {ended&&<section className="ending-screen"><div><p className="overline">귀가 기록 / {view?.story.ending==='crashed'?'배드 엔딩 · 동승자':'미완'}</p><h2>{view?.story.ending==='crashed'?'끝내, 혼자가 아니었다.':'발소리가 멎었다.'}</h2><p className="ending-copy">{view?.story.ending==='crashed'?endings.crashed:endings.caught}</p><p className="end-time">{minutes}분 {seconds}초의 기록</p><button className="start-button" onClick={()=>game.current?.start(view?.story.ending==='caught')}><span>{view?.story.ending==='caught'?view.checkpointLabel:'다시 귀가하기'}</span><RotateCcw size={18}/></button><p className="ending-note">{view?.story.ending==='caught'?'발소리와 시선을 살피세요. 해당 구간부터 다시 시작하며, 읽은 기록은 남습니다.':'〈귀가〉를 플레이해 주셔서 감사합니다.'}</p></div></section>}
+    {ended&&view&&<EndingScreen ending={view.story.ending} elapsed={view.elapsed} checkpointLabel={view.checkpointLabel} reducedMotion={settings.reducedMotion} onRestart={()=>game.current?.start(view.story.ending==='caught')}/>}
     {error&&(ready||began)&&<div className="error-note" role="alert"><Volume2 size={18}/><p>{error}</p><button aria-label="알림 닫기" onClick={()=>setError('')}>×</button></div>}
   </main>;
 }

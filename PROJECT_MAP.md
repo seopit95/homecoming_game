@@ -4,7 +4,7 @@
 
 | 작업 영역 | 첫 진입점 / 연결 파일 |
 | --- | --- |
-| 플레이 화면·설정·모바일 조작 | `app/page.tsx`, `app/globals.css`; 키·설정·저장: `lib/preferences.ts` |
+| 플레이 화면·설정·모바일 조작 | `app/page.tsx`, `app/globals.css`; 키·설정·저장: `lib/preferences.ts` V128 공통 먹색/회백색/탁한 적색은 마지막에 불러오는 app/game-theme.css에서 관리. 메뉴/설정/HUD/수첩/체력/터치/오류를 공유하며 맵 광량은 바꾸지 않음. |
 | 스마트폰 전화·플래시 | V123 `lib/smartphone.ts` 공통 기기 → `world.ts` 침대 협탁 픽업, `viewmodel.ts` 후면 LED 광원/실사 손(`smartphone-hand-v1.webp`), `observed-player.ts` CCTV 속 기기, `chapters.ts` 한서연 음성메시지/사고 현장 폰. 공용 비상전화·인터폰은 유지. 새 도입: 스위치→폰 픽업→손 안의 전화 받기→차단기→신발. `game.findTarget`의 phone은 들고 있는 대상이며 협탁을 다시 조준하지 않는다. `preferences.ts`의 phone/shoes 체크포인트와 `smartphone` 노트가 새/기존 저장 흐름을 구별. 내부 torch/flashlight 액션·저장 이름은 호환성 때문에 유지. `audio.ts`의 mobile 루프는 건물 전화벨과 구분되며 들고 이동/통화 종료/장면 변경에 맞춰 갱신 |
 | 사고 여성·귀신 공통 의상 | V123 `lib/victim-outfit.ts`의 단색 회색 공통 재질(젖은 정도만 구분), `pedestrian-art.ts`의 기존 소매 바인딩, `pedestrian.ts`의 긴 치마. 치마는 hip/knee/ankle을 따라 곡선 길이 기준으로 분할해 허리 링의 겹침/버킷 모양을 방지. 귀신은 기존 gown/관절/상처 유지. `tests/victim-outfit.test.mjs`와 `pedestrian-clothing.test.mjs`; 실제 사고 접지는 `opening-staging.test.mjs` |
 | 조사 수첩·획득한 증거 해석 | `app/investigation-notebook.tsx`, `lib/investigation.ts` |
@@ -25,6 +25,7 @@
 | 은신 범위 | V119: 집 밖 은신용 캐비닛17개 삭제. world.ts는 빈 hidingPlaces를 반환. 집 장롱의 story.hidden은 유지하며 V126부터 닫힌 장롱은 안전, V127부터 숨 참기는 비활성. 중정 열쇠 보관함은 은신처가 아닌 레거시 미션 소품 |
 | 퍼즐·전화·원본 대조 | `lib/annex-call.ts`, `lib/surveillance.ts`, `lib/archive-review.ts`, `lib/plant-*.ts` |
 | 붙잡힘·얼굴 전체화면 돌진 | V127 captureDuration1.25초, lib/capture-scene.ts가 같은 귀신의 피부·입·치아·머리카락을 공유해 어두운 근접 포획. 추격 비명과 다른 voice(capture) 충격음. game.ts의 dying/skipDeath/공유 진행률과 일치. 재시도 때 일반 시점 복귀 |
+| V128 충돌 뒤 후일담 | app/ending-screen.tsx: crashed 엔딩에만 2초 암전→사고 기록→빈 조수석→블랙박스 단서→21초 제목/크레딧. 숨은 탭에서는 진행 중지, 건너뛰기/다시 보기. caught는 기존 즉시 체크포인트 재시도. app/page.tsx에서만 연결, 실제 운전/충돌/저장 엔진은 유지. app/ending-screen.css의 원본227KB 스틸은2초부터 마운트해 초기 준비/프리로드에 추가하지 않음. 각 문장 교체는 고정 aria-live 안쪽에서만 수행 |
 | 주차장·차문·마지막 충돌 | V127 game.ts: 경보5초 동안 소리 쪽 유도→종료 비명/4.30 추격. parking_alarm 재시도·이어하기는 경보 노트를 초기화해 재사용 가능. building.ts의 실제 운전석 문짝을 조준, 차체 자체 충돌만 시선 검사에서 제외하고 반대편 탑승 차단. story.ts의 탑승 입력.2초 후 기존 문 열기/탑승/경사로 연출. driving-car.ts의 문 안감/손잡이/실/경첩은 실제 문에 연결. prologue.ts의 조수석 대사3초→남성 비명/전방 회전→dump-truck.ts 덤프트럭 정면 접촉1.35초. 귀신 타격 없음. passenger-portrait.ts의 사전 준비된 곡면 알파 얼굴과 기존3D 착석 몸체를 결합하며 완전한 실사3D 모델은 아님 |
 | V127 교체 음원 | smartphone-audio.ts는 Apple 녹음 없이 별도 제작한 마림바 루프. 기존 V126 추격 비명을 유지해 음량20% 상승, 포획은 별도 충격음. public/audio/ghost-v127/sources.json에 금속 긁기/남성 비명 CC0 출처 및 합성 대사 한계 기록. 승강기 실제 긁기10.6/13.2초, 마지막 대사는 합성 근사치이며 실제 배우 녹음 아님 |
 | 음원·배경음·믹싱 | `lib/audio.ts`, `public/audio/`; 주인공 재질 판정 `lib/footsteps.ts`, PCM 영역 `lib/footstep-bank.json`, 점진 호흡 `lib/stamina.ts`의 `stepBreathing`. 귀신 발소리는 procedural 분기 유지. 거리 심장 박동·머리 회전에 따른 HRTF 발/숨/끌림 음향은 `lib/ghost-sound.ts` → `lib/audio.ts.setGhostPosition`; `game.ts.danger`가 실제 위치/문 차폐/활성 여부를 제공. 추격 비명·가속 전환은 `lib/game.ts`의 `chaseSpeed` |

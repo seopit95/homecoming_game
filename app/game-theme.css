@@ -1,0 +1,69 @@
+/* One palette for menus, HUD, records and touch controls. */
+:root{--ui-paper:#ddd5cd;--ui-muted:#a89e9b;--ui-heading:#f0e8df;--ui-panel:#100d0f;--ui-rule:#9b7e7b48;--ui-accent:#b66b61;--ui-accent-light:#d79788;--ui-track:#79676635;color:var(--ui-paper);background:#080708;color-scheme:dark}
+.game-shell{color:var(--ui-paper);background:#080708;accent-color:var(--ui-accent)}
+.game-shell button:focus-visible,.game-shell summary:focus-visible,.game-shell input:focus-visible{outline:2px solid var(--ui-accent-light);outline-offset:4px}
+.game-shell kbd{color:var(--ui-paper);background:#1b1517c9;border-color:var(--ui-rule)}
+.game-shell h2,.game-shell .room-label,.game-shell .chapter-card p{color:var(--ui-heading)}
+.game-shell .overline,.game-shell .muted,.game-shell .clock,.game-shell .room-label span,.game-shell .chapter-card span,.game-shell .save-location,.game-shell .save-notice,.game-shell .play-footer,.game-shell .end-time,.game-shell .ending-note{color:var(--ui-muted)}
+.game-shell .start-button{color:var(--ui-heading);border-color:#af776b8c;background:linear-gradient(100deg,#42232485,#20131555);box-shadow:inset 2px 0 var(--ui-accent)}
+.game-shell .start-button:hover{background:#4c292b80;border-color:var(--ui-accent-light)}
+.game-shell .quiet-button{color:var(--ui-muted)}
+.game-shell .quiet-button:hover{color:var(--ui-heading)}
+.game-shell .hud{background:linear-gradient(#0b080bcc,transparent)}
+.game-shell .hud p,.game-shell .settings-panel label,.game-shell .settings-panel b,.game-shell .pause-controls dt,.game-shell .pause-controls dd{color:var(--ui-paper)}
+.game-shell .hud p.urgent,.game-shell .settings-panel .binding-error{color:var(--ui-accent-light)}
+.game-shell .hud-tools button,.game-shell .binding-grid button,.game-shell .touch-controls button{background:#171114d9;border-color:var(--ui-rule);color:var(--ui-paper)}
+.game-shell .touch-controls .touch-run,.game-shell .touch-actions button[aria-pressed=true],.game-shell .binding-grid button.listening{background:#452529b8;border-color:var(--ui-accent);color:var(--ui-heading)}
+.game-shell .interaction{background:#120d11eb;color:var(--ui-heading);border-color:var(--ui-rule)}
+.game-shell .interaction kbd{border-color:#b07b7190}
+.game-shell .hold-meter,.game-shell .hold-meter::-webkit-progress-bar{background:var(--ui-track)}
+.game-shell .hold-meter::-webkit-progress-value{background:var(--ui-accent-light)}
+.game-shell .hold-meter::-moz-progress-bar{background:var(--ui-accent-light)}
+.game-shell .crosshair{background:#e5dad1a6}
+.game-shell .crosshair.active{background:transparent;border-color:var(--ui-accent-light)}
+.game-shell .subtitle p{background:#0e090de6;border-color:var(--ui-rule);color:var(--ui-heading)}
+.game-shell .ghost-whisper{color:#dcc1b7}
+.game-shell .modal-backdrop{background:#0d090def}
+.game-shell .caught-ending{background:#0a070af5}
+.game-shell .ending-copy,.game-shell .journal p{color:var(--ui-paper)}
+.game-shell .settings-panel input{accent-color:var(--ui-accent)}
+.game-shell .settings-panel details,.game-shell .pause-controls,.game-shell .pause-tabs{border-color:var(--ui-rule)}
+.game-shell .settings-panel summary,.game-shell .pause-controls h3{color:var(--ui-heading)}
+.game-shell .settings-local,.game-shell .pause-controls p{color:var(--ui-muted)}
+.game-shell .pause-tabs button{color:var(--ui-muted)}
+.game-shell .pause-tabs button[aria-pressed=true]{border-color:var(--ui-accent);color:var(--ui-heading)}
+.game-shell .stamina{color:var(--ui-muted)}
+.game-shell .stamina progress,.game-shell .stamina progress::-webkit-progress-bar{background:var(--ui-track)}
+.game-shell .stamina progress::-webkit-progress-value{background:#c6b6ac}
+.game-shell .stamina progress::-moz-progress-bar{background:#c6b6ac}
+.game-shell .stamina.exhausted{color:var(--ui-accent-light)}
+.game-shell .stamina.exhausted progress::-webkit-progress-value{background:var(--ui-accent)}
+.game-shell .stamina.exhausted progress::-moz-progress-bar{background:var(--ui-accent)}
+/* The title keeps its photographed setting; its typography follows the HUD. */
+.game-shell .entrance-screen{background:#080708;color:var(--ui-paper);scrollbar-color:#6c5355 #100c0f}
+.game-shell .entrance-header,.game-shell .entrance-footer,.game-shell .entrance-kicker,.game-shell .entrance-config,.game-shell .entrance-save,.game-shell .entrance-back,.game-shell .entrance-title>span{color:var(--ui-muted)}
+.game-shell .entrance-header,.game-shell .entrance-footer{border-color:var(--ui-rule)}
+.game-shell .entrance-title,.game-shell .entrance-settings h2{color:var(--ui-heading)}
+.game-shell .entrance-title>.entrance-hanja{color:#b3a5a0}
+.game-shell .entrance-tagline{color:#c6b9b3}
+.game-shell .entrance-kicker:before{background:var(--ui-accent)}
+.game-shell .entrance-option{color:var(--ui-paper)}
+.game-shell .entrance-option.primary{border-color:var(--ui-accent);color:var(--ui-heading);background:linear-gradient(90deg,#77383a30,transparent)}
+.game-shell .entrance-option:hover,.game-shell .entrance-option:focus-visible{color:var(--ui-heading);background:linear-gradient(90deg,#89404545,transparent);border-color:var(--ui-accent-light)}
+.game-shell .entrance-loading p,.game-shell .entrance-footer svg{color:var(--ui-muted)}
+.game-shell .entrance-loading-line{background:var(--ui-track)}
+.game-shell .entrance-loading-line>i{background:linear-gradient(90deg,transparent,#bc8075,transparent)}
+/* Notes read like faded paper rather than a green computer terminal. */
+.game-shell .investigation-heading,.game-shell .investigation-person,.game-shell .investigation-questions,.game-shell .investigation-pattern,.game-shell .investigation-records article{border-color:var(--ui-rule)}
+.game-shell .investigation-heading h3,.game-shell .investigation h4,.game-shell .investigation-records h5{color:var(--ui-heading)}
+.game-shell .investigation p,.game-shell .investigation-questions li,.game-shell .investigation-records summary{color:var(--ui-paper)}
+.game-shell .investigation-heading span,.game-shell .investigation .investigation-muted,.game-shell .investigation-empty p,.game-shell .investigation .investigation-source,.game-shell .investigation-timeline time,.game-shell .investigation-records summary span,.game-shell .investigation-records summary:before{color:var(--ui-muted)}
+.game-shell .investigation-timeline .confirmed time{color:var(--ui-accent-light)}
+.game-shell .investigation-timeline li:before{border-color:var(--ui-rule)}
+.game-shell .investigation-timeline .confirmed:before,.game-shell .investigation-pattern{border-color:var(--ui-accent)}
+.game-shell .investigation-records details{background:#21161b60;border-color:var(--ui-rule)}
+.game-shell .investigation-heading-controls button{background:#2b1c21;border-color:#a47b705e;color:var(--ui-paper)}
+.game-shell .investigation-facts,.game-shell .investigation-records,.game-shell .investigation,.game-shell .journal{scrollbar-color:#72585a #140e12}
+.game-shell .room-label span{border-color:var(--ui-rule)}
+.game-shell .error-note{background:#241318;border-color:var(--ui-accent);color:var(--ui-paper)}
+.game-shell .error-note button{color:var(--ui-paper)}

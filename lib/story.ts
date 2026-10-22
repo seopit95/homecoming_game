@@ -268,7 +268,7 @@ export function journalEntry(id:Action,story:Pick<Story,'notes'>){
   return journal[id];
 }
 export const endings={
-  crashed:'차는 아파트 앞 도로의 콘크리트 방호벽을 들이받았다.\n운전자는 현장에서 사망했다.\n\n차량에서 발견된 탑승자는 한 명.\n블랙박스에는 충돌 직전, 여자의 목소리가 남아 있었다.\n\n「이번에도… 혼자 가려고?」',
+  crashed:'차는 아파트 앞 도로에서 마주 오던 덤프트럭과 정면으로 충돌했다.\n운전자는 현장에서 사망했다.\n\n차량에서 발견된 탑승자는 한 명.\n블랙박스에는 충돌 직전, 여자의 목소리가 남아 있었다.\n\n「이번에도… 혼자 가려고?」',
   caught:'숨을 죽였다.\n발소리도 멎었다.\n\n바로 뒤에서 젖은 숨이 들렸다.',
 };
 

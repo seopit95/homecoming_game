@@ -229,3 +229,21 @@ the ending dump truck is authored geometry (`lib/dump-truck.ts`). No third
 party truck model, new runtime package or external runtime request was added.
 The V85 historical hand-reach ending is replaced here by a passive passenger,
 male reaction, continuous forward camera turn and head-on truck collision.
+
+
+### Original epilogue still (V128)
+
+`public/images/ending-aftermath-v128.webp` is an original built-in ImageGen
+cinematic aftermath still,1672×941 and227,538bytes. One correction removed
+the truck from the static aftermath because its generated direction
+contradicted the existing head-on collision. Only format conversion to WebP
+followed; no frame or sound from another horror game is included. The image
+is mounted after second2 of the crashed epilogue, outside initial graphics
+preparation/preload hints. It is a still-image treatment, not a new3D scene.
+
+Editorial references: Silent Hill2's final-letter/fade/credits structure
+([script reference](https://www.silenthillmemories.net/sh2/script_en.htm)) and
+SOMA's final-scene/credits/aftermath recontextualisation
+([Tampere Universities PlayLab analysis](https://blogs.tuni.fi/playlab/features/the-ending-of-soma-and-why-its-excellent/)).
+Only the pacing idea is used; the on-screen report, imagery and text are
+original to this game's existing crash/passenger story.

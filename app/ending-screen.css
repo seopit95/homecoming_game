@@ -1,0 +1,42 @@
+.epilogue{position:absolute;inset:0;z-index:20;isolation:isolate;overflow:auto;background:#040305;color:var(--ui-paper);padding:clamp(22px,4vw,60px) clamp(24px,7vw,120px);display:flex;flex-direction:column;min-height:0;scrollbar-color:#72585a #100b0e}
+.epilogue-still{position:fixed;inset:0;z-index:-3;background:#070507 url('/images/ending-aftermath-v128.webp') 64% center/cover no-repeat;animation:epilogue-reveal 2s ease-out both;pointer-events:none}
+.epilogue-shade{position:fixed;inset:0;z-index:-2;pointer-events:none;background:linear-gradient(90deg,#050305db,#0805088c 42%,#08050812 75%),linear-gradient(0deg,#080508c9,transparent 36%,transparent 75%,#060406a6)}
+.epilogue:before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.08;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.4' d='M0 0h180v180H0z'/%3E%3C/svg%3E")}
+.epilogue-header,.epilogue-footer{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-shrink:0;color:#b8a9a4;font:10px/1.6 ui-monospace,monospace;letter-spacing:.16em;text-shadow:0 1px 6px #000}
+.epilogue-header{padding-bottom:18px;border-bottom:1px solid #bd91832b}
+.epilogue-footer{margin-top:auto;padding-top:24px;border-top:1px solid #bd91832b}
+.epilogue-copy{width:min(640px,92%);margin:auto 0;padding:70px 0}.epilogue-beat{animation:epilogue-copy-in 1s ease-out both}
+.epilogue-label{font:11px/1.8 ui-monospace,monospace;letter-spacing:.18em;color:#c18b7c;margin:0 0 25px;word-break:keep-all}
+.game-shell .epilogue h2{font:400 clamp(24px,3.2vw,44px)/1.5 'Nanum Myeongjo',Batang,serif;color:#eee1d6;letter-spacing:.015em;word-break:keep-all;margin:0 0 24px;text-shadow:0 2px 20px #000}
+.epilogue-beat>p:last-of-type{font-size:clamp(13px,1.2vw,16px);line-height:2;letter-spacing:.02em;white-space:pre-line;color:#c4b6b0;text-shadow:0 2px 8px #000;word-break:keep-all}
+.epilogue-wave{display:flex;align-items:center;gap:4px;height:55px;opacity:.65;margin-top:27px;mask-image:linear-gradient(90deg,transparent,#000 5%,#000 90%,transparent);width:max-content}
+.epilogue-wave i{display:block;width:2px;background:#b77467}
+.epilogue-skip{position:absolute;right:clamp(24px,7vw,120px);bottom:clamp(70px,10vh,110px);background:#0e090dc7;border:1px solid #b48c7b40;color:#cab9b1;padding:12px 17px;font:12px/1.5 sans-serif;letter-spacing:.03em}
+.epilogue-skip span{margin-left:22px;color:#ba7c6e}
+.epilogue-skip:hover{border-color:#c88b7d;background:#30191e}
+.epilogue-finish{width:min(440px,100%);margin:auto 0;padding:40px 0;animation:epilogue-copy-in 1.3s ease-out both}
+.epilogue.is-complete .epilogue-shade{background:linear-gradient(90deg,#080407f5,#080508ac 48%,#08050836),linear-gradient(0deg,#080508cd,transparent 65%)}
+.game-shell .epilogue .epilogue-title{font-size:clamp(66px,8vw,108px);line-height:1.1;letter-spacing:.13em;margin-bottom:30px;white-space:nowrap}
+.epilogue-title small{font-size:.2em;letter-spacing:.02em;vertical-align:middle;color:#c3a89a}
+.epilogue-title>span{display:block;font:11px/1.8 ui-monospace,monospace;letter-spacing:.5em;color:#a58b85;margin:16px 0 0 6px}
+.epilogue-last{font:clamp(15px,1.4vw,18px)/2 Batang,serif;letter-spacing:.04em;color:#ddc9be;margin:0 0 24px}
+.epilogue-thanks{font-size:12px;color:#b9a49b;line-height:1.8;margin:0 0 28px}
+.epilogue-actions{display:grid;gap:12px;max-width:290px}
+.game-shell .epilogue .start-button{width:100%;font-size:14px;padding:14px 18px}
+.epilogue-secondary,.epilogue-credits-toggle{background:none;color:#b5a19a;font:12px/1.6 sans-serif;text-align:left;padding:6px 0;letter-spacing:.03em}
+.epilogue-secondary:hover,.epilogue-credits-toggle:hover{color:#e8d4ca}
+.epilogue-record{border-top:1px solid #bd91832b;margin-top:24px;padding-top:16px;font-size:11px;color:#bba79f}
+.epilogue-record summary{cursor:pointer;width:fit-content;line-height:1.8}
+.epilogue-record p{font-size:12px;line-height:1.9;white-space:pre-line;color:#cbb7ad;margin:16px 0}
+.epilogue-credits-toggle{margin-top:10px}
+.epilogue-credits{margin:10px 0 0;padding:14px 0;border-top:1px solid #bd91832b;font-size:11px;line-height:1.8;color:#c3ada4}
+.epilogue-credits dl{margin:16px 0;display:grid;gap:12px}
+.epilogue-credits dl>div{display:grid;grid-template-columns:110px 1fr;gap:16px}
+.epilogue-credits dt{color:#a18b85}.epilogue-credits dd{margin:0}
+@keyframes epilogue-reveal{from{opacity:0}to{opacity:1}}
+@keyframes epilogue-copy-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:600px){.epilogue-still{background-position:70% center;filter:brightness(.65)}.epilogue-shade{background:linear-gradient(90deg,#060307db,#08050873),linear-gradient(0deg,#080508c9,transparent)}.epilogue-copy{width:100%;padding:60px 0 120px}.epilogue-header,.epilogue-footer{font-size:9px;letter-spacing:.05em}.epilogue-finish{padding:35px 0}.game-shell .epilogue .epilogue-title{font-size:70px}.epilogue.is-complete .epilogue-shade{background:#080508ab}.epilogue-credits dl>div{grid-template-columns:95px 1fr}}
+@media(max-height:550px){.epilogue-copy{margin:25px 0;padding:20px 0 70px}.epilogue-finish{margin:20px 0}.game-shell .epilogue .epilogue-title{font-size:68px}.epilogue-copy .epilogue-label{margin-bottom:12px}.game-shell .epilogue-copy h2{margin-bottom:12px}.epilogue-wave{margin-top:14px}.epilogue-skip{bottom:52px}}
+@media(prefers-reduced-motion:reduce){.epilogue-still,.epilogue-beat,.epilogue-finish{animation:none}}
+.epilogue.is-still .epilogue-still,.epilogue.is-still .epilogue-beat,.epilogue.is-still .epilogue-finish,.reduce-motion .epilogue-still,.reduce-motion .epilogue-beat,.reduce-motion .epilogue-finish{animation:none}
+.no-grain .epilogue:before,.reduce-motion .epilogue:before{display:none}
