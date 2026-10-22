@@ -40,6 +40,7 @@ export function buildCarDeparture(root:T.Group,solids:Solid[]):CarDeparture{
   // The grounded chassis still blocks walking. Only the opened side's reach
   // aperture is clear above it; the hood, boot and roof remain real occluders.
   const apertureParts=[{x:0,z:-1.605,w:2.24,d:1.33,y:.92,h:1.2},{x:0,z:1.25,w:2.24,d:2.04,y:.92,h:1.2},{x:0,z:.19,w:1.4,d:1.17,y:1.43,h:.16}],apertureBlocks:Solid[]=apertureParts.map(p=>({...p}));
+  car.userData.interactionSolids=[bodyBlock,doorBlock,passengerBlock,...apertureBlocks];
   const seatEuler=new T.Euler(-.055,0,0,'YXZ'),doorEuler=new T.Euler();
   const doorCenter=new T.Vector3(.025,.88,-.585),eye=new T.Vector3(-.38,1.22,-.24),approach=new T.Vector3(),startRotation=new T.Quaternion(),seatRotation=new T.Quaternion(),doorRotation=new T.Quaternion(),temp=new T.Vector3();
   let captured=false,inspectionAt=-1;

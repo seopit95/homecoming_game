@@ -115,3 +115,7 @@ test('V126 emergency stair has two separate supported flights and a continuous 2
   for(const r of [.23,.43])for(const voidPoint of [{x:1.35,z:2},{x:-1.35,z:-4}])assert.equal(findPath(w.spawn,voidPoint,w.solids,w.bounds,r).length,0,'rails enclose unsupported stairwell voids');
  }finally{close(w);}
 });
+
+test('V127 connection leaves and their jambs meet the actual wall opening',()=>{
+ for(const area of ['annex','archive','plant']){const w=build(area);try{const target=w.targets.find(t=>t.id===`${area}_exit`),p=target.mesh.getWorldPosition(new T.Vector3());assert.ok(Math.abs(p.z+apartmentEscapeLayout[area].z)<.12,`${area}: door floats away from wall ${p.z}`);assert.ok(w.root.getObjectByName('apartment-exit-frame-left'),'the leaf has a connected jamb');}finally{close(w);}}
+});

@@ -1430,7 +1430,7 @@ test('V126 actual foyer records replay and B1 stairs form a playable connected e
   assert.match(f.game.snapshot().objective,/0\/3/);for(const id of ['archive_gate','archive_road','archive_call'])use('archive',id);assert.equal(f.game.snapshot().story.stage,'archive_reveal');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);
   use('archive','archive_play');tick(8);f.game.pause();const elapsed=f.game.snapshot().elapsed;tick(5);assert.equal(f.game.snapshot().elapsed,elapsed);assert.equal(f.game.snapshot().story.stage,'archive_playback');f.game.pause(false);tick(11.1);
   assert.equal(f.game.snapshot().story.stage,'archive_escape');assert.ok(f.game.snapshot().stamina>.99,'the safe investigation restores a usable escape budget');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the warning precedes the pursuer entering');
-  const refusal=voiceCalls.filter(v=>v==='no').length;use('archive','archive_exit');assert.equal(voiceCalls.filter(v=>v==='no').length,refusal+1,'opening the escape door triggers the new refusal once');tick(1);
+  const refusal=voiceCalls.filter(v=>v==='no').length;use('archive','archive_exit');assert.equal(voiceCalls.filter(v=>v==='no').length,refusal,'V127 removes the unnatural exit refusal');tick(1);
   walk('archive',{x:3,z:-9},true);assert.equal(areaFor(f.game.snapshot().story),'plant');walk('plant',{x:0,z:-6.6},true);use('plant','plant_exit');tick(.95);walk('plant',{x:3,z:-10},true);
   assert.equal(f.game.snapshot().story.stage,'parking_gate');assert.ok(f.game.snapshot().story.notes.includes('basement_route'));assert.ok(Math.abs(renderedCamera.position.y-1.65)<.12,'B1 is normalized only across the matching landing');
  }finally{f.close();for(const w of maps.values())disposeWorld(w.root);}
@@ -1443,7 +1443,47 @@ test('V126 retired archive editing shortcuts cannot crash the replacement CCTV s
 test('V126 reading the recovered ending stays safe until the player opens the archive escape door',async()=>{
  const f=await officeAgencyInput({stage:'archive_escape',notes:['archive_road','archive_call','archive_gate','archive_play'],pursuit:true,elapsed:950});try{
   const g=renderedScene.getObjectByName('resident-remains');tick(20);assert.equal(f.game.snapshot().story.stage,'archive_escape');assert.equal(g.visible,false);
-  const before=voiceCalls.filter(v=>v==='no').length;f.use([0,1.65,-5.45],[0,1.2,-6.53]);assert.equal(f.game.snapshot().story.stage,'archive_departure');assert.equal(voiceCalls.filter(v=>v==='no').length,before+1);assert.equal(g.visible,false);
-  tick(2);assert.equal(g.visible,false,'the exit has an audible warning before approach');const at=g.position.clone();tick(1.4);assert.equal(g.visible,true);assert.ok(g.position.distanceTo(at)>.1,'pursuer walks out of the actual incoming passage');assert.equal(voiceCalls.filter(v=>v==='no').length,before+1);
+  const before=voiceCalls.filter(v=>v==='no').length;f.use([0,1.65,-5.45],[0,1.2,-6.53]);assert.equal(f.game.snapshot().story.stage,'archive_departure');assert.equal(voiceCalls.filter(v=>v==='no').length,before);assert.equal(g.visible,false);
+  tick(2);assert.equal(g.visible,false,'the exit has an audible warning before approach');const at=g.position.clone();tick(1.4);assert.equal(g.visible,true);assert.ok(g.position.distanceTo(at)>.1,'pursuer walks out of the actual incoming passage');assert.equal(voiceCalls.filter(v=>v==='no').length,before);
  }finally{f.close();}
+});
+
+test('V127 full gallery sprint reaches the closing lift with the pursuer close behind',async()=>{
+ const f=await officeAgencyInput({stage:'lift_call',notes:[],elapsed:200});try{const g=renderedScene.getObjectByName('resident-remains');f.game.key('KeyW',true);f.game.key('ShiftLeft',true);
+ for(let i=0;i<1100&&renderedCamera.position.z>-21.7&&!['dying','ended'].includes(f.game.snapshot().story.stage);i++)tick(.025);f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.equal(f.game.snapshot().story.stage,'lift_call');
+ const pos=renderedCamera.position.toArray(),gap=g.position.distanceTo(renderedCamera.position);assert.ok(gap<3.6&&gap>.67,`call-button pursuit gap must feel narrow: ${gap}`);
+ f.use(pos,[.95,1.25,-22.834]);f.aim(pos,[pos[0],pos[1],-30]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);for(let i=0;i<220&&!['lift_button','dying','ended'].includes(f.game.snapshot().story.stage);i++)tick(.025);assert.equal(f.game.snapshot().story.stage,'lift_button',JSON.stringify({at:renderedCamera.position.toArray(),ghost:g.position.toArray()}));
+ }finally{f.close();}
+});
+test('V127 lift ceiling scratching is an actual audible cue and the follower waits beyond sight',async()=>{
+ const f=await officeAgencyInput({stage:'lift_button',notes:[],elapsed:300});try{f.use([0,1.65,.3],[.75,1.3,-.3]);tick(10.8);assert.ok(soundCalls.includes('lift-scratch'));tick(5.4);assert.equal(f.game.snapshot().story.stage,'pry');
+ }finally{f.close();}
+ const c=await officeAgencyInput({stage:'lift_exit',notes:[],elapsed:340});try{tick(1.2);c.aim([0,1.65,-1.75],[0,1.65,-10]);assert.equal(c.game.snapshot().story.stage,'corridor_run');const g=renderedScene.getObjectByName('resident-remains');tick(8);assert.equal(g.visible,false,'body cannot descend through the visible cab/wall');
+ const before=voiceCalls.filter(v=>v==='scream').length;c.aim([2.65,1.65,10],[2.65,1.65,0]);tick(.1);assert.equal(g.visible,true);assert.equal(voiceCalls.filter(v=>v==='scream').length,before+1);assert.ok(Math.abs(g.position.y)<.02,'the follower begins on the real floor');assert.ok(g.position.distanceTo(renderedCamera.position)>5);c.game.pause();const frozen=g.position.clone();tick(1);assert.deepEqual(g.position.toArray(),frozen.toArray());
+ }finally{c.close();}
+});
+test('V127 home hiding has no unused breath control and capture uses a short separate impact',async()=>{
+ const f=await wardrobeFixture();try{f.game.interact();tick(.1);assert.equal(f.game.snapshot().breathAvailable,false);f.game.key('ControlLeft',true);tick(1);assert.equal(f.game.snapshot().breathHolding,false);const at=renderedCamera.position.clone();f.game.interact();f.ghost.position.set(renderedCamera.position.x+.3,0,renderedCamera.position.z);tick(.025);assert.equal(f.game.snapshot().story.stage,'dying');assert.equal(voiceCalls.at(-1),'capture');tick(1.4);assert.equal(f.game.snapshot().story.stage,'ended');}finally{f.game.dispose();}
+});
+test('V127 a parking car door accepts its visible panel at normal eye height',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['basement_route','car_passenger','car_search'],elapsed:1200});try{renderedScene.getObjectByName('resident-remains').position.set(0,0,21);f.aim([2.9,1.65,-18.6],[3.98,1.45,-18.6]);assert.match(f.game.snapshot().prompt,/운전석/);f.game.hold(true);tick(1);assert.equal(f.game.snapshot().story.stage,'car_departure');}finally{f.close();}
+});
+test('V127 the parking alarm stops after five seconds then the pursuer commits to a fast chase',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['basement_route','car_search'],elapsed:1200});try{f.use([-10.8,1.65,17.4],[-10.8,1.4,16.18]);tick(1);assert.ok(deviceLevels.alarm>0);f.game.pause();tick(8);assert.ok(deviceLevels.alarm>0);f.game.pause(false);const g=renderedScene.getObjectByName('resident-remains');renderedCamera.position.set(1.5,1.65,-5);g.position.set(-8,0,18);tick(3.8);assert.ok(deviceLevels.alarm>0);tick(.3);assert.equal(deviceLevels.alarm,0);g.position.set(1.5,0,4);g.rotation.y=Math.PI;tick(.6);const before=g.position.clone(),count=voiceCalls.filter(v=>v==='scream').length;tick(.5);assert.ok(g.position.distanceTo(before)>1.7,'post-alarm chase must gain real speed');assert.equal(f.game.snapshot().story.stage,'parking_run');assert.ok(voiceCalls.filter(v=>v==='scream').length>=count);assert.match(f.game.snapshot().objective,/멎|꺼|차|운전석/);}finally{f.close();}
+});
+test('V127 the final male panic and truck impact replace the ghost attack sound',async()=>{
+ const f=await officeAgencyInput({stage:'car_escape',notes:['basement_route','car_search'],elapsed:1400});try{const start=soundCalls.length,vs=voiceCalls.length;tick(10.3);assert.ok(soundCalls.slice(start).includes('passenger-line'));tick(2.8);assert.equal(f.game.snapshot().story.stage,'car_crash');assert.ok(soundCalls.slice(start).includes('male-terror'));assert.ok(!voiceCalls.slice(vs).includes('scream'));tick(.9);assert.ok(!soundCalls.slice(start).includes('collision-impact'));tick(.5);assert.ok(soundCalls.slice(start).includes('collision-impact'));tick(4.5);assert.equal(f.game.snapshot().story.stage,'ended');assert.equal(f.game.snapshot().story.ending,'crashed');}finally{f.close();}
+});
+test('V127 the remodeled passenger door still exposes a collectible key',async()=>{
+ const f=await officeAgencyInput({stage:'parking_gate',notes:['basement_route'],elapsed:1200});try{const g=renderedScene.getObjectByName('resident-remains');g.position.set(0,0,21);f.aim([7.1,1.65,-17.8],[6.02,1.1,-17.8]);assert.match(f.game.snapshot().prompt,/조수석/);f.game.interact();tick(1);f.use([7.1,1.65,-17.8],[5.415,.31,-17.83]);assert.ok(f.game.snapshot().story.notes.includes('car_search'));assert.equal(f.game.snapshot().story.stage,'parking_alarm');}finally{f.close();}
+});
+test('V127 parking retry and continue restore one usable five-second alarm attempt',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['basement_route','car_search','alarm'],elapsed:1500});try{assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.ok(!f.game.snapshot().story.notes.includes('alarm'));f.use([-10.8,1.65,17.4],[-10.8,1.4,16.18]);assert.ok(deviceLevels.alarm>0);const g=renderedScene.getObjectByName('resident-remains');g.position.copy(renderedCamera.position);g.position.y=0;tick(.025);assert.equal(f.game.snapshot().story.stage,'dying');tick(1.4);f.game.start(true);tick();assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.ok(!f.game.snapshot().story.notes.includes('alarm'));f.use([-10.8,1.65,17.4],[-10.8,1.4,16.18]);assert.ok(deviceLevels.alarm>0);}finally{f.close();}
+});
+test('V127 five seconds of alarm leave a physical sprint route to the driver before the fast pursuer catches up',async()=>{
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['basement_route','car_passenger','car_search'],elapsed:1600});const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{findPath}=await import('../lib/navigation.ts'),w=buildWorld(new THREE.Scene(),'parking');try{
+  f.use([-10.8,1.65,17.4],[-10.8,1.4,16.18]);const goal={x:2.9,z:-18.6},path=findPath(renderedCamera.position,goal,w.solids,w.bounds,.25);assert.ok(path.length);
+  for(const p of path){const at=renderedCamera.position.toArray();f.aim(at,[p.x,at[1],p.z]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);let n=0;while(Math.hypot(renderedCamera.position.x-p.x,renderedCamera.position.z-p.z)>.15&&n++<1000){tick(.025);assert.equal(f.game.snapshot().story.stage,'parking_run',JSON.stringify({at:renderedCamera.position.toArray(),stamina:f.game.snapshot().stamina,ghost:renderedScene.getObjectByName('resident-remains')?.position.toArray()}));}f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.ok(n<1000);}
+  f.aim(renderedCamera.position.toArray(),[3.98,1.45,-18.6]);assert.match(f.game.snapshot().prompt,/운전석/);f.game.hold(true);tick(1);assert.equal(f.game.snapshot().story.stage,'car_departure');
+ }finally{f.close();disposeWorld(w.root);}
 });

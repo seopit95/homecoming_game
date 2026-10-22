@@ -13,6 +13,40 @@ export function createDrivingCar(damaged=true,passengerAccess=false){
   const rubber=new T.MeshStandardMaterial({color:'#202623',roughness:.8});
   const steel=new T.MeshStandardMaterial({color:'#a2a8a7',metalness:.8,roughness:.35});
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,parent:T.Object3D=root){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);parent.add(o);return o;}
+  if(passengerAccess){
+    const panel=upholstery('#343e3b'),moulding=new T.MeshStandardMaterial({color:'#222a27',roughness:.78});
+    const enamel=new T.MeshPhysicalMaterial({color:'#263531',metalness:.52,roughness:.42,clearcoat:.2});
+    function fitted(name:string,x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,parent:T.Object3D,r=.012){const o=new T.Mesh(softBox(w,h,d,r),m);o.name=name;o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;parent.add(o);return o;}
+    function seam(name:string,points:number[][],r:number,m:T.Material,parent:T.Object3D){const o=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p as [number,number,number]))),24,r,6,false),m);o.name=name;o.castShadow=o.receiveShadow=true;parent.add(o);return o;}
+    for(const side of [-1,1]){
+      const leaf=shell.getObjectByName(side<0?'hero-passenger-door':'hero-driver-door')!,inside=-side;
+      // The painted return and compressed seal close the raw edge between the
+      // exterior sheet and the padded card. Everything here follows the leaf.
+      const edge=[[inside*.006,.88,-.025],[inside*.009,.4,-.04],[inside*.008,.36,-1.13],[inside*.006,.87,-1.145]];
+      seam('hero-door-pressed-return',edge,.026,enamel,leaf);
+      seam('hero-door-edge-seal',edge.map(([x,y,z])=>[x+inside*.022,y+.006,z]),.009,rubber,leaf);
+      fitted('hero-door-card',inside*.055,.638,-.585,.047,.444,1.045,panel,leaf,.028);
+      fitted('hero-door-upper-pad',inside*.074,.811,-.58,.06,.085,1.005,moulding,leaf,.023);
+      fitted('hero-door-armrest',inside*.11,.697,-.62,.086,.071,.43,moulding,leaf,.025);
+      fitted('hero-door-pull-recess',inside*.156,.722,-.62,.009,.026,.21,rubber,leaf,.01);
+      fitted('hero-door-handle-recess',inside*.089,.796,-.36,.014,.053,.17,rubber,leaf,.012);
+      fitted('hero-door-release',inside*.102,.796,-.36,.015,.018,.115,steel,leaf,.005);
+      fitted('hero-door-map-pocket',inside*.09,.469,-.67,.079,.098,.64,moulding,leaf,.018);
+      fitted('hero-door-pocket-opening',inside*.133,.517,-.67,.007,.015,.56,rubber,leaf,.005);
+      const speaker=new T.Mesh(new T.CircleGeometry(.075,24),moulding);speaker.name='hero-door-speaker';speaker.position.set(inside*.084,.541,-.193);speaker.rotation.y=inside*Math.PI/2;leaf.add(speaker);
+      const perforations=new T.InstancedMesh(new T.CircleGeometry(.0023,6),rubber,55),stamp=new T.Object3D();perforations.name='hero-speaker-perforations';perforations.position.set(inside*.085,.541,-.193);leaf.add(perforations);
+      for(let i=0;i<55;i++){const a=i*2.399,r=.064*Math.sqrt(i/55);stamp.position.set(0,Math.sin(a)*r,Math.cos(a)*r);stamp.rotation.y=inside*Math.PI/2;stamp.updateMatrix();perforations.setMatrixAt(i,stamp.matrix);}
+      for(const [name,y] of [['upper',.78],['lower',.44]] as const){
+        fitted(`hero-door-hinge-${name}`,0,y,-.009,.065,.055,.065,steel,leaf,.007);
+        const pin=new T.Mesh(new T.CylinderGeometry(.013,.013,.078,10),steel);pin.name='hero-door-hinge-pin';pin.position.set(0,y,-.009);leaf.add(pin);
+      }
+      fitted('hero-door-latch',inside*.01,.73,-1.143,.043,.068,.024,steel,leaf,.005);
+      const sill=fitted(side<0?'hero-passenger-sill':'hero-driver-sill',side*.797,.329,.355,.125,.068,1.16,enamel,shell,.018);
+      fitted('hero-sill-scuff-plate',0,.038,0,.084,.013,.85,steel,sill,.006);
+      // The body-side gasket follows the physical aperture, leaving its centre open.
+      seam('hero-body-aperture-seal',[[side*.79,.37,-.215],[side*.79,.9,-.215],[side*.65,1.375,-.215],[side*.655,1.375,.355],[side*.797,.916,.91],[side*.797,.37,.91],[side*.79,.37,-.215]],.009,rubber,shell);
+    }
+  }
   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#a6ad9a';ctx.fillRect(0,0,512,128);ctx.fillStyle='#2b3027';ctx.font='64px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('28 가 0317',256,64);const plateMap=sharePrintedTexture(new T.CanvasTexture(canvas),['hero-car-plate-v1']);plateMap.colorSpace=T.SRGBColorSpace;
   const plateMaterial=new T.MeshStandardMaterial({map:plateMap,roughness:.9});for(const end of [-1,1]){const plate=new T.Mesh(new T.PlaneGeometry(.47,.11),plateMaterial);plate.position.set(0,.548,end*2.263);plate.rotation.y=end>0?0:Math.PI;root.add(plate);}
   const dashboard=upholstery('#252a29');dashboard.bumpScale=.00035;

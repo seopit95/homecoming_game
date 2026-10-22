@@ -1,0 +1,195 @@
+{
+  "version": "ghost-audio-v127",
+  "createdDate": "2026-10-22",
+  "generation": {
+    "provider": "Runway",
+    "attemptedCapabilities": [
+      "Sound Effects",
+      "Eleven v3 speech"
+    ],
+    "bothRejected": "paid_plan_required",
+    "acceptedTasks": 0,
+    "newCreditsUsed": 0,
+    "priorV126CreditsUsed": 5,
+    "totalIncludingV126": 5,
+    "userCapIncludingV126": 14,
+    "purchasedCredits": false,
+    "subscriptionChanged": false,
+    "retries": 0
+  },
+  "preservedChase": {
+    "file": "/audio/ghost-v126/capture-scream.wav",
+    "sha256": "acc756e3c1c7242fd79f2afcc78a34a94580052e4e6094ab82dac87371394ebf",
+    "runtimeGainChange": "0.64 -> 0.768 (20 percent); original waveform and playbackRate 1 retained."
+  },
+  "production": {
+    "format": "Mono 44100 Hz signed 16-bit PCM WAV",
+    "edgeFades": "8 ms onset, 25 ms end unless source has longer quiet edge",
+    "runtime": "All new voice/recorded performances keep playbackRate 1; distress clips retain existing gentle 11 kHz filter / 35 ms 4 percent early reflection; no new runtime detuning.",
+    "newDependencies": false
+  },
+  "sources": [
+    {
+      "id": "metal-scrape",
+      "title": "Metal Scrape",
+      "author": "dslrguide",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/dslrguide/sounds/321480/",
+      "download": "https://cdn.freesound.org/previews/321/321480_5485024-hq.mp3",
+      "sourceMp3Sha256": "e36dd4f89f5eb4ce45f5c95f584f4c16f3f3df0c27b1969ff6a22c3fb1681c97",
+      "description": "Uploader: dragging a metal axe across a long rusty piece of metal; Rode VideoMic Pro / Zoom H5 field recording."
+    },
+    {
+      "id": "male-scream",
+      "title": "Male_Scream_1.wav",
+      "author": "tonsil5",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/tonsil5/sounds/416539/",
+      "download": "https://cdn.freesound.org/previews/416/416539_8247784-hq.mp3",
+      "sourceMp3Sha256": "ae745e36f5bf5aff7d2c55d01e7c6c0705f0ac9ae895009660e461aa62969bc2",
+      "description": "Uploader identifies a male scream in Scream Pack 1. Performer age and emotional delivery are not independently verified."
+    },
+    {
+      "id": "body-crunch",
+      "title": "body impact metal clang cabbage thrown at a bin.wav",
+      "author": "vestibule-door",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/vestibule-door/sounds/669685/",
+      "existingFile": "/audio/overhaul/collision-impact.wav",
+      "sha256": "723f450a9fd132de89c0a7011903c97ab96ab2949bfa4ba1c053b2f1327ed3eb"
+    },
+    {
+      "id": "slush-contact",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "existingFile": "/audio/footsteps/bank.wav",
+      "existingMetadata": "/audio/footsteps/sources.json",
+      "sha256": "9812860d8e08d5a6e6c0fd4b072c76456c6a4a034eb6eb5b1c580c22ea1e271d"
+    },
+    {
+      "id": "v126-refusal",
+      "origin": "Existing user-account Runway synthetic Ella performance; no real actress cloned or imitated.",
+      "existingMetadata": "/audio/ghost-v126/sources.json",
+      "taskId": "e01ae723-f95a-4142-b1b1-44d558576f1c",
+      "terms": "https://runway.com/terms-of-use",
+      "rights": "https://help.runwayml.com/hc/en-us/articles/18927776141715-Usage-rights",
+      "sourceDrySha256": "03c0fed56ddf634fa826ed229d505676046b517c3619d99ba389113a9f883557"
+    },
+    {
+      "id": "korean-model",
+      "author": "MyShell.ai; gnyong ONNX conversion",
+      "license": "MIT",
+      "model": "https://huggingface.co/myshell-ai/MeloTTS-Korean",
+      "conversion": "https://huggingface.co/gnyong/melotts-kr-onnx/tree/145bb692add83629213f0d847a282a1ea752c371",
+      "licenseURL": "https://github.com/myshell-ai/MeloTTS/blob/main/LICENSE",
+      "modelSha256": "a2450570c59a18361717842c25a1800cb8a67d150d9b3f1dc05d253c4e2220e9",
+      "notice": "Copyright (c) 2024 MyShell.ai\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
+    }
+  ],
+  "files": [
+    {
+      "file": "capture.wav",
+      "durationSeconds": 1.25,
+      "peakDbfs": -4.500292425884415,
+      "rmsDbfs": -22.244865702098583,
+      "clippedSamples": 0,
+      "sha256": "5f1b346eb1c3c713e5e31245c1c66bd4ed8044a0c459d24b049a49f3a1492b2b",
+      "use": "GhostLine capture only; distinct from the chase scream.",
+      "sources": [
+        "body-crunch",
+        "slush-contact"
+      ],
+      "edits": "Original-speed organic cabbage impact cropped to 0.7 s and filtered below 2.4 kHz, mixed with a short slush contact and its quiet reversed friction. No scream layer.1.25s container.",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitDepth": 16,
+      "pcmDecodeVerified": true
+    },
+    {
+      "file": "lift-scratch.wav",
+      "durationSeconds": 2.55,
+      "peakDbfs": -5.000377362660108,
+      "rmsDbfs": -23.593441987696355,
+      "clippedSamples": 0,
+      "sha256": "59aa3fca3fab94c74fd77e79b2f9fecbaba8e286ba7c4983ab2c21dd1136a10e",
+      "use": "RecordedClip lift-scratch; two dry friction strokes on elevator ceiling.",
+      "sources": [
+        "metal-scrape"
+      ],
+      "edits": "Two original-speed 1.412 s real metal friction strokes at 0 s and 0.98 s, second at 80 percent gain; 2.55 s container. No synthetic oscillator or reverb.",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitDepth": 16,
+      "pcmDecodeVerified": true
+    },
+    {
+      "file": "male-terror.wav",
+      "durationSeconds": 0.83,
+      "peakDbfs": -4.500292425884415,
+      "rmsDbfs": -19.087776416508685,
+      "clippedSamples": 0,
+      "sha256": "6b96018e07f4ac0def9a7cbc12fee9eb7f7186c5af719425b499c414240bf81c",
+      "use": "RecordedClip male-terror; final frightened driver reaction, separate source from opening male-surprise.",
+      "sources": [
+        "male-scream"
+      ],
+      "edits": "Native-rate 0–0.83 s excerpt. No loop, stretch, pitch shift or added creature voice. Source is a short male scream; sustained long terror and actor age unverified.",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitDepth": 16,
+      "pcmDecodeVerified": true
+    },
+    {
+      "file": "refusal-ko.wav",
+      "durationSeconds": 1.12,
+      "peakDbfs": -6.000477743319013,
+      "rmsDbfs": -17.129224243462268,
+      "clippedSamples": 0,
+      "sha256": "213de5069f127ee15f328ca972e54481143abdce8386dd1952a01f3eb1b01fd4",
+      "use": "GhostLine no; intended short 안 돼! after removal of the leading cry.",
+      "sources": [
+        "v126-refusal"
+      ],
+      "edits": "Keep 1.35–2.47 s of V126 dry performance at original pitch and tempo; no added leading cry, echo, saturation or scream. Word boundary inferred from waveform; Korean contents and strained naturalness unverified.",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitDepth": 16,
+      "pcmDecodeVerified": true
+    },
+    {
+      "file": "passenger-line.wav",
+      "durationSeconds": 1.997437641723356,
+      "peakDbfs": -8.000117030469568,
+      "rmsDbfs": -21.358652514858754,
+      "clippedSamples": 0,
+      "sha256": "739041b43a471a8b42606fd89dc6d8216746606194a0d7a30fe327fab12e17df",
+      "use": "RecordedClip passenger-line; replacement for the former macOS Yuna asset.",
+      "sources": [
+        "korean-model",
+        "v126-refusal"
+      ],
+      "text": "이번에도, 혼자 가려고?",
+      "pronunciationInput": "이버네도,혼자가려고?",
+      "edits": "Offline fixed-line Korean ONNX synthesis using existing KR preset 0, seed 23, length_scale 1.0. Gentle 100 Hz / 8.5 kHz passband, quiet breath fragment mixed at 4 percent pre-normalization and declining amplitude. Original pitch / cadence, no echo or layered scream.",
+      "limitation": "Quiet synthetic rendition only. This is not a newly acted dying adult female whisper. Preset gender, emotional delivery and Korean intelligibility are not verified by listening.",
+      "sampleRate": 44100,
+      "channels": 1,
+      "bitDepth": 16,
+      "pcmDecodeVerified": true
+    }
+  ],
+  "verification": {
+    "pcmDecode": true,
+    "nonzeroSignal": true,
+    "clippedSamples": 0,
+    "edgeSamplesZero": true,
+    "focusedRoutingTests": 3,
+    "subjectiveListeningVerified": false,
+    "limitation": "Agent cannot consume audio input; no subjective quality or in-game mix claim. Natural adult female dying delivery and emotional force remain listening-review items. Final male scream is a short 0.83 s source, not the requested longer sustained performance."
+  }
+}

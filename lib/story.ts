@@ -37,12 +37,12 @@ export const carDepartureDuration=24;
 export const finale:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={
   car_departure:{duration:carDepartureDuration,action:'car_departed',label:'B1 · 운전석',text:'문을 연다.',cues:[{at:5.5,text:'문이 잠겼다.'},{at:6,text:'시동이 걸렸다. 차량 셔터가 올라간다.'},{at:10,text:'경사로를 따라 밖으로.'},{at:20,text:''}]},
   car_escape:{duration:10,action:'passenger',label:'제 11장 · 동승자',text:'경사로 끝. 도로가 보인다.',cues:[{at:3,text:'경사로가 뒤로 멀어졌다.'},{at:6,text:'이제… 빠져나왔다.'},{at:6.4,text:'딸깍. 처음 전화에서 들었던 잠금음.\n수화기 속 빗소리와 와이퍼… 이 차 안의 소리였다.'},{at:8.5,text:'처음부터 나를 밖으로 부른 것이 아니었다.\n다시 이 자리에 앉히고 있었다.'}]},
-  car_voice:{duration:5,action:'wreck',label:'03:17 · 조수석',text:'「이번에도… 혼자 가려고?」',cues:[{at:4.1,text:''}]},
+  car_voice:{duration:3,action:'wreck',label:'03:17 · 조수석',text:'「이번에도… 혼자 가려고?」',cues:[{at:4.1,text:''}]},
   car_crash:{duration:5.5,action:'fatal',label:'03:17',text:'',cues:[{at:3,text:'브레이크를 밟기에는 늦었다.'}]},
 };
 // Reuse the same bank clip at the first phone and after the final escape.
 export const phoneCallback={clip:'archive-lock',finalStage:'car_escape',at:6.4} as const;
-export const finaleTiming={turn:1.2,reveal:3.2,impact:.55} as const;
+export const finaleTiming={turn:.25,reveal:1.45,forwardStart:.08,forwardEnd:.78,impact:1.35} as const;
 export function isFinale(stage:Stage){return finale[stage]!==undefined;}
 export function isCinematic(stage:Stage){return isMemory(stage)||isFinale(stage);}
 export const residentEvidence=['belongings','answerphone','portrait','resident_shift'] as const;
@@ -89,7 +89,7 @@ export function isMemory(stage:Stage){return opening[stage]!==undefined;}
 export function initialStory():Story{return {stage:'drive',hidden:false,ending:null,resume:'radio',notes:[],circuit:[],officeSupply:false,tapeIndex:0,code:'0000'};}
 export function parkingDrained(state:Pick<Story,'notes'>){return state.notes.includes('basement_route')||state.notes.includes('plant_drained')||state.notes.includes('pump');}
 function parkingAfterKey(state:Pick<Story,'notes'>){return parkingDrained(state)?'parking_alarm':'parking_pump';}
-export const parkingBoardDuration=.9;
+export const parkingBoardDuration=.2;
 export function parkingCanBoard(stage:Stage){return stage==='parking_alarm'||stage==='parking_run';}
 export function parkingAlarmActive(s:Pick<Story,'stage'|'notes'>){return s.notes.includes('alarm')||s.stage==='parking_run';}
 export function retryStage(stage:Stage):Stage{
@@ -228,7 +228,7 @@ export const objectives:Record<Stage,string>={stairs_ground:'비상계단을 따
   drive:'사흘 전의 기억',impact:'사람이었다',flee:'나는 도망쳤다',sleep:'집으로 돌아와 잠들었다',tv:'사흘 뒤',wake_ring:'전화벨에 잠이 깬다',light_switch:'익숙한 방. 벽의 스위치를 더듬는다.',find_torch:'불이 들어오지 않는다. 침대 옆에서 스마트폰 화면이 켜졌다.',phone:'손 안의 스마트폰. 발신자 표시 제한.',power:'우리 집만 정전인가. 다용도실 쪽에서 전기 타는 냄새가 난다.',shoes:'현관. 무언가 젖은 것이 바닥에 닿았다.',radio:'침실의 라디오. 분명 꺼 두었는데.',listen:'라디오는 꺼졌다. 그런데 복도에서 무슨 소리가…',hide:'발소리가 가까워진다. 침실 장롱이라면 몸을 감출 수 있다.',wait:'어둠 속의 움직임에 귀를 기울인다',escape:'발을 끄는 소리가 멀어진다. 지금이라면 현관까지.',
   lift_call:'복도 끝 승강기. 문 오른쪽의 호출 버튼을 눌러야 한다.',lift_wait:'호출등은 켜졌다. 문이 벌어지기를 기다린다.',lift_enter:'문이 열렸다. 더 기다릴 수 없다.',lift_boarding:'탑승했다. 문이 닫히고 있다',lift_button:'1층. 제발 한 번에 내려가 줘.',descent:'1층으로 내려가는 중',pry:'문 가까이에서 E를 길게 눌러 문을 벌리세요',lift_exit:'멈춘 승강기. 문틈 너머에 바닥이 보인다.',corridor_run:'천장에서 기어 내려온다. 어둠 너머 녹색 유도등.',
   corridor_departure:'방화문 너머 계단. 문을 닫을 시간은 없다.',stairs_loop:'아래로. 내려가면 끝이 있을 것이다.',stairs_descent:'아래층 문이 열려 있다. 같은 발소리가 따라온다.',stairs_clue:'또 23층. 벽의 점검 메모만 아까와 다르다.',stairs_reverse:'17층. 위쪽 열린 방화문 너머로 1층 피난 안내가 보인다.',stairs_passage:'열린 방화문을 통과해 나머지 계단을 내려간다.',office_record:'관리실 책상의 야간 근무일지를 확인하세요',office_fuse:'서고의 예비 부품대에서 퓨즈를 찾으세요',office_power:'전기실 배전반에 퓨즈를 설치하고 6A 한도 안에서 필요한 회로를 선택하세요',office_tape:'CCTV 시간 선택 버튼으로 내 차가 입차한 기록을 찾아 재생하세요',office_playback:'재생 중 · 지하 입차 기록의 누락 구간을 확인하세요',office_key:'CCTV 오른쪽 책상에 놓인 관리용 승강기 열쇠를 챙기세요',office_leave:'복도 끝 관리용 승강기를 열어 1층으로 내려가세요',
-  parking_gate:'주차장. 내 차만 그대로 서 있다. 출구 쪽에는 물이 차 있다.',parking_key:'내 차 오른쪽 조수석 문을 열고 가방에서 설비 열쇠를 찾으세요',parking_pump:'물이 계속 밀려든다. 펌프보다 먼저 유입을 멈춰야 한다.',parking_alarm:'물은 빠졌다. 시동만 걸면 된다. 입구에 경보기 소리가 남아 있다.',parking_run:'경보가 울린다. 차체 너머로 손톱 긁는 소리가 다가온다.',resident_arrival:'1704호. 전화벨과 명패의 이름이 겹친다. 한서연.',resident_departure:'연결문이 열렸다. 뒤에서는 더 이상 발소리가 나지 않는다.',resident_entry:'1704호. 현관에 그 신발 한 짝이 남아 있다',resident_memory:'서재의 수첩과 서랍을 살펴 연결문 열쇠를 찾으세요',resident_return:'연결문 열쇠를 챙겼다. 뒤쪽 1703호로 피하세요',road_exit:'03:17. 이번에는 차 문을 연다',road_evidence:'횡단보도 위에 떨어진 가방을 확인한다',road_call:'가방 곁의 금 간 전화기를 든다. 이번에는 신고한다',road_wait:'도망치지 않고, 구조를 기다린다',car_departure:'',car_escape:'',car_voice:'',car_crash:'',dying:'',ended:'',
+  parking_gate:'주차장. 내 차만 그대로 서 있다. 출구 쪽에는 물이 차 있다.',parking_key:'내 차 오른쪽 조수석 문을 열고 가방에서 설비 열쇠를 찾으세요',parking_pump:'물이 계속 밀려든다. 펌프보다 먼저 유입을 멈춰야 한다.',parking_alarm:'열쇠를 챙겼다. 운전석으로. 경보기는 다섯 초 동안 시선을 돌릴 수 있다.',parking_run:'경보가 멎으면 달려온다. 기둥과 차체로 시야를 끊고 운전석으로!',resident_arrival:'1704호. 전화벨과 명패의 이름이 겹친다. 한서연.',resident_departure:'연결문이 열렸다. 뒤에서는 더 이상 발소리가 나지 않는다.',resident_entry:'1704호. 현관에 그 신발 한 짝이 남아 있다',resident_memory:'서재의 수첩과 서랍을 살펴 연결문 열쇠를 찾으세요',resident_return:'연결문 열쇠를 챙겼다. 뒤쪽 1703호로 피하세요',road_exit:'03:17. 이번에는 차 문을 연다',road_evidence:'횡단보도 위에 떨어진 가방을 확인한다',road_call:'가방 곁의 금 간 전화기를 든다. 이번에는 신고한다',road_wait:'도망치지 않고, 구조를 기다린다',car_departure:'',car_escape:'',car_voice:'',car_crash:'',dying:'',ended:'',
 };
 export const journal:Partial<Record<Action,{title:string;text:string}>>={
   home_repair:{title:'2803호 · 신고보다 먼저',text:'식탁 위 차량 수리 견적. 앞범퍼와 우측 헤드램프. 내일 오전 입고 예약. 아래에 「고객 요청: 보험 접수 없이」라고 적혀 있다.\n\n사고 다음 날, 사진을 보내고 견적을 받았다. 어디에 부딪혔느냐는 물음에 주차장 기둥이라고 답했다. 신고 전화 대신 수리점을 찾아봤다. 내가 사흘 동안 아무것도 하지 않은 것은 아니었다.'},
@@ -241,7 +241,7 @@ export const journal:Partial<Record<Action,{title:string;text:string}>>={
   fuse:{title:'17층 · 예비 퓨즈',text:'서고의 예비 부품대에서 퓨즈를 챙겼다. 전기실 배전반의 빈 홀더에 설치해야 비상전원 선택기를 사용할 수 있다.'},
   office_install:{title:'17층 · 제한된 비상전원',text:'빈 홀더에 예비 퓨즈를 설치했다. 비상 공급 한도는 6A. A는 구역 조명 4A, B는 CCTV 기록장치 2A, C는 관리용 승강기 제어 4A다.\n\n모두 켜면 보호계전기가 전원을 끊는다. 승강기 제어만 복구하면 나갈 수 있지만, CCTV에는 내 차의 기록이 남아 있다. 필요한 부하를 선택해 공급하고, 바꿀 때는 주 전원을 다시 투입해야 한다.'},
   flashlight:{title:'28층 · 꺼진 조명',text:'스위치를 눌러도 불이 들어오지 않는다. 협탁 위 스마트폰을 집었다. 화면에 발신자 표시 제한이 떠 있다. 플래시는 아직 작동한다.'},
-  alarm:{title:'B1 · 멈추지 않는 벨',text:'버튼이 안쪽에 걸리고 빨간 확인등이 켜졌다. 경보는 계속 울리고 먼 발소리는 벨에 묻힌다. 그러나 바로 옆의 발소리나 눈앞에 보이는 나까지 놓치지는 않는다. 차체와 기둥 뒤로 시야를 끊어야 한다. 그러면 마지막으로 나를 본 곳을 뒤진 뒤, 다시 벨 쪽으로 갈 것이다.'},
+  alarm:{title:'B1 · 다섯 초의 경보',text:'경보가 다섯 초 울리다 끊긴다. 소리가 멎으면 더 빠른 발소리가 다가온다. 벨이 울리는 동안 차체와 기둥 뒤로 거리를 벌리고 운전석으로 돌아가야 한다.'},
   car_passenger:{title:'B1 · 잠그지 않은 문',text:'손잡이를 당기자 조수석 문이 열렸다. 사흘 전 차에서 내릴 때는 문조차 잠그지 않았다. 잠금 버튼을 누른 것은 그보다 앞, 누군가 창문을 두드렸을 때였다.\n\n조수석 뒤 발밑에 내 가방이 벌어진 채 놓여 있다. 안쪽에 열쇠가 보인다. 빗물을 맞을 수 없었던 안전벨트까지 젖어 있다.'},
   car_search:{title:'B1 · 조수석에 놓인 열쇠',text:'조수석 가방에서 배수 설비 열쇠를 찾았다. 꼬리표 뒷면에는 「양측 급수 차단 후 펌프 가동」이 적혀 있다. 젖은 좌석 위에는 손자국 하나가 남아 있다.'},
   valve_a:{title:'B1 · 서측 급수 밸브',text:'서측 급수관을 차단했다. 동측 밸브도 잠가야 펌프를 돌릴 수 있다.'},
@@ -263,7 +263,7 @@ export const journal:Partial<Record<Action,{title:string;text:string}>>={
 export function journalEntry(id:Action,story:Pick<Story,'notes'>){
   if(id==='exit')return {title:'B1 · 막힌 보행자 출구',text:'보행자 출구는 바깥의 공사 셔터에 막혀 있다. 차량 경사로로 나가야 한다. '+(parkingDrained(story)?'차량 통로는 열려 있다. 차에 타면 차량 출구로 나갈 수 있다. ':'차량 출구에 물이 고여 있다. 양측 급수를 잠근 뒤 펌프를 가동해야 한다. ')+(story.notes.includes('car_search')?'열쇠는 이미 챙겼다. ':'조수석 가방에서 열쇠를 찾아야 한다. ')+'차체와 기둥 뒤로 돌아갈 수 있고, 필요하면 입구 경보기로 반대쪽에서 소리를 낼 수도 있다.'};
   if(parkingDrained(story)){
-    if(id==='car_search')return {title:'B1 · 내 차 열쇠',text:'젖은 조수석 가방에서 차 열쇠를 꺼냈다. 그날 운전대를 잡았던 손이 다시 떨린다. 배수는 이미 끝났다. 차체와 기둥 뒤로 돌아 운전석에 갈 수 있다. 입구 쪽에는 붉은 경보기가 있다. 너무 가까이 따라오면 반대쪽에서 큰 소리를 낼 방법이 될 것이다.'};
+    if(id==='car_search')return {title:'B1 · 내 차 열쇠',text:'젖은 조수석 가방에서 차 열쇠를 꺼냈다. 그날 운전대를 잡았던 손이 다시 떨린다. 차량 출구까지 통행할 수 있다. 차체와 기둥 뒤로 돌아 운전석에 갈 수 있다. 입구 쪽에는 붉은 경보기가 있다. 너무 가까이 따라오면 반대쪽에서 큰 소리를 낼 방법이 될 것이다.'};
   }
   return journal[id];
 }

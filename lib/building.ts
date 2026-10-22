@@ -325,7 +325,7 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const dx of [-1.27,1.27])garageMarking(root,L.car.x+dx,L.car.z,.055,4.85,garage.floorPaint);garageMarking(root,L.car.x,L.car.z+2.45,2.59,.055,garage.floorPaint);
     for(const dx of [-.55,.55])box(L.car.x+dx,.07,L.car.z+2.45,.55,.14,.16,dark);
     target('car_passenger','조수석 문 열기',carDeparture.passengerDoor,6.02,1.1,-17.8);carDeparture.passengerDoor.userData.approach={x:7.1,z:-17.8};
-    target('car_search','가방에서 열쇠 꺼내기',carDeparture.key,5.415,.31,-17.83);carDeparture.key.userData.approach={x:7.1,z:-17.8};target('car_board','운전석 문 열고 탑승',own,3.98,1.1,-17.8);
+    target('car_search','가방에서 열쇠 꺼내기',carDeparture.key,5.415,.31,-17.83);carDeparture.key.userData.approach={x:7.1,z:-17.8};target('car_board','운전석 문 열고 탑승',own.getObjectByName('hero-driver-door')!,3.98,1.1,-17.8);
     box(-11.3,1.35,15.82,1.4,2.7,.24,concrete,true);
     const cabinet=box(L.alarm.x,1.25,15.96,.55,1.85,.12,metal);cabinet.name='fire-alarm-cabinet';
     const enamel=surface('steel','#8e3c31',{roughness:.68});

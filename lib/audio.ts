@@ -2,10 +2,13 @@ import type {ArchiveFrame} from './archive-review.ts';
 import type {FootSurface} from './footsteps.ts';
 import footBank from './footstep-bank.json' with {type:'json'};
 import {heartbeatBuffer,type GhostSoundPosition} from './ghost-sound.ts';
-export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'female-collision-scream'|'collision-impact'|'phone-ring'|'mobile-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
+import {smartphoneRing} from './smartphone-audio.ts';
+export {smartphoneRing} from './smartphone-audio.ts';
+export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'male-terror'|'lift-scratch'|'female-collision-scream'|'collision-impact'|'phone-ring'|'mobile-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
 const archiveCues={road:[['collision-impact',4.2]],call:[['archive-guard',.2],['archive-denial',8]],gate:[['archive-plea',.8],['archive-lock',5.8]]} as const;
-export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'memory'|'no';
-const ghostVoiceFiles:Partial<Record<GhostLine,string>>={scream:'/audio/ghost-v126/capture-scream.wav',no:'/audio/ghost-v126/refusal-ko.wav'};
+export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'capture'|'memory'|'no';
+const ghostVoiceFiles:Partial<Record<GhostLine,string>>={scream:'/audio/ghost-v126/capture-scream.wav',capture:'/audio/ghost-v127/capture.wav',no:'/audio/ghost-v127/refusal-ko.wav'};
+const recordedFiles:Partial<Record<RecordedClip,string>>={'passenger-line':'/audio/ghost-v127/passenger-line.wav','male-terror':'/audio/ghost-v127/male-terror.wav','lift-scratch':'/audio/ghost-v127/lift-scratch.wav'};
 // Local voice clips and procedural effects share a bounded master volume.
 export class HorrorAudio {
   context: AudioContext | null = null;
@@ -89,15 +92,15 @@ export class HorrorAudio {
     for(const hz of [43,57.4,86.3]){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=hz;g.gain.value=.015;o.connect(g);g.connect(this.musicBus!);o.start();}
     const lock=this.clips['archive-lock']=ctx.createBuffer(1,Math.round(ctx.sampleRate*.1),ctx.sampleRate),lockData=lock.getChannelData(0);
     for(let i=0;i<lockData.length;i++){const t=i/ctx.sampleRate;lockData[i]=Math.sin(t*2300)*Math.exp(-t*90)*.4;}
-    for(const clip of ['fire-bell','player-breath','passenger-line','male-surprise','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast','archive-guard','archive-denial','archive-plea'] as RecordedClip[])void fetch(`/audio/overhaul/${clip}.${clip.startsWith('archive-')?'mp3':'wav'}`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setExertion(this.exertionWanted);this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);this.setDevice('alarm',this.deviceWanted.alarm);}}).catch(()=>{});
+    for(const clip of ['fire-bell','player-breath','passenger-line','male-surprise','male-terror','lift-scratch','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast','archive-guard','archive-denial','archive-plea'] as RecordedClip[])void fetch(recordedFiles[clip]??`/audio/overhaul/${clip}.${clip.startsWith('archive-')?'mp3':'wav'}`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setExertion(this.exertionWanted);this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);this.setDevice('alarm',this.deviceWanted.alarm);}}).catch(()=>{});
     this.clips['intercom-ringback']=intercomTone(ctx,false);this.clips['intercom-busy']=intercomTone(ctx,true);this.clips['mobile-ring']=smartphoneRing(ctx);
     void fetch('/audio/footsteps/bank.wav').then(r=>{if(!r.ok)throw new Error('Footsteps unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.footstepBuffer=buffer;}).catch(()=>{});
-    for(const line of ['where','here','found','come','cry','scream','memory','no'] as GhostLine[])void fetch(ghostVoiceFiles[line]??`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
+    for(const line of ['where','here','found','come','cry','scream','capture','memory','no'] as GhostLine[])void fetch(ghostVoiceFiles[line]??`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
   recorded(clip:RecordedClip,level=1,pan=0){
     const ctx=this.context,buffer=this.clips[clip];if(!ctx||!buffer||ctx.state!=='running')return;
-    const source=ctx.createBufferSource(),gain=ctx.createGain(),p=ctx.createStereoPanner();source.buffer=buffer;gain.gain.value=level*.9;p.pan.value=pan;
-    source.connect(gain);gain.connect(p);p.connect(clip==='passenger-line'||clip==='male-surprise'||clip==='female-collision-scream'?this.voiceBus!:this.effectsBus!);
+    const source=ctx.createBufferSource(),gain=ctx.createGain(),p=ctx.createStereoPanner();source.buffer=buffer;source.playbackRate.value=1;gain.gain.value=level*.9;p.pan.value=pan;
+    source.connect(gain);gain.connect(p);p.connect(clip==='passenger-line'||clip==='male-surprise'||clip==='male-terror'||clip==='female-collision-scream'?this.voiceBus!:this.effectsBus!);
     this.roadSounds.add(source);source.onended=()=>{this.roadSounds.delete(source);source.disconnect();gain.disconnect();p.disconnect();};source.start();
   }
   stopArchiveRecord(){
@@ -244,8 +247,8 @@ export class HorrorAudio {
     if(!buffer){this.sound('breath',pan,level);return;}
     this.stopVoices();const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),panner=ctx.createStereoPanner(),delay=ctx.createDelay(.5),echo=ctx.createGain();
     // Keep the distress performance intact; only a quiet early room reflection follows it.
-    const distress=line==='scream'||line==='no';
-    source.buffer=buffer;source.playbackRate.value=distress||line==='memory'?1:line==='cry'?.94:.86;filter.type='lowpass';filter.frequency.value=occluded?650:distress?11000:line==='memory'?2800:2400;gain.gain.value=.64*level;panner.pan.value=Math.max(-1,Math.min(1,pan));delay.delayTime.value=distress?.035:.23;echo.gain.value=distress?.04:.22;
+    const distress=line==='scream'||line==='no'||line==='capture';
+    source.buffer=buffer;source.playbackRate.value=distress||line==='memory'?1:line==='cry'?.94:.86;filter.type='lowpass';filter.frequency.value=occluded?650:distress?11000:line==='memory'?2800:2400;gain.gain.value=.64*level*(line==='scream'?1.2:1);panner.pan.value=Math.max(-1,Math.min(1,pan));delay.delayTime.value=distress?.035:.23;echo.gain.value=distress?.04:.22;
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.voiceBus!);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }
@@ -296,9 +299,3 @@ export function intercomTone(ctx:BaseAudioContext,busy:boolean){
   return buffer;
 }
 
-// A short original digital ringtone, distinct from the building emergency bell.
-export function smartphoneRing(ctx:Pick<AudioContext,'sampleRate'|'createBuffer'>){
- const buffer=ctx.createBuffer(1,Math.round(ctx.sampleRate*3),ctx.sampleRate),data=buffer.getChannelData(0),notes=[880,1174.66,1318.51,1174.66];
- for(let i=0;i<data.length;i++){const t=i/ctx.sampleRate,beat=Math.floor(t/.18);if(beat>=8)continue;const u=t% .18;if(u>.125)continue;const envelope=Math.min(1,u/.008,(.125-u)/.025),f=notes[beat%4];data[i]=envelope*(Math.sin(2*Math.PI*f*t)*.12+Math.sin(2*Math.PI*f*2*t)*.025);}
- return buffer;
-}

@@ -111,7 +111,9 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
  // Exact shared geometry and x/z origins preserve the existing chapter handoff.
  connectionPassage(root,solids,lamps,-3,bz+6,0,.9);
  connectionPassage(root,solids,lamps,0,-bz,bottom);
- const doorZ=-bz+.35,hinge=new T.Group();hinge.name='expansion-exit-door';hinge.position.set(-.7,bottom,doorZ);root.add(hinge);
+ const doorZ=-bz+.025,hinge=new T.Group();hinge.name='expansion-exit-door';hinge.position.set(-.7,bottom,doorZ);root.add(hinge);
+ for(const side of [-1,1]){const jamb=box(side*.725,bottom+1.2,-bz,.12,2.4,.22,steel);jamb.name=side<0?'apartment-exit-frame-left':'apartment-exit-frame-right';}
+ box(0,bottom+2.37,-bz,1.57,.12,.22,steel);box(0,bottom+.012,-bz,1.5,.024,.23,steel);
  const leaf=box(.7,1.17,0,1.37,2.34,.08,steel,false,hinge);doorHardware(leaf,1.37);
  const doorBlock:Solid={x:0,z:doorZ,w:1.4,d:.12,y:bottom+1.17,h:2.34};solids.push(doorBlock);
  target(`${area}_exit` as Action,L.exit,leaf,[0,bottom+1.2,doorZ+.12],[0,doorZ+(area==='plant'?1.05:1.2)]);

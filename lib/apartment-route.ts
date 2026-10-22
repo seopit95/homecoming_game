@@ -49,6 +49,7 @@ export function apartmentRouteObjective(s:Story):string|undefined{
 }
 export function normalizeApartmentRoute(s:Story):Story{
  const stage=s.stage;
+ if(stage==='parking_alarm')return {...s,notes:s.notes.filter(id=>id!=='alarm')};
  if(stage.startsWith('resident')||stage.startsWith('office')||stage.startsWith('service_')||stage.startsWith('court_'))return {...s,stage:readyFoyer(s),circuit:[],officeSupply:false};
  if(stage.startsWith('annex_'))return {...s,stage:stage==='annex_departure'?stage:readyFoyer(s),circuit:[]};
  if(stage.startsWith('archive_')&&!['archive_playback','archive_escape','archive_departure'].includes(stage))return {...s,stage:records.every(id=>s.notes.includes(id))?'archive_reveal':s.notes.some(id=>records.includes(id as typeof records[number]))?'archive_search':'archive_arrival',circuit:[]};

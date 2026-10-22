@@ -199,3 +199,33 @@ photographic paving, plaster and weathered concrete are reused.
 `public/audio/footsteps/bank.wav` derives 16 short variants from Kenney's [Impact Sounds](https://kenney.nl/assets/impact-sounds), licensed CC0 1.0. The original licence is retained beside the bank. `sources.json` records each original ZIP path/hash and the derived bank hash. Wood and concrete are sole-contact samples; light metal impacts and snow/slush foley provide quiet material layers for metal and wet surfaces. Tile uses a brighter concrete contact plus a short reflection. These are designed foley samples; no claim of site-specific location recording is made.
 
 `python3 scripts/import-footsteps.py /path/to/kenney_impact-sounds.zip` reproduces the 24 kHz mono PCM bank with macOS `afconvert`. Trimmed clips have normalized peaks and faded edges; the bank is 155,682 bytes. `lib/footstep-bank.json` stores offset/duration regions. Playback avoids immediate variant repeats and slightly varies pitch; actor footsteps retain the existing procedural ghost sounds. Existing `player-breath.wav` is reused with gradually changing level, playback rate and filtering. No new voice recording or external runtime dependency was added.
+
+
+### Chase and finale additions (V127)
+
+The incoming smartphone ring is an original procedural marimba phrase in
+`lib/smartphone-audio.ts`; it contains no Apple recording. The user selected
+this approach. New sounds and their source licences/hashes are recorded in
+`public/audio/ghost-v127/sources.json`. Metal scraping and the male reaction
+use CC0 recordings; the existing chase scream is retained with a20% level
+increase, while capture uses a separate short impact. The passenger's Korean
+line is a locally generated synthetic approximation, not an actress recording.
+The connected generation service rejected this request as paid-plan-required;
+no upgrade or credit purchase was made. No natural acting/listening acceptance
+is claimed.
+
+`public/textures/ghost-passenger-v127.webp` is an original AI-generated
+1024×1536 alpha head/neck portrait (484,102bytes), made with built-in ImageGen
+for the final seated passenger. A small curved alpha surface follows the
+native head anchor; the existing3D seated body/dress remains. The previous
+head is a loading fallback until the local texture is prepared. This is a
+passenger-only hybrid image/mesh treatment, not a fully reconstructed3D face
+or a replacement of the roaming pursuer. Prompt/source metadata and native
+composition evidence are retained externally in
+`quality-2026-10-22/chase-finale-v127/vehicle/passenger-portrait-evidence.json`.
+
+The garage door's trim, seals, hinge/latch and sill belong to the moving door;
+the ending dump truck is authored geometry (`lib/dump-truck.ts`). No third
+party truck model, new runtime package or external runtime request was added.
+The V85 historical hand-reach ending is replaced here by a passive passenger,
+male reaction, continuous forward camera turn and head-on truck collision.

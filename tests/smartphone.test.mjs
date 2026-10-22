@@ -24,8 +24,4 @@ test('V123 a phone has separate front screen and rear LED at human scale',async(
  try{const {createSmartphone}=await import('../lib/smartphone.ts');const phone=createSmartphone();const b=new T.Box3().setFromObject(phone.root),size=b.getSize(new T.Vector3());assert.ok(size.x>.065&&size.x<.09&&size.y>.14&&size.y<.17&&size.z<.025);assert.ok(phone.screen.position.z>0&&phone.led.position.z<0);phone.setState('torch');assert.ok(phone.led.material.emissiveIntensity>0);phone.setState('idle');assert.equal(phone.led.material.emissiveIntensity,0);}
  finally{globalThis.document=before;}
 });
-test('V123 the original mobile ringtone has clear bursts and a quiet gap',async()=>{
- const {smartphoneRing}=await import('../lib/audio.ts');let data;
- const buffer=smartphoneRing({sampleRate:8000,createBuffer:(_channels,length)=>{data=new Float32Array(length);return {getChannelData:()=>data};}});
- assert.ok(buffer);assert.equal(data.length,24000);assert.ok(data.slice(0,11000).some(n=>Math.abs(n)>.05));assert.ok(data.slice(12000).every(n=>n===0));
-});
+// V127 original marimba waveform replaces the old fixed3-second beep; see smartphone-ring-v127.test.mjs.
