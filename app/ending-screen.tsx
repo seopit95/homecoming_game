@@ -31,8 +31,7 @@ export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRes
   </div></section>;
   const beat=[...beats].reverse().find(item=>seconds>=item.at);
   function again(){setShowCredits(false);setSeconds(0);setReplay(value=>value+1);}
-  return <section className={`epilogue${complete?' is-complete':''}${reducedMotion?' is-still':''}`} aria-label="귀가 후일담">
-    {seconds>=2&&<div className="epilogue-still" aria-hidden="true"/>}
+  return <section className={`epilogue${seconds>=2?' has-scene':''}${complete?' is-complete':''}${reducedMotion?' is-still':''}`} aria-label="귀가 후일담">
     <div className="epilogue-shade" aria-hidden="true"/>
     <header className="epilogue-header"><span>백로아파트 · 귀가 기록</span><time>03 : 17</time></header>
     {!complete?<>
@@ -49,7 +48,7 @@ export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRes
       <div className="epilogue-actions"><button type="button" className="start-button" onClick={onRestart}><span>처음부터 다시</span><RotateCcw size={17}/></button><button type="button" className="epilogue-secondary" onClick={again}>후일담 다시 보기</button></div>
       <details className="epilogue-record"><summary>마지막 기록 · {duration}</summary><p>{endings.crashed}</p></details>
       <button type="button" className="epilogue-credits-toggle" aria-expanded={showCredits} onClick={()=>setShowCredits(!showCredits)}>크레딧 {showCredits?'−':'＋'}</button>
-      {showCredits&&<div className="epilogue-credits"><p>귀가 (歸家) · 한밤의 귀가 기록</p><dl><div><dt>주요 음향 자료</dt><dd>Kenney · dslrguide · tonsil5<br/>CC0</dd></div><div><dt>주요 환경 질감</dt><dd>Poly Haven · CC0</dd></div><div><dt>후일담 스틸</dt><dd>본 게임을 위해 생성한 원본 이미지</dd></div></dl><p>그리고 이 밤을 끝까지 걸어온 당신.</p></div>}
+      {showCredits&&<div className="epilogue-credits"><p>귀가 (歸家) · 한밤의 귀가 기록</p><dl><div><dt>주요 음향 자료</dt><dd>Kenney · dslrguide · tonsil5<br/>CC0</dd></div><div><dt>주요 환경 질감</dt><dd>Poly Haven · CC0</dd></div><div><dt>후일담 장면</dt><dd>게임 속 차량과 도로의 3D 장면</dd></div></dl><p>그리고 이 밤을 끝까지 걸어온 당신.</p></div>}
     </div>}
     <footer className="epilogue-footer"><span>귀가 (歸家)</span><span>{complete?'기록 종료':'마지막으로 남은 것'}</span></footer>
   </section>;

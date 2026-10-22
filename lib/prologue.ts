@@ -3,7 +3,6 @@ import {configureShadow} from './lighting.ts';
 import {buildRoadStreet} from './road-street.ts';
 import {createDrivingCar} from './driving-car.ts';
 import {createDumpTruck} from './dump-truck.ts';
-import {createPassengerPortrait} from './passenger-portrait.ts';
 import {createSedan,sedanWindshieldPoint} from './sedan.ts';
 import {createDrivingHands} from './driving-hands.ts';
 import {createPedestrian} from './pedestrian.ts';
@@ -119,7 +118,6 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const cruiseSpeed=8,braking=driveDuration-beats.brake,deceleration=1.8,impactSpeed=cruiseSpeed-braking*deceleration,stopZ=1.2-impactSpeed*.45;
   const looseShoe=createLeatherShoe();looseShoe.name='memory-lost-shoe';root.add(looseShoe);
   const passenger=escapeDrive?createGhost(car):null;
-  let passengerPortrait:ReturnType<typeof createPassengerPortrait>|undefined;
   const truck=escapeDrive?createDumpTruck():null;if(truck)root.add(truck.root);
   let shattered:T.LineSegments|undefined,revealLight:T.PointLight|undefined;
   if(passenger){
@@ -140,7 +138,6 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
       };
       object.material=Array.isArray(object.material)?object.material.map(wet):wet(object.material);
     });
-    passengerPortrait=createPassengerPortrait(passenger);
     revealLight=new T.PointLight('#c4cbb9',.92,2.1,2);revealLight.position.set(.69,1.39,-.57);car.add(revealLight);
     const fracture:number[]=[];
     for(let i=0;i<17;i++){const angle=i*2.399;let u=.51,v=.43;for(let j=1;j<=5;j++){const n=j/5,nu=.51+Math.cos(angle+Math.sin(i*13+j)*.07)*(.16+(i%4)*.05)*n,nv=.43+Math.sin(angle)*(.17+(i%3)*.08)*n;const point=(a:number,b:number)=>[(a*2-1)*T.MathUtils.lerp(.815,.658,b),.923+b*.48+.047*(1-(a*2-1)**2)*b,-.971+b*.592-.033*(1-(a*2-1)**2)*Math.sin(b*Math.PI)];fracture.push(...point(u,v),...point(nu,nv));u=nu;v=nv;}}
@@ -191,7 +188,6 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     const passengerHead=passenger!.getObjectByName('ghost-head')!;
     camera.position.set(1.27,1.22-T.MathUtils.smoothstep(hit,.18,1.45)*.39,z+push-.24-T.MathUtils.smoothstep(hit,0,.16)*.14+jolt*.024);
     car.updateMatrixWorld(true);
-    passengerPortrait!.pose(camera,clock,reduced,root.matrixWorld);
     const face=passengerHead.localToWorld(facePosition.set(0,.13,.16));root.worldToLocal(face);face.sub(camera.position);
     const turn=driving?0:speaking?T.MathUtils.smoothstep(t,endingBeats.turn,endingBeats.reveal):1-T.MathUtils.smoothstep(t,endingBeats.forwardStart,endingBeats.forwardEnd);
     const collapse=T.MathUtils.smoothstep(hit,.12,1.25);
@@ -205,8 +201,16 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     streetLights.forEach((light,i)=>{const lampZ=-135+(Math.floor((z+135)/18)-2+i)*18;light.position.set(3.8,5.25,lampZ);light.target.position.set(1.7,0,lampZ);});
     return speed;
   }
+  // The aftermath uses exactly the crashed car/street/truck rendered during play.
+  // Freeze the impact state and observe it from outside, with room for the epilogue.
+  function aftermathPose(camera:T.PerspectiveCamera,reduced:boolean){
+    finalPose('car_crash',finale.car_crash!.duration,camera,reduced);
+    const z=car.position.z;
+    camera.position.set(car.position.x+4.2,1.5,z+2.5);
+    camera.lookAt(car.position.x-.6,.75,z+.9);
+  }
   function pose(stage:Stage,time:number,camera:T.PerspectiveCamera,reduced:boolean){
-    if(escapeDrive){const speed=finalPose(stage,Math.max(0,time),camera,reduced);camera.position.applyMatrix4(root.matrix);camera.quaternion.premultiply(root.quaternion);camera.updateMatrixWorld();return speed;}
+    if(escapeDrive){const speed=stage==='ended'?(aftermathPose(camera,reduced),0):finalPose(stage,Math.max(0,time),camera,reduced);camera.position.applyMatrix4(root.matrix);camera.quaternion.premultiply(root.quaternion);camera.updateMatrixWorld();return speed;}
     const driving=stage==='drive',impact=stage==='impact',t=Math.max(0,time),hitTime=impact?t:stage==='flee'?impactDuration:0;
     const clock=driving?t:driveDuration+(impact?t:impactDuration+t);
     const brake=driving?Math.max(0,t-beats.brake):0;

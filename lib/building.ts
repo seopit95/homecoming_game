@@ -1,3 +1,4 @@
+import {createApartmentPlaque} from './apartment-signage.ts';
 import {buildApartmentEscape} from './apartment-escape.ts';
 import {buildGarageStructure,garageMarking} from './garage-structure.ts';
 import * as T from 'three';
@@ -184,14 +185,10 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     for(const side of [-1,1]){roundPipe(root,[side*.16,.92,0],[side*.16,.92-side*2.8,-4],.023,rust);}
     bounds.z=29.75;bounds.x=6.3;
     const {hinge,leaf,block:closed}=buildStairDoor(root,solids,-1,2.8,-5.85,'stairs-first-upper-door');leaf.name='stairs-upper-leaf';
-    const firstUpperLabel=label('연결 복도',-1,5.26,-5.906,0,.9,.18);target('up','방화문 열기',leaf,-1,4.05,-5.65);
+    const firstUpperLabel=createApartmentPlaque(root,{text:'연결 복도',width:.94,height:.2,position:[-1,5.28,-5.9105],name:'stairs-upper-room-plaque'});target('up','방화문 열기',leaf,-1,4.05,-5.65);
     const {hinge:lowerHinge,leaf:lowerLeaf,block:lowerClosed}=buildStairDoor(root,solids,1,-2.8,-5.85,'stairs-loop-door');
-    const lowerLabel=label('아래층',1,-.32,-5.906,0,.9,.18);lowerLabel.mesh.name='stairs-lower-direction';target('down','아래층 방화문 열기',lowerLeaf,1,-1.55,-5.65);
-    box(1.25,1.65,5.907,.325,.455,.002,mat('#a59b83'));
-    const note=label('백로아파트 · 시설 연락 메모\n\n같은 층으로 돌아왔다면\n계단 표지 아래를 확인하세요.\n\n17층 외벽 공사 / 임시 관리실 1703호\n야간 당직 한서연 · 내선 17\n부재 시 1704호로 연락 바랍니다.\n\n28 가 0317   /   03:17\n03:17   03:17   03:17\n\n그때 멈췄어야지.',1.25,1.65,5.904,Math.PI,.297,.42,'#34392e','#c6bfa6');note.mesh.name='stairs-clue-panel';
-    for(const x of [1.14,1.36])box(x,1.865,5.903,.026,.02,.014,metal);
-    target('stair_note','계단 점검 메모 읽기',note.mesh,1.25,1.65,5.7);
-    const floorLabel=label('23층',-1.89,2,3,Math.PI/2,.9,.55,undefined,undefined,false,true);label('↓ 아래층',1.906,1.35,3,-Math.PI/2,.65,.2);
+    createApartmentPlaque(root,{text:'아래층 계단',width:.94,height:.2,position:[1,-.32,-5.9105],name:'stairs-lower-direction'});target('down','아래층 방화문 열기',lowerLeaf,1,-1.55,-5.65);
+    createApartmentPlaque(root,{text:'23층',code:'23F',width:.72,height:.38,position:[-1.9105,2,3],rotationY:Math.PI/2,name:'stairs-floor-number'});createApartmentPlaque(root,{text:'아래층 ↓',width:.65,height:.2,position:[1.9105,1.35,3],rotationY:-Math.PI/2,name:'stairs-down-direction'});
     light(0,3.2,3,'#8f9c83',5);light(-1,5.3,-4.8,'#b0a17b',3);light(1,-.3,-4.8,'#769789',3);
     // A physically connected second well makes the repeated floor believable
     // even when the player looks back. Neither actor changes coordinate space.
@@ -204,10 +201,11 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const repeatSolids=solids.slice(solidStart).map(s=>({...s,x:s.x+4,y:(s.y??1.5)-2.8,z:s.z-17.85}));
     const repeatClosed=repeatSolids[solids.indexOf(closed)-solidStart];solids.push(...repeatSolids);
     const repeatHinge=repeated.getObjectByName('stairs-first-upper-door')!;repeatHinge.name='stairs-passage-door';repeated.getObjectByName('stairs-loop-door')!.name='stairs-repeat-lower-door';
-    for(const id of ['up','stair_note'] as const){const t=targets.find(t=>t.id===id)!;t.point.add(offset);t.mesh=repeated.getObjectByName(id==='up'?'stairs-upper-leaf':'stairs-clue-panel')!;}
+    const upperTarget=targets.find(t=>t.id==='up')!;upperTarget.point.add(offset);upperTarget.mesh=repeated.getObjectByName('stairs-upper-leaf')!;
+    repeated.getObjectByName('stairs-floor-number')!.removeFromParent();createApartmentPlaque(repeated,{text:'17층',code:'17F',width:.72,height:.38,position:[-1.9105,2,3],rotationY:Math.PI/2,name:'stairs-repeat-floor-number'});
     // These two decorative exits have no receiving corridor. Mark them only
     // after cloning so the real lower and repeated upper route stay unobstructed.
-    firstUpperLabel.mesh.visible=false;repeated.getObjectByName('stairs-lower-direction')!.visible=false;
+    firstUpperLabel.group.visible=false;repeated.getObjectByName('stairs-lower-direction')!.visible=false;
     function closedExit(x:number,y:number,z:number,text:string,name:string){
       for(const offset of [.75,1.35,1.95]){const brace=box(x,y+offset,z+.09,1.27,.12,.045,wood);brace.rotation.z=.12;brace.name='stairs-construction-brace';}
       const notice=label(text,x,y+1.5,z+.126,0,.84,.37,'#080908','#b3a88b');notice.mesh.name=name;
@@ -220,9 +218,8 @@ export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
     const galleryRoot=new T.Group();galleryRoot.position.set(3,0,-35.5);root.add(galleryRoot);
     const gallery=buildResidentGallery(galleryRoot,false);lamps.push(...gallery.lamps);
     solids.push(...gallery.solids.map(s=>({...s,x:s.x+3,y:s.y??1.5,z:s.z-35.5})));
-    let opened=-1,lowerOpened=-1,updated=-1,shown='23층';reset=()=>{opened=lowerOpened=updated=-1;shown='';setDoorAngle(repeatHinge,repeatClosed,0,.55);setDoorAngle(lowerHinge,lowerClosed,0,.55);};updateStory=(stage,time,_reduced,_story,occupants)=>{
+    let opened=-1,lowerOpened=-1,updated=-1;reset=()=>{opened=lowerOpened=updated=-1;setDoorAngle(repeatHinge,repeatClosed,0,.55);setDoorAngle(lowerHinge,lowerClosed,0,.55);};updateStory=(stage,time,_reduced,_story,occupants)=>{
       const dt=updated<0?0:Math.max(0,time-updated);updated=time;
-      const text=stage==='stairs_reverse'||stage==='stairs_passage'?'17층':'23층';if(text!==shown){floorLabel.update(text);shown=text;}
       if(stage==='stairs_passage'&&opened<0)opened=time;
       if(opened>=0){const player=occupants?.[0],cleared=player&&player.z<-25.35&&Math.abs(player.x-3)<1.1,angle=cleared?0:1.55*T.MathUtils.smoothstep(time-opened,0,.85);setDoorAngle(repeatHinge,repeatClosed,T.MathUtils.damp(repeatHinge.rotation.y,angle,7,dt),.55,0,occupants);}
       if(['stairs_descent','stairs_clue','stairs_reverse','stairs_passage'].includes(stage)&&lowerOpened<0)lowerOpened=time;

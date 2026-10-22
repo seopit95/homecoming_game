@@ -9,6 +9,7 @@ import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {createGhost} from './ghost.ts';
 import {archiveReplay} from './expansion-story.ts';
 import {apartmentEscapeLayout} from './escape-layout.ts';
+import {createApartmentPlaque,apartmentEvacuationTexture} from './apartment-signage.ts';
 import type {Action,Stage,Story} from './story.ts';
 import type {buildExpansion} from './expansion-world.ts';
 import type {Solid,Target} from './world.ts';
@@ -41,10 +42,6 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
  }
  function target(id:Action,caption:string,mesh:T.Object3D,point:[number,number,number],approach:[number,number]){
   mesh.userData.approach={x:approach[0],z:approach[1]};targets.push({id,label:caption,mesh,point:new T.Vector3(...point)});
- }
- function sign(text:string,x:number,z:number){
-  box(x,2.49,z,3,.43,.045,steel);const p=print(text,x,2.49,z+.023,2.88,.35,0,root,true);
-  for(const dx of [-1.15,1.15])roundPipe(root,[x+dx,2.7,z],[x+dx,2.8,z],.009,steel);return p;
  }
  function fixture(x:number,z:number){
   box(x,2.745,z,.16,.11,.8,steel);box(x,2.684,z,.11,.012,.72,new T.MeshStandardMaterial({color:'#bcc7ac',emissive:'#a5b391',emissiveIntensity:.35}));
@@ -95,8 +92,8 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
    roundPipe(root,[x-w/2,y+.94,z],[x+w/2,y+.94,z],.024,steel);solids.push({x,z,w,d:.075,y:y+.5,h:1,seeThrough:true});
   }
   landingRail(1.5,4,0,2.85);landingRail(1.5,0,-1.4,2.85);landingRail(-1.5,-2,-1.4,2.85);landingRail(-1.5,-6,-2.8,2.85);
-  for(const [x,y,z,text] of [[-2.9,.62,-1,'B1 주차장 →'],[2.9,-.72,-6.7,'← 주차장 출입문']] as const){
-   box(x,y,z,.05,.22,1.3,steel);print(text,x+(x<0?.026:-.026),y,z,1.24,.18,x<0?Math.PI/2:-Math.PI/2,root,true);
+  for(const [x,y,z,text] of [[-2.9095,.62,-1,'주차장 →'],[2.9095,-.72,-6.7,'← 주차장']] as const){
+   if(x<0)createApartmentPlaque(root,{name:'plant-midlanding-direction',text,code:'B1',width:1.24,height:.24,position:[x,1.15,z],rotationY:Math.PI/2,lit:true});
    const light=new T.PointLight('#a6baa0',1.8,5.5,2);light.position.set(x+(x<0?.2:-.2),y+.35,z);light.userData.base=1.8;root.add(light);lamps.push(light);
   }
   const maintenance=new T.Group();maintenance.name='plant-closed-maintenance-door';maintenance.position.set(-2.89,-1.4,-1);maintenance.rotation.y=Math.PI/2;root.add(maintenance);
@@ -117,7 +114,9 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
  const leaf=box(.7,1.17,0,1.37,2.34,.08,steel,false,hinge);doorHardware(leaf,1.37);
  const doorBlock:Solid={x:0,z:doorZ,w:1.4,d:.12,y:bottom+1.17,h:2.34};solids.push(doorBlock);
  target(`${area}_exit` as Action,L.exit,leaf,[0,bottom+1.2,doorZ+.12],[0,doorZ+(area==='plant'?1.05:1.2)]);
- print(L.exit,0,bottom+2.55,-bz+.0905,1.42,.24,0,root,true);
+ const exitPlace=area==='annex'?'관리문서 보관실':area==='archive'?'비상계단':'지하주차장';
+ createApartmentPlaque(root,{name:`${area}-exit-plaque`,text:exitPlace,code:area==='plant'?'B1':'1F',width:1.38,height:.22,position:[0,bottom+2.56,-bz+.0895]});
+ createApartmentPlaque(root,{name:`${area}-entry-plaque`,text:area==='annex'?'공동현관':area==='archive'?'관리문서 보관실':'비상계단',code:'1F',width:1.38,height:.22,position:[0,2.56,bz-.0895],rotationY:Math.PI});
  fixture(0,bz-2);if(area!=='plant')fixture(0,-bz+3);
  let key:T.Group|undefined,surveillance:Surveillance|undefined;
  if(area==='annex'){
@@ -127,7 +126,7 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
   for(const z of [-4,-2.45,-.9])box(-2,1.61,z,.18,1.42,.05,steel);
   for(const y of [.95,2.3])box(-2,y,-2.45,.18,.05,3.1,steel);
   box(-2,1.61,-2.45,.012,1.31,3.0,glass);box(-2,2.61,0,.14,.38,1.8,wall);
-  print('경비실',-1.9295,2.6,0,1.1,.23,Math.PI/2);
+  createApartmentPlaque(root,{name:'annex-guard-plaque',text:'경비실',width:1.1,height:.22,position:[-1.9305,2.6,0],rotationY:Math.PI/2});
   const desk=table('annex-guard-desk',-4,-2.3,2.3,1.0),ledger=folder('annex-duty-ledger','야간 근무일지\n관리용 열쇠 · 북측 연결문',-4.45,-2.3,desk);ledger.rotation.y=.08;
   const chair=facilityChair(wood,steel);chair.position.set(-4,0,-3.35);root.add(chair);solids.push({x:-4,z:-3.35,w:.5,d:.5,y:.44,h:.88});
   key=new T.Group();key.name='annex-management-key';key.position.set(-3.5,.8205,-2.25);key.userData.support=desk.name;root.add(key);
@@ -136,7 +135,11 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
   box(.14,.0025,0,.18,.005,.075,paper,false,key);print('관리용',.14,.0055,0,.17,.064,0,key).rotation.x=-Math.PI/2;
   target('annex_badge','북측 연결문 관리용 열쇠',key,[-3.5,.84,-2.2],[-3.5,-1.05]);
   const backing=box(-5.875,1.5,5.35,.07,1.25,1.95,steel);backing.name='annex-route-board-backing';
-  const map=print('백로아파트 · 1층 피난안내\n정문: 낙하물로 통행 불가\n경비실: 북측 연결문 열쇠\n관리문서 보관실 → 비상계단 → B1 주차장',-5.8395,1.5,5.35,1.84,1.14,Math.PI/2);map.name='annex-floor-plan';
+  const map=new T.Mesh(new T.PlaneGeometry(1.84,1.14),new T.MeshStandardMaterial({map:apartmentEvacuationTexture(),roughness:.9}));map.position.set(-5.8395,1.5,5.35);map.rotation.y=Math.PI/2;map.name='annex-floor-plan';map.userData.text='1층 피난안내도';root.add(map);
+  // Preserve the existing board/target footprint; add the shallow frame only around its edge.
+  const frame=new T.Group();frame.name='annex-route-board-frame';frame.position.copy(map.position);frame.rotation.copy(map.rotation);root.add(frame);
+  for(const [x,y,w,h] of [[0,-.5975,1.95,.035],[0,.5975,1.95,.035],[-.955,0,.035,1.2],[.955,0,.035,1.2]])box(x,y,.003,w,h,.009,steel,false,frame);
+  for(const x of [-.95,.95])for(const y of [-.595,.595]){const screw=new T.Mesh(new T.CylinderGeometry(.006,.006,.004,8),dark);screw.rotation.x=Math.PI/2;screw.position.set(x,y,.009);frame.add(screw);}
   target('annex_map','1층 안내도와 주차장 우회로',map,[-5.83,1.5,5.35],[-4.6,5.35]);
   const mail=box(-5.66,1.1,3.75,.5,1.25,1.55,steel,true);mail.name='annex-mailboxes';
   for(let row=0;row<5;row++)for(let col=0;col<3;col++){
@@ -153,8 +156,7 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
   for(const y of [.28,.63])box(7.05,y,3,.06,.09,3.5,warning,false,barrier);
   box(7.01,.47,3,.05,.3,1.5,warning,false,barrier);print('낙하물 · 통행 금지',6.9845,.47,3,1.4,.24,-Math.PI/2,barrier);
   box(6.65,.06,2.7,.65,.12,1.1,wall,false,street);box(7.25,.045,3.5,.8,.09,.4,lower,false,street);
-  sign('경비실 ←     북측 연결문 ↑\n관리사무소 · 비상계단 · 지하주차장',0,2.6);
-  print('1F · 공동현관',0,2.55,bz-.0905,1.4,.23,Math.PI);
+  createApartmentPlaque(root,{name:'annex-north-direction',text:'관리문서 보관실',subtitle:'← 북측 연결문',code:'1F',width:1.8,height:.38,position:[5.9105,1.85,6.5],rotationY:-Math.PI/2});
  }else if(area==='archive'){
   const notice=box(-4.38,1.48,4.8,.06,.8,1.4,steel);notice.name='archive-usage-board';
   const ledger=print('관리문서 보관실 · 이용 안내\n세 기록 확인 후 CCTV 재생\n비상계단은 북측 문',-4.3495,1.48,4.8,1.3,.7,Math.PI/2);
@@ -180,10 +182,9 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
   crtCable(root,[power,new T.Vector3(power.x,.85,-4.11),new T.Vector3(power.x,.0035,-4.25),new T.Vector3(lead.x,.0035,lead.z),lead]);
   box(-2.4,1.64,-6.87,2.9,.64,.08,steel);
   const instructions=print('1 사고기록 · 2 통화기록 · 3 입차기록 / 세 기록 확인 후 CCTV 재생',-2.4,1.64,-6.8295,2.8,.54);instructions.name='archive-reading-instructions';
-  sign('1F 관리문서 보관실\n북측 비상계단 ↓ B1 주차장',0,.2);
  }else{
-  sign('1F 공동현관 / B1 주차장 ↓',0,6.1);
-  print('1F',-2.9095,1.8,6.5,.5,.5,Math.PI/2);print('B1',2.9095,-.95,-7,.5,.5,-Math.PI/2);
+  createApartmentPlaque(root,{name:'plant-upper-floor',text:'1F',subtitle:'1층 · 공동현관',width:.55,height:.5,position:[-2.9095,1.8,6.5],rotationY:Math.PI/2});
+  createApartmentPlaque(root,{name:'plant-lower-floor',text:'B1',subtitle:'지하주차장',width:.55,height:.5,position:[2.9095,-.95,-7],rotationY:-Math.PI/2});
  }
  const figure=createGhost(root);figure.position.set(-3,0,bz+6.3);figure.rotation.y=Math.PI;figure.visible=false;
  let opened=-1,replayAt=-1,currentStage:Stage=area==='archive'?'archive_arrival':area==='annex'?'annex_arrival':'plant_arrival',currentClock=0,lastDisplay='';

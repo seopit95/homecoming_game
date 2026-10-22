@@ -72,7 +72,7 @@ test('V122 a stair checkpoint restart approaches around the real blind corner in
  }finally{f.close();}
 });
 test('V120 an unlocked upper stair door opens while looking at its real leaf at eye height from close range',async()=>{
- const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{f.use([1,-1.15,-4.8],[1,-1.55,-5.65]);tick(1);renderedCamera.position.set(4,-1.15,-12.2);tick();f.use([5.25,-1.15,-13.35],[5.25,-1.15,-12.15]);assert.equal(f.game.snapshot().story.stage,'stairs_reverse');f.use([3,1.65,-23.12],[3,1.65,-23.7]);assert.equal(f.game.snapshot().story.stage,'stairs_passage');tick(1.2);assert.ok(renderedScene.getObjectByName('stairs-passage-door').rotation.y>1.2);}finally{f.close();}
+ const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{f.use([1,-1.15,-4.8],[1,-1.55,-5.65]);tick(1);renderedCamera.position.set(4,-1.15,-12.2);tick();assert.equal(f.game.snapshot().story.stage,'stairs_reverse');f.use([3,1.65,-23.12],[3,1.65,-23.7]);assert.equal(f.game.snapshot().story.stage,'stairs_passage');tick(1.2);assert.ok(renderedScene.getObjectByName('stairs-passage-door').rotation.y>1.2);}finally{f.close();}
 });
 for(const [stage,id,next,notes,circuit,officeSupply] of [
  ['lift_exit','stairs','corridor_departure'],['stairs_loop','down','stairs_descent'],['resident_arrival','resident_open','resident_entry'],
@@ -409,8 +409,8 @@ test('real interaction loop reaches the ending, requires a held pry, and freezes
   assert.ok(renderedScene.getObjectByName('lift-ceiling-hatch'));assert.ok(renderedScene.getObjectByName('resident-remains').position.y>2,'pursuer starts above the cab');
   runTo(-2.6,16);runTo(-2.6,-16);runTo(0,-18.5);
   use([0,1.65,-18.5],[0,1.25,-19.68],'corridor_departure');tick(1);runTo(0,-22);aim(renderedCamera.position.toArray(),[3,1.65,-22],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='corridor_departure';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'stairs_loop');runTo(0,10);runTo(0,5.5);
-  use([1,-1.15,-4.8],[1,-1.55,-5.65],'stairs_descent');tick(1);runTo(1,-7.85);runTo(4,-7.85);aim(renderedCamera.position.toArray(),[4,-1.15,-13],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='stairs_descent';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'stairs_clue');
-  use([5.25,-1.15,-13.35],[5.25,-1.15,-12.15],'stairs_reverse');assert.equal(game.snapshot().floor,'17F');
+  use([1,-1.15,-4.8],[1,-1.55,-5.65],'stairs_descent');tick(1);runTo(1,-7.85);runTo(4,-7.85);aim(renderedCamera.position.toArray(),[4,-1.15,-13],false);game.key('KeyW',true);for(let i=0;i<150&&game.snapshot().story.stage==='stairs_descent';i++)tick(.025);game.key('KeyW',false);assert.equal(game.snapshot().story.stage,'stairs_reverse');
+  assert.equal(game.snapshot().floor,'17F'); // V129: reaching the landing replaces the removed wall-note gate.
   use([3,1.65,-22.65],[3,1.25,-23.5],'stairs_passage');
   assert.equal(renderedScene.getObjectByName('resident-1704'),undefined,'opening the stair door does not teleport into a home');
     tick(1);aim(renderedCamera.position.toArray(),[3,1.65,-25.5],false);game.key('KeyW',true);for(let i=0;i<220&&game.snapshot().story.stage==='stairs_passage';i++)tick(.025);game.key('KeyW',false);
@@ -864,9 +864,9 @@ test('the lower stair door opens in place and the repeated floor begins only aft
     aim([4,-1.15,-13]);game.key('KeyW',true);
     const ghost=renderedScene.getObjectByName('resident-remains');
     for(let i=0;i<150&&game.snapshot().story.stage==='stairs_descent';i++){const at=renderedCamera.position.clone(),enemy=ghost.position.clone();tick(.025);assert.ok(renderedCamera.position.distanceTo(at)<.09,'continuous movement onto the repeated floor');assert.ok(ghost.position.distanceTo(enemy)<.12,'the pursuer continues along the same route');assert.equal(ghost.visible,true,'no hidden waiting actor can pop into this landing');}game.key('KeyW',false);
-    assert.equal(game.snapshot().story.stage,'stairs_clue');assert.ok(renderedCamera.position.x>3.9&&renderedCamera.position.z<-12);assert.ok(Math.abs(renderedCamera.position.y+1.15)<.03);
+    assert.equal(game.snapshot().story.stage,'stairs_reverse');assert.ok(renderedCamera.position.x>3.9&&renderedCamera.position.z<-12);assert.ok(Math.abs(renderedCamera.position.y+1.15)<.03);
     game.key('ShiftLeft',false);
-    assert.ok(game.snapshot().message.includes('23'),'the repeated floor is revealed after reaching the physical landing');
+    assert.ok(game.snapshot().message.includes('17'),'the repeated floor is revealed after reaching the physical landing');
     tick(45);
     assert.ok(ghost.position.distanceTo(pursuitStart)>8,`the pursuer actually follows through the opened doorway: ${pursuitStart.toArray()} -> ${ghost.position.toArray()}`);
     assert.ok(['dying','ended'].includes(game.snapshot().story.stage),'a player waiting on the repeated landing remains catchable '+JSON.stringify({ghost:ghost.position.toArray(),player:renderedCamera.position.toArray(),stage:game.snapshot().story.stage}));
@@ -882,8 +882,7 @@ test('the stair gallery transition waits for the visible fire door to close and 
     await game.ready;tick();game.continueGame();tick();
     // Isolate the upper door after completing the prerequisite interactions.
     renderedCamera.position.set(1,-1.15,-4.8);aim([1,-1.55,-5.65]);game.interact();tick(1);
-    renderedCamera.position.set(4,-1.15,-12.2);tick();assert.equal(game.snapshot().story.stage,'stairs_clue');
-    renderedCamera.position.set(5.25,-1.15,-13.35);aim([5.25,-1.15,-12.15]);game.interact();assert.equal(game.snapshot().story.stage,'stairs_reverse');
+    renderedCamera.position.set(4,-1.15,-12.2);tick();assert.equal(game.snapshot().story.stage,'stairs_reverse');
     renderedCamera.position.set(3,1.65,-22.65);aim([3,1.25,-23.5]);game.interact();tick(1);
     const door=renderedScene.getObjectByName('stairs-passage-door');assert.ok(door.rotation.y>1.2);
     aim([3,1.65,-26]);game.key('KeyW',true);for(let i=0;i<130&&renderedCamera.position.z>-25.4;i++)tick(.025);game.key('KeyW',false);
@@ -1486,4 +1485,13 @@ test('V127 five seconds of alarm leave a physical sprint route to the driver bef
   for(const p of path){const at=renderedCamera.position.toArray();f.aim(at,[p.x,at[1],p.z]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);let n=0;while(Math.hypot(renderedCamera.position.x-p.x,renderedCamera.position.z-p.z)>.15&&n++<1000){tick(.025);assert.equal(f.game.snapshot().story.stage,'parking_run',JSON.stringify({at:renderedCamera.position.toArray(),stamina:f.game.snapshot().stamina,ghost:renderedScene.getObjectByName('resident-remains')?.position.toArray()}));}f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.ok(n<1000);}
   f.aim(renderedCamera.position.toArray(),[3.98,1.45,-18.6]);assert.match(f.game.snapshot().prompt,/운전석/);f.game.hold(true);tick(1);assert.equal(f.game.snapshot().story.stage,'car_departure');
  }finally{f.close();disposeWorld(w.root);}
+});
+
+
+test('V129 the stair landing and upper door continue without any wall-reading interaction',async()=>{
+ const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{
+  f.use([1,-1.15,-4.8],[1,-1.55,-5.65]);assert.equal(f.game.snapshot().story.stage,'stairs_descent');tick(1);
+  renderedCamera.position.set(4,-1.15,-12.2);tick(.05);assert.equal(f.game.snapshot().story.stage,'stairs_reverse');assert.equal(f.game.snapshot().floor,'17F');assert.equal(f.game.snapshot().story.notes.includes('stair_note'),false);
+  f.use([3,1.65,-23.12],[3,1.65,-23.7]);assert.equal(f.game.snapshot().story.stage,'stairs_passage');tick(1.2);assert.ok(renderedScene.getObjectByName('stairs-passage-door').rotation.y>1.2);
+ }finally{f.close();}
 });

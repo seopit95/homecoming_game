@@ -270,7 +270,6 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     leave_lift:'바로 옆에 있다.\n중앙 설비실을 피해 좌우 복도로 돌아! 반대편 녹색 비상계단으로!',
     stairs:'비상문을 닫자, 손톱 긁는 소리가 따라 내려온다.\n아래층으로 가야 한다.',
     down:'아래층 방화문이 열렸다.\n연결 통로를 지나 내려가 보자.',
-    stair_note:'점검 메모 아래에 내 차 번호가 적혀 있다. 「1704호, 한서연.」\n다시 본 계단 표지는 23이 아니라 17이다. 문 너머에서 그날의 전화벨이 들린다.',
     up:'방화문이 열렸다. 문 너머로 낡은 복도가 이어진다.\n전화는 복도 끝 1704호 안에서 울리고 있다.',
     resident_open:'잠겨 있지 않다. 전화벨은 거실에서 울린다.\n현관의 신발… 도로에 떨어져 있던 것과 같은 신발이다.',
     belongings:'검은 신발 한 짝. 봉투에는 「1704호 한서연」.\n야간 당직 안내에는 관리실 내선 17이 적혀 있다.',
@@ -354,7 +353,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       }
       if(action.startsWith('annex_')||action.startsWith('court_')||action.startsWith('archive_')||action.startsWith('plant_')){say(objectiveFor(story),6);return;}
 
-      const responses:Partial<Record<Action,string>>={exit:'보행자 출구는 바깥에서 막혔다. 내 차를 타고 차량 출구로 나가야 한다.',resident_leave:'연결문이 잠겼다. 열쇠가 필요하다. 현관 관리비 봉투나 서재의 수첩을 살펴보자.',resident_drawer:'서랍이 걸려 있다면 앞에서 한 걸음 물러서자. 안의 1703호 열쇠를 챙겨야 한다.',door:'문이 꿈쩍하지 않는다. 안쪽 잠금쇠는 풀려 있는데…',closet:'장롱 안에 몸을 숨길 수 있다.',up:story.stage==='stairs_clue'?'아래층 계단참의 점검 메모에 내 차 번호가 있었다. 먼저 확인해야 한다.':'외벽 공사로 폐쇄됐다. 아래층으로 내려가야 한다.',fuse:'먼저 관리실 책상의 근무일지를 살펴보자.',security_power:'퓨즈가 빠져 있다. 서고의 예비 부품을 찾아야 한다.',monitor:officeCanWatch(story)?'이 시각에는 내 차가 없다. 근무일지의 입차 시각을 다시 확인하자.':'CCTV 전원이 꺼져 있다. 배전반의 B 회로 2A가 필요하다.',service_exit:story.notes.includes('service_key')?'열쇠는 있다. 전기실에서 C 승강기 제어 회로에 비상전원을 공급해야 한다.':'비상 열쇠가 필요하다. CCTV 오른쪽 책상에 보인다.'};
+      const responses:Partial<Record<Action,string>>={exit:'보행자 출구는 바깥에서 막혔다. 내 차를 타고 차량 출구로 나가야 한다.',resident_leave:'연결문이 잠겼다. 열쇠가 필요하다. 현관 관리비 봉투나 서재의 수첩을 살펴보자.',resident_drawer:'서랍이 걸려 있다면 앞에서 한 걸음 물러서자. 안의 1703호 열쇠를 챙겨야 한다.',door:'문이 꿈쩍하지 않는다. 안쪽 잠금쇠는 풀려 있는데…',closet:'장롱 안에 몸을 숨길 수 있다.',up:'외벽 공사로 폐쇄됐다. 아래층으로 내려가야 한다.',fuse:'먼저 관리실 책상의 근무일지를 살펴보자.',security_power:'퓨즈가 빠져 있다. 서고의 예비 부품을 찾아야 한다.',monitor:officeCanWatch(story)?'이 시각에는 내 차가 없다. 근무일지의 입차 시각을 다시 확인하자.':'CCTV 전원이 꺼져 있다. 배전반의 B 회로 2A가 필요하다.',service_exit:story.notes.includes('service_key')?'열쇠는 있다. 전기실에서 C 승강기 제어 회로에 비상전원을 공급해야 한다.':'비상 열쇠가 필요하다. CCTV 오른쪽 책상에 보인다.'};
       if(action==='monitor'&&officeCanWatch(story)){audio.sound('alarm',0,.25);noiseRadius=22;noiseUntil=elapsed+3;}
       if(action==='pump'&&story.stage==='parking_pump'){say(story.notes.includes('valve_a')?'동측 급수관이 아직 열려 있다. 물부터 차단해야 한다.':story.notes.includes('valve_b')?'서측 급수관이 아직 열려 있다. 물부터 차단해야 한다.':'압력계가 흔들린다. 양쪽 급수 밸브를 먼저 잠가야 한다.',5);return;}
       if(action==='phone'&&!story.notes.includes('phone')){say(hasFlashlight(story)?'전화벨이 끊이지 않는다. 먼저 다용도실 차단기를 확인하자.':'어둡다. 침실 스위치부터 확인하자. 스마트폰은 침대 옆에 뒀다.',5);return;}
@@ -934,7 +933,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       // then holds there instead of hunting an unreachable seated camera.
       if(world.figure.visible)animateGhost(world.figure,time,ghostMotion,0,reducedMotion,walkPhase,1,undefined,world.solids);return;
     }
-    if(road){audio.setDevice('alarm',0);ambient.intensity=.32;flashlight.intensity=0;fill.intensity=0;(scene.fog as T.FogExp2).density=.025;const speed=road.pose(story.stage==='ended'?'car_crash':story.stage,story.stage==='ended'?finale.car_crash!.duration:stageTime,camera,reducedMotion);audio.setDrive(story.stage==='ended'?null:speed);audio.setDevice('phone',0);audio.setDevice('mobile',0);camera.updateMatrixWorld();return;}
+    if(road){audio.setDevice('alarm',0);ambient.intensity=.32;flashlight.intensity=0;fill.intensity=0;(scene.fog as T.FogExp2).density=.025;const speed=road.pose(story.stage,stageTime,camera,reducedMotion);audio.setDrive(story.stage==='ended'?null:speed);audio.setDevice('phone',0);audio.setDevice('mobile',0);camera.updateMatrixWorld();return;}
     if(story.stage==='wake_ring'){camera.position.set(...home.sleep);pitch=.85*(1-T.MathUtils.smoothstep(stageTime,1,4.8));yaw=.45;}
     if(story.stage==='sleep'){camera.position.set(...home.sleep);pitch=.85+T.MathUtils.smoothstep(stageTime,0,5)*.15;yaw=0;}
     if(area==='apartment')(scene.fog as T.FogExp2).density=.016;
@@ -1007,7 +1006,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   function crossThresholds(){
     if(concealed())return;
     if(story.stage==='stairs_descent'&&camera.position.z<-12.05&&Math.abs(camera.position.x-4)<.5){
-      advance('stair_loop');audio.sound('dread',0,.5);say('한 층을 내려왔는데… 다시 23층이다.\n바닥의 같은 얼룩. 벽의 점검 메모도 그대로다.',8);
+      advance('stair_loop');audio.sound('dread',0,.5);say('17층. 아래쪽 문은 공사 자재로 막혀 있다.\n위쪽 방화문 너머에서 아래층의 찬 공기가 올라온다.',6);
     }
     if(story.stage==='lift_exit'&&doorOpen>.75&&camera.position.z<-1.62&&Math.abs(camera.position.x)<.48){
       const p=camera.position.clone(),ry=yaw,rx=pitch;advance('leave_lift');

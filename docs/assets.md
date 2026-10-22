@@ -247,3 +247,24 @@ SOMA's final-scene/credits/aftermath recontextualisation
 ([Tampere Universities PlayLab analysis](https://blogs.tuni.fi/playlab/features/the-ending-of-soma-and-why-its-excellent/)).
 Only the pacing idea is used; the on-screen report, imagery and text are
 original to this game's existing crash/passenger story.
+
+
+### Gameplay art consistency (V129, supersedes the two images above)
+
+The passenger portrait, its curved surface/module/preload and
+`public/textures/ghost-passenger-v127.webp` were removed. The passenger now
+uses the same native `createGhost` head/body as the roaming pursuer. Two wet
+blood-tear films in `lib/ghost-tears.ts` bind to the existing facial triangles
+through walking, crawling, seated and capture poses. These are static wet
+marks following deforming skin, not a simulated stream of fluid.
+
+`public/images/ending-aftermath-v128.webp` was also removed. The epilogue
+now exposes the actual frozen game road, smashed sedan and dump truck from
+an exterior camera in `lib/prologue.ts`. Existing report timing and credits
+remain. No replacement photograph, runtime image fetch or third-party asset
+was added. The V127/V128 descriptions above are historical provenance only.
+
+Apartment signs in `lib/apartment-signage.ts` and the 1F evacuation diagram
+are authored canvas textures on framed, wall-mounted geometry. They reuse
+existing materials/font rendering; no external sign image or font was added.
+The removed stair memo is no longer an interaction or progress requirement.

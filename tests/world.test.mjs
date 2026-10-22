@@ -57,7 +57,7 @@ test('the lower stair door opens onto a continuous repeated-floor passage',()=>{
   for(const [x,z] of [[1,-6.2],[1,-7.85],[2.4,-7.85],[3.2,-7.85]])assert.ok(canStandAt(x,z,w.solids,.23,w.bounds),`clear lower passage ${x},${z}`);
   assert.ok(hasLineOfSight({x:1,y:-1.15,z:-5},{x:1,y:-1.15,z:-7.8},w.solids),'the wall behind the open door is actually cut away');
   for(const [x,z] of [[4,-10.5],[4,-12.5],[5.25,-13.35]])assert.ok(canStandAt(x,z,w.solids,.23,w.bounds),`the physical repeated landing exists ${x},${z}`);
-  const clue=w.targets.find(t=>t.id==='stair_note');assert.ok(clue.point.z<-12&&clue.point.y<0,'the clue is on the actual lower landing');
+  assert.equal(w.targets.some(t=>t.id==='stair_note'),false,'V129 removes the mandatory wall-note prop');assert.ok(w.targets.find(t=>t.id==='up'));
   w.updateStory('stairs_passage',2,false);w.updateStory('stairs_passage',3,false);assert.ok(canStandAt(3,-24.05,w.solids,.23,w.bounds),'the upper exit on the repeated landing opens');
   w.reset();w.updateStory('stairs_loop',0,false);assert.equal(canStandAt(1,-5.85,w.solids,.23,w.bounds),false,'retry restores the closed lower door');assert.equal(canStandAt(3,-23.7,w.solids,.23,w.bounds),false,'retry also closes the repeated landing exit');
 });

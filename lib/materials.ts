@@ -1,6 +1,5 @@
 import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
-import {preparePassengerPortrait} from './passenger-portrait.ts';
 import {prepareFacilityModels} from './facility-models.ts';
 import {loadTexture} from './texture-loader.ts';
 
@@ -29,8 +28,7 @@ export function prepareVisuals(){
     const physicalJobs=(['asphalt-color','asphalt-normal','asphalt-arm','soil-color','soil-normal','soil-arm','plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm','cast-concrete-color','cast-concrete-normal','cast-concrete-arm','worn-concrete-color','worn-concrete-normal','worn-concrete-arm','wood-color','wood-normal','wood-arm','wood-floor-color','wood-floor-normal','wood-floor-arm','painted-metal-color','painted-metal-normal','painted-metal-arm','bag-leather-color','bag-leather-normal','bag-leather-arm','cotton-color','cotton-normal','cotton-arm','paving-color','paving-normal','paving-arm','terrazzo-color','terrazzo-normal','terrazzo-arm'] as const).map(async key=>{
       const texture=await loadTexture(`/textures/pbr/${key}.${key.startsWith('painted-metal')||key.startsWith('bag-leather')||key.startsWith('paving')?'webp':'jpg'}`);texture.colorSpace=key.endsWith('color')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.setScalar(.9);return {key,texture};
     });
-    // The passenger keeps its native head if this optional portrait is unavailable.
-    const [results,physical,facility]=await Promise.all([Promise.allSettled([...jobs,...livingJobs]),Promise.allSettled(physicalJobs),Promise.allSettled([prepareFacilityModels(),preparePassengerPortrait().catch(()=>{})])]);
+    const [results,physical,facility]=await Promise.all([Promise.allSettled([...jobs,...livingJobs]),Promise.allSettled(physicalJobs),Promise.allSettled([prepareFacilityModels()])]);
     if([...results,...physical,...facility].some(r=>r.status==='rejected')){for(const r of [...results,...physical])if(r.status==='fulfilled'){r.value.texture.dispose();r.value.texture.image?.close?.();}loading=undefined;throw new Error('Visual asset loading failed');}
     for(const r of results)if(r.status==='fulfilled')sources[r.value.key]=r.value.texture;
     for(const r of physical)if(r.status==='fulfilled')physicalSources[r.value.key]=r.value.texture;

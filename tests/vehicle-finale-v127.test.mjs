@@ -85,40 +85,4 @@ test('V127 the parked door trim stays attached to its hinge and exposes a clear 
   const ray=new T.Raycaster(new T.Vector3(.38,1.18,-.24),new T.Vector3(1,0,0),0,.72);assert.equal(ray.intersectObjects(meshes,false).length,0,'open passenger aperture has no remaining side pane or panel');
 });
 
-test('V127 the passenger portrait replaces the scalp at its real head anchor and keeps a safe fallback',async()=>{
-  const road=buildRoad(new T.Scene(),true),c=camera();
-  try{
-    road.pose('car_voice',2.45,c,true);
-    assert.ok(road.root.getObjectByName('finale-passenger-portrait'),'the authored portrait must belong to the actual seated figure');
-    const {createPassengerPortrait}=await import('../lib/passenger-portrait.ts');
-    const {createGhost,animateGhostPassenger}=await import('../lib/ghost.ts');
-    const figure=createGhost(new T.Group());figure.position.set(.42,.055,-.11);figure.rotation.y=Math.PI;figure.scale.setScalar(.9);figure.visible=true;
-    animateGhostPassenger(figure,12.45,0,true,true);
-    const head=figure.getObjectByName('ghost-head'),source=new T.DataTexture(new Uint8Array([180,190,185,255]),1,1);
-    const fallback=createPassengerPortrait(figure,null);fallback.pose(c,12.45,true);assert.equal(head.visible,true,'a failed texture load cannot leave a headless passenger');assert.equal(fallback.mesh.visible,false);
-    const portrait=createPassengerPortrait(figure,source);portrait.pose(c,12.45,true);figure.updateMatrixWorld(true);
-    assert.equal(head.visible,false,'flat scalp and old wide hair strips are completely hidden only after the portrait is ready');
-    assert.equal(portrait.mesh.visible,true);assert.ok(portrait.mesh.material.transparent&&portrait.mesh.material.map,'fine hair uses the alpha cutout');
-    const bounds=new T.Box3().setFromBufferAttribute(portrait.mesh.geometry.attributes.position);
-    assert.ok(bounds.max.z-bounds.min.z>.01,'the head surface has physical curvature');
-    const size=new T.Box3().setFromObject(portrait.mesh,true).getSize(new T.Vector3());assert.ok(size.y<.51&&size.y>.45,'portrait retains adult head/neck size');
-    assert.ok(portrait.mesh.getWorldPosition(new T.Vector3()).distanceTo(head.getWorldPosition(new T.Vector3()))<.025,'photo stays on the original head instead of approaching the player');
-    const fixed=portrait.mesh.matrixWorld.toArray();portrait.pose(c,12.45,true);figure.updateMatrixWorld(true);assert.deepEqual(portrait.mesh.matrixWorld.toArray(),fixed,'same simulation time freezes the portrait');
-    const collar=figure.getObjectByName('ghost-collar-skin');assert.notEqual(collar.material,portrait.mesh.material,'the lower anatomical body retains its own real surface');
-  }finally{road.dispose();}
-});
-
-test('V127 the portrait neck blends over the shoulder without changing head occlusion',async()=>{
-  const {createPassengerPortrait}=await import('../lib/passenger-portrait.ts');
-  const {createGhost,animateGhostPassenger}=await import('../lib/ghost.ts');
-  const figure=createGhost(new T.Group());figure.position.set(.42,.055,-.11);figure.rotation.y=Math.PI;figure.scale.setScalar(.9);figure.visible=true;
-  animateGhostPassenger(figure,12.45,0,true,true);
-  const c=camera();c.position.set(-.38,1.22,-.24);
-  const source=new T.DataTexture(new Uint8Array([180,190,185,255]),1,1),portrait=createPassengerPortrait(figure,source);portrait.pose(c,12.45,true);figure.updateMatrixWorld(true);
-  const junction=portrait.mesh.getObjectByName('finale-passenger-portrait-junction');assert.ok(junction,'the neck must blend over the native sleeve instead of being cut through');
-  assert.equal(portrait.mesh.material.depthTest,true,'the actual head still respects cabin occlusion');
-  assert.equal(junction.material.depthTest,false,'only the lower neck paints over the shoulder');
-  assert.ok(junction.material.transparent&&junction.material.map,'fine hair and lower fade retain their alpha');
-  const hit=y=>new T.Raycaster(portrait.mesh.localToWorld(new T.Vector3(0,y,1)),new T.Vector3(0,0,-1).transformDirection(portrait.mesh.matrixWorld),0,2).intersectObject(junction,false);
-  assert.ok(hit(-.15).length>0,'the native neck/chest area receives the overlay');assert.equal(hit(.1).length,0,'the overlay cannot cover the face or scalp');
-});
+// V129 removes the photographic replacement; native-face/aftermath checks live in scene-continuity-v129.test.mjs.
