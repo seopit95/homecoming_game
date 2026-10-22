@@ -1,11 +1,5 @@
 import * as T from 'three';
-import {ghostHairMaterials} from './materials.ts';
-import authored from './assets/ghost-hair.json' with {type:'json'};
-
-// UV copies share a surface, so they must also share its lighting normal.
-const copies=new Map<string,number[]>();
-for(let i=0;i<authored.position.length;i+=3){const key=authored.position.slice(i,i+3).join(',');if(!copies.has(key))copies.set(key,[]);copies.get(key)!.push(i/3);}
-const seams=[...copies.values()].filter(group=>group.length>1);
+import authored from './assets/ghost-strands.json' with {type:'json'};
 
 // Match Three.js per-vertex tangent accumulation (MIT; docs/third-party-tangent-work.md) without allocating two
 // Vector3 objects per vertex on every animation frame. Float64 keeps its math.
@@ -34,56 +28,102 @@ export function updateHairTangents(geometry:T.BufferGeometry){
   }
 }
 
+type StrandState={center:Float32Array;delta:Float32Array;posed:Float32Array;seeds:Float32Array;weights:Float32Array;radius:Float32Array;offsets:Uint32Array};
+// Settling is synchronous. Reuse one scratch frame across prepared ghosts;
+// each ghost owns only its deforming centerline/vertex buffers.
+const fit=new T.Matrix4(),inverse=new T.Matrix4(),bodyInverse=new T.Matrix4(),linear=new T.Matrix3(),normalToLocal=new T.Matrix3();
+const point=new T.Vector3(),previous=new T.Vector3(),direction=new T.Vector3(),tangent=new T.Vector3(),radial=new T.Vector3(),binormal=new T.Vector3(),vertex=new T.Vector3(),surfaceNormal=new T.Vector3(),worldUp=new T.Vector3(0,1,0),headUp=new T.Vector3();
+const gravity=new T.Quaternion(),bend=new T.Quaternion();
+const circles={3:Array.from({length:3},(_,i)=>new T.Vector2(Math.cos(i*Math.PI*2/3),Math.sin(i*Math.PI*2/3))),7:Array.from({length:7},(_,i)=>new T.Vector2(Math.cos(i*Math.PI*2/7),Math.sin(i*Math.PI*2/7)))};
+let radiusScale=1;
+
+function writeStrands(geometry:T.BufferGeometry,state:StrandState){
+  const positions=geometry.getAttribute('position'),normals=geometry.getAttribute('normal');
+  for(const [start,count,,,sides] of authored.strands)for(let j=0;j<count;j++){
+    const k=start+j,lo=Math.max(start,k-1),hi=Math.min(start+count-1,k+1);
+    point.fromArray(state.posed,k*3);tangent.fromArray(state.posed,hi*3).sub(previous.fromArray(state.posed,lo*3)).normalize();
+    bend.identity().slerp(gravity,state.weights[k]);radial.fromArray(state.seeds,k*3).applyMatrix3(linear).applyQuaternion(bend);
+    radial.addScaledVector(tangent,-radial.dot(tangent)).normalize();binormal.crossVectors(tangent,radial).normalize();
+    const circle=circles[sides as 3|7];
+    for(let side=0;side<sides;side++){
+      surfaceNormal.copy(radial).multiplyScalar(circle[side].x).addScaledVector(binormal,circle[side].y);
+      vertex.copy(point).addScaledVector(surfaceNormal,state.radius[k]*radiusScale).applyMatrix4(inverse);
+      const id=state.offsets[k]+side;positions.setXYZ(id,vertex.x,vertex.y,vertex.z);
+      surfaceNormal.applyMatrix3(normalToLocal).normalize();normals.setXYZ(id,surfaceNormal.x,surfaceNormal.y,surfaceNormal.z);
+    }
+  }
+  positions.needsUpdate=normals.needsUpdate=true;
+}
+
 export function createHair(head:T.Group){
   const hair=new T.Group();hair.name='ghost-scalp-hair';head.add(hair);
   const tails=new T.Group();tails.name='ghost-long-hair';head.add(tails);
-  const geometry=new T.BufferGeometry();
-  geometry.setAttribute('position',new T.Float32BufferAttribute(authored.position,3));
-  geometry.setAttribute('uv',new T.Float32BufferAttribute(authored.uv,2));geometry.setIndex(authored.index);
-  geometry.setAttribute('uv1',new T.Float32BufferAttribute(authored.position.flatMap((y,i)=>i%3===1?[.5,i/3<authored.metadata.scalpVertices?T.MathUtils.clamp((y-authored.metadata.scalpFadeStart)/authored.metadata.scalpFade,0,1):1]:[]),2));
-  for(const group of authored.groups)geometry.addGroup(group.start,group.count,group.materialIndex);
-  const material=ghostHairMaterials();
-  const mesh=new T.Mesh(geometry,material);mesh.name='ghost-authored-long-hair';
-  mesh.userData.rest=new Float32Array(authored.position);mesh.userData.anchors=new Float32Array(authored.anchor);mesh.userData.skinDelta=new Float32Array(authored.skinDelta);
-  mesh.userData.face=head.getObjectByName('ghost-continuous-face');
+  const scalpGeometry=new T.BufferGeometry();scalpGeometry.setAttribute('position',new T.Float32BufferAttribute(authored.scalp.position,3));scalpGeometry.setAttribute('normal',new T.Float32BufferAttribute(authored.scalp.normal,3));scalpGeometry.setIndex(authored.scalp.index);
+  const scalpMaterial=new T.MeshStandardMaterial({color:'#0e1010',roughness:.76});scalpMaterial.name='surface-dark-scalp-underlay';
+  const scalp=new T.Mesh(scalpGeometry,scalpMaterial);scalp.name='ghost-inner-crown';scalp.castShadow=scalp.receiveShadow=true;hair.add(scalp);
+
+  const center=new Float32Array(authored.center),state:StrandState={center,delta:new Float32Array(authored.skinDelta),posed:center.slice(),seeds:new Float32Array(center.length),weights:new Float32Array(center.length/3),radius:new Float32Array(authored.radius),offsets:new Uint32Array(center.length/3)};
+  const index:number[]=[],color=new Float32Array(authored.metadata.strandVertices*3);let cursor=0;
+  for(const [start,count,release,shade,sides] of authored.strands){
+    for(let j=0;j<count;j++){
+      const k=start+j,lo=Math.max(start,k-1),hi=Math.min(start+count-1,k+1);state.offsets[k]=cursor;
+      tangent.fromArray(center,hi*3).sub(previous.fromArray(center,lo*3)).normalize();radial.set(center[k*3],.035,center[k*3+2]-.02).normalize();
+      radial.addScaledVector(tangent,-radial.dot(tangent)).normalize();radial.toArray(state.seeds,k*3);
+      state.weights[k]=j>release?T.MathUtils.smoothstep((j-release)/(count-1-release),0,.24):0;
+      for(let side=0;side<sides;side++){const offset=(cursor+side)*3,light=shade*(.91+.09*Math.sin(j*.8+start));color[offset]=light;color[offset+1]=light*.98;color[offset+2]=light*.94;}
+      if(j<count-1)for(let side=0;side<sides;side++){const a=cursor+side,b=cursor+(side+1)%sides,c=a+sides,d=b+sides;index.push(a,b,c,b,d,c);}cursor+=sides;
+    }
+    const root=state.offsets[start],tip=state.offsets[start+count-1];for(let side=1;side<sides-1;side++)index.push(root,root+side+1,root+side,tip,tip+side,tip+side+1);
+  }
+  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(new Float32Array(authored.metadata.strandVertices*3),3));geometry.setAttribute('normal',new T.BufferAttribute(new Float32Array(authored.metadata.strandVertices*3),3));geometry.setAttribute('color',new T.BufferAttribute(color,3));geometry.setIndex(index);
+  fit.identity();inverse.identity();linear.identity();normalToLocal.identity();gravity.identity();radiusScale=1;writeStrands(geometry,state);
+  // A conservative bound covers the rotating/gravity-settled lengths without
+  // scanning the strand vertices or allocating a new sphere on every pose.
+  geometry.boundingSphere=new T.Sphere(new T.Vector3(0,-.45,0),1.95);
+  const material=new T.MeshPhysicalMaterial({color:'#202221',vertexColors:true,roughness:.76,metalness:0,clearcoat:.02,clearcoatRoughness:.7});material.specularIntensity=.22;material.name='surface-fine-wet-hair-strands';
+  const mesh=new T.Mesh(geometry,material);mesh.name='ghost-authored-long-hair';mesh.userData.strands=state;mesh.userData.rest=(geometry.getAttribute('position').array as Float32Array).slice();mesh.userData.face=head.getObjectByName('ghost-continuous-face');
   mesh.castShadow=mesh.receiveShadow=true;tails.add(mesh);return {hair,tails};
 }
+
 export function settleHair(tails:T.Group,figure:T.Group,time:number,floor:number,heightAt?:(x:number,z:number)=>number){
   tails.updateWorldMatrix(true,false);
-  const world=tails.matrixWorld,inverse=world.clone().invert(),bodyInverse=figure.matrixWorld.clone().invert(),mesh=tails.children[0] as T.Mesh,p=mesh.geometry.getAttribute('position');
-  const rest=mesh.userData.rest as Float32Array,anchors=mesh.userData.anchors as Float32Array,delta=mesh.userData.skinDelta as Float32Array,lengthScale=tails.scale.y,open=mesh.userData.face?.userData.openness??0;
-  const point=new T.Vector3(),anchor=new T.Vector3(),up=new T.Vector3(0,1,0).transformDirection(world);
-  const gravity=new T.Quaternion().setFromUnitVectors(up,new T.Vector3(0,1,0)),bend=new T.Quaternion(),identity=new T.Quaternion();
-  for(let i=0;i<p.count;i++){
-    const weight=T.MathUtils.smoothstep(-.16-rest[i*3+1],0,.45),phase=rest[i*3]*11+rest[i*3+2]*8;
-    point.fromArray(rest,i*3);anchor.fromArray(anchors,i*3);
-    point.x+=delta[i*3]*open;point.y+=delta[i*3+1]*open;point.z+=delta[i*3+2]*open;
-    // The passenger rig shortens only loose lengths. Compensate its group
-    // scale at the roots so the complete authored scalp remains on the skull.
-    point.y=(anchor.y+(point.y-anchor.y)*(1-weight*(1-lengthScale)))/lengthScale;anchor.y/=lengthScale;
-    point.applyMatrix4(world);anchor.applyMatrix4(world);
-    // Keep the complete skull/temple fit rigid; wet lengths bend below the
-    // jaw around their own guide, so a tilted head cannot pull hair into itself.
-    bend.copy(identity).slerp(gravity,weight);point.sub(anchor).applyQuaternion(bend).add(anchor);
-    point.x+=Math.sin(time*.85+phase)*.003*weight;point.z+=Math.sin(time*.7+phase)*.002*weight;
+  const mesh=tails.children[0] as T.Mesh,state=mesh.userData.strands as StrandState,lengthScale=tails.scale.y,open=mesh.userData.face?.userData.openness??0,cabin=lengthScale<1&&figure.parent?.name==='memory-car';
+  inverse.copy(tails.matrixWorld).invert();bodyInverse.copy(figure.matrixWorld).invert();
+  // Passenger scale affects the free lengths. Cancel it at every bound root,
+  // including the circular cross-section, to keep the true skull fit intact.
+  fit.copy(tails.matrixWorld).scale(vertex.set(1,1/lengthScale,1));linear.setFromMatrix4(fit);normalToLocal.setFromMatrix4(tails.matrixWorld).transpose();
+  headUp.set(0,1,0).transformDirection(fit);gravity.setFromUnitVectors(headUp,worldUp);
+  const m=linear.elements;radiusScale=Math.sqrt((m[0]**2+m[1]**2+m[2]**2+m[3]**2+m[4]**2+m[5]**2+m[6]**2+m[7]**2+m[8]**2)/3);
+  const f=figure.matrixWorld.elements,figureRadiusScale=radiusScale/Math.min(Math.hypot(f[0],f[1],f[2]),Math.hypot(f[4],f[5],f[6]),Math.hypot(f[8],f[9],f[10]));
+  for(const [start,count,release] of authored.strands)for(let j=0;j<count;j++){
+    const k=start+j,offset=k*3;point.fromArray(state.center,offset);direction.fromArray(state.delta,offset);point.addScaledVector(direction,open);
+    if(j<=release)point.applyMatrix4(fit);
+    else{
+      previous.fromArray(state.center,offset-3);direction.fromArray(state.delta,offset-3);previous.addScaledVector(direction,open);
+      direction.copy(point).sub(previous).applyMatrix3(linear).multiplyScalar(lengthScale);bend.identity().slerp(gravity,state.weights[k]);direction.applyQuaternion(bend);
+      point.fromArray(state.posed,offset-3).add(direction);
+      const phase=start*.17;point.x+=Math.sin(time*.85+phase)*.00012*state.weights[k];point.z+=Math.sin(time*.7+phase)*.00009*state.weights[k];
+    }
     if(heightAt){
-      const support=heightAt(figure.position.x,point.z)+.09;
-      if(point.y<support){const drag=support-point.y;point.z-=drag*.25;point.y=Math.max(support,heightAt(figure.position.x,point.z)+.09)+.001;}
+      const padding=.002+state.radius[k]*radiusScale,surface=heightAt(point.x,point.z);let tread=0;
+      // Navigation interpolates each flight. Its rendered tread can stand
+      // 8.3cm above that slope; flat floors retain only true tube clearance.
+      if(point.y<surface+padding+.09){const slope=Math.abs(heightAt(point.x,point.z+.06)-heightAt(point.x,point.z-.06))/.12;tread=.09*T.MathUtils.smoothstep(slope,.035,.15);}
+      const support=surface+padding+tread;
+      if(point.y<support){point.z-=(support-point.y)*.25;point.y=Math.max(support,heightAt(point.x,point.z)+padding+tread);}
     }else{
       point.applyMatrix4(bodyInverse);
-      // Seated hair drapes in front of the inclined backrest, then onto the
-      // lap. Work in the figure frame so a transformed/rolling car stays valid.
-      if(lengthScale<1&&point.y<1.22){const side=T.MathUtils.smoothstep(Math.abs(point.x),.12,.18);point.z=Math.max(point.z,.048+side*.059-.15*Math.max(.6,point.y));}
-      if(point.y<floor){point.z-=(floor-point.y)*.25;point.y=floor+.001;}
+      const padding=.002+state.radius[k]*figureRadiusScale;
+      // A few lifted crown wisps bend under the actual closed car roof.
+      // Standalone seated rigs have no ceiling; their skull roots stay fixed.
+      if(cabin)point.y=Math.min(point.y,1.535-padding);
+      // Actual closed-cabin fabric plane is z=.05196-.15114*y in this
+      // figure frame. Keep the entire round bundle in front of it.
+      if(lengthScale<1&&point.y<1.22){const side=T.MathUtils.smoothstep(Math.abs(point.x),.12,.18);point.z=Math.max(point.z,.057+side*.059-.15*Math.max(.6,point.y)+padding);}
+      if(point.y<floor+padding){point.z-=(floor+padding-point.y)*.25;point.y=floor+padding;}
       point.applyMatrix4(figure.matrixWorld);
     }
-    point.applyMatrix4(inverse);p.setXYZ(i,point.x,point.y,point.z);
+    point.toArray(state.posed,offset);
   }
-  p.needsUpdate=true;mesh.geometry.computeVertexNormals();
-  const normals=mesh.geometry.getAttribute('normal'),normal=new T.Vector3();
-  for(const group of seams){normal.set(0,0,0);for(const i of group)normal.add(point.fromBufferAttribute(normals,i));normal.normalize();for(const i of group)normals.setXYZ(i,normal.x,normal.y,normal.z);}
-  normals.needsUpdate=true;
-  // Without vertex tangents the anisotropic highlight changes direction at
-  // every triangle, making this smooth hair read as reflective metal plates.
-  updateHairTangents(mesh.geometry);mesh.geometry.getAttribute('tangent').needsUpdate=true;mesh.geometry.computeBoundingSphere();
+  writeStrands(mesh.geometry,state);
 }

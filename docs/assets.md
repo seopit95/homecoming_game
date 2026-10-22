@@ -268,3 +268,28 @@ Apartment signs in `lib/apartment-signage.ts` and the 1F evacuation diagram
 are authored canvas textures on framed, wall-mounted geometry. They reuse
 existing materials/font rendering; no external sign image or font was added.
 The removed stair memo is no longer an interaction or progress requirement.
+
+
+### Volumetric wet strand hair and wider human spider stance (V130)
+
+The approved generated concept images are visual references only; neither is
+loaded by the game. `scripts/author-ghost-strands.mjs` authors seeded tapered
+3D tube paths fitted to the existing CC0 MakeHuman-derived skull. It outputs
+`lib/assets/ghost-strands.json`. `lib/ghost-hair.ts` batches the closed tubes
+with vertex colour and a small true scalp underlay. There is no portrait,
+alpha card or texture on this new hair. The old long01/locks image downloads
+are removed from initial visual preparation; their historical files remain
+for provenance and are no longer used by the shared ghost hair.
+
+Free lengths follow a bounded gravity/seat/floor deformation; roots retain
+the head and facial deformation. This is authored motion, not a full
+strand-to-strand physical simulation. All appearances use `createGhost`;
+the passenger's previous surface-material overrides are removed. The same
+plain grey outfit remains on accident victim and apparition; the wet
+material's broad plastic glare is reduced.
+
+The chasing skeleton keeps its existing human two-arm/two-leg topology and
+bone lengths. Hands and rear feet spread farther sideways, elbows and knees
+flare above them around a low suspended torso. The clearance envelope reads
+the widened shape before gathering in narrow spaces. No extra insect limbs,
+root scale enlargement or separate passenger model was introduced.

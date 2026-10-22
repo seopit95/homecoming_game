@@ -1,0 +1,10 @@
+import test from'node:test';import assert from'node:assert/strict';import*as T from'three';import{buildRoad}from'../lib/prologue.ts';import{createGhost}from'../lib/ghost.ts';import{disposeWorld}from'../lib/world.ts';
+const ink=new Proxy({measureText:text=>({width:String(text).length*(parseFloat(ink.font)||20)*.55}),createLinearGradient:()=>({addColorStop(){}})},{get:(obj,key)=>key in obj?obj[key]:(()=>{})});Object.defineProperty(globalThis,'document',{value:{createElement:()=>({width:0,height:0,getContext:()=>ink})},configurable:true});
+// Catches a separate seated-only wig, alpha portrait or fallback cap hiding the revised strands.
+test('V130 the road passenger wears the exact shared volumetric hair and face used by the pursuer',()=>{
+ const f=createGhost(new T.Group()),r=buildRoad(new T.Scene(),true),camera=new T.PerspectiveCamera(72,16/9,.06,220);
+ try{r.pose('car_voice',2.45,camera,true);const seated=r.root.getObjectByName('finale-passenger');
+  const a=f.getObjectByName('ghost-authored-long-hair'),b=seated.getObjectByName('ghost-authored-long-hair');assert.ok(a&&b);const materials=Array.isArray(b.material)?b.material:[b.material];assert.ok(materials.every(m=>!m.map&&!m.alphaMap),'hair silhouette comes from actual3D surfaces, not alpha portrait/cards');
+  assert.equal(a.geometry.getAttribute('position').count,b.geometry.getAttribute('position').count);assert.deepEqual(a.userData.rest,b.userData.rest,'same rest geometry, posed into the seat');assert.equal(b.material.roughness,a.material.roughness,'cabin must keep the same hair surface instead of a shiny seat-only substitute');assert.equal(seated.getObjectByName('ghost-continuous-face').material.roughness,f.getObjectByName('ghost-continuous-face').material.roughness,'face surface is shared across scenes');assert.equal(b.visible,true);assert.equal(seated.getObjectByName('ghost-head').visible,true);assert.ok(seated.getObjectByName('ghost-blood-tears'));assert.ok(!seated.getObjectByName('finale-passenger-portrait'));assert.ok(seated.getObjectByName('ghost-continuous-face').geometry.getAttribute('position').count>1000);
+ }finally{r.dispose();disposeWorld(f);}
+});

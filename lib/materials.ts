@@ -18,8 +18,8 @@ const physicalSources:Partial<Record<`${'asphalt'|'soil'|'plaster'|'concrete'|'c
 let loading:Promise<void>|undefined;
 export function prepareVisuals(){
   if(!loading)loading=(async()=>{
-    const jobs=(['night-sky','surfaces','remains','face','teeth','hand','hand-view','hair','hair-locks','cloth','resident-photo'] as const).map(async key=>{
-      const file=key==='hand-view'?'smartphone-hand-v1.webp':key==='night-sky'?'courtyard-night-sky-2k.jpg':key==='teeth'?'ghost-teeth-v1.webp':key==='resident-photo'?'resident-memory-photo-v1.webp':key==='hair-locks'?'ghost-hair-locks-v1.webp':key==='hair'?'ghost-hair-long01-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.webp`;
+    const jobs=(['night-sky','surfaces','remains','face','teeth','hand','hand-view','cloth','resident-photo'] as const).map(async key=>{
+      const file=key==='hand-view'?'smartphone-hand-v1.webp':key==='night-sky'?'courtyard-night-sky-2k.jpg':key==='teeth'?'ghost-teeth-v1.webp':key==='resident-photo'?'resident-memory-photo-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.webp`;
       const texture=await loadTexture(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;if(key==='night-sky')texture.mapping=T.EquirectangularReflectionMapping;return {key,texture};
     });
     const livingJobs=(['pedestrian-skin','pedestrian-shirt','pedestrian-shirt-normal','pedestrian-hair'] as const).map(async key=>{

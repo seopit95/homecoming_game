@@ -122,22 +122,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   let shattered:T.LineSegments|undefined,revealLight:T.PointLight|undefined;
   if(passenger){
     passenger.name='finale-passenger';passenger.position.set(.42,.055,-.11);passenger.scale.setScalar(.9);passenger.rotation.y=Math.PI;
-    // Keep the same connected adult anatomy and injury portrait. The cabin's
-    // grazing light catches wet skin/hair instead of flattening them into grey.
-    const wetMaterials=new Map<T.Material,T.Material>();
-    passenger.traverse(object=>{
-      if(!(object instanceof T.Mesh))return;
-      const wet=(material:T.Material)=>{
-        if(wetMaterials.has(material))return wetMaterials.get(material)!;
-        const copy=material.clone();copy.onBeforeCompile=material.onBeforeCompile;copy.customProgramCacheKey=material.customProgramCacheKey;
-        if(copy instanceof T.MeshStandardMaterial){
-          if(/hair/.test(material.name)){copy.roughness=.44;if(copy instanceof T.MeshPhysicalMaterial){copy.clearcoat=.12;copy.clearcoatRoughness=.32;}}
-          else if(object.name==='ghost-continuous-face'||object.name==='ghost-collar-skin'){copy.roughness=.5;if(copy instanceof T.MeshPhysicalMaterial){copy.clearcoat=.2;copy.clearcoatRoughness=.38;}}
-        }
-        wetMaterials.set(material,copy);return copy;
-      };
-      object.material=Array.isArray(object.material)?object.material.map(wet):wet(object.material);
-    });
+    // Use the exact shared character surfaces; cabin lights provide the scene contrast.
     revealLight=new T.PointLight('#c4cbb9',.92,2.1,2);revealLight.position.set(.69,1.39,-.57);car.add(revealLight);
     const fracture:number[]=[];
     for(let i=0;i<17;i++){const angle=i*2.399;let u=.51,v=.43;for(let j=1;j<=5;j++){const n=j/5,nu=.51+Math.cos(angle+Math.sin(i*13+j)*.07)*(.16+(i%4)*.05)*n,nv=.43+Math.sin(angle)*(.17+(i%3)*.08)*n;const point=(a:number,b:number)=>[(a*2-1)*T.MathUtils.lerp(.815,.658,b),.923+b*.48+.047*(1-(a*2-1)**2)*b,-.971+b*.592-.033*(1-(a*2-1)**2)*Math.sin(b*Math.PI)];fracture.push(...point(u,v),...point(nu,nv));u=nu;v=nv;}}

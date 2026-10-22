@@ -4,8 +4,8 @@ import {livingMaterial} from './materials.ts';
 // One unprinted fabric survives from the accident into the damaged apparition.
 export function victimDressMaterial(wet=false){
  const material=livingMaterial('shirt');material.map?.dispose();material.map=null;
- material.name='victim-grey-dress';material.color.set('#999891');material.roughness=wet?.62:.9;
- material.sheen=wet?.12:.3;material.clearcoat=wet?.18:0;material.clearcoatRoughness=.38;
+ material.name='victim-grey-dress';material.color.set('#999891');material.roughness=wet?.84:.9;
+ material.sheen=wet?.06:.3;material.clearcoat=wet?.04:0;material.clearcoatRoughness=.6;
  return material;
 }
 

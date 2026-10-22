@@ -20,7 +20,7 @@ type Rig={pursuit:number;steps?:Steps;crawl:number;kneel:number;spider:number;tu
 const rigs=new WeakMap<T.Group,Rig>();
 export function createGhost(parent:T.Object3D){
   const figure=new T.Group();figure.name='resident-remains';figure.rotation.order='YXZ';parent.add(figure);figure.visible=false;
-  const skin=surface('skin','#bfc7c3',{roughness:.62}),cloth=victimDressMaterial(true);
+  const skin=surface('skin','#b7bcb6',{roughness:.8}),cloth=victimDressMaterial(true);
   const torso=new T.Group();torso.position.set(.035,1.16,.02);figure.add(torso);
   const {gown,hem}=createDress(torso,cloth);
   const head=new T.Group();head.name='ghost-head';head.position.set(0,.502,.00816);head.scale.set(.67,.68,.68);torso.add(head);
@@ -109,7 +109,7 @@ export function animateGhost(figure:T.Group,time:number,moving:number,proximity:
   const menace=state.pursuit*crawl*(1-T.MathUtils.smoothstep(Math.max(tuck.side,tuck.front,tuck.back),.05,.4));
   const rig=poseGhost(figure,time,moving,proximity,reducedMotion,phase,crawl,tuck,moving>.01||live,kneeGround,menace);if(!rig)return;
   // Quantized tissue poses avoid recomputing the face normals every chase frame.
-  poseFace(rig.face,Math.round(menace*.8*12)/12);rig.mouth.visible=menace>.02;
+  poseFace(rig.face,Math.round(menace*.32*12)/12);rig.mouth.visible=menace>.02;
   if(heightAt)groundGhost(figure,heightAt,false);
   plantContacts(figure,rig,time,phase,crawl,moving,live,continuous?previous:undefined);
   poseDress(rig.gown,rig.hem,rig.torso,rig.knees,crawl,false,tuck.back,tuck.side,tuck.front);
@@ -181,10 +181,10 @@ function crawlClearance(figure:T.Group,solids:Solid[],height=1.3){
   const p=figure.position,yaw=figure.rotation.y,c=Math.cos(yaw),s=Math.sin(yaw),tuck:Clearance={side:0,front:0,back:0};
   for(const b of solids){
     if((b.y??1.5)+(b.h??3)/2<p.y+.02||(b.y??1.5)-(b.h??3)/2>p.y+height)continue;
-    if(Math.hypot(b.x-p.x,b.z-p.z)>Math.hypot(b.w,b.d)/2+1.6)continue;
+    if(Math.hypot(b.x-p.x,b.z-p.z)>Math.hypot(b.w,b.d)/2+1.85)continue;
     const bc=Math.cos(b.yaw??0),bs=Math.sin(b.yaw??0),ox=bc*(p.x-b.x)-bs*(p.z-b.z),oz=bs*(p.x-b.x)+bc*(p.z-b.z);
     for(let angle=0;angle<Math.PI*2;angle+=Math.PI/16){
-      const ux=Math.cos(angle),uz=Math.sin(angle),length=Math.min(.78/Math.max(.0001,Math.abs(ux)),(uz<0?1.3:1.25)/Math.max(.0001,Math.abs(uz))),x=ux*length,z=uz*length;
+      const ux=Math.cos(angle),uz=Math.sin(angle),length=Math.min(1.03/Math.max(.0001,Math.abs(ux)),(uz<0?1.3:1.25)/Math.max(.0001,Math.abs(uz))),x=ux*length,z=uz*length;
       const wx=c*x+s*z,wz=-s*x+c*z,dx=bc*wx-bs*wz,dz=bs*wx+bc*wz;let lo=0,hi=1,entryAxis=0;
       for(const [axis,[origin,d,half]] of [[ox,dx,b.w/2+.035],[oz,dz,b.d/2+.035]].entries()){
         if(Math.abs(d)<1e-8){if(Math.abs(origin)>=half){hi=-1;break;}}
@@ -280,16 +280,16 @@ function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearanc
   rig.spider=spider*blend;
   // Shoulder-led dragging lags behind the alternating planted hands. The root
   // speed and contact phases stay distance-driven; only the supported body coils.
-  const stagger=Math.sin(phase*.5-.4)*.028*strain,pull=(Math.sin(phase*2-.75)*.035+Math.sin(phase*4-.2)*.009)*strain;
+  const stagger=Math.sin(phase*.5-.4)*.042*strain,pull=(Math.sin(phase*2-.75)*.045+Math.sin(phase*4-.2)*.009)*strain;
   // The knee-led stroke has a longer trailing shin than the gathered drag.
   // Blend out before that rear envelope reaches a nearby divider or leaf.
   rig.kneel=blend*kneeGround*(1-T.MathUtils.smoothstep(Math.max(front,back,tuck.side),0,.25))*(1-T.MathUtils.smoothstep(spider,0,.8));
   const walkingHands=rig.arms.map((arm,i)=>new T.Vector3(0,-.49,0).applyQuaternion(rig.forearms[i].quaternion).add(rig.forearms[i].position).applyQuaternion(arm.quaternion).add(arm.position).applyQuaternion(rig.torso.quaternion).add(rig.torso.position));
   const walkingElbows=rig.arms.map((arm,i)=>rig.forearms[i].position.clone().applyQuaternion(arm.quaternion).add(arm.position).applyQuaternion(rig.torso.quaternion).add(rig.torso.position));
   const walkingPalms=rig.arms.map((arm,i)=>rig.torso.quaternion.clone().multiply(arm.quaternion).multiply(rig.forearms[i].quaternion).multiply(rig.palms[i].quaternion));
-  rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving+stagger, .445+menace*.19+back*.22+Math.cos(phase*2)*.014*moving,-.1+menace*.35-front*.06+Math.sin(phase*2-.9)*.022*moving*(1-front)+pull),blend);
-  rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17-menace*.18-front*.37+Math.sin(phase*2-.5)*.018*strain,Math.sin(phase)*.025*moving+Math.sin(phase*.5-.6)*.055*strain,menace*.10+Math.sin(phase)*.055*moving+(.035+Math.sin(phase-.5)*.035)*strain)),blend);
-  rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+menace*.18+Math.sin(phase-.9)*.035*moving,.065-menace*.16+Math.sin(phase*.5-.7)*.10*strain,-.28-menace*.34+Math.sin(phase-1)*.035*moving-(.14+Math.sin(phase*.5-.8)*.06)*strain)),blend);
+  rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving+stagger, .445+menace*.09+back*.22+Math.cos(phase*2)*.014*moving,-.1+menace*.35-front*.06+Math.sin(phase*2-.9)*.022*moving*(1-front)+pull),blend);
+  rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17-menace*.07-front*.37+Math.sin(phase*2-.5)*.018*strain,Math.sin(phase)*.025*moving+Math.sin(phase*.5-.6)*.055*strain,menace*.10+Math.sin(phase)*.055*moving+(.035+Math.sin(phase-.5)*.035)*strain)),blend);
+  rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+menace*.12+Math.sin(phase-.9)*.035*moving,.065-menace*.16+Math.sin(phase*.5-.7)*.10*strain,-.28-menace*.34+Math.sin(phase-1)*.035*moving-(.14+Math.sin(phase*.5-.8)*.06)*strain)),blend);
   // The lifted neck does not drag the humeri upwards into straight stilts.
   // Lowered shoulder sockets leave room for the elbows to bend outwards.
   rig.arms[0].position.y=T.MathUtils.lerp(.308,.308-menace*.08,blend);
@@ -299,19 +299,19 @@ function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearanc
     const side=i===0?-1:1,a=T.MathUtils.euclideanModulo(phase+i*Math.PI,Math.PI*2),u=a/(Math.PI*2),swing=u<.36,lift=(swing?Math.sin(u/.36*Math.PI):0)*moving;
     const handStride=swing?T.MathUtils.lerp(-.2624,.2624,T.MathUtils.smoothstep(u/.36,0,1)):.2624-.82*(u-.36);
     // Forward-facing long nails need their full projected reach behind a wall.
-    const hand=walkingHands[i].lerp(new T.Vector3(side*(.34+menace*.055-arms*.15+lift*.025*(1-arms)),.075+lift*.1,.59-front*.60+handStride*(moving>.01?1:0)*(1-front*.86)),blend).sub(rig.torso.position).applyQuaternion(inverse);
-    const crawlPole=new T.Vector3(side*(.55+(i===0?.10:-.06)*unease),.18+(i===0?.04:-.025)*unease,-.55+(i===0?.08:-.04)*unease).lerp(new T.Vector3(side*.7,-.05,-.8).applyQuaternion(inverse),menace).lerp(new T.Vector3(0,0,-1).applyQuaternion(inverse),arms).normalize();
+    const hand=walkingHands[i].lerp(new T.Vector3(side*(.34+menace*.30-arms*.15+lift*.025*(1-arms)),.075+lift*.1,.59-front*.60+handStride*(moving>.01?1:0)*(1-front*.86)),blend).sub(rig.torso.position).applyQuaternion(inverse);
+    const crawlPole=new T.Vector3(side*(.55+(i===0?.10:-.06)*unease),.18+(i===0?.04:-.025)*unease,-.55+(i===0?.08:-.04)*unease).lerp(new T.Vector3(side*1.2,.35,-.05).applyQuaternion(inverse),menace).lerp(new T.Vector3(0,0,-1).applyQuaternion(inverse),arms).normalize();
     const elbowPole=walkingElbows[i].sub(rig.torso.position).applyQuaternion(inverse).sub(rig.arms[i].position).normalize().lerp(crawlPole,blend);
     reach(rig.arms[i],rig.forearms[i],hand,.46,.49,side,elbowPole);
     const armWorld=rig.torso.quaternion.clone().multiply(rig.arms[i].quaternion).multiply(rig.forearms[i].quaternion);
     const palmOrientation=walkingPalms[i].slerp(new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2,-side*.25*arms,side*.16,'YXZ')),blend);
     rig.palms[i].quaternion.copy(armWorld.invert().multiply(palmOrientation));
     const walkFoot=new T.Vector3(0,-.42,0).applyQuaternion(rig.knees[i].quaternion).add(rig.knees[i].position).applyQuaternion(rig.legs[i].quaternion).add(rig.legs[i].position);
-    const kneePole=rig.knees[i].position.clone().applyQuaternion(rig.legs[i].quaternion).normalize().lerp(new T.Vector3(side*.18,-1,.3).lerp(new T.Vector3(side*.7,0,.8),spider).lerp(new T.Vector3(0,0,1),back).normalize(),blend);
+    const kneePole=rig.knees[i].position.clone().applyQuaternion(rig.legs[i].quaternion).normalize().lerp(new T.Vector3(side*.18,-1,.3).lerp(new T.Vector3(side*.9,.25,.30),spider).lerp(new T.Vector3(0,0,1),back).normalize(),blend);
     const footOrientation=rig.legs[i].quaternion.clone().multiply(rig.knees[i].quaternion).multiply(rig.ankles[i].quaternion).slerp(new T.Quaternion(),blend);
     rig.legs[i].position.lerp(new T.Vector3(side*(.125+menace*.015),.48+back*.2,-.45+back*.25),blend);
     const rearPhase=T.MathUtils.euclideanModulo(a+Math.PI/2,Math.PI*2)/(Math.PI*2),rearSwing=rearPhase<.36,rearStroke=(rearSwing?T.MathUtils.lerp(-.2624,.2624,T.MathUtils.smoothstep(rearPhase/.36,0,1)):.2624-.82*(rearPhase-.36))*(moving>.01?1:0);
-    const rearFoot=new T.Vector3(side*(.19+menace*.08-back*.07),.095+Math.max(0,-Math.sin(a))*.015*moving,-1.04+back*.82+Math.sin(a-.7)*.04*moving*(1-back)).lerp(new T.Vector3(side*.34,.07+(rearSwing?Math.sin(rearPhase/.36*Math.PI)*.06*moving:0),-.73+rearStroke),spider);
+    const rearFoot=new T.Vector3(side*(.19+menace*.08-back*.07),.095+Math.max(0,-Math.sin(a))*.015*moving,-1.04+back*.82+Math.sin(a-.7)*.04*moving*(1-back)).lerp(new T.Vector3(side*.51,.07+(rearSwing?Math.sin(rearPhase/.36*Math.PI)*.06*moving:0),-.73+rearStroke),spider);
     reach(rig.legs[i],rig.knees[i],walkFoot.lerp(rearFoot,blend),.42,.42,side,kneePole);
     rig.ankles[i].quaternion.copy(rig.legs[i].quaternion).multiply(rig.knees[i].quaternion).invert().multiply(footOrientation);
     if(rig.kneel>0){
