@@ -1461,8 +1461,16 @@ test('V127 lift ceiling scratching is an actual audible cue and the follower wai
  const before=voiceCalls.filter(v=>v==='scream').length;c.aim([2.65,1.65,10],[2.65,1.65,0]);tick(.1);assert.equal(g.visible,true);assert.equal(voiceCalls.filter(v=>v==='scream').length,before+1);assert.ok(Math.abs(g.position.y)<.02,'the follower begins on the real floor');assert.ok(g.position.distanceTo(renderedCamera.position)>5);c.game.pause();const frozen=g.position.clone();tick(1);assert.deepEqual(g.position.toArray(),frozen.toArray());
  }finally{c.close();}
 });
-test('V127 home hiding has no unused breath control and capture uses a short separate impact',async()=>{
- const f=await wardrobeFixture();try{f.game.interact();tick(.1);assert.equal(f.game.snapshot().breathAvailable,false);f.game.key('ControlLeft',true);tick(1);assert.equal(f.game.snapshot().breathHolding,false);const at=renderedCamera.position.clone();f.game.interact();f.ghost.position.set(renderedCamera.position.x+.3,0,renderedCamera.position.z);tick(.025);assert.equal(f.game.snapshot().story.stage,'dying');assert.equal(voiceCalls.at(-1),'capture');tick(1.4);assert.equal(f.game.snapshot().story.stage,'ended');}finally{f.game.dispose();}
+test('home hiding keeps its controls and capture screams on first play and checkpoint retry',async()=>{
+ const f=await wardrobeFixture();try{
+  f.game.interact();tick(.1);assert.equal(f.game.snapshot().breathAvailable,false);f.game.key('ControlLeft',true);tick(1);assert.equal(f.game.snapshot().breathHolding,false);f.game.interact();
+  for(const round of ['first play','checkpoint retry']){
+   const before=voiceCalls.length;f.ghost.position.set(renderedCamera.position.x+.3,0,renderedCamera.position.z);tick(.025);
+   assert.equal(f.game.snapshot().story.stage,'dying');assert.deepEqual(voiceCalls.slice(before),['scream'],round+' must play the female scream, not the impact-only capture cue');
+   tick(1.4);assert.equal(f.game.snapshot().story.stage,'ended');
+   if(round==='first play'){f.game.start(true);tick();assert.equal(f.game.snapshot().story.stage,'radio');f.aim([home.radio[0],1.65,home.radio[2]-1.25],home.radio);f.game.interact();tick(3);assert.equal(f.game.snapshot().story.stage,'hide');}
+  }
+ }finally{f.game.dispose();}
 });
 test('V127 a parking car door accepts its visible panel at normal eye height',async()=>{
  const f=await officeAgencyInput({stage:'parking_alarm',notes:['basement_route','car_passenger','car_search'],elapsed:1200});try{renderedScene.getObjectByName('resident-remains').position.set(0,0,21);f.aim([2.9,1.65,-18.6],[3.98,1.45,-18.6]);assert.match(f.game.snapshot().prompt,/운전석/);f.game.hold(true);tick(1);assert.equal(f.game.snapshot().story.stage,'car_departure');}finally{f.close();}

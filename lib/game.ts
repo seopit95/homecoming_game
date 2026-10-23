@@ -198,7 +198,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       stopRecording();stopAnnexCall();stopCourtCall();keys.clear();holding=false;dragging=false;hover=undefined;message='';whisper='';threat=1;deathOrigin.copy(camera.position);deathFloor=world.heightAt(camera.position.x,camera.position.z);deathEye=camera.position.y-deathFloor;
       deathDirection.copy(world.figure.position).sub(camera.position);deathDirection.y=0;if(deathDirection.lengthSq()<.001)deathDirection.set(-Math.sin(yaw),0,-Math.cos(yaw));deathDirection.normalize();
       deathGhostOrigin.copy(world.figure.position);deathLightOrigin.copy(flashlight.position);deathLightAim.copy(flashlight.target.position);
-      world.figure.visible=true;audio.stopVoices();audio.voice('capture',0,1);audio.sound('slam',0,.65);emit();return true;
+      world.figure.visible=true;audio.stopVoices();audio.voice('scream',0,1);audio.sound('slam',0,.65);emit();return true;
     }
     const nextArea=areaFor(story);if(nextArea!==area){const wasCrouched=crouched;loadArea(nextArea);crouched=wasCrouched;}
     if(isCinematic(story.stage)||story.stage==='tv'||story.stage==='wake_ring')openingScene();
