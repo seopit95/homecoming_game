@@ -20,7 +20,7 @@ test('boarding succeeds in the actual garage before reaching the road',()=>{
 test('the real chassis and hinged door sweep through the installed garage and ramp without static overlap',()=>{
  const w=buildWorld(new T.Scene(),'parking'),r=w.carDeparture,c=new T.PerspectiveCamera(72,16/9,.06,160);
  try{
-  assert.ok(r);assert.equal(r.duration,story.carDepartureDuration);assert.equal(r.duration,24);
+  assert.ok(r);assert.equal(r.duration,story.carDepartureDuration);assert.equal(r.duration,12);
   assert.equal(w.root.children.filter(o=>o.name==='parked-sedan').length,8);
   c.position.set(3.2,1.65,-17.8);c.rotation.y=-Math.PI/2;
   const meshes=[];w.root.traverse(o=>{if(o.isMesh&&!r.car.getObjectById(o.id)&&!w.figure.getObjectById(o.id))meshes.push(o);});
@@ -30,7 +30,7 @@ test('the real chassis and hinged door sweep through the installed garage and ra
   door.updateWorldMatrix(true,true);doorBounds.setFromObject(door,true);doorBounds.applyMatrix4(new T.Matrix4().copy(door.matrixWorld).invert());
   const envelopes=[{object:r.car,box:new T.Box3(new T.Vector3(-.85,.177,-1.78),new T.Vector3(.85,.325,1.78))},{object:r.car,box:body},{object:door,box:doorBounds}];
   for(const x of [-.795,.795])for(const z of [-1.35,1.35])envelopes.push({object:r.car,box:new T.Box3(new T.Vector3(x-.111,.065,z-.312),new T.Vector3(x+.111,.626,z+.312))});
-  for(let step=0;step<=240;step++){
+  for(let step=0;step<=r.duration*10;step++){
    const t=step/10;r.pose(t,c,false);w.root.updateMatrixWorld(true);
    // The tyre contact cap below 65 mm is curved rather than a rectangular
    // volume. Test its real vertices against the installed ramp floor.
@@ -69,9 +69,9 @@ test('door aperture, deterministic pause, reset and reduced motion use the same 
   const carMeshes=[];r.car.traverse(o=>{if(o.isMesh)carMeshes.push(o);});
   const ray=new T.Raycaster(new T.Vector3(4.62,1.18,-18.24),new T.Vector3(-1,0,0),0,.72);
   assert.equal(ray.intersectObjects(carMeshes,false).length,0,'real open aperture, no intact side pane/panel');
-  r.pose(13,c,false);const at=c.position.toArray(),q=c.quaternion.toArray(),solids=JSON.stringify(w.solids);r.pose(13,c,false);
+  r.pose(9.7,c,false);const at=c.position.toArray(),q=c.quaternion.toArray(),solids=JSON.stringify(w.solids);r.pose(9.7,c,false);
   assert.deepEqual(c.position.toArray(),at);assert.deepEqual(c.quaternion.toArray(),q);assert.equal(JSON.stringify(w.solids),solids);
-  r.pose(24,c,true);const reduced=c.position.clone();r.reset();c.position.set(3.2,1.65,-17.8);r.pose(24,c,false);assert.ok(c.position.distanceTo(reduced)<.00001);
+  r.pose(r.duration,c,true);const reduced=c.position.clone();r.reset();c.position.set(3.2,1.65,-17.8);r.pose(r.duration,c,false);assert.ok(c.position.distanceTo(reduced)<.00001);
   w.reset();assert.deepEqual(r.car.position.toArray(),[5,0,-18]);assert.equal(r.car.getObjectByName('hero-driver-door').rotation.y,0);assert.equal(w.root.getObjectByName('vehicle-shutter').position.y,1.3);
  }finally{disposeWorld(w.root);}
 });
@@ -80,8 +80,8 @@ test('the visible wheel follows the bay alignment and centers at rest and handof
  const w=buildWorld(new T.Scene(),'parking'),r=w.carDeparture,c=new T.PerspectiveCamera(),wheel=r.car.getObjectByName('hero-steering-wheel');
  try{
   assert.ok(wheel);c.position.set(3.2,1.65,-17.8);r.pose(8,c,false);assert.equal(wheel.rotation.z,0);
-  r.pose(11,c,false);assert.ok(wheel.rotation.z>.2,'wheel turns into the rightward bay alignment');const into=wheel.quaternion.clone();r.pose(11,c,false);assert.deepEqual(wheel.quaternion.toArray(),into.toArray());
-  r.pose(13,c,false);assert.ok(wheel.rotation.z<-.2,'wheel counter-turns as the car aligns with the ramp');
-  r.pose(24,c,false);assert.equal(wheel.rotation.z,0);r.pose(11,c,false);r.reset();assert.equal(wheel.rotation.z,0);
+  r.pose(9,c,false);assert.ok(wheel.rotation.z>.2,'wheel turns into the rightward bay alignment');const into=wheel.quaternion.clone();r.pose(9,c,false);assert.deepEqual(wheel.quaternion.toArray(),into.toArray());
+  r.pose(9.7,c,false);assert.ok(wheel.rotation.z<-.2,'wheel counter-turns as the car aligns with the ramp');
+  r.pose(r.duration,c,false);assert.equal(wheel.rotation.z,0);r.pose(9,c,false);r.reset();assert.equal(wheel.rotation.z,0);
  }finally{disposeWorld(w.root);}
 });

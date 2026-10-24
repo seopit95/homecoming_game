@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {createDrivingCar} from './driving-car.ts';
 import {surface} from './materials.ts';
-import {carDepartureDuration,type Story,type Stage} from './story.ts';
+import {carDepartureDuration,carExitSpeed,type Story,type Stage} from './story.ts';
 import type {Solid} from './world.ts';
 import {setDoorAngle} from './passage.ts';
 import type {Occupant} from './collision.ts';
@@ -60,19 +60,19 @@ export function buildCarDeparture(root:T.Group,solids:Solid[]):CarDeparture{
   function pose(time:number,camera:T.PerspectiveCamera,reduced:boolean){
     const t=T.MathUtils.clamp(time,0,carDepartureDuration);
     if(!captured){approach.copy(camera.position);startRotation.copy(camera.quaternion);captured=true;}
-    const drive=T.MathUtils.smoothstep(t,8,carDepartureDuration),distance=26*drive,z=-18-distance;
+    const seconds=carDepartureDuration-8,u=T.MathUtils.clamp((t-8)/seconds,0,1),distance=26*(3*u*u-2*u*u*u)+carExitSpeed*seconds*(u*u*u-u*u),z=-18-distance;
     const align=T.MathUtils.smoothstep(distance,0,8),x=5+.8*align;
     const slope=(rampHeight(z-1.35)-rampHeight(z+1.35))/2.7;
     const dx=distance>0&&distance<8?.8*6*(distance/8)*(1-distance/8)/8:0;
     car.position.set(x,(rampHeight(z-1.35)+rampHeight(z+1.35))/2,z);car.rotation.set(Math.atan(slope),-Math.atan(dx),0,'YXZ');
     // Turn into the first half of the lateral curve, then counter-turn to the ramp.
     const steer=distance>0&&distance<8?.55*Math.sin(distance*Math.PI/4):0;
-    const speed=t>8&&t<carDepartureDuration?26*6*((t-8)/16)*(1-(t-8)/16)/16:0;
+    const speed=t>=8?(26*(6*u-6*u*u)+carExitSpeed*seconds*(3*u*u-2*u))/seconds:0;
     const open=1.08*T.MathUtils.smoothstep(t,1.5,2.5)*(1-T.MathUtils.smoothstep(t,4.8,5.5));rig.pose(Math.max(0,t-6),open,t>=6,steer,0,speed);
     const lift=T.MathUtils.smoothstep(t,6,8);shutter.position.y=1.3+1.3*lift;shutter.scale.y=1-.995*lift;shutterBlock.y=shutter.position.y;shutterBlock.h=2.6*shutter.scale.y;sync();
     const board=T.MathUtils.smoothstep(t,2.5,4.8);temp.copy(eye);car.localToWorld(temp);camera.position.copy(approach).lerp(temp,board);
     seatEuler.y=(reduced?.45:.7)*T.MathUtils.smoothstep(t,4.6,5)*(1-T.MathUtils.smoothstep(t,5.5,6.2));seatRotation.setFromEuler(seatEuler).premultiply(car.quaternion);camera.quaternion.copy(startRotation).slerp(seatRotation,board);
-    if(!reduced&&t>6)camera.position.y+=Math.sin(t*23)*.0015*T.MathUtils.smoothstep(t,6,7)*(1-T.MathUtils.smoothstep(t,23,24));
+    if(!reduced&&t>6)camera.position.y+=Math.sin(t*23)*.0015*T.MathUtils.smoothstep(t,6,7)*(1-T.MathUtils.smoothstep(t,carDepartureDuration-1,carDepartureDuration));
     camera.updateMatrixWorld();return speed;
   }
   reset();return {car,passengerDoor,key,inspect,duration:carDepartureDuration,pose,roadFrame:departureFrame.clone(),reset};

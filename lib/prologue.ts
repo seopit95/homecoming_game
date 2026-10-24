@@ -10,7 +10,7 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {sharePrintedTexture,surface,boxUV,softBox} from './materials.ts';
 import {createLeatherShoe} from './entry-props.ts';
 import {createGhost,animateGhostPassenger} from './ghost.ts';
-import {opening,openingTiming as beats,finale,finaleTiming as endingBeats,type Stage} from './story.ts';
+import {carExitSpeed,opening,openingTiming as beats,finale,finaleTiming as endingBeats,type Stage} from './story.ts';
 
 // All motion is sampled from simulation time: pause, skip and replay never leave a cutscene running.
 export function buildRoad(scene:T.Scene,escapeDrive=false){
@@ -157,13 +157,14 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     const driving=stage==='car_escape',speaking=stage==='car_voice',crashing=stage==='car_crash';
     const beforeCrash=finale.car_escape!.duration+finale.car_voice!.duration,impactClock=beforeCrash+endingBeats.impact;
     const clock=driving?t:speaking?finale.car_escape!.duration+t:beforeCrash+Math.min(t,endingBeats.impact);
-    const distance=clock<3.5?2*clock*clock:14*clock-24.5,z=145-distance;
+    const travel=(s:number)=>{const a=Math.min(s,(14-carExitSpeed)/4);return carExitSpeed*a+2*a*a+14*(s-a);};
+    const distance=travel(clock),z=145-distance;
     const hit=crashing?Math.max(0,t-endingBeats.impact):0,crush=T.MathUtils.smoothstep(hit,0,.22),push=.44*T.MathUtils.smoothstep(hit,0,.38);
     car.position.set(1.65,0,z+push);car.rotation.set(.035*Math.sin(Math.min(1,hit/.32)*Math.PI)*Math.exp(-hit*2),0,0);
-    const speed=crashing&&t>=endingBeats.impact?0:Math.min(14,clock*4);
+    const speed=crashing&&t>=endingBeats.impact?0:Math.min(14,carExitSpeed+clock*4);
     const jolt=!reduced&&hit>0?Math.exp(-hit*4.5)*Math.sin(hit*31):0;
     car.rotation.z=jolt*.018;
-    const truckZ=145-(14*impactClock-24.5)-2.27-3.02-18.5*(impactClock-clock)+push;
+    const truckZ=145-travel(impactClock)-2.27-3.02-18.5*(impactClock-clock)+push;
     truck!.root.position.set(T.MathUtils.lerp(-1.65,1.65,T.MathUtils.smoothstep(clock,beforeCrash-3,beforeCrash+1)),0,truckZ);
     truck!.root.rotation.y=crashing&&t>=1?0:.055*Math.sin(Math.PI*T.MathUtils.smoothstep(clock,beforeCrash-3,beforeCrash+1));
     truck!.root.visible=clock>=finale.car_escape!.duration-1;truck!.pose(clock*18.5+push);

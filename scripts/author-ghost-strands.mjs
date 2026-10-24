@@ -1,4 +1,4 @@
-// Original, deterministic tube centerlines fitted to the existing CC0 skull.
+// Original dense fine fibers fitted to the existing CC0 skull.
 // node --experimental-strip-types scripts/author-ghost-strands.mjs
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
@@ -9,89 +9,117 @@ const rig=createFace(new T.Group(),new T.MeshStandardMaterial()),mesh=rig.face,g
 const base=g.attributes.position.array.slice();poseFace(rig,1);const gape=g.attributes.position.array.slice();poseFace(rig,0);mesh.updateMatrixWorld(true);
 const ray=new T.Raycaster(),radial=new T.Vector3(),normal=new T.Vector3(),bary=new T.Vector3(),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3();
 const random=n=>{const x=Math.sin(n*127.1+31.7)*43758.5453;return x-Math.floor(x);};
-function sample(angle,y,x){
- if(x===undefined){radial.set(Math.sin(angle),0,Math.cos(angle));ray.set(new T.Vector3(0,y,.02),radial);}
- else ray.set(new T.Vector3(x,y,1),new T.Vector3(0,0,-1));
- const hit=ray.intersectObject(mesh).at(x===undefined?-1:0);assert.ok(hit,`missing skull at ${angle}, ${y}, ${x}`);
+function fittedHit(hit,inside=false){
  const ids=[hit.face.a,hit.face.b,hit.face.c];a.fromArray(base,ids[0]*3);b.fromArray(base,ids[1]*3);c.fromArray(base,ids[2]*3);new T.Triangle(a,b,c).getBarycoord(hit.point,bary);
- normal.copy(hit.normal).normalize();if(normal.dot(radial)<0&&x===undefined)normal.negate();
+ normal.copy(hit.normal).normalize();if(inside&&normal.dot(radial)<0)normal.negate();
  const weights=bary.toArray(),delta=[0,1,2].map(axis=>ids.reduce((sum,id,k)=>sum+(gape[id*3+axis]-base[id*3+axis])*weights[k],0));
  return {p:hit.point.clone(),n:normal.clone(),delta};
 }
+function rawSample(angle,y,x){
+ if(x===undefined){radial.set(Math.sin(angle),0,Math.cos(angle));ray.set(new T.Vector3(0,y,.02),radial);}
+ else ray.set(new T.Vector3(x,y,1),new T.Vector3(0,0,-1));
+ const hit=ray.intersectObject(mesh).at(x===undefined?-1:0);
+ if(!hit&&x!==undefined)return rawSample(angle,y);
+ assert.ok(hit,`missing skull at ${angle},${y},${x}`);
+ return fittedHit(hit,x===undefined);
+}
+function topSample(x,z){
+ ray.set(new T.Vector3(x,1,z),new T.Vector3(0,-1,0));let hit=ray.intersectObject(mesh).at(0);
+ for(let i=1;!hit&&i<=7;i++){const fit=1-i*.035;ray.set(new T.Vector3(x*fit,1,T.MathUtils.lerp(.02,z,fit)),new T.Vector3(0,-1,0));hit=ray.intersectObject(mesh).at(0);}
+ assert.ok(hit,`missing crown at ${x},${z}`);return fittedHit(hit);
+}
+function partRoot(seed,right){
+ const z=-.065+random(seed+22)*.173,part=.026+.003*Math.sin(z*41)+.0015*Math.sin(z*87);
+ return topSample(part+(right?1:-1)*(.0033+random(seed+23)*.0018),z);
+}
 
-const center=[],skinDelta=[],radius=[],strands=[];
-function strand(points,release,width,seed,sides=3){
+// Interpolating a small actual-skull sampling grid keeps authoring cheap;
+// individual fibers have independent continuous angles/roots, not grid paths.
+const cache=new Map(),angles=80,stepY=.007;
+function node(ai,yi){
+ ai=T.MathUtils.euclideanModulo(ai,angles);const key=ai+yi*angles;
+ if(!cache.has(key))cache.set(key,rawSample(ai/angles*Math.PI*2,yi*stepY));return cache.get(key);
+}
+function sample(angle,y,x){
+ if(x!==undefined)return rawSample(angle,y,x);
+ const u=T.MathUtils.euclideanModulo(angle,Math.PI*2)/(Math.PI*2)*angles,v=y/stepY,ai=Math.floor(u),yi=Math.floor(v),s=u-ai,t=v-yi;
+ const cells=[node(ai,yi),node(ai+1,yi),node(ai,yi+1),node(ai+1,yi+1)],weights=[(1-s)*(1-t),s*(1-t),(1-s)*t,s*t],p=new T.Vector3(),n=new T.Vector3(),delta=[0,0,0];
+ for(let i=0;i<4;i++){p.addScaledVector(cells[i].p,weights[i]);n.addScaledVector(cells[i].n,weights[i]);for(let axis=0;axis<3;axis++)delta[axis]+=cells[i].delta[axis]*weights[i];}
+ return {p,n:n.normalize(),delta};
+}
+
+const center=[],skinDelta=[],radius=[],strands=[],freeLengthScales=[],finalRadiusScale=.6;
+function strand(points,release,width,seed){
  const start=radius.length;
  for(let j=0;j<points.length;j++){
-  const t=j/(points.length-1),q=points[j],tip=Math.pow(1-t, .48),tipWidth=sides>3?.025:.14,r=width*(tipWidth+(1-tipWidth)*tip)*(1+.08*Math.sin(seed+j*.8));
+  const t=j/(points.length-1),q=points[j],taper=.035+.965*Math.pow(1-t,.35),r=width*taper*(1+.05*Math.sin(seed+j*.9))*finalRadiusScale;
   center.push(...q.p.toArray());skinDelta.push(...q.delta);radius.push(r);
  }
- strands.push([start,points.length,release,.58+random(seed+31)*.62,sides]);
+ strands.push([start,points.length,release,.48+random(seed+170)*.72,3]);
 }
 
-// Forty small bundles, each surrounded by sixteen separate tapered fibers.
-// Most go around the sides/back; the left fringe crosses the brow in narrow
-// separated wisps while the opposite eye and the mouth remain exposed.
-for(let lock=0;lock<40;lock++){
- const front=lock>=32,left=lock<38,angle=front?(left?-.90+(lock-32)*.13:.76+(lock-38)*.20):.98+lock*4.32/31;
- const rootY=.337+random(lock+5)*.009,releaseY=front?.075:.13,cheekX=left?-.112+(lock-32)*.012:.110+(lock-38)*.013;
- const endY=-(front?.53+random(lock+1)*.30:.84+random(lock+1)*.42),guide=[];
+// Dense side/back mass is made entirely of individual fine fibers. Roots,
+// layer depths, curvature and tips are independently sampled for every fiber.
+for(let id=0;id<3000;id++){
+ const front=id>=2960,left=id<2988,seed=id*31+11,parted=id<800||id>=2700&&id<2960,right=parted?random(seed+21)>.68:!left;
+ const angle=parted?(right?1.04+random(seed+1)*1.4:-(1.04+random(seed+1)*1.4)):(front?(left?-.94+random(seed+1)*.76:.85+random(seed+1)*.29):1.01+random(seed+1)*4.26);
+ const rootY=.305+random(seed+2)*.039,releaseY=front?(left?.052+random(seed+3)*.03:.12+random(seed+3)*.025):.105+random(seed+3)*.06;
+ const endY=-(front?.50+random(seed+4)*.60:.78+random(seed+4)*.67),phase=random(seed+5)*Math.PI*2,freeScale=.78+random(seed+24)*.14;freeLengthScales.push(freeScale);
+ const lift=front?.002+random(seed+6)*.013:.008+random(seed+6)**.7*.051,twist=(random(seed+7)-.5)*(front?.17:.27),points=[];
+ const root=parted?partRoot(seed,right):sample(angle,rootY),cheekX=left?-.119+random(seed+8)*.055:.111+random(seed+8)*.031,target=parted?sample(angle,releaseY):undefined;
  let last;
  for(let j=0;j<24;j++){
-  if(j<=10){
-   const t=j/10,y=T.MathUtils.lerp(rootY,releaseY,t),sweep=T.MathUtils.smoothstep(t,0,.64);
-   const root=front?sample(angle,rootY):undefined,x=front?T.MathUtils.lerp(root.p.x,cheekX,sweep):undefined;
-   last=sample(angle+.04*Math.sin(t*3+lock),y,x);last.p.addScaledVector(last.n,.0024+Math.sin(t*Math.PI*.73)*(front?.016:.054+random(lock+2)*.022));guide.push(last);
+  if(j<=9){
+   const t=j/9,y=T.MathUtils.lerp(rootY,releaseY,t),sweep=T.MathUtils.smoothstep(t,.03,.76),theta=angle+twist*Math.sin(t*Math.PI*.9)+Math.sin(t*3.7+phase)*.025*t;
+   const x=front?T.MathUtils.lerp(root.p.x,cheekX,sweep):undefined,q=parted?topSample(T.MathUtils.lerp(root.p.x,target.p.x,sweep),T.MathUtils.lerp(root.p.z,target.p.z,sweep)):sample(theta,y,x);
+   if(parted)q.p.addScaledVector(new T.Vector3(Math.cos(angle),0,-Math.sin(angle)),Math.sin(t*Math.PI)*.003*Math.sin(phase+t*4));
+   const volume=.0009+lift*Math.pow(Math.sin(t*Math.PI*.76),1.12);
+   q.p.addScaledVector(q.n,volume);last=q;points.push(q);
   }else{
-   const t=(j-10)/13,loose=T.MathUtils.smoothstep(t,0,.24),phase=lock*1.81;
-   const amplitude=.030+random(lock+113)*.018,frequency=5.5+random(lock+114)*3.5;
-   const p=last.p.clone();p.y=T.MathUtils.lerp(releaseY,endY,t);p.x+=(Math.sin(t*frequency+phase)-Math.sin(phase))*amplitude*loose;p.z+=(Math.cos(t*(frequency-.8)+phase)-Math.cos(phase))*amplitude*.8*loose;
-   guide.push({p,n:last.n,delta:last.delta.map(v=>v*(1-T.MathUtils.smoothstep(t,0,.22)))});
+   const t=(j-9)/14,loose=T.MathUtils.smoothstep(t,0,.22),frequency=3.3+random(seed+10)*4.4,amplitude=.004+random(seed+11)*.030;
+   const p=last.p.clone();p.y=T.MathUtils.lerp(last.p.y,endY,t);
+   p.x+=(Math.sin(t*frequency+phase)-Math.sin(phase))*amplitude*loose;
+   p.z+=(Math.cos(t*(frequency*.83)+phase)-Math.cos(phase))*amplitude*(.45+random(seed+12)*.5)*loose;
+   p.x+=Math.sin(t*14+phase)*.0012*loose;p.z+=Math.sin(t*11+phase*.7)*.0009*loose;
+   p.sub(last.p).multiplyScalar(freeScale).add(last.p);
+   points.push({p,n:last.n,delta:last.delta.map(v=>v*(1-T.MathUtils.smoothstep(t,0,.20)))});
   }
  }
- for(let fiber=0;fiber<16;fiber++){
-  const seed=lock*37+fiber,spread=(fiber-7.5)*.00074,tangent=new T.Vector3(Math.cos(angle),0,-Math.sin(angle)),phase=random(seed+71)*Math.PI*2,shellAngle=fiber*2.399963+lock*.71,shell=front?.002:.009+random(seed+76)*.004;
-  const points=guide.map((q,j)=>{
-   const t=j/23,free=T.MathUtils.smoothstep(t,.40,.75),separate=1+free*(.7+random(seed+93));
-   const growth=T.MathUtils.smoothstep(t,0,.18),p=q.p.clone().addScaledVector(tangent,spread*separate+.00045*Math.sin(t*13+phase)+Math.sin(shellAngle)*shell*growth);p.addScaledVector(q.n,.00015+random(seed+8)*.0007+Math.cos(shellAngle)*shell*growth);
-   p.x+=Math.sin(t*17+phase)*.0018*free;p.z+=Math.cos(t*13+phase)*.0014*free;
-   p.y-=(.025+random(seed+79)*.11)*T.MathUtils.smoothstep(t,.48,1);
-   return {...q,p};
-  });
-  strand(points,10,(fiber===3?.0011:.00040+random(seed+17)*.00038),seed);
- }
- // Rounded wet bundle cores provide visible density at the actual cabin
- // camera scale. Fine fibers remain separate around each irregular core.
- for(let layer=0;layer<(front?1:2);layer++){
-  const seed=lock*43+layer+3000,tangent=new T.Vector3(Math.cos(angle),0,-Math.sin(angle)),spread=front?-.001:(layer-.5)*.006;
-  const points=guide.map((q,j)=>{const t=j/23,p=q.p.clone().addScaledVector(tangent,spread*(.5+Math.sin(t*Math.PI)*.6));p.addScaledVector(q.n,.001+layer*.004*Math.sin(t*Math.PI));return {...q,p};});
-  strand(points,10,(front?.0024:.0070)+random(seed+5)*(front?.0012:.0040),seed,7);
- }
+ strand(points,9,.00034+random(seed+17)*.00040,seed);
 }
 
-// Fine crown growth breaks the cap's edge. A few longer, lifted flyaways
-// interrupt the silhouette; all seeds are static, so no hairstyle flicker.
-for(let id=0;id<120;id++){
- const fly=id>=96,angle=.95+random(id+3)*4.38,count=fly?14:12,top=.337+random(id+11)*.009,bottom=(fly?.20:.17)+random(id+17)*.12,points=[];
- for(let j=0;j<count;j++){
-  const t=j/(count-1),q=sample(angle+.09*Math.sin(t*3+id),T.MathUtils.lerp(top,bottom,t));
-  q.p.addScaledVector(q.n,.0028+(fly?.050+random(id+12)*.030:.014+random(id+14)*.015)*Math.sin(t*Math.PI*.88));points.push(q);
+// Overlapping growth sweeps out of a narrow, irregular off-center part.
+// Only sparse individual wisps continue across the face; no central tongue.
+for(let id=0;id<360;id++){
+ const seed=id*41+99001,parted=id>=140,right=random(seed+21)>.68,angle=parted?(right?.92+random(seed+1)*1.0:-(.92+random(seed+1)*1.0)):1.0+random(seed+1)*4.28,top=.328+random(seed+2)*.017,bottom=parted?.19+random(seed+3)*.085:.18+random(seed+3)*.12,phase=random(seed+4)*Math.PI*2,points=[],root=parted?partRoot(seed,right):undefined,target=parted?sample(angle,bottom):undefined;
+ for(let j=0;j<16;j++){
+  const t=j/15,theta=angle+(random(seed+5)-.5)*.32*t+.045*Math.sin(t*4+phase)*t,sweep=T.MathUtils.smoothstep(t,0,1),q=parted?topSample(T.MathUtils.lerp(root.p.x,target.p.x,sweep),T.MathUtils.lerp(root.p.z,target.p.z,sweep)):sample(theta,T.MathUtils.lerp(top,bottom,t));
+  q.p.addScaledVector(q.n,.001+(.004+random(seed+6)*.036)*Math.sin(t*Math.PI*.86));points.push(q);
  }
- strand(points,count,(fly?.00026:.00046)+random(id+37)*.00024,id+1800);
+ strand(points,16,.00030+random(seed+17)*.00033,seed);
 }
 
-// A small actual skull surface fills only the inner crown. The irregular
-// boundary sits inside the fine growth, rather than outlining a solid bob.
+for(let id=0;id<48;id++){
+ const seed=id*53+130001,angle=.91+random(seed+1)*4.43,top=.319+random(seed+2)*.025,bottom=.18+random(seed+3)*.12,points=[];
+ for(let j=0;j<20;j++){
+  const t=j/19,q=sample(angle+(random(seed+4)-.5)*.42*t,T.MathUtils.lerp(top,bottom,t));
+  q.p.addScaledVector(q.n,.001+(.040+random(seed+5)*.044)*Math.sin(t*Math.PI*.79));points.push(q);
+ }
+ strand(points,20,.00019+random(seed+17)*.00017,seed);
+}
+
+// The backing is a small actual posterior/crown skull surface, inside the
+// dense fibers. No frontal painted shell or hard forehead hairline survives.
 const scalp={position:[],normal:[],index:[]},lookup=new Map(),sourceNormal=g.attributes.normal;
-const inside=i=>{const x=base[i*3],y=base[i*3+1],z=base[i*3+2],angle=Math.atan2(x,z+.015),front=T.MathUtils.smoothstep(z,.03,.12)*(1-T.MathUtils.smoothstep(Math.abs(x),.07,.14));return y>.122+.196*front+.014*Math.sin(angle*9)+.009*Math.sin(angle*19);};
+const inside=i=>{const x=base[i*3],y=base[i*3+1],z=base[i*3+2],angle=Math.atan2(x,z+.015);return z<.035&&y>.17+.015*Math.sin(angle*11)||y>.334;};
 function scalpVertex(i){
  if(lookup.has(i))return lookup.get(i);const id=scalp.position.length/3,n=new T.Vector3().fromBufferAttribute(sourceNormal,i);
- scalp.position.push(base[i*3]+n.x*.0011,base[i*3+1]+n.y*.0011,base[i*3+2]+n.z*.0011);scalp.normal.push(...n.toArray());lookup.set(i,id);return id;
+ scalp.position.push(base[i*3]+n.x*.0006,base[i*3+1]+n.y*.0006,base[i*3+2]+n.z*.0006);scalp.normal.push(...n.toArray());lookup.set(i,id);return id;
 }
 for(let j=0;j<g.index.count;j+=3){const ids=[g.index.getX(j),g.index.getX(j+1),g.index.getX(j+2)];if(ids.every(inside))scalp.index.push(...ids.map(scalpVertex));}
-const round=values=>values.map(v=>+v.toFixed(7));
-const strandVertices=strands.reduce((sum,s)=>sum+s[1]*s[4],0);
-const out={center:round(center),skinDelta:round(skinDelta),radius:round(radius),strands:strands.map(s=>s.map(v=>+v.toFixed(7))),scalp:{position:round(scalp.position),normal:round(scalp.normal),index:scalp.index},metadata:{name:'Original layered wet 3D strand hair fitted to the existing adult skull',strandCount:strands.length,strandVertices,vertices:strandVertices+scalp.position.length/3,construction:'Closed tapered triangular fine fibers and seven-sided rounded wet bundle cores,40 irregular layered locks,96 fine crown strands and24 lifted flyaways. Skull-fitting inner underlay; no card, portrait, billboard or texture.',skullLicense:'CC0-1.0',skullSource:'Existing ghost-head.json (MakeHuman Team and contributors)'}};
-assert.ok(out.metadata.vertices<=80000);assert.ok(center.every(Number.isFinite));
+const round=values=>values.map(v=>+v.toFixed(7)),strandVertices=radius.length*3;
+const headRadiusScale=Math.sqrt((.526315789**2+.5**2+.64516129**2)/3),meanLocalRadius=radius.reduce((sum,r)=>sum+r,0)/radius.length;
+const out={center:round(center),skinDelta:round(skinDelta),radius:round(radius),strands:strands.map(s=>s.map(v=>+v.toFixed(7))),scalp:{position:round(scalp.position),normal:round(scalp.normal),index:scalp.index},metadata:{name:'V131 preview: dense independent fine 3D fibers; no thick cores',strandCount:strands.length,strandVertices,vertices:strandVertices+scalp.position.length/3,construction:'3000 independently curved long fine closed fibers,360 crown fibers,48 subtle flyaways. All three-sided tapered tubes. Small posterior skull backing only; no cards, portraits or textures.',maxLocalRadius:Math.max(...radius),polish:{radiusScale:finalRadiusScale,maxWorldDiameter:Math.max(...radius)*headRadiusScale*2,meanWorldDiameter:meanLocalRadius*headRadiusScale*2,freeLengthScaleRange:[.78,.92],meanFreeLengthScale:freeLengthScales.reduce((sum,s)=>sum+s,0)/freeLengthScales.length,rootShape:'Unchanged narrow irregular off-center part and swept grooming.'},skullLicense:'CC0-1.0',skullSource:'Existing ghost-head.json (MakeHuman Team and contributors)'}};
+assert.ok(out.metadata.vertices<250000);assert.ok(out.metadata.maxLocalRadius<.0008);assert.ok(center.every(Number.isFinite));
 fs.writeFileSync(new URL('../lib/assets/ghost-strands.json',import.meta.url),JSON.stringify(out)+'\n');
-console.log(JSON.stringify({strands:strands.length,centerlinePoints:radius.length,vertices:out.metadata.vertices,scalpVertices:scalp.position.length/3,scalpTriangles:scalp.index.length/3}));
+console.log(JSON.stringify({strands:strands.length,vertices:out.metadata.vertices,scalpVertices:scalp.position.length/3,maxLocalRadius:out.metadata.maxLocalRadius,cachedSkullSamples:cache.size}));

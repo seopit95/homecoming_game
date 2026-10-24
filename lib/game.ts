@@ -388,7 +388,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     }
     else if(dialogue[action]&&story.ending===null&&!isFinale(story.stage))say(dialogue[action]!,['record','monitor','phone'].includes(action)?12:8);
     if(action==='exit')say((parkingDrained(story)?'바닥은 통행할 수 있지만 보행자 출구는 공사 셔터에 막혀 있다. 차량 경사로로 나가야 한다.\n':'보행자 출구는 봉쇄됐고 차량 출구에 물이 고여 있다. 양쪽 급수 밸브를 잠근 뒤 펌프를 돌리자.\n')+(story.notes.includes('car_search')?'열쇠는 챙겼다. '+(parkingDrained(story)?'운전석으로 돌아가자.':'서측 배수 설비로 가자.'):'내 차 조수석 가방에서 열쇠를 찾자.'),9);
-    else if(action==='car_search'&&parkingDrained(story))say('젖은 조수석 가방에서 차 열쇠를 찾았다.\n차체와 기둥 뒤로 돌아 운전석으로 가자. 필요하면 입구 쪽 경보를 쓸 수 있다.',9);
+    else if(action==='car_search'&&parkingDrained(story)){audio.sound('metal',.4,.4);noiseRadius=30;noiseUntil=elapsed+2.5;say('열쇠고리가 문틀에 부딪혀 주차장에 울렸다.\n멀리서 나던 긁는 소리가 멎었다. 운전석으로 돌아가야 한다.',7);}
     if(action==='breaker')audio.sound('click');
     if(action==='phone'){
       audio.setDevice('phone',0);audio.setDevice('mobile',0);audio.sound('wiper',-.1,.32);audio.recorded(phoneCallback.clip,.75,-.1);
@@ -733,7 +733,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     else if(area==='parking'&&areaTime>Math.max(2.8,entranceDelay)){
       world.figure.visible=true;const alarmUsed=parkingAlarmActive(story),sounding=alarmSounding();
       if(sounding){tracking=false;lastSeen=null;chaseAt=-1;followEnemy(layout.parking.alarmApproach,2.7,dt);threat=T.MathUtils.clamp(1-world.figure.position.distanceTo(camera.position)/16,0,.8);}
-      else{if(alarmUsed&&scriptBeat<20){scriptBeat=20;chaseAt=elapsed;ghostVoice('scream',true);}hunt(alarmUsed?4.30:2.7,dt);}
+      else{if(alarmUsed&&scriptBeat<20){scriptBeat=20;chaseAt=elapsed;ghostVoice('scream',true);}hunt(alarmUsed?4.40:2.7,dt,story.notes.includes('car_search')?{x:7.1,z:-17.8}:undefined);}
     }
     if(contact())return;
     const audible=world.figure.visible&&story.stage!=='dying'&&(area!=='office'||arrivalPursuit);

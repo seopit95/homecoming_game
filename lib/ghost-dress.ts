@@ -1,5 +1,22 @@
 import * as T from 'three';
-import asset from './assets/ghost-dress.json' with {type:'json'};
+import sourceAsset from './assets/ghost-dress.json' with {type:'json'};
+// Cut the sleeve through its weighted surface instead of discarding whole
+// triangles, which left staircase-shaped paper teeth along the shoulder.
+const asset=(()=>{
+ const out={...sourceAsset,position:[...sourceAsset.position],uv:[...sourceAsset.uv],armWeight:[...sourceAsset.armWeight],neckWeight:[...sourceAsset.neckWeight],index:[] as number[]},cuts=new Map<string,number>(),limit=.38;
+ function cut(a:number,b:number){
+  const key=Math.min(a,b)+'/'+Math.max(a,b);if(cuts.has(key))return cuts.get(key)!;
+  const t=(limit-out.armWeight[a])/(out.armWeight[b]-out.armWeight[a]),id=out.armWeight.length;
+  for(const [array,n] of [[out.position,3],[out.uv,2],[out.neckWeight,1]] as const)for(let axis=0;axis<n;axis++)array.push(T.MathUtils.lerp(array[a*n+axis],array[b*n+axis],t));
+  out.armWeight.push(limit);cuts.set(key,id);return id;
+ }
+ for(let k=0;k<sourceAsset.index.length;k+=3){
+  const polygon=sourceAsset.index.slice(k,k+3),clipped:number[]=[];
+  for(let j=0;j<3;j++){const a=polygon[j],b=polygon[(j+1)%3],inside=out.armWeight[a]<=limit,next=out.armWeight[b]<=limit;if(inside)clipped.push(a);if(inside!==next)clipped.push(cut(a,b));}
+  for(let j=1;j<clipped.length-1;j++)out.index.push(clipped[0],clipped[j],clipped[j+1]);
+ }
+ return out;
+})();
 // UV copies remain one physical cloth surface. Accumulate triangle areas on
 // their original vertex owner, then copy the result back to the texture seams.
 const owners:number[]=[],copies=new Map<string,number[]>();

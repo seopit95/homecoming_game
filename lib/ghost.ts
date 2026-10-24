@@ -1,6 +1,5 @@
 import * as T from 'three';
 import {surface} from './materials.ts';
-import {victimDressMaterial} from './victim-outfit.ts';
 import {createAnatomicalArm,poseAnatomicalArm} from './ghost-arms.ts';
 import {createAnatomicalLeg} from './ghost-legs.ts';
 import {createHair,settleHair} from './ghost-hair.ts';
@@ -20,10 +19,10 @@ type Rig={pursuit:number;steps?:Steps;crawl:number;kneel:number;spider:number;tu
 const rigs=new WeakMap<T.Group,Rig>();
 export function createGhost(parent:T.Object3D){
   const figure=new T.Group();figure.name='resident-remains';figure.rotation.order='YXZ';parent.add(figure);figure.visible=false;
-  const skin=surface('skin','#b7bcb6',{roughness:.8}),cloth=victimDressMaterial(true);
+  const skin=surface('skin','#c1bcb2',{roughness:.67,bumpScale:.00045}),cloth=surface('cloth','#696763',{roughness:.96,bumpScale:.00065});
   const torso=new T.Group();torso.position.set(.035,1.16,.02);figure.add(torso);
   const {gown,hem}=createDress(torso,cloth);
-  const head=new T.Group();head.name='ghost-head';head.position.set(0,.502,.00816);head.scale.set(.67,.68,.68);torso.add(head);
+  const head=new T.Group();head.name='ghost-head';head.position.set(0,.502,.00816);head.scale.set(1/1.9,1/2,1/1.55);torso.add(head);
   const face=createFace(head,skin),{mouth}=face,tears=createGhostTears(face.face);
   const neck=createNeck(torso,head,face.face,gown,skin);
   const {hair,tails}=createHair(head);
@@ -289,7 +288,7 @@ function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearanc
   const walkingPalms=rig.arms.map((arm,i)=>rig.torso.quaternion.clone().multiply(arm.quaternion).multiply(rig.forearms[i].quaternion).multiply(rig.palms[i].quaternion));
   rig.torso.position.lerp(new T.Vector3(Math.sin(phase)*.033*moving+stagger, .445+menace*.09+back*.22+Math.cos(phase*2)*.014*moving,-.1+menace*.35-front*.06+Math.sin(phase*2-.9)*.022*moving*(1-front)+pull),blend);
   rig.torso.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(1.17-menace*.07-front*.37+Math.sin(phase*2-.5)*.018*strain,Math.sin(phase)*.025*moving+Math.sin(phase*.5-.6)*.055*strain,menace*.10+Math.sin(phase)*.055*moving+(.035+Math.sin(phase-.5)*.035)*strain)),blend);
-  rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+menace*.12+Math.sin(phase-.9)*.035*moving,.065-menace*.16+Math.sin(phase*.5-.7)*.10*strain,-.28-menace*.34+Math.sin(phase-1)*.035*moving-(.14+Math.sin(phase*.5-.8)*.06)*strain)),blend);
+  rig.head.quaternion.slerp(new T.Quaternion().setFromEuler(new T.Euler(-1.13+menace*.12+Math.sin(phase-.9)*.035*moving,.065-menace*.16+Math.sin(phase*.5-.7)*.10*strain,-.18-menace*.18+Math.sin(phase-1)*.025*moving-(.08+Math.sin(phase*.5-.8)*.04)*strain)),blend);
   // The lifted neck does not drag the humeri upwards into straight stilts.
   // Lowered shoulder sockets leave room for the elbows to bend outwards.
   rig.arms[0].position.y=T.MathUtils.lerp(.308,.308-menace*.08,blend);
@@ -300,7 +299,7 @@ function crawlPose(rig:Rig,phase:number,moving:number,blend:number,tuck:Clearanc
     const handStride=swing?T.MathUtils.lerp(-.2624,.2624,T.MathUtils.smoothstep(u/.36,0,1)):.2624-.82*(u-.36);
     // Forward-facing long nails need their full projected reach behind a wall.
     const hand=walkingHands[i].lerp(new T.Vector3(side*(.34+menace*.30-arms*.15+lift*.025*(1-arms)),.075+lift*.1,.59-front*.60+handStride*(moving>.01?1:0)*(1-front*.86)),blend).sub(rig.torso.position).applyQuaternion(inverse);
-    const crawlPole=new T.Vector3(side*(.55+(i===0?.10:-.06)*unease),.18+(i===0?.04:-.025)*unease,-.55+(i===0?.08:-.04)*unease).lerp(new T.Vector3(side*1.2,.35,-.05).applyQuaternion(inverse),menace).lerp(new T.Vector3(0,0,-1).applyQuaternion(inverse),arms).normalize();
+    const crawlPole=new T.Vector3(side*(.55+(i===0?.10:-.06)*unease),.18+(i===0?.04:-.025)*unease,-.55+(i===0?.08:-.04)*unease).lerp(new T.Vector3(side*.60,-.18,-.30).applyQuaternion(inverse),menace).lerp(new T.Vector3(0,0,-1).applyQuaternion(inverse),arms).normalize();
     const elbowPole=walkingElbows[i].sub(rig.torso.position).applyQuaternion(inverse).sub(rig.arms[i].position).normalize().lerp(crawlPole,blend);
     reach(rig.arms[i],rig.forearms[i],hand,.46,.49,side,elbowPole);
     const armWorld=rig.torso.quaternion.clone().multiply(rig.arms[i].quaternion).multiply(rig.forearms[i].quaternion);
@@ -355,7 +354,7 @@ export function animateGhostPassenger(figure:T.Group,time:number,scare:number,re
     const orientation=new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2,0,0)).slerp(new T.Quaternion().setFromEuler(new T.Euler(0,0,Math.PI/2)),scare);
     palm.quaternion.copy(upper.quaternion).multiply(lower.quaternion).invert().multiply(orientation);
   }
-  rig.head.rotation.set(.05,cabinReach?.7:-.7,-.26+(reducedMotion?0:Math.sin(time*21)*.025*scare));
+  rig.head.rotation.set(.05,cabinReach?1.18:-.7,-.26+(reducedMotion?0:Math.sin(time*21)*.025*scare));
   rig.head.position.z+=scare*.055;anchorHeadAtNeck(rig.head,rig.headOffset);poseFace(rig.face,scare);rig.tails.scale.y=.68;
   poseDress(rig.gown,rig.hem,rig.torso,rig.knees,0,true);
   settleHair(rig.tails,figure,time,.25);poseArms(rig);bloodDrops(rig,time,.255);

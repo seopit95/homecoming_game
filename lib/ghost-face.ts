@@ -3,11 +3,13 @@ import {faceMaterial,ghostEnamelMaterial} from './materials.ts';
 import anatomy from './assets/ghost-head.json' with {type:'json'};
 import dentition from './assets/ghost-teeth.json' with {type:'json'};
 
+function approvedSkin(){const m=faceMaterial();m.color.set('#d5cfc7');m.roughness=.62;m.clearcoat=.065;m.clearcoatRoughness=.38;m.specularIntensity=.34;m.sheen=.06;m.sheenColor.set('#a47970');return m;}
+
 // One anatomical skin; the lower face follows the same turning mandible as
 // its dentition. The posterior neck and upper skull retain their rest shape.
 export function createFace(head:T.Group,skin:T.Material){
   const jaw=new T.Group();jaw.name='ghost-jaw';head.add(jaw);
-  const face=new T.Mesh(new T.BufferGeometry(),faceMaterial());face.name='ghost-continuous-face';head.add(face);
+  const face=new T.Mesh(new T.BufferGeometry(),approvedSkin());face.name='ghost-continuous-face';head.add(face);
   const base=new Float32Array(anatomy.position),weights=new Float32Array(anatomy.jawWeights),lift=new Float32Array(base.length/3);
   // Soft tissue retains the same seated eyes and skull. One swollen upper
   // lid hangs lower; the opposite eye remains exposed beneath a strained brow.
@@ -45,7 +47,7 @@ export function createFace(head:T.Group,skin:T.Material){
   const eyes=new T.Group();head.add(eyes);
   for(const [side,eye] of Object.entries(anatomy.eyes)){
     const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(eye.position,3));g.setIndex(eye.index);g.computeVertexNormals();
-    const material=new T.MeshPhysicalMaterial({color:'#adb4a5',roughness:.4,clearcoat:.2});
+    const material=new T.MeshPhysicalMaterial({color:'#a4aca6',roughness:.24,clearcoat:.32});
     material.onBeforeCompile=shader=>{
       shader.uniforms.eyeCenter={value:new T.Vector3(...eye.center)};
       shader.uniforms.irisOffset={value:new T.Vector2(eye.center[0]<0?-.001:.002,eye.center[0]<0?.006:.008)};
