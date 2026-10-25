@@ -1,6 +1,6 @@
 import type {Action,Stage} from './story.ts';
 
-export const archiveCamera={position:[4.16,2.42,-6.28],lookAt:[.2,1.05,1.5]} as const;
+export const archiveCamera={position:[2.85,2.42,-3.85],lookAt:[0,1.05,.6]} as const;
 
 export const archiveClips={
  road:{duration:6,markFrom:3.8,markUntil:4.3,title:'A · 정문 도로 / 03:17',hint:'보행 신호와 제동등이 켜지는 시점을 함께 살피자. 원본만 정지하거나 ±1초씩 대조할 수 있다.',question:'충돌 직전, 화면에서 확인한 사실은?',choices:['보행자가 적색 신호에 진입했다','차가 녹색 보행 신호에 진입했다'],answer:1,retry:'보행 신호와 제동등이 함께 보이는 구간을 다시 보자.',finding:'신호는 녹색이었다. 브레이크를 밟은 건 사람을 치기 직전이다. 갑자기 뛰어든 것이 아니었다.'},

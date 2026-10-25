@@ -1,3 +1,6 @@
+import {buildResidentialGallery,buildResidentialLift} from './residential-gallery.ts';
+import {buildResidentialStairs} from './residential-stairs.ts';
+import {buildGroundSupport} from './ground-support.ts';
 import {createApartmentPlaque} from './apartment-signage.ts';
 import {buildApartmentEscape} from './apartment-escape.ts';
 import {buildGarageStructure,garageMarking} from './garage-structure.ts';
@@ -27,6 +30,21 @@ import {createGhost as makeFigure} from './ghost.ts';
 export const landing={halfWidth:1.3,halfLength:23,spawnZ:20.5,homeZ:20.5,homeX:1.3,liftZ:-22.75,boardZ:-23.25,fallTriggerZ:8,fallZ:1} as const;
 export const buildingLayout={corridor:{x:3.5,z:20,spawnZ:18},lift:{x:1.1,z:1.45,spawnZ:.7},stairs:{x:2,z:6,flightX:1,run:4,spawnZ:3.8},office:{x:5.8,z:7.8,spawnZ:6.5},parking:{x:12,z:22,spawnZ:20,alarm:{x:-10.8,z:16},alarmApproach:{x:-10.8,z:16.5},car:{x:5,z:-18}}} as const;
 export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
+ if(area==='landing'||area==='corridor'||area==='transfer'){
+  const gallery=buildResidentialGallery(root,area);
+  if(area!=='landing'){
+   root.getObjectByName('gallery-stair-vestibule')?.removeFromParent();
+   const receiving=new T.Group();receiving.name='gallery-receiving-stairwell';receiving.position.set(0,area==='transfer'?11.2:0,24.71);root.add(receiving);
+   const stairs=buildResidentialStairs(receiving,true);receiving.getObjectByName(area==='transfer'?'residential-stair-door-20':'residential-stair-door-24')?.parent?.removeFromParent();gallery.lamps.push(...stairs.lamps);
+  }
+  return gallery;
+ }
+ if(area==='lift')return buildResidentialLift(root);
+ if(area==='stairs')return buildResidentialStairs(root);
+ if(area==='annex'||area==='archive')return buildGroundSupport(root,area);
+ return buildLegacyBuilding(root,area);
+}
+function buildLegacyBuilding(root:T.Group,area:Exclude<Area,'apartment'|'transfer'>){
   if(area==='courtyard')return {...buildCourtyard(root),carDeparture:undefined};
   if(area==='annex'||area==='archive'||area==='plant')return {...buildApartmentEscape(root,area),carDeparture:undefined};
   if(area==='resident'||area==='aftermath')return {...buildStoryRoom(root,area),carDeparture:undefined};

@@ -51,6 +51,9 @@ export type Target = { precise?:boolean; id: Action; point: T.Vector3; label: st
 export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const root=new T.Group();scene.add(root);
   const content=area==='apartment'?{...buildApartment(root),bounds:{...home.bounds,z:home.bounds.z+1.1},spawn:new T.Vector3(...home.stand),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:undefined,setDisplay:undefined,fallingFigure:undefined,carDeparture:undefined}:{...buildBuilding(root,area),setTV:undefined};
+  const stairRoute='stairRoute' in content?content.stairRoute:undefined,climb='climb' in content?content.climb:undefined;
+  const carDeparture='carDeparture' in content?content.carDeparture:undefined;
+  const heightAt=content.heightAt as (x:number,z:number,referenceY?:number)=>number;
   const hidingPlaces:HidingPlace[]=[];
   batchStaticGeometry(root,content.targets.map(t=>t.mesh));
   const updateStory:((stage:import('./story').Stage,time:number,reduced:boolean,story?:import('./story').Story,occupants?:Occupant[])=>void)|undefined=content.updateStory;
@@ -73,7 +76,7 @@ export function buildWorld(scene:T.Scene,area:Area='apartment'){
   const courtPhone='courtPhone' in content?content.courtPhone:undefined,courtSafe='courtSafe' in content?content.courtSafe:undefined;
   const lureRadio='lureRadio' in content?content.lureRadio:undefined;
   const residentStudy='residentStudy' in content?content.residentStudy:undefined;
-  return {...content,root,hidingPlaces,updateStory,reset,surveillance,archiveReview,archiveDoor,plantAttempt,answeringMachine,intercom,updateIntercom,courtPhone,courtSafe,residentStudy,lureRadio};
+  return {...content,root,heightAt,stairRoute,climb,carDeparture,hidingPlaces,updateStory,reset,surveillance,archiveReview,archiveDoor,plantAttempt,answeringMachine,intercom,updateIntercom,courtPhone,courtSafe,residentStudy,lureRadio};
 }
 export function disposeWorld(root:T.Object3D){
   root.traverse(o=>o.userData.surveillance?.dispose());

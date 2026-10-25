@@ -71,7 +71,8 @@ test('V122 a stair checkpoint restart approaches around the real blind corner in
   }finally{disposeWorld(w.root);}
  }finally{f.close();}
 });
-test('V120 an unlocked upper stair door opens while looking at its real leaf at eye height from close range',async()=>{
+// V133 replaces this removed17F/repeated-floor route; see focused V133 input cases.
+test.skip('V120 an unlocked upper stair door opens while looking at its real leaf at eye height from close range',async()=>{
  const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{f.use([1,-1.15,-4.8],[1,-1.55,-5.65]);tick(1);renderedCamera.position.set(4,-1.15,-12.2);tick();assert.equal(f.game.snapshot().story.stage,'stairs_reverse');f.use([3,1.65,-23.12],[3,1.65,-23.7]);assert.equal(f.game.snapshot().story.stage,'stairs_passage');tick(1.2);assert.ok(renderedScene.getObjectByName('stairs-passage-door').rotation.y>1.2);}finally{f.close();}
 });
 for(const [stage,id,next,notes,circuit,officeSupply] of [
@@ -322,7 +323,8 @@ test('a close divider stays within the held flashlight shadow frustum',()=>{
   assert.ok(frustum.containsPoint(occluder),'the nearby wall must cast a shadow into the next room');game.dispose();
 });
 
-test('real interaction loop reaches the ending, requires a held pry, and freezes on pause',async()=>{
+// V133 replaces this removed17F/repeated-floor route; see focused V133 input cases.
+test.skip('real interaction loop reaches the ending, requires a held pry, and freezes on pause',async()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const media=win.matchMedia;win.matchMedia=query=>({matches:query.includes('pointer:coarse')});
   const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));await game.ready;win.matchMedia=media;tick();game.start();game.skipMemory();tick();
@@ -837,7 +839,8 @@ test('V124 office power restoration and CCTV playback do not start the chase',as
  }finally{f.close();}
 });
 
-test('the lower stair door opens in place and the repeated floor begins only after walking around its corner',async()=>{
+// V133 replaces this removed17F/repeated-floor route; see focused V133 input cases.
+test.skip('the lower stair door opens in place and the repeated floor begins only after walking around its corner',async()=>{
   const previous=win.localStorage;
   win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'stairs_loop',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
@@ -873,7 +876,8 @@ test('the lower stair door opens in place and the repeated floor begins only aft
   }finally{game.dispose();win.localStorage=previous;}
 });
 
-test('the stair gallery transition waits for the visible fire door to close and allows retreat',async()=>{
+// V133 replaces this removed17F/repeated-floor route; see focused V133 input cases.
+test.skip('the stair gallery transition waits for the visible fire door to close and allows retreat',async()=>{
   const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'stairs_loop',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const game=createGame(canvas,()=>{},e=>assert.fail(e));
@@ -1399,7 +1403,8 @@ test('V126 the closed home wardrobe cannot eject or kill a breathing player',asy
  const {game,ghost}=await wardrobeFixture();try{game.interact();assert.equal(game.snapshot().story.hidden,true);for(let i=0;i<2400;i++){tick(.025);assert.equal(game.snapshot().story.hidden,true,'closed wardrobe remains protected without holding breath');assert.notEqual(game.snapshot().story.stage,'dying');assert.notEqual(game.snapshot().story.stage,'ended');}assert.equal(game.snapshot().story.stage,'escape');assert.ok(ghost.position.distanceTo(renderedCamera.position)>1);}finally{game.dispose();}
 });
 
-test('V126 the real stair exit announces the remaining descent and manual pause freezes travel',async()=>{
+// V133 replaces this removed17F/repeated-floor route; see focused V133 input cases.
+test.skip('V126 the real stair exit announces the remaining descent and manual pause freezes travel',async()=>{
  const f=await officeAgencyInput({stage:'stairs_passage',notes:[],elapsed:600});try{
   f.aim([3,1.65,-23.1],[3,1.65,-30]);f.game.key('KeyW',true);
   for(let i=0;i<150&&f.game.snapshot().story.stage==='stairs_passage';i++)tick(.025);
@@ -1409,7 +1414,7 @@ test('V126 the real stair exit announces the remaining descent and manual pause 
  }finally{f.close();}
 });
 
-test('V126 actual foyer records replay and B1 stairs form a playable connected escape',async()=>{
+test('V133 actual compact foyer and management office retain a connected B1 stair route',async()=>{
  const f=await officeAgencyInput({stage:'annex_arrival',notes:[],pursuit:true,elapsed:800});
  const {buildWorld,disposeWorld,canStandAt}=await import('../lib/world.ts'),{areaFor}=await import('../lib/story.ts'),{findPath}=await import('../lib/navigation.ts');
  const maps=new Map();const world=area=>{if(!maps.has(area))maps.set(area,buildWorld(new THREE.Scene(),area));return maps.get(area);};
@@ -1423,15 +1428,13 @@ test('V126 actual foyer records replay and B1 stairs form a playable connected e
  }
  try{
   assert.equal(f.game.snapshot().story.stage,'annex_arrival');const g=renderedScene.getObjectByName('resident-remains');g.visible=true;g.position.copy(renderedCamera.position);tick(.1);assert.equal(g.visible,false);assert.equal(f.game.snapshot().threat,0);
-  f.aim([0,1.65,3],[0,1.65,-4]);f.game.key('ShiftLeft',true);for(let i=0;i<14;i++){const code=i%2?'KeyS':'KeyW';f.game.key(code,true);tick(.5);f.game.key(code,false);}f.game.key('ShiftLeft',false);assert.equal(f.game.snapshot().exhausted,true);assert.equal(f.game.snapshot().story.stage,'annex_arrival');
   use('annex','annex_map');use('annex','annex_badge');assert.equal(f.game.snapshot().story.stage,'annex_exit_ready');use('annex','annex_exit');tick(1.1);
-  assert.equal(g.visible,false);walk('annex',{x:3,z:-11},false);assert.equal(areaFor(f.game.snapshot().story),'archive');assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,world('archive').solids,.23,world('archive').bounds));
+  assert.equal(g.visible,false);walk('annex',{x:3,z:-7.5},false);assert.equal(areaFor(f.game.snapshot().story),'archive');assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,world('archive').solids,.23,world('archive').bounds));
   assert.match(f.game.snapshot().objective,/0\/3/);for(const id of ['archive_gate','archive_road','archive_call'])use('archive',id);assert.equal(f.game.snapshot().story.stage,'archive_reveal');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);
   use('archive','archive_play');tick(8);f.game.pause();const elapsed=f.game.snapshot().elapsed;tick(5);assert.equal(f.game.snapshot().elapsed,elapsed);assert.equal(f.game.snapshot().story.stage,'archive_playback');f.game.pause(false);tick(11.1);
   assert.equal(f.game.snapshot().story.stage,'archive_escape');assert.ok(f.game.snapshot().stamina>.99,'the safe investigation restores a usable escape budget');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the warning precedes the pursuer entering');
   const refusal=voiceCalls.filter(v=>v==='no').length;use('archive','archive_exit');assert.equal(voiceCalls.filter(v=>v==='no').length,refusal,'V127 removes the unnatural exit refusal');tick(1);
-  walk('archive',{x:3,z:-9},true);assert.equal(areaFor(f.game.snapshot().story),'plant');walk('plant',{x:0,z:-6.6},true);use('plant','plant_exit');tick(.95);walk('plant',{x:3,z:-10},true);
-  assert.equal(f.game.snapshot().story.stage,'parking_gate');assert.ok(f.game.snapshot().story.notes.includes('basement_route'));assert.ok(Math.abs(renderedCamera.position.y-1.65)<.12,'B1 is normalized only across the matching landing');
+  walk('archive',{x:3,z:-6.5},true);assert.equal(areaFor(f.game.snapshot().story),'plant');assert.equal(f.game.snapshot().story.stage,'plant_exit_ready');assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,world('plant').solids,.23,world('plant').bounds));assert.ok(Math.abs(renderedCamera.position.y-1.65)<.12,'the shared B1 stair entrance keeps its floor height');
  }finally{f.close();for(const w of maps.values())disposeWorld(w.root);}
 });
 
@@ -1496,7 +1499,8 @@ test('V132 parking alarm leaves a tight but achievable physical sprint to the dr
 });
 
 
-test('V129 the stair landing and upper door continue without any wall-reading interaction',async()=>{
+// V133 replaces this removed17F/repeated-floor route; see focused V133 input cases.
+test.skip('V129 the stair landing and upper door continue without any wall-reading interaction',async()=>{
  const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{
   f.use([1,-1.15,-4.8],[1,-1.55,-5.65]);assert.equal(f.game.snapshot().story.stage,'stairs_descent');tick(1);
   renderedCamera.position.set(4,-1.15,-12.2);tick(.05);assert.equal(f.game.snapshot().story.stage,'stairs_reverse');assert.equal(f.game.snapshot().floor,'17F');assert.equal(f.game.snapshot().story.notes.includes('stair_note'),false);
@@ -1516,4 +1520,69 @@ test('V132 actual departure advances in12seconds and manual pause freezes that a
  const f=await officeAgencyInput({stage:'car_departure',notes:['basement_route','car_search'],elapsed:1800});
  try{tick(10);assert.equal(f.game.snapshot().story.stage,'car_departure');f.game.pause();tick(5);assert.equal(f.game.snapshot().story.stage,'car_departure');f.game.pause(false);tick(2.1);assert.equal(f.game.snapshot().story.stage,'car_escape');}
  finally{f.close();}
+});
+
+test('V133 actual stalled-lift input climbs the half-storey sill and pause freezes the brace',async()=>{
+ const f=await officeAgencyInput({stage:'lift_exit',notes:[],elapsed:350});try{
+  assert.ok(renderedScene.getObjectByName('lift-offset-ledge'),'the raised physical landing exists');
+  f.aim([0,1.65,-.72],[0,1.4,-3]);f.game.key('KeyW',true);tick(.35);assert.equal(f.game.snapshot().story.stage,'lift_climb');f.game.key('KeyW',false);
+  tick(.6);f.game.pause();const before=renderedCamera.position.clone();tick(2);assert.ok(before.distanceTo(renderedCamera.position)<1e-8);f.game.pause(false);tick(2);
+  assert.equal(f.game.snapshot().story.stage,'corridor_run');assert.equal(f.game.snapshot().floor,'24F');assert.ok(Math.abs(renderedCamera.position.y-1.65)<.02);assert.ok(renderedCamera.position.z< -20,'same bank end of the long gallery');
+ }finally{f.close();}
+});
+
+test('V133 actual four-floor flight reaches the visibly open20F door without locked-door guessing',async()=>{
+ const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:450});const{buildWorld,disposeWorld}=await import('../lib/world.ts'),w=buildWorld(new THREE.Scene(),'stairs');
+ try{
+  assert.ok(w.stairRoute,'the real vertically stacked support map is installed');
+  const points=[];for(let k=0;k<4;k++){const y=-k*2.8;points.push({x:1,y:y-1.4,z:3.9},{x:-1,y:y-1.4,z:3.9},{x:-1,y:y-2.8,z:-.8});if(k<3)points.push({x:1,y:y-2.8,z:-.8});}
+  for(const p of points){const pos=renderedCamera.position.toArray();f.aim(pos,[p.x,pos[1],p.z]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);let i=0;while(Math.hypot(renderedCamera.position.x-p.x,renderedCamera.position.z-p.z)>.13&&i++<700){tick(.025);assert.ok(!['dying','ended'].includes(f.game.snapshot().story.stage),JSON.stringify({at:renderedCamera.position.toArray(),ghost:renderedScene.getObjectByName('resident-remains')?.position.toArray(),goal:p,stamina:f.game.snapshot().stamina}));}f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.ok(i<700,JSON.stringify({stalled:renderedCamera.position.toArray(),goal:p}));assert.ok(Math.abs(renderedCamera.position.y-1.65-p.y)<.12,'continuous physical height on each landing');}
+  const pursuer=renderedScene.getObjectByName('resident-remains');assert.ok(pursuer.position.y< -5.6,`the pursuer keeps descending, groundY=${pursuer.position.y}`);
+  assert.equal(f.game.snapshot().floor,'20F');assert.equal(w.targets.length,1);const target=w.targets[0];f.aim(renderedCamera.position.toArray(),target.point.toArray());f.game.interact();assert.equal(f.game.snapshot().story.stage,'stairs_passage');
+ }finally{f.close();disposeWorld(w.root);}
+});
+
+test('V133 actual20F escape calls bankB, boards under pursuit and walks out at1F',async()=>{
+ const f=await officeAgencyInput({stage:'transfer_gallery',notes:[],elapsed:600});try{
+  for(const p of [[0,-20.7],[2.2,-21.6]]){const pos=renderedCamera.position.toArray();f.aim(pos,[p[0],pos[1],p[1]]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);let i=0;while(Math.hypot(renderedCamera.position.x-p[0],renderedCamera.position.z-p[1])>.15&&i++<1000){tick(.025);assert.equal(f.game.snapshot().story.stage,'transfer_gallery',JSON.stringify({at:renderedCamera.position.toArray(),ghost:renderedScene.getObjectByName('resident-remains').position.toArray(),stamina:f.game.snapshot().stamina}));}f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.ok(i<1000);}
+  f.aim(renderedCamera.position.toArray(),[3.1,1.25,-22.74]);assert.match(f.game.snapshot().prompt,/2호기/);f.game.interact();tick(.7);assert.equal(f.game.snapshot().story.stage,'transfer_enter');
+  f.aim(renderedCamera.position.toArray(),[2.2,1.65,-27]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);for(let i=0;i<200&&f.game.snapshot().story.stage!=='transfer_panel';i++)tick(.025);f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.equal(f.game.snapshot().story.stage,'transfer_panel',JSON.stringify({at:renderedCamera.position.toArray(),ghost:renderedScene.getObjectByName('resident-remains').position.toArray()}));
+  f.aim(renderedCamera.position.toArray(),[.92,1.3,-.45]);assert.match(f.game.snapshot().prompt,/1층/);f.game.interact();assert.equal(f.game.snapshot().story.stage,'transfer_ride');tick(20.1);assert.equal(f.game.snapshot().story.stage,'transfer_exit');assert.equal(f.game.snapshot().floor,'1F');
+  f.aim(renderedCamera.position.toArray(),[0,1.65,-6]);f.game.key('KeyW',true);for(let i=0;i<100&&f.game.snapshot().story.stage!=='annex_arrival';i++)tick(.025);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'annex_arrival',JSON.stringify({at:renderedCamera.position.toArray(),prompt:f.game.snapshot().prompt}));assert.ok(renderedCamera.position.z>4&&renderedCamera.position.z<5.5);assert.ok(Math.abs(renderedCamera.position.y-1.65)<.03);
+ }finally{f.close();}
+});
+
+test('V133 actual home search distinguishes a witnessed entry and retreats by walking',async()=>{
+ for(const witnessed of [false,true]){const f=await wardrobeFixture();try{
+  // Put the body in a real clear approach, then face it toward/away from the
+  // player before the closet interaction captures knowledge.
+  f.ghost.position.set(home.closet[0]-2,0,home.closet[2]);f.ghost.rotation.y=witnessed?Math.PI/2:-Math.PI/2;
+  const before=voiceCalls.length,start=f.ghost.position.clone();f.game.interact();assert.equal(f.game.snapshot().story.stage,'wait');tick(.1);assert.ok(f.ghost.position.distanceTo(start)<.15);
+  let near=Infinity;for(let i=0;i<3200&&f.game.snapshot().story.stage==='wait';i++){tick(.025);near=Math.min(near,Math.hypot(f.ghost.position.x-home.closet[0],f.ghost.position.z-home.closet[2]));}
+  assert.equal(f.game.snapshot().story.stage,'escape',JSON.stringify({witnessed,at:f.ghost.position.toArray(),near}));assert.equal(f.game.snapshot().story.hidden,true);assert.ok(Math.hypot(f.ghost.position.x-home.bath.x,f.ghost.position.z-home.bath.z)<.6);assert.ok(!voiceCalls.slice(before).some(v=>['where','here','come'].includes(v)));
+ }finally{f.game.dispose();}}
+});
+
+test('V133 actual20F open firedoor crosses into the matching gallery without a vertical jump',async()=>{
+ const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:590});try{
+  f.aim([0,-9.55,-.8],[0,-10,-1.75]);assert.match(f.game.snapshot().prompt,/문/);f.game.interact();tick(.8);assert.equal(f.game.snapshot().story.stage,'stairs_passage');f.game.key('KeyW',true);for(let i=0;i<100&&f.game.snapshot().story.stage!=='transfer_gallery';i++)tick(.025);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'transfer_gallery');assert.ok(Math.abs(renderedCamera.position.y-1.65)<.04);assert.ok(renderedCamera.position.z<23&&renderedCamera.position.z>22.5);assert.ok(Math.cos(renderedCamera.rotation.y)>.9);
+ }finally{f.close();}
+});
+
+test('V133 actual jamb alignment preserves earned stair distance instead of respawning a close follower',async()=>{
+ const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:590});try{
+  f.aim([.28,-9.55,-.8],[0,-10,-1.75]);f.game.interact();tick(.8);assert.equal(f.game.snapshot().story.stage,'stairs_passage');f.aim(renderedCamera.position.toArray(),[.28,-9.55,-4]);f.game.key('KeyW',true);for(let i=0;i<100&&f.game.snapshot().story.stage!=='transfer_gallery';i++)tick(.025);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'transfer_gallery');assert.ok(Math.abs(renderedCamera.position.x-.28)<.015);const g=renderedScene.getObjectByName('resident-remains');assert.equal(g.visible,false,'an upper-floor pursuer cannot instantly reappear at20F');const start=renderedCamera.position.z;f.game.key('KeyW',true);tick(.5);f.game.key('KeyW',false);assert.ok(renderedCamera.position.z<start-.8,'the receiving door has the same hinge and no jamb overlap');tick(2);assert.equal(g.visible,false);
+  const saved=JSON.parse(f.data.get('homecoming.progress.v2'));assert.equal(saved.stage,'transfer_gallery');assert.ok(saved.pursuitWait>5);f.game.continueGame();tick();assert.equal(f.game.snapshot().story.stage,'transfer_gallery');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);tick(2);assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'continue preserves the earned off-screen approach');
+ }finally{f.close();}
+});
+
+test('V133 actual24F stair entry preserves heading and position through the same door',async()=>{
+ const f=await officeAgencyInput({stage:'lift_exit',notes:[],elapsed:400});try{
+  f.aim([0,1.65,-.72],[0,1.4,-3]);f.game.key('KeyW',true);tick(.35);f.game.key('KeyW',false);tick(2.5);assert.equal(f.game.snapshot().story.stage,'corridor_run');const g=renderedScene.getObjectByName('resident-remains');g.visible=false;
+  f.aim([.28,1.65,21.9],[0,1.2,22.95]);f.game.interact();tick(.85);assert.equal(f.game.snapshot().story.stage,'corridor_departure');f.aim(renderedCamera.position.toArray(),[.28,1.65,27]);f.game.key('KeyW',true);for(let i=0;i<120&&f.game.snapshot().story.stage!=='stairs_loop';i++)tick(.025);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'stairs_loop');assert.ok(Math.abs(renderedCamera.position.x-.28)<.02);assert.ok(renderedCamera.position.z>-1.4&&renderedCamera.position.z<-1.2);assert.ok(Math.cos(renderedCamera.rotation.y)<-.9);
+ }finally{f.close();}
+});
+
+test('V133 direct stair and second-gallery pursuit drive the existing chase soundtrack',async()=>{
+ for(const stage of ['stairs_loop','transfer_gallery']){const f=await officeAgencyInput({stage,notes:[],elapsed:550});try{tick(.8);assert.ok(chaseLevel>.45,stage+' audible chase mix');f.game.pause();const p=renderedScene.getObjectByName('resident-remains').position.clone();tick(1);assert.ok(p.distanceTo(renderedScene.getObjectByName('resident-remains').position)<1e-8);}finally{f.close();}}
 });

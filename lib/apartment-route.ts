@@ -5,7 +5,14 @@ const labels=['사고 기록','통화 기록','입차 기록'];
 const readyFoyer=(s:Pick<Story,'notes'>):Stage=>['annex_map','annex_badge'].every(id=>s.notes.includes(id))?'annex_exit_ready':s.notes.some(id=>id==='annex_map'||id==='annex_badge')?'annex_unlock':'annex_arrival';
 const note=(s:Story,id:string,stage:Stage=s.stage):Story=>({...s,stage,notes:[...new Set([...s.notes,id])]});
 export function apartmentRouteTransition(s:Story,a:Action):Story|undefined{
- if(s.stage==='stairs_passage'&&a==='stair_exit')return {...s,stage:'stairs_ground'};
+ if(s.stage==='lift_exit'&&a==='leave_lift')return {...s,stage:'lift_climb'};
+ if(s.stage==='lift_climb')return a==='climbed'?{...s,stage:'corridor_run'}:s;
+ if(['stairs_loop','stairs_descent','stairs_reverse','stairs_clue'].includes(s.stage)&&a==='up')return {...s,stage:'stairs_passage'};
+ if(s.stage==='stairs_passage'&&a==='stair_exit')return {...s,stage:'transfer_gallery'};
+ if(s.stage.startsWith('transfer_')){
+  const route:Record<string,[Action,Stage]>={transfer_gallery:['call','transfer_wait'],transfer_wait:['arrived','transfer_enter'],transfer_enter:['enter','transfer_boarding'],transfer_boarding:['sealed','transfer_panel'],transfer_panel:['panel','transfer_ride'],transfer_ride:['stopped','transfer_exit'],transfer_exit:['ground_arrived','annex_arrival']};
+  const step=route[s.stage];return step&&a===step[0]?{...s,stage:step[1]}:s;
+ }
  if(s.stage==='stairs_ground')return a==='ground_arrived'?{...s,stage:'annex_arrival'}:s;
  if(s.stage.startsWith('annex_')){
   if(a==='annex_map'||a==='annex_badge'){if(s.notes.includes(a))return s;const next=note(s,a);return {...next,stage:readyFoyer(next)};}
@@ -34,7 +41,7 @@ export function apartmentRouteTransition(s:Story,a:Action):Story|undefined{
 }
 export function apartmentRouteObjective(s:Story):string|undefined{
  if(s.stage==='stairs_ground')return '비상계단을 따라 1층까지 계속 내려간다.';
- if(s.stage.startsWith('annex_'))return s.stage==='annex_departure'?'관리실 옆 문서보관실로. 지하주차장 출입 기록이 남아 있다.':!s.notes.includes('annex_map')?'1층 공동현관. 안내판에서 주차장으로 가는 길을 확인한다.':!s.notes.includes('annex_badge')?'정문 앞 작업대가 무너져 있다. 옆 경비실 책상에서 관리용 열쇠를 챙긴다.':'열쇠를 챙겼다. 「문서보관실 · 지하출입」 표지의 문을 연다.';
+ if(s.stage.startsWith('annex_'))return s.stage==='annex_departure'?'관리사무소로. CCTV에 내 차가 들어온 시각이 남아 있다.':!s.notes.includes('annex_map')?'1층 공동현관. 안내판에서 주차장으로 가는 길을 확인한다.':!s.notes.includes('annex_badge')?'정문은 보수 공사로 막혔다. 경비실 책상에 관리용 열쇠가 남아 있다.':'열쇠를 챙겼다. 「관리사무소」 문 너머에 지하계단이 있다.';
  if(['archive_arrival','archive_search','archive_edit'].includes(s.stage)){
   const count=records.filter(id=>s.notes.includes(id)).length,missing=labels.filter((_,i)=>!s.notes.includes(records[i]));
   return `기록 확인 ${count}/3 · ${missing.join(' · ')}. 책상에 놓인 세 기록을 확인한다.`;
@@ -49,6 +56,8 @@ export function apartmentRouteObjective(s:Story):string|undefined{
 }
 export function normalizeApartmentRoute(s:Story):Story{
  const stage=s.stage;
+ if(stage==='stairs_ground')return {...s,stage:'transfer_panel'};
+ if(stage==='stairs_reverse'||stage==='stairs_clue'||stage==='stairs_passage')return {...s,stage:'stairs_loop'};
  if(stage==='parking_alarm')return {...s,notes:s.notes.filter(id=>id!=='alarm')};
  if(stage.startsWith('resident')||stage.startsWith('office')||stage.startsWith('service_')||stage.startsWith('court_'))return {...s,stage:readyFoyer(s),circuit:[],officeSupply:false};
  if(stage.startsWith('annex_'))return {...s,stage:stage==='annex_departure'?stage:readyFoyer(s),circuit:[]};

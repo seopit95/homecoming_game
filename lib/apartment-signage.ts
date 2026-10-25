@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {sharePrintedTexture,softBox,surface} from './materials.ts';
+import {apartmentEscapeLayout} from './escape-layout.ts';
 
 const korean='"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif';
 const ink='#2d3d36',green='#3f5d50',sheet='#dedbcf';
@@ -54,36 +55,36 @@ export function createApartmentPlaque(parent:T.Object3D,options:ApartmentPlaqueO
  return {group,face};
 }
 
-/** Schematic follows the actual west guard room, north archive and two-flight B1 connection. */
+/** One continuous schematic of the real foyer, small office and B1 route. */
 export function apartmentEvacuationTexture(){
- const {c,g}=canvas(1536,952);
- const planInk='#111c15',routeInk='#1b4530',warningInk='#59281f';
- g.fillStyle=sheet;g.fillRect(0,0,1536,952);g.fillStyle='#cdcabe';g.fillRect(0,0,1536,9);g.fillRect(0,943,1536,9);
- g.fillStyle=green;g.fillRect(62,48,112,112);lettering(g,'1F',118,104,48,700,'#e7e7d8','center');
- lettering(g,'백로아파트',210,62,25,600,'#647166');lettering(g,'1층 피난안내도',210,119,59,750);
- lettering(g,'비상시 북측 연결문을 이용하십시오',1468,126,25,500,'#536456','right');
- g.fillStyle='#637163';g.fillRect(62,185,1410,3);
- // Flush plan outlines and door gaps describe rooms; nothing is added to the walkable world.
- const outline=(x:number,y:number,w:number,h:number)=>{g.fillStyle='#34443a';g.fillRect(x,y,w,h);g.fillStyle='#eeede3';g.fillRect(x+11,y+11,w-22,h-22);};
- outline(83,393,550,416);outline(83,474,190,178);outline(226,229,407,171);outline(758,229,212,171);outline(758,506,212,151);
- g.fillStyle='#eeede3';g.fillRect(530,389,61,16);g.fillRect(626,283,14,61);g.fillRect(751,283,14,61);g.fillRect(840,393,50,16);g.fillRect(840,499,50,16);g.fillRect(266,548,14,47);
- // A muted green continuous route is distinct from red closed-entrance/current-position marks.
- const route=[[155,729],[560,729],[560,313],[865,313],[865,572]];
- g.strokeStyle=routeInk;g.lineWidth=16;g.lineJoin='round';g.beginPath();g.moveTo(...route[0] as [number,number]);for(const [x,y] of route.slice(1))g.lineTo(x,y);g.stroke();
- const arrow=(x:number,y:number,dx:number,dy:number)=>{g.beginPath();g.moveTo(x-dx*20-dy*13,y-dy*20+dx*13);g.lineTo(x,y);g.lineTo(x-dx*20+dy*13,y-dy*20-dx*13);g.stroke();};
- arrow(560,440,0,-1);arrow(700,313,1,0);arrow(865,469,0,1);
- lettering(g,'관리문서 보관실',429,269,39,750,planInk,'center');
- lettering(g,'비상계단',864,265,35,750,planInk,'center');lettering(g,'B1 주차장',864,615,34,750,planInk,'center');
- lettering(g,'경비실',177,514,38,750,planInk,'center');lettering(g,'열쇠 보관',177,616,26,650,planInk,'center');
- lettering(g,'공동현관',420,605,42,750,planInk,'center');
- g.fillStyle=warningInk;g.fillRect(141,715,28,28);g.fillStyle=sheet;g.fillRect(151,725,8,8);lettering(g,'현위치',154,776,32,750,warningInk,'center');
- g.fillStyle=warningInk;g.fillRect(620,669,20,77);lettering(g,'정문 폐쇄',681,699,28,750,warningInk);
- lettering(g,'북 ↑',88,255,28,700,planInk);
- // Deliberately short legend: navigation, hazard and one familiar apartment evacuation rule.
- g.fillStyle='#637163';g.fillRect(1024,230,3,584);
- lettering(g,'피난 동선',1090,258,39,750,planInk);g.strokeStyle=routeInk;g.lineWidth=12;g.beginPath();g.moveTo(1091,319);g.lineTo(1430,319);g.stroke();arrow(1430,319,1,0);
- lettering(g,'북측 연결문 이용',1090,385,32,750,planInk);lettering(g,'관리문서 보관실을 지나',1090,438,27,650,planInk);lettering(g,'비상계단으로 이동',1090,479,27,650,planInk);
- lettering(g,'정문 통행 불가',1090,592,32,750,warningInk);lettering(g,'낙하물 위험 · 출입 금지',1090,644,27,650,planInk);
- g.fillStyle='#637163';g.fillRect(62,862,1410,3);lettering(g,'화재 시 승강기 사용 금지',76,905,30,700,planInk);lettering(g,'1층 · 지하 연결 개략도',1467,907,24,600,planInk,'right');
- return printed(c,['1f-evacuation-plan-contrast']);
+ const {c,g}=canvas(1536,1152),planInk='#17251c',routeInk='#28543b',warningInk='#6d3027',unit=24;
+ const sx=(x:number)=>320+x*unit,sy=(z:number)=>382-z*unit;
+ g.fillStyle=sheet;g.fillRect(0,0,1536,1152);g.fillStyle=green;g.fillRect(56,46,112,108);lettering(g,'1F',112,100,47,700,'#e8e8d8','center');
+ lettering(g,'백로아파트',207,61,25,600,'#687368');lettering(g,'1층 피난안내도',207,117,58,750);g.fillStyle='#728071';g.fillRect(56,176,1424,3);
+ function room(x:number,z:number,w:number,d:number){const px=sx(x),py=sy(z);g.fillStyle='#39483c';g.fillRect(px,py,w*unit,d*unit);g.fillStyle='#eeede3';g.fillRect(px+5,py+5,w*unit-10,d*unit-10);}
+ const A=apartmentEscapeLayout.annex,O=apartmentEscapeLayout.archive;
+ room(-A.x,A.z,A.x*2,A.z*2);room(-4.2,1.8,2.6,3.8);
+ // The office copy is translated(+3,-16) at the normalized blind-turn handoff.
+ const ox=3,oz=-(A.z+6+O.z);room(ox-O.x,oz+O.z,O.x*2,O.z*2);
+ g.fillStyle='#eeede3';g.fillRect(sx(-1.6)-5,sy(1.65),10,1.3*unit);g.fillRect(sx(-.65),sy(A.z)-5,1.3*unit,10);g.fillRect(sx(-.7),sy(-A.z)-5,1.4*unit,10);g.fillRect(sx(ox-.7),sy(oz+O.z)-5,1.4*unit,10);g.fillRect(sx(ox-.7),sy(oz-O.z)-5,1.4*unit,10);
+ // The open B cabin is drawn behind its1F threshold; A remains a closed stop.
+ room(-.9,A.z+2.7,1.8,2.7);g.fillStyle='#eeede3';g.fillRect(sx(-.65),sy(A.z)-5,1.3*unit,10);
+ g.fillStyle=warningInk;g.fillRect(sx(-2.85),sy(A.z)-3,1.3*unit,7);lettering(g,'A호기 · 운행 중지',135,222,19,650,warningInk,'center');lettering(g,'B호기',320,222,21,700,planInk,'center');
+ const route=[[2.85,3.4],[.4,3.4],[.4,1],[-2.5,1],[-2.5,.35],[-2.5,1],[.4,1],[.4,-4.7],[0,-A.z],[0,-A.z-2],[3,-A.z-2],[3,-A.z-6],[3,oz-O.z],[3,oz-O.z-2],[6,oz-O.z-2],[6,oz-O.z-6]];
+ g.strokeStyle=routeInk;g.lineWidth=7;g.lineJoin='round';g.beginPath();g.moveTo(sx(route[0][0]),sy(route[0][1]));for(const [x,z]of route.slice(1))g.lineTo(sx(x),sy(z));g.stroke();
+ function arrow(x:number,z:number,dx:number,dz:number){const px=sx(x),py=sy(z),dy=-dz;g.beginPath();g.moveTo(px-dx*11-dy*7,py-dy*11+dx*7);g.lineTo(px,py);g.lineTo(px-dx*11+dy*7,py-dy*11-dx*7);g.stroke();}
+ arrow(.4,-2.8,0,-1);arrow(1.8,-A.z-2,1,0);arrow(3,oz-2.5,0,-1);arrow(6,oz-O.z-4.5,0,-1);
+ lettering(g,'경비실',sx(-2.9),sy(1.35),18,750,planInk,'center');lettering(g,'열쇠',sx(-2.9),sy(-1.4),16,650,planInk,'center');lettering(g,'공동현관',sx(1.2),sy(-2.9),27,750,planInk,'center');
+ g.fillStyle=warningInk;g.beginPath();g.arc(sx(2.85),sy(3.4),7,0,Math.PI*2);g.fill();lettering(g,'현위치',452,sy(3.4),24,750,warningInk);
+ g.fillRect(sx(A.x)-3,sy(2.1),7,3.2*unit);lettering(g,'정문 폐쇄',464,sy(.5),22,700,warningInk);
+ // Desk stations match the actual office's west records and east CCTV desk.
+ for(const [n,x,z]of[[1,-1.85,1.7],[2,-1.85,-.7],[3,1.85,1.7]]){g.fillStyle='#b5b79f';g.fillRect(sx(ox+x)-15,sy(oz+z)-9,30,18);lettering(g,String(n),sx(ox+x),sy(oz+z),16,700,planInk,'center');}
+ g.fillStyle='#eeede3';g.fillRect(sx(ox)-68,sy(oz+3.1)-15,136,30);lettering(g,'관리사무소',sx(ox),sy(oz+3.1),24,750,planInk,'center');lettering(g,'CCTV',sx(ox+1.85),sy(oz-2.55),19,700,planInk,'center');
+ room(4.5,oz-O.z-5.7,3,2.1);lettering(g,'B1 비상계단',sx(6),sy(oz-O.z-6.4),22,750,planInk,'center');lettering(g,'B1 주차장',sx(6),sy(oz-O.z-7.3),22,750,planInk,'center');
+ lettering(g,'북 ↑',80,258,25,700,planInk);
+ g.fillStyle='#728071';g.fillRect(690,232,3,820);lettering(g,'주차장으로 가는 길',756,265,43,750,planInk);
+ for(const [text,y]of[['B호기 → 공동현관',345],['경비실 책상에서 관리용 열쇠',410],['관리사무소: 세 기록 확인',475],['CCTV 재생 후 B1 비상계단',540],['계단을 내려가 B1 주차장',605]] as const)lettering(g,text,756,y,31,650,planInk);
+ lettering(g,'정문 통행 불가',756,744,35,750,warningInk);lettering(g,'보수 작업 · 낙하물 위험',756,798,29,650,warningInk);lettering(g,'승강기는 지하로 연결되지 않습니다',756,897,27,650,planInk);lettering(g,'이 도면은 연결 개략도입니다',756,966,25,500,'#667363');
+ g.fillStyle='#728071';g.fillRect(56,1095,1424,3);lettering(g,'화재 시 승강기 사용 금지',70,1121,27,700,planInk);lettering(g,'공동현관 · 관리사무소 · B1',1465,1121,25,600,planInk,'right');
+ return printed(c,['1f-ground-support-v133']);
 }
