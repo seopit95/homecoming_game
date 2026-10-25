@@ -31,7 +31,7 @@ export function buildResidentialStairs(root:T.Group,preview=false){
  }
  function slab(name:string,x:number,top:number,z:number,w:number,d:number){return box(name,x,top-.11,z,w,.22,d,tile,true,true);}
  function lamp(x:number,y:number,z:number,color:string,intensity:number,range=4.5){
-  const light=new T.PointLight(color,intensity,range,2);light.position.set(x,y,z);light.userData.base=intensity;root.add(light);lamps.push(light);return light;
+  const light=new T.PointLight(color,intensity,range,2);light.position.set(x,y,z);light.userData.base=intensity;light.userData.moodSeed=Math.abs(Math.round((24+y/2.8)*31+x*11+z*17));root.add(light);lamps.push(light);return light;
  }
  const low=-11.42,high=2.8,middle=(low+high)/2,height=high-low;
  for(const side of [-1,1]){
@@ -55,7 +55,8 @@ export function buildResidentialStairs(root:T.Group,preview=false){
   setDoorAngle(door.hinge,door.block,floor===24?1.55:floor===20?.55:0,.55);
   createApartmentPlaque(root,{text:`${floor}층`,subtitle:'비상계단',position:[1.35,base+1.65,-1.5695],width:.68,height:.29,name:`residential-stair-floor-${floor}`});
   box('stair-landing-fixture',1.58,base+2.58,-.65,.45,.07,.16,steel);
-  lamp(1.58,base+2.49,-.65,'#87998b',.46);
+  const tube=new T.MeshStandardMaterial({color:'#a8aaad',emissive:'#b4bacb',emissiveIntensity:.08,roughness:.85});box('stair-opal-tube',1.58,base+2.535,-.65,.35,.018,.1,tube);
+  lamp(1.58,base+2.49,-.65,'#9da7be',1.35).userData.bulb=tube;
   if(k===4)continue;
   slab(`stair-mid-landing-${floor}`,0,base-1.4,3.9,4,1.4);
   // Ten 140 mm risers / 320 mm treads per half flight. The analytical walking
@@ -83,7 +84,11 @@ export function buildResidentialStairs(root:T.Group,preview=false){
    const angle=Math.atan(.4375),dado=box('stair-flight-dado',side*2.005,base+(side>0?-.25:-1.65),1.6,.018,.9,3.2/Math.cos(angle),lower);dado.rotation.x=side*angle;
   }
   roundPipe(root,[-1.86,base-.48,4.5],[1.86,base-.48,4.5],.025,steel);
-  lamp(-1.65,base+.95,4.45,'#819084',.28,3.8);
+  box('stair-emergency-housing',-1.65,base+1,4.575,.28,.16,.065,steel);
+  const lens=new T.MeshStandardMaterial({color:'#592521',emissive:'#7d2922',emissiveIntensity:.12,roughness:.62});
+  box('stair-emergency-lens',-1.65,base+1,4.536,.21,.095,.014,lens);
+  for(const x of[-1.72,-1.58])box('stair-emergency-guard',x,base+1,4.522,.008,.11,.01,steel);
+  lamp(-1.65,base+.95,4.45,'#ab3e32',4,4.8).userData.bulb=lens;
  }
  // The bounded shaft ends here; a wrong turn cannot step onto the other
  // storey's flight where an upper/lower continuation has not been built.
@@ -106,7 +111,7 @@ export function buildResidentialStairs(root:T.Group,preview=false){
  }
  box('20f-vestibule-light',.35,-8.59,-2.45,.55,.06,.2,steel);
  box('20f-vestibule-diffuser',.35,-8.627,-2.45,.45,.015,.15,new T.MeshStandardMaterial({color:'#9eb6cb',emissive:'#8cacc7',emissiveIntensity:.5}));
- lamp(.35,-8.72,-2.45,'#8cacc7',2.2,6);
+ lamp(.35,-8.72,-2.45,'#8cacc7',2.2,6).userData.exitCue=true;
  const exitDoor=doors.get(20)!,target:Target={id:'up',label:'20층 복도문 · 밀어서 열기',mesh:exitDoor.leaf,point:new T.Vector3()};
  exitDoor.leaf.userData.approach={x:.18,z:-.8};targets.push(target);
  function targetPosition(){exitDoor.leaf.updateWorldMatrix(true,false);target.point.copy(exitDoor.leaf.position).applyMatrix4(exitDoor.hinge.matrixWorld);target.point.y=-10;}

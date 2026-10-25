@@ -1586,3 +1586,19 @@ test('V133 actual24F stair entry preserves heading and position through the same
 test('V133 direct stair and second-gallery pursuit drive the existing chase soundtrack',async()=>{
  for(const stage of ['stairs_loop','transfer_gallery']){const f=await officeAgencyInput({stage,notes:[],elapsed:550});try{tick(.8);assert.ok(chaseLevel>.45,stage+' audible chase mix');f.game.pause();const p=renderedScene.getObjectByName('resident-remains').position.clone();tick(1);assert.ok(p.distanceTo(renderedScene.getObjectByName('resident-remains').position)<1e-8);}finally{f.close();}}
 });
+
+test('V134 stair mood and timed room cues obey pause, leave the exit steady and persist in the safe foyer',async()=>{
+ const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:550});try{
+  f.aim([0,-9.55,-.8],[0,-9.55,-3]);const ambient=renderedScene.children.find(o=>o.isHemisphereLight);assert.ok(ambient.intensity<.025);
+  const lamps=[];renderedScene.traverse(o=>{if(o.isPointLight&&o.userData.exitCue)lamps.push(o);});assert.ok(lamps.length);const exit=lamps[0],light=exit.intensity,start=soundCalls.filter(s=>s==='ballast'||s==='pipe-groan').length,ballastStart=soundCalls.filter(s=>s==='ballast').length;
+  f.game.pause();tick(3);assert.equal(soundCalls.filter(s=>s==='ballast'||s==='pipe-groan').length,start);assert.equal(exit.intensity,light);f.game.pause(false);tick(1.3);assert.equal(soundCalls.filter(s=>s==='ballast').length,ballastStart+1);tick(1);assert.equal(soundCalls.filter(s=>s==='ballast').length,ballastStart+1);assert.equal(exit.intensity,light);
+ }finally{f.close();}
+ const g=await officeAgencyInput({stage:'annex_arrival',notes:[],elapsed:650});try{assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);assert.ok(hauntLevel>=.3);assert.ok(renderedScene.children.find(o=>o.isHemisphereLight).intensity<.03);}finally{g.close();}
+});
+
+test('V134 the existing CCTV dialogue consumes new room-cue beats silently without a late burst',async()=>{
+ const f=await officeAgencyInput({stage:'archive_arrival',notes:['archive_road','archive_call','archive_gate'],elapsed:700});try{
+  f.use([1.85,1.65,-.45],[1.85,1.1575,-1.52]);assert.equal(f.game.snapshot().story.stage,'archive_playback');const before=soundCalls.filter(s=>['ballast','pipe-groan','wet-drop'].includes(s)).length;
+  tick(19.2);assert.equal(f.game.snapshot().story.stage,'archive_escape');tick(.3);assert.equal(soundCalls.filter(s=>['ballast','pipe-groan','wet-drop'].includes(s)).length,before);assert.ok(hauntLevel>=.3,'ambient bed returns after speech');
+ }finally{f.close();}
+});

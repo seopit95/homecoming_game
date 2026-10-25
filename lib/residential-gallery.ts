@@ -15,7 +15,7 @@ import type{Solid,Target}from'./world.ts';import type{Action,Stage,Story}from'./
 function tools(root:T.Group,solids:Solid[],lamps:T.PointLight[]){
  const floor=surface('oldTile','#b0b1a4',{roughness:.68}),wall=surface('decayWall','#aab0a2'),concrete=surface('castConcrete','#8f9690'),steel=surface('steel','#7f8884',{roughness:.55,metalness:.4}),dark=new T.MeshStandardMaterial({color:'#101818',roughness:.9});
  function box(name:string,x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=root){const o=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);o.name=name;o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;parent.add(o);if(solid)solids.push({x,y,z,w,h,d});return o;}
- function light(x:number,y:number,z:number,power=3){const l=new T.PointLight('#91a69a',power,7);l.position.set(x,y,z);l.userData.base=power;root.add(l);lamps.push(l);return l;}
+ function light(x:number,y:number,z:number,power=3){const l=new T.PointLight('#91a69a',power,7);l.position.set(x,y,z);l.userData.base=power;l.userData.moodSeed=Math.abs(Math.round((root.userData.floorNo??0)*71+x*11+z*17));root.add(l);lamps.push(l);return l;}
  function display(x:number,y:number,z:number,text:string){const c=document.createElement('canvas');c.width=256;c.height=128;const ctx=c.getContext('2d')!,map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;const m=new T.MeshBasicMaterial({map}),o=new T.Mesh(new T.PlaneGeometry(.38,.17),m);o.position.set(x,y,z);root.add(o);return{mesh:o,update(t:string){ctx.fillStyle='#0a1010';ctx.fillRect(0,0,256,128);ctx.fillStyle='#b88161';ctx.font='70px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,128,70);map.needsUpdate=true;},init(){this.update(text);}};}
  return{floor,wall,concrete,steel,dark,box,light,display};
 }
@@ -24,7 +24,7 @@ function tools(root:T.Group,solids:Solid[],lamps:T.PointLight[]){
 //28F,24F and20F. Only floor numbers and actual door states vary.
 export function buildResidentialGallery(root:T.Group,area:'landing'|'corridor'|'transfer',preview=false){
  const G=R.gallery,floorNo=area==='landing'?28:area==='transfer'?20:24,solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[],a=tools(root,solids,lamps),{box}=a;
- root.name=`residential-gallery-${floorNo}`;
+ root.name=`residential-gallery-${floorNo}`;root.userData.floorNo=floorNo;
  box('residential-gallery-floor',0,-.1,1,2.6,.2,44,a.floor);box('residential-gallery-ceiling',0,2.88,1,2.6,.16,44,a.concrete);
  box('gallery-lift-lobby-floor',1.15,-.1,-22.2,4.9,.2,4.4,a.floor);box('gallery-lift-lobby-ceiling',1.15,2.88,-22.2,4.9,.16,4.4,a.concrete);
  for(const [lo,hi]of[[-20.1,19.75],[21.25,23]])box('',1.3,1.4,(lo+hi)/2,.18,2.8,hi-lo,a.wall,true);

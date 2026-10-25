@@ -1,0 +1,8 @@
+import test from'node:test';import assert from'node:assert/strict';import{HorrorAudio}from'../lib/audio.ts';
+class Param{value=0;events=[];setValueAtTime(...a){this.events.push(a);}linearRampToValueAtTime(...a){this.events.push(a);}exponentialRampToValueAtTime(...a){this.events.push(a);}}
+class Node{gain=new Param();frequency=new Param();Q=new Param();pan=new Param();delayTime=new Param();links=[];connect(n){this.links.push(n);return n;}disconnect(){this.links=[];}start(...a){this.started=a;}stop(...a){this.stopped=a;}}
+test('V134 pipe and failing-ballast cues have bounded echo tails on the effects bus and release their graph',()=>{
+ for(const kind of ['pipe-groan','ballast']){const nodes=[],make=()=>{const n=new Node();nodes.push(n);return n;},audio=new HorrorAudio();audio.context={state:'running',currentTime:20,createGain:make,createStereoPanner:make,createBufferSource:make,createBiquadFilter:make,createOscillator:make,createDelay:make};audio.master=new Node();audio.effectsBus=new Node();audio.noise={duration:4};
+  audio.sound(kind,-.6,.7);assert.ok(nodes.some(n=>n.links.includes(audio.effectsBus)));assert.ok(nodes.some(n=>n.delayTime.events.length),'a physical-room echo is present');const source=nodes.find(n=>n.buffer);assert.ok(source.started&&source.stopped[0]>20&&source.stopped[0]<25);assert.ok(nodes.filter(n=>n.started).every(n=>n.stopped),'every source is bounded');assert.ok(nodes.flatMap(n=>n.gain.events).every(e=>Number.isFinite(e[0])&&e[0]>=0&&e[0]<=.7));source.onended();assert.ok(nodes.every(n=>n.links.length===0),'the tail cannot leak nodes between cues');
+ }
+});

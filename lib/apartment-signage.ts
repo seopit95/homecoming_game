@@ -12,7 +12,7 @@ function lettering(g:CanvasRenderingContext2D,text:string,x:number,y:number,size
  g.font=`${weight} ${size}px ${korean}`;g.fillStyle=color;g.textAlign=align;g.textBaseline='middle';g.fillText(text,x,y);
 }
 function printed(c:HTMLCanvasElement,key:(string|number|boolean)[]){
- const map=sharePrintedTexture(new T.CanvasTexture(c),['apartment-signage-v129',...key]);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;return map;
+ const map=sharePrintedTexture(new T.CanvasTexture(c),['apartment-signage-v134',...key]);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;return map;
 }
 
 export type ApartmentPlaqueOptions={
@@ -21,36 +21,39 @@ export type ApartmentPlaqueOptions={
  position:[number,number,number];rotationY?:number;name?:string;lit?:boolean;
 };
 
-/** A modest enamel insert in a screwed, wall-mounted painted metal case. No light or collider. */
+/** Worn stencil lettering on a matte, wall-mounted steel plate. */
 export function createApartmentPlaque(parent:T.Object3D,options:ApartmentPlaqueOptions){
  const {text,code='',subtitle='',width:w,height:h,position,rotationY=0,name='apartment-plaque',lit=false}=options;
  const {c,g}=canvas(1024,Math.max(160,Math.round(1024*h/w))),H=c.height;
- const bg=lit?'#344c40':sheet,fg=lit?'#e0e6ce':ink;
- g.fillStyle=bg;g.fillRect(0,0,1024,H);g.fillStyle=lit?'#4a6050':'#c9c6b9';g.fillRect(0,0,1024,3);g.fillRect(0,H-3,1024,3);
- const left=code?220:58,right=970,available=right-left;
+ const bg='#272729',fg='#d7d1c5';
+ g.fillStyle=bg;g.fillRect(0,0,1024,H);
+ // Edge wear has a stable pattern per plate size; the centre stays legible.
+ for(let i=0;i<176;i++){const x=(i*137+text.length*29)%1024,y=i%2?H-3-(i*7%18):i*11%19;g.fillStyle=i%3?'#373431':'#62554a';g.fillRect(x,y,2+i%17,1+i%3);}
+ g.fillStyle='#696158';g.fillRect(18,16,988,1);g.fillRect(18,H-17,988,1);
+ const left=code?202:58,right=966,available=right-left;
  if(code){
-  g.fillStyle=green;g.fillRect(0,0,164,H);
+  g.fillStyle='#686055';g.fillRect(173,H*.22,1,H*.56);
   const size=H*.34;g.font=`650 ${size}px ${korean}`;
   const measured=g.measureText?.(code).width??size*code.length*.65;
-  lettering(g,code,82,H/2,size*Math.min(1,138/Math.max(1,measured)),650,'#e3e4d6','center');
+  lettering(g,code,91,H/2,size*Math.min(1,138/Math.max(1,measured)),650,'#b8aa95','center');
  }
- else{g.fillStyle=green;g.fillRect(28,H*.24,5,H*.52);}
+ else{g.fillStyle='#8b6655';g.fillRect(29,H*.30,3,H*.40);}
  const titleSize=Math.min(H*(subtitle ? .38 : .52),available/(text.length+.35));
  lettering(g,text,left,H*(subtitle ? .36 : .51),titleSize,700,fg);
- if(subtitle)lettering(g,subtitle,left,H*.75,Math.min(H*.205,available/(subtitle.length+.35)),500,lit?'#c1cbb4':'#657067');
+ if(subtitle)lettering(g,subtitle,left,H*.75,Math.min(H*.205,available/(subtitle.length+.35)),500,'#a6a097');
  const group=new T.Group();group.name=name;group.position.set(...position);group.rotation.y=rotationY;group.userData.apartmentPlaque=true;parent.add(group);
- const metal=surface('paintedMetal','#777d73',{metalness:.35,roughness:.65});
+ const metal=surface('paintedMetal','#393736',{metalness:.5,roughness:.84});
  const backing=new T.Mesh(softBox(w+.048,h+.048,.026,.004),metal);backing.name=`${name}-backing`;backing.position.z=.013;backing.receiveShadow=true;group.add(backing);
  // The narrow raised rim encloses the insert without masking any printed letters.
  for(const [x,y,ww,hh] of [[0,-h/2-.012,w+.048,.012],[0,h/2+.012,w+.048,.012],[-w/2-.012,0,.012,h],[w/2+.012,0,.012,h]]){
   const rim=new T.Mesh(new T.BoxGeometry(ww,hh,.005),metal);rim.position.set(x,y,.026);group.add(rim);
  }
- const fastener=new T.MeshStandardMaterial({color:'#555c54',metalness:.6,roughness:.58});
+ const fastener=new T.MeshStandardMaterial({color:'#625b54',metalness:.6,roughness:.68});
  for(const x of [-w/2-.012,w/2+.012])for(const y of [-h/2-.012,h/2+.012]){
   const screw=new T.Mesh(new T.CylinderGeometry(.004,.004,.003,8),fastener);screw.name=`${name}-${x}-${y}-screw`;screw.rotation.x=Math.PI/2;screw.position.set(x,y,.028);group.add(screw);
-  const slot=new T.Mesh(new T.BoxGeometry(.005,.0009,.0005),new T.MeshStandardMaterial({color:'#343a34',roughness:.9}));slot.position.set(x,y,.0297);group.add(slot);
+  const slot=new T.Mesh(new T.BoxGeometry(.005,.0009,.0005),new T.MeshStandardMaterial({color:'#262423',roughness:.9}));slot.position.set(x,y,.0297);group.add(slot);
  }
- const map=printed(c,['code-fit',text,code,subtitle,w,h,lit]),material=lit?new T.MeshBasicMaterial({map}):new T.MeshStandardMaterial({map,roughness:.87});
+ const map=printed(c,['stencilled-steel',text,code,subtitle,w,h,lit]),material=new T.MeshStandardMaterial({map,roughness:.88,emissiveMap:lit?map:null,emissive:'#d4c9b5',emissiveIntensity:lit?.2:0});
  const face=new T.Mesh(new T.PlaneGeometry(w,h),material);face.name=`${name}-face`;face.position.z=.0265;face.userData.text=text;group.add(face);
  return {group,face};
 }

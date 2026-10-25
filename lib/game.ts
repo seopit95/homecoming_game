@@ -1,5 +1,6 @@
 import {residentialRoute as R,isTransferStage} from './residential-route.ts';
 import {createHomeSearch,stepHomeSearch,type HomeSearch} from './home-search.ts';
+import {escapeMood,escapeLamp,escapeCue} from './escape-atmosphere.ts';
 import {courtyardSky} from './materials.ts';
 import * as T from 'three';
 import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive,plantProblem,plantRoute,annexTapeDuration,courtCallTimes,courtCallDuration} from './expansion-story.ts';
@@ -71,7 +72,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   const alarmSounding=()=>parkingAlarmAt>=0&&elapsed-parkingAlarmAt<5;
   let shelter:HidingPlace|null=null,shelterSeen=false,hideSearchAt=-1,hidePassedAt=-1,shelterTorch=false,hideInvestigate=false;
   let shelterMotion:{kind:'enter'|'exit';time:number;from:T.Vector3;to:T.Vector3;yaw:number;pitch:number}|null=null,hideSweep=0;
-  let homeWitnessed=false,homeInterest:Point|undefined,homeSearch:HomeSearch|undefined,homeCue=0,stairDoorHeard=false;
+  let homeWitnessed=false,homeInterest:Point|undefined,homeSearch:HomeSearch|undefined,homeCue=0,stairDoorHeard=false,atmosphereBeat=0;
+  const atmosphereSource=new T.Vector3(),lampPosition=new T.Vector3();
   let previousSearch=-1,searchPlan=shelterSearchPlan(),hideStopAt=-1;
   const concealed=()=>story.hidden||shelter!==null;
   const protectedInShelter=()=>story.hidden||shelter!==null&&!shelterMotion;
@@ -170,8 +172,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     scene.background=next==='courtyard'?(skyBackground??nightBackground):nightBackground;scene.backgroundIntensity=next==='courtyard'?.035:1;
     world.root.removeFromParent();area=next;world=preparedWorld(area);world.reset();scene.add(world.root);camera.position.copy(world.spawn);if(story.stage==='resident_arrival')camera.position.set(0,1.65,11.2);yaw=world.heading;pitch=0;
     hover=undefined;holdProgress=0;holding=false;doorOpen=0;lastDisplay='';enemyPath=[];repathAt=0;scriptBeat=0;threat=0;lastSound=elapsed;lastBreath=elapsed;lastDrip=elapsed;
-    areaTime=0;entranceDelay=0;arrivalPursuit=false;arrivalDoor=undefined;arrivalDoorRelease=-1;lureUsed=false;crouched=false;walkPhase=0;lastSeen=null;inspectAt=-1;tracking=false;seenAt=elapsed;patrol=0;voiceBeat=0;noiseRadius=0;noiseUntil=0;whisper='';lastVoice=elapsed-8;audio.stopVoices();
+    areaTime=0;atmosphereBeat=0;entranceDelay=0;arrivalPursuit=false;arrivalDoor=undefined;arrivalDoorRelease=-1;lureUsed=false;crouched=false;walkPhase=0;lastSeen=null;inspectAt=-1;tracking=false;seenAt=elapsed;patrol=0;voiceBeat=0;noiseRadius=0;noiseUntil=0;whisper='';lastVoice=elapsed-8;audio.stopVoices();
     chaseAt=-1;surging=false;corridorReleaseAt=-1;parkingAlarmAt=-1;chapterUntil=elapsed+4.5;ambient.intensity=area==='parking'?.06:area==='resident'?.035:area==='aftermath'?.24:.075;lastGhostPosition.copy(world.figure.position);ghostMotion=0;
+    (scene.fog as T.FogExp2).color.set(escapeMood(area,story.stage)?'#080a0f':'#14191d');
     (scene.fog as T.FogExp2).density=area==='corridor'?.026:area==='parking'?.021:.016;
     if(area==='landing'||area==='corridor'){world.figure.visible=true;world.figure.position.set(area==='landing'?3.7:.95,0,area==='landing'?landing.homeZ:19.2);world.figure.lookAt(camera.position.x,0,camera.position.z);chapterUntil=elapsed+1.7;}
     // Retry uses the same two-turn entrance as the continuous corridor arrival.
@@ -852,7 +855,18 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(stageTime>1.2&&scriptBeat===0){scriptBeat=1;audio.sound('drag',-.7);ghostVoice('cry',true);}
       if(stageTime>=2.8){advance('heard');say('현관은 닫혀 있다. 소리는 다용도실 안에서 난다.\n이미 집 안에 있었다. 장롱에 숨어야 한다.',7);}
     }
-    if(area!=='lift'&&elapsed-lastDrip>7.8){audio.sound('drip',Math.sin(elapsed*.37)*.8,area==='stairs'||area==='parking'?.8:.35);lastDrip=elapsed;}
+    if(escapeMood(area,story.stage)&&!isCinematic(story.stage)){
+      const cue=escapeCue(area,atmosphereBeat);
+      if(cue&&areaTime>=cue.at){
+        atmosphereBeat++;
+        if(story.stage!=='archive_playback'&&!(area==='parking'&&alarmSounding())){
+          let nearest:T.PointLight|undefined,distance=Infinity;
+          for(const lamp of world.lamps){if(lamp.userData.exitCue)continue;lamp.getWorldPosition(lampPosition);const d=lampPosition.distanceToSquared(camera.position);if(d<distance){distance=d;nearest=lamp;}}
+          if(nearest){nearest.getWorldPosition(atmosphereSource);const dx=atmosphereSource.x-camera.position.x,dz=atmosphereSource.z-camera.position.z,d=Math.sqrt(distance),pan=T.MathUtils.clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/Math.max(1,d),-1,1);audio.sound(cue.kind,pan,cue.level*Math.min(1,5/Math.max(1,d)));}
+        }
+      }
+    }
+    if(!escapeMood(area,story.stage)&&area!=='lift'&&elapsed-lastDrip>7.8){audio.sound('drip',Math.sin(elapsed*.37)*.8,area==='stairs'||area==='parking'?.8:.35);lastDrip=elapsed;}
     if(story.stage==='lift_climb'&&stageTime>=R.climbSeconds){advance('climbed');camera.position.set(0,1.65,-21.7);yaw=Math.PI;pitch=0;chapterUntil=0;say('층수만 다를 뿐, 집 앞과 같은 복도다.',4);}
     if(story.stage==='transfer_wait'&&stageTime>.65){advance('arrived');audio.sound('chime',0,.5);}
     if(story.stage==='transfer_ride'){if(elapsed-lastSound>1.8){audio.sound('motor',0,.35);lastSound=elapsed;}if(stageTime>=R.secondRideSeconds){advance('stopped');audio.sound('chime',0,.65);say('1층. 지하주차장은 계단으로 가야 한다.',5);}}
@@ -951,7 +965,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     if(story.stage==='wake_ring'){camera.position.set(...home.sleep);pitch=.85*(1-T.MathUtils.smoothstep(stageTime,1,4.8));yaw=.45;}
     if(story.stage==='sleep'){camera.position.set(...home.sleep);pitch=.85+T.MathUtils.smoothstep(stageTime,0,5)*.15;yaw=0;}
     if(area==='apartment')(scene.fog as T.FogExp2).density=.016;
-    if(area==='stairs')ambient.intensity=T.MathUtils.lerp(.045,.025,T.MathUtils.smoothstep(-playerGround(),0,11.2));
+    const mood=escapeMood(area,story.stage);
+    if(mood){ambient.intensity=area==='stairs'?T.MathUtils.lerp(.022,.012,T.MathUtils.smoothstep(-playerGround(),0,11.2)):area==='parking'?.028:.023;}
     if(world.figure.visible&&story.stage!=='dying'&&story.stage!=='ended')animateGhost(world.figure,time,ghostMotion,threat,reducedMotion,walkPhase,crawling()?(area==='landing'?T.MathUtils.smoothstep(areaTime-entranceDelay,0,.5):1):0,area==='stairs'?ghostHeight:area==='plant'||area==='courtyard'||area==='resident'&&arrivalPursuit?world.heightAt:undefined,world.solids,!concealed()&&chaseStages.includes(story.stage)&&(tracking||area==='landing')?1:0);
     
     if(evidenceReaction&&!reducedMotion){
@@ -977,13 +992,15 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       delta.set(-deathDirection.z,0,deathDirection.x).multiplyScalar(2.2).addScaledVector(deathDirection,.5).add(deathOrigin);delta.y=deathFloor+.05;
       flashlight.target.position.copy(deathLightAim).lerp(delta,T.MathUtils.smoothstep(stageTime,0,.18));
     }
-    flashlight.intensity=torch&&!concealed()&&story.stage!=='road_exit'?42:0;fill.position.copy(camera.position);fill.intensity=story.stage==='dying'?1.1:concealed()||story.stage==='road_exit'?.025:.035;
+    flashlight.intensity=torch&&!concealed()&&story.stage!=='road_exit'?(mood?34:42):0;fill.position.copy(camera.position);fill.intensity=story.stage==='dying'?1.1:concealed()||story.stage==='road_exit'?.025:.035;
     const powered=story.stage==='tv';world.shoes.visible=area==='apartment'&&!['drive','impact','flee','sleep','tv','wake_ring','light_switch','find_torch','phone','power'].includes(story.stage);
     if(area==='apartment'){ambient.intensity=powered?.45:.035;world.setTV?.(started&&story.stage==='tv',time);}
     for(let i=0;i<world.lamps.length;i++){
       const base=typeof world.lamps[i].userData.base==='number'?world.lamps[i].userData.base:area==='apartment'?(powered?6:0):area==='lift'&&['pry','lift_exit'].includes(story.stage)?1:area==='landing'?(i%4===2?.35:4.3):area==='corridor'?4.2:7;
-      world.lamps[i].intensity=base*(powered||story.stage==='dying'?1:.4)*(!reducedMotion&&i%3===1?.86+Math.sin(time*7)*.08:1);
-      const bulb=world.lamps[i].userData.bulb as T.MeshStandardMaterial|undefined;if(bulb)bulb.emissiveIntensity=powered?.35:0;
+      const lamp=world.lamps[i],seed=lamp.userData.moodSeed??Math.abs(Math.round(lamp.position.x*11+lamp.position.z*17+lamp.position.y*7));
+      const voltage=mood?escapeLamp(time,seed,reducedMotion,!!lamp.userData.exitCue):.4*(!reducedMotion&&i%3===1?.86+Math.sin(time*7)*.08:1);
+      lamp.intensity=base*(powered||story.stage==='dying'?1:voltage);
+      const bulb=world.lamps[i].userData.bulb as T.MeshStandardMaterial|undefined;if(bulb)bulb.emissiveIntensity=powered?.35:mood?.7*voltage:0;
     }
     world.radioLight.intensity=story.stage==='radio'&&!evidenceReaction?1.5:0;world.phoneGlow.intensity=['wake_ring','light_switch','find_torch'].includes(story.stage)?.2:0;
     const courtPhone=area==='courtyard'&&courtCallAt<0&&story.notes.includes('court_evidence')&&!story.notes.includes('court_phone')?world.targets.find(t=>t.id==='court_phone')?.point:undefined;
@@ -1106,7 +1123,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     audio.setBreathStrain(canFeelBreath()?breathStrain:0);
     audio.setExertion(started&&!isCinematic(story.stage)&&!['ended','dying'].includes(story.stage)?playerBreathLevel(heldBreath,breathLoad,concealed()):0);
     if(!started||isCinematic(story.stage)||['ended','dying'].includes(story.stage)||!world.figure.visible)audio.setGhostPosition(null);
-    audio.setHaunt(started&&!isCinematic(story.stage)&&story.stage!=='ended'&&area!=='aftermath'?(tracking?Math.min(.9,.2+threat*.7):story.stage==='hide'?.65:world.figure.visible?.1+threat*.22:0):0);
+    audio.setHaunt(started&&!isCinematic(story.stage)&&!['dying','ended'].includes(story.stage)&&area!=='aftermath'?Math.max(tracking?Math.min(.9,.2+threat*.7):story.stage==='hide'?.65:world.figure.visible?.1+threat*.22:0,escapeMood(area,story.stage)?story.stage==='archive_playback'?.16:.32:0):0);
     const chasing=started&&!concealed()&&world.figure.visible&&chaseStages.includes(story.stage)&&(tracking||story.stage==='hide'||area==='landing'||area==='stairs'||area==='transfer');
     audio.setChase(chasing?T.MathUtils.clamp(.5+threat*.6+(surging?.12:0),0,1):0);
     world.answeringMachine?.setPlayback(recordingAt<0?null:elapsed-recordingAt);

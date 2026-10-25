@@ -252,9 +252,18 @@ export class HorrorAudio {
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.voiceBus!);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }
-  sound(kind:'wet-drop'|'door-creak'|'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren'|'wiper'|'vibrate'|'brake'|'crash'|'glass',pan=0,level=1,spatial=false){
+  sound(kind:'pipe-groan'|'ballast'|'wet-drop'|'door-creak'|'step'|'knock'|'click'|'phone'|'dread'|'breath'|'drag'|'fall'|'drip'|'slam'|'metal'|'motor'|'chime'|'alarm'|'tap'|'siren'|'wiper'|'vibrate'|'brake'|'crash'|'glass',pan=0,level=1,spatial=false){
     const ctx=this.context;if(!ctx||!this.master||ctx.state!=='running')return;
     const t=ctx.currentTime, g=ctx.createGain(), p=ctx.createStereoPanner();p.pan.value=spatial?0:pan;g.connect(p);p.connect(spatial&&this.ghostFilter?this.ghostFilter:this.effectsBus!);
+    if(kind==='pipe-groan'||kind==='ballast'){
+      const pipe=kind==='pipe-groan',duration=pipe?2.1:.85,source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),body=ctx.createOscillator(),bodyGain=ctx.createGain(),echo=ctx.createDelay(.6),feedback=ctx.createGain(),tail=ctx.createGain();
+      source.buffer=this.noise;filter.type='bandpass';filter.frequency.setValueAtTime(pipe?350:2700,t);filter.frequency.exponentialRampToValueAtTime(pipe?85:680,t+duration);filter.Q.value=pipe?5:2.5;source.connect(filter);filter.connect(g);
+      body.type='triangle';body.frequency.setValueAtTime(pipe?87:100,t);body.frequency.exponentialRampToValueAtTime(pipe?43:75,t+duration);bodyGain.gain.value=pipe?.11:.025;body.connect(bodyGain);bodyGain.connect(g);
+      echo.delayTime.setValueAtTime(pipe?.27:.17,t);feedback.gain.value=.24;tail.gain.value=.24;g.connect(echo);echo.connect(feedback);feedback.connect(echo);echo.connect(tail);tail.connect(p);
+      g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(level*(pipe?.24:.12),t+(pipe?.26:.06));g.gain.exponentialRampToValueAtTime(.0001,t+duration);
+      source.start(t);body.start(t);source.stop(t+duration+1.2);body.stop(t+duration+1.2);
+      source.onended=()=>{for(const node of[source,filter,body,bodyGain,echo,feedback,tail,g,p])node.disconnect();};return;
+    }
     if(kind==='wet-drop'||kind==='door-creak'){
       const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),body=ctx.createOscillator(),bodyGain=ctx.createGain(),wet=kind==='wet-drop',duration=wet?.65:1.05;
       source.buffer=this.noise;filter.type=wet?'lowpass':'bandpass';filter.frequency.setValueAtTime(wet?1800:420,t);filter.frequency.exponentialRampToValueAtTime(wet?350:105,t+duration);filter.Q.value=wet?.8:9;
