@@ -2,6 +2,7 @@ import * as T from 'three';
 import {configureShadow} from './lighting.ts';
 import {buildRoadStreet} from './road-street.ts';
 import {createDrivingCar} from './driving-car.ts';
+import {createVehicleWreck} from './vehicle-wreck.ts';
 import {createDumpTruck} from './dump-truck.ts';
 import {createSedan,sedanWindshieldPoint} from './sedan.ts';
 import {createDrivingHands} from './driving-hands.ts';
@@ -62,7 +63,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const rainPoints=[];for(let i=0;i<600;i++){const x=Math.sin(i*73.1)*8,y=(i*.173)%7,z=escapeDrive?-150+(i*7.31)%267:-42+(i*7.31)%53;rainPoints.push(x,y,z,x-.025,y-.22,z);}
   const rain=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(rainPoints,3)),new T.LineBasicMaterial({color:'#a4bcc9',transparent:true,opacity:.2,depthWrite:false}));root.add(rain);
   const car=new T.Group();car.name='memory-car';root.add(car);
-  const drivingCar=createDrivingCar(escapeDrive);car.add(drivingCar.root);
+  const drivingCar=createDrivingCar(escapeDrive);car.add(drivingCar.root);const vehicleWreck=escapeDrive?createVehicleWreck(drivingCar.root):undefined;
   const wheel=drivingCar.root.getObjectByName('hero-steering-wheel')!;
   let memoryHands:T.Group|undefined;
   if(!escapeDrive)memoryHands=createDrivingHands(wheel);
@@ -133,7 +134,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     label('백로아파트  출구',2.7,.35,[1.65,2.48,118.1]);
     for(const z of [122,128,134,140,146]){box(1.65,2.65,z,1,.05,.18,warm);const light=new T.PointLight('#8fada8',4,7);light.position.set(1.65,2.5,z);root.add(light);}
   }
-  const facePosition=new T.Vector3(),carriedBag=new T.Vector3(),contactBounds=new T.Box3();
+  const facePosition=new T.Vector3(),carriedBag=new T.Vector3(),contactBounds=new T.Box3(),driverGaze=new T.Vector3(.88889,1.29444,.14444);
   const exitPath=new T.CatmullRomCurve3([[-.38,1.22,-.24],[-.72,1.28,-.12],[-1.25,1.34,-.06],[-1.3,1.65,.43]].map(p=>new T.Vector3(...p as [number,number,number])));
   const inspectPath=new T.CatmullRomCurve3([[-1.3,1.65,.43],[-1.36,1.65,-.6],[-1.36,1.65,-2.15],[-1.23,1.65,-2.6],[-.55,1.65,-2.7],[.65,1.65,-2.7],[1.3,1.65,-2.6]].map(p=>new T.Vector3(...p as [number,number,number])));
   function aftermathView(t:number,camera:T.PerspectiveCamera,reduced:boolean){
@@ -164,12 +165,13 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     const speed=crashing&&t>=endingBeats.impact?0:Math.min(14,carExitSpeed+clock*4);
     const jolt=!reduced&&hit>0?Math.exp(-hit*4.5)*Math.sin(hit*31):0;
     car.rotation.z=jolt*.018;
-    const truckZ=145-travel(impactClock)-2.27-3.02-18.5*(impactClock-clock)+push;
-    truck!.root.position.set(T.MathUtils.lerp(-1.65,1.65,T.MathUtils.smoothstep(clock,beforeCrash-3,beforeCrash+1)),0,truckZ);
-    truck!.root.rotation.y=crashing&&t>=1?0:.055*Math.sin(Math.PI*T.MathUtils.smoothstep(clock,beforeCrash-3,beforeCrash+1));
-    truck!.root.visible=clock>=finale.car_escape!.duration-1;truck!.pose(clock*18.5+push);
+    const truckZ=145-travel(impactClock)-2.27-3.02-endingBeats.truckSpeed*(impactClock-clock)+push+crush*.7;
+    truck!.root.position.set(T.MathUtils.lerp(-1.65,1.65,T.MathUtils.smoothstep(clock,beforeCrash-2.4,impactClock-.08)),0,truckZ);
+    truck!.root.rotation.y=crashing&&t>=endingBeats.forwardEnd?0:.055*Math.sin(Math.PI*T.MathUtils.smoothstep(clock,beforeCrash-2.4,impactClock-.08));
+    truck!.root.visible=clock>=finale.car_escape!.duration-1;truck!.pose(clock*endingBeats.truckSpeed+push);
     passenger!.visible=!driving&&hit<.8;
-    animateGhostPassenger(passenger!,clock,0,reduced,true);
+    const lean=driving?0:T.MathUtils.smoothstep(speaking?t:finale.car_voice!.duration,.55,1.75)*(1-T.MathUtils.smoothstep(hit,.03,.35));
+    animateGhostPassenger(passenger!,clock,0,reduced,true,lean,driverGaze);
     passenger!.getObjectByName('ghost-blood-drips')!.visible=false;
     const passengerHead=passenger!.getObjectByName('ghost-head')!;
     camera.position.set(1.27,1.22-T.MathUtils.smoothstep(hit,.18,1.45)*.39,z+push-.24-T.MathUtils.smoothstep(hit,0,.16)*.14+jolt*.024);
@@ -179,9 +181,9 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     const collapse=T.MathUtils.smoothstep(hit,.12,1.25);
     camera.rotation.set(T.MathUtils.lerp(T.MathUtils.lerp(-.055,Math.atan2(face.y,Math.hypot(face.x,face.z)),turn),-.67,collapse)+jolt*.06,T.MathUtils.lerp(Math.atan2(-face.x,-face.z)*turn,-.08,collapse),reduced?0:T.MathUtils.smoothstep(hit,.25,1.45)*.27+jolt*.045,'YXZ');
     const steer=crashing?-.32*T.MathUtils.smoothstep(hit,0,.25):Math.sin(clock*.6)*.025;
-    shattered!.visible=crush>0;cracks.visible=false;revealLight!.intensity=driving?0:.92*(1-T.MathUtils.smoothstep(hit,.1,.8));(cracks.material as T.LineBasicMaterial).opacity=.2+crush*.7;
+    shattered!.visible=crush>0&&crush<.8;cracks.visible=false;revealLight!.intensity=driving?0:.92*(1-T.MathUtils.smoothstep(hit,.1,.8));(cracks.material as T.LineBasicMaterial).opacity=.2+crush*.7;
     victim.visible=false;bag.visible=false;phone.visible=false;looseShoe.visible=false;message.visible=false;
-    drivingCar.pose(clock+18,0,true,steer,crush,speed);
+    drivingCar.pose(clock+18,0,true,steer,crush,speed);vehicleWreck!.pose(crush);
     windshieldMat.uniforms.time.value=clock;
     rain.position.set(0,-(clock*4.6)%6,0);
     streetLights.forEach((light,i)=>{const lampZ=-135+(Math.floor((z+135)/18)-2+i)*18;light.position.set(3.8,5.25,lampZ);light.target.position.set(1.7,0,lampZ);});
@@ -192,8 +194,8 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   function aftermathPose(camera:T.PerspectiveCamera,reduced:boolean){
     finalPose('car_crash',finale.car_crash!.duration,camera,reduced);
     const z=car.position.z;
-    camera.position.set(car.position.x+4.2,1.5,z+2.5);
-    camera.lookAt(car.position.x-.6,.75,z+.9);
+    camera.position.set(car.position.x-3.8,2.1,z-2.2);
+    camera.lookAt(car.position.x,.72,z-.7);
   }
   function pose(stage:Stage,time:number,camera:T.PerspectiveCamera,reduced:boolean){
     if(escapeDrive){const speed=stage==='ended'?(aftermathPose(camera,reduced),0):finalPose(stage,Math.max(0,time),camera,reduced);camera.position.applyMatrix4(root.matrix);camera.quaternion.premultiply(root.quaternion);camera.updateMatrixWorld();return speed;}
@@ -257,5 +259,5 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     batch.forEach(m=>{m.geometry.dispose();owner.remove(m);});
   }
   }
-  return {root,pose,renderMirror,setDepartureFrame(frame:T.Matrix4){frame.decompose(root.position,root.quaternion,root.scale);root.updateMatrixWorld(true);},dispose(){mirrorTarget.dispose();}};
+  return {root,pose,renderMirror,setDepartureFrame(frame:T.Matrix4){frame.decompose(root.position,root.quaternion,root.scale);root.updateMatrixWorld(true);},dispose(){vehicleWreck?.dispose();mirrorTarget.dispose();}};
 }

@@ -32,13 +32,13 @@ test('V127 the approaching dump truck has a supported cab, tipper and chassis wi
   }finally{road.dispose();}
 });
 
-test('V127 the driver continuously turns forward before the head-on bumper contact',()=>{
+test('V135 the driver turns forward continuously before the faster head-on contact',()=>{
   const road=buildRoad(new T.Scene(),true),c=camera();
   try{
-    road.pose('car_voice',4.999,c,true);const endVoice=c.quaternion.clone();
+    road.pose('car_voice',2.999,c,true);const endVoice=c.quaternion.clone();
     road.pose('car_crash',0,c,true);assert.ok(c.quaternion.angleTo(endVoice)<.002,'stage boundary keeps the passenger view');
     let prior=c.quaternion.clone(),priorYaw=Math.abs(c.rotation.y);
-    for(let t=.02;t<=1.2;t+=.02){road.pose('car_crash',t,c,true);assert.ok(c.quaternion.angleTo(prior)<.12,'no hard cut to the windshield');assert.ok(Math.abs(c.rotation.y)<=priorYaw+.002,'head turns toward the road');prior.copy(c.quaternion);priorYaw=Math.abs(c.rotation.y);}
+    for(let t=.02;t<=finaleTiming.forwardEnd+.001;t+=.02){road.pose('car_crash',t,c,true);assert.ok(c.quaternion.angleTo(prior)<.12,'no hard cut to the windshield');assert.ok(Math.abs(c.rotation.y)<=priorYaw+.002,'head turns toward the road');prior.copy(c.quaternion);priorYaw=Math.abs(c.rotation.y);}
     assert.ok(Math.abs(c.rotation.y)<.03,'driver faces forward before impact');
     const truck=road.root.getObjectByName('finale-dump-truck');assert.ok(truck);
     road.pose('car_voice',0,c,true);const first=truck.position.clone();assert.ok(first.x<0,'truck starts in the opposite lane');
@@ -56,13 +56,13 @@ test('V127 the driver continuously turns forward before the head-on bumper conta
   }finally{road.dispose();}
 });
 
-test('V127 the injured passenger remains seated inside the cabin without reaching at the driver',()=>{
+test('V135 the passenger leans toward the driver while feet and hands remain supported inside the cabin',()=>{
   const road=buildRoad(new T.Scene(),true),c=camera();
   try{
-    for(const [stage,t] of [['car_voice',3.5],['car_voice',4.9],['car_crash',0],['car_crash',.4],['car_crash',1.2]]){
+    for(const [stage,t] of [['car_voice',0],['car_voice',1.3],['car_voice',2.8],['car_crash',0],['car_crash',.4]]){
       road.pose(stage,t,c,true);road.root.updateMatrixWorld(true);
       const figure=road.root.getObjectByName('finale-passenger'),car=road.root.getObjectByName('hero-sedan'),bounds=vertices(figure,car);
-      assert.ok(bounds.min.x>0&&bounds.max.x<.79,'complete adult figure stays on passenger side');
+      assert.ok(bounds.min.x>-.7&&bounds.max.x<.79,'leaning adult remains within the actual cabin width');
       assert.ok(bounds.min.y>.272&&bounds.max.y<1.46,'feet and wet hair remain above floor, skull below roof');
       assert.ok(bounds.min.z>-.98&&bounds.max.z<.48,'body stays inside the front footwell and rear of the passenger seat');
       for(const side of [-1,1]){const hand=figure.getObjectByName(`ghost-hand-${side}`).getWorldPosition(new T.Vector3()).applyMatrix4(car.matrixWorld.clone().invert());assert.ok(hand.x>.15&&hand.y<.85,'hands rest at the lap throughout the scream and turn');}

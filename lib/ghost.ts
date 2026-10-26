@@ -331,9 +331,9 @@ function poseCrawlKnee(rig:Rig,i:number,target:T.Vector3,blend:number){
   ankle.quaternion.slerp(shin.clone().invert(),blend);
 }
 
-export function animateGhostPassenger(figure:T.Group,time:number,scare:number,reducedMotion:boolean,cabinReach=false){
+export function animateGhostPassenger(figure:T.Group,time:number,scare:number,reducedMotion:boolean,cabinReach=false,lean=0,gaze?:T.Vector3){
   const rig=poseGhost(figure,time,0,1,reducedMotion,0);if(!rig)return;
-  rig.torso.position.set(0,.81,.03);rig.head.position.y-=.02;rig.torso.rotation.set(.08,0,-.12);
+  rig.torso.position.set(.40*lean,.81+.015*lean,.03);rig.head.position.y-=.02;rig.torso.rotation.set(.08,0,-.12-.66*lean);
   for(let i=0;i<2;i++){rig.legs[i].position.set((i===0?-1:1)*.12,.61,.04);rig.legs[i].rotation.set(-1.75,0,0);rig.knees[i].rotation.set(2.28,0,0);rig.ankles[i].rotation.set(-.53,0,0);rig.arms[i].rotation.set(-.55-(cabinReach?0:scare*.65),0,(i===0?-1:1)*.18);rig.forearms[i].rotation.set(-.85,0,0);}
   // Plant the complete feet ahead of the cushion frame. The old fixed angles
   // folded the heels under the seat even though the visible toes looked clear.
@@ -355,6 +355,7 @@ export function animateGhostPassenger(figure:T.Group,time:number,scare:number,re
     palm.quaternion.copy(upper.quaternion).multiply(lower.quaternion).invert().multiply(orientation);
   }
   rig.head.rotation.set(.05,cabinReach?1.18:-.7,-.26+(reducedMotion?0:Math.sin(time*21)*.025*scare));
+  if(gaze&&lean>0){const rest=rig.head.quaternion.clone();rig.head.lookAt(figure.localToWorld(gaze.clone()));rig.head.quaternion.slerpQuaternions(rest,rig.head.quaternion.clone(),lean);}
   rig.head.position.z+=scare*.055;anchorHeadAtNeck(rig.head,rig.headOffset);poseFace(rig.face,scare);rig.tails.scale.y=.68;
   poseDress(rig.gown,rig.hem,rig.torso,rig.knees,0,true);
   settleHair(rig.tails,figure,time,.25);poseArms(rig);bloodDrops(rig,time,.255);

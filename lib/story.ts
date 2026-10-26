@@ -43,7 +43,7 @@ export const finale:Partial<Record<Stage,{duration:number;action:Action;label:st
 };
 // Reuse the same bank clip at the first phone and after the final escape.
 export const phoneCallback={clip:'archive-lock',finalStage:'car_escape',at:6.4} as const;
-export const finaleTiming={turn:.25,reveal:1.45,forwardStart:.08,forwardEnd:.78,impact:1.35} as const;
+export const finaleTiming={turn:.25,reveal:1.45,forwardStart:.02,forwardEnd:.60,impact:.78,truckSpeed:32} as const;
 export function isFinale(stage:Stage){return finale[stage]!==undefined;}
 export function isCinematic(stage:Stage){return isMemory(stage)||isFinale(stage)||stage==='lift_climb';}
 export const residentEvidence=['belongings','answerphone','portrait','resident_shift'] as const;

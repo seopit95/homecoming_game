@@ -6,7 +6,7 @@ import {roundPipe} from './props.ts';
 import {buildStairDoor,setDoorAngle} from './passage.ts';
 import {createApartmentPlaque} from './apartment-signage.ts';
 import {nightWindow} from './japan.ts';
-import {residentialRoute as R,isTransferStage} from './residential-route.ts';
+import {residentialRoute as R} from './residential-route.ts';
 import {createLiftClimb} from './lift-climb.ts';
 import {buildGroundSupport} from './ground-support.ts';
 import {apartmentEscapeLayout} from './escape-layout.ts';
@@ -26,7 +26,7 @@ export function buildResidentialGallery(root:T.Group,area:'landing'|'corridor'|'
  const G=R.gallery,floorNo=area==='landing'?28:area==='transfer'?20:24,solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[],a=tools(root,solids,lamps),{box}=a;
  root.name=`residential-gallery-${floorNo}`;root.userData.floorNo=floorNo;
  box('residential-gallery-floor',0,-.1,1,2.6,.2,44,a.floor);box('residential-gallery-ceiling',0,2.88,1,2.6,.16,44,a.concrete);
- box('gallery-lift-lobby-floor',1.15,-.1,-22.2,4.9,.2,4.4,a.floor);box('gallery-lift-lobby-ceiling',1.15,2.88,-22.2,4.9,.16,4.4,a.concrete);
+ box('gallery-lift-lobby-floor',1.15,-.1,-21.375,4.9,.2,2.75,a.floor);box('gallery-lift-lobby-ceiling',1.15,2.88,-21.375,4.9,.16,2.75,a.concrete);
  for(const [lo,hi]of[[-20.1,19.75],[21.25,23]])box('',1.3,1.4,(lo+hi)/2,.18,2.8,hi-lo,a.wall,true);
  box('',1.3,2.64,20.5,.18,.32,1.5,a.wall);box('',3.6,1.4,-22.1,.18,2.8,4.6,a.wall,true);box('',2.45,1.4,-20.05,2.3,2.8,.18,a.wall,true);
  box('',-1.3,.44,1,.14,.88,44,a.concrete,true);
@@ -96,6 +96,8 @@ export function buildResidentialLift(root:T.Group){
  createApartmentPlaque(root,{text:'1',width:.12,height:.14,position:[.961,1.3,-.45],rotationY:-Math.PI/2});createApartmentPlaque(root,{text:'운행층 1–28',subtitle:'지하주차장: 1층 계단 이용',width:1.4,height:.24,position:[0,2,1.329],rotationY:Math.PI});
  a.light(0,2.6,0,3);const display=a.display(0,2.54,-1.235,'28');display.init();
  const climb=createLiftClimb(root),figure=createGhost(root);figure.visible=false;const bounds={x:.98,z:1.28};
- function updateStory(stage:Stage,_time:number,_reduced:boolean){const transfer=isTransferStage(stage),opened=['lift_exit','lift_climb','transfer_exit'].includes(stage);groundRoot.visible=transfer;galleryRoot.visible=!transfer;ledge.visible=!transfer;const ledgeIndex=solids.indexOf(ledgeBlock);if(transfer&&ledgeIndex>=0)solids.splice(ledgeIndex,1);else if(!transfer&&ledgeIndex<0)solids.push(ledgeBlock);shaft.visible=!opened;const fraction=T.MathUtils.clamp((-.315-left.position.x)/.64,0,1);gallery.liftDoors.left.position.x=-.315-fraction*.64;gallery.liftDoors.right.position.x=.315+fraction*.64;bounds.z=opened?3.3:1.28;climb.root.visible=stage==='lift_climb';}
- return{solids,targets,lamps,shoes:new T.Group(),figure,phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds,spawn:new T.Vector3(0,1.65,.7),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:{left,right,blocks},setDisplay:display.update,fallingFigure:undefined,carDeparture:undefined,climb,updateStory,reset(){climb.reset();}};
+ function updateStory(stage:Stage,_time:number,_reduced:boolean){const stalled=['pry','lift_exit','lift_climb'].includes(stage),opened=['lift_exit','lift_climb','transfer_exit'].includes(stage);groundRoot.visible=stage==='transfer_exit';galleryRoot.visible=stalled;ledge.visible=stalled;const ledgeIndex=solids.indexOf(ledgeBlock);if(!stalled&&ledgeIndex>=0)solids.splice(ledgeIndex,1);else if(stalled&&ledgeIndex<0)solids.push(ledgeBlock);shaft.visible=!opened;const fraction=T.MathUtils.clamp((-.315-left.position.x)/.64,0,1);gallery.liftDoors.left.position.x=-.315-fraction*.64;gallery.liftDoors.right.position.x=.315+fraction*.64;bounds.z=opened?3.3:1.28;climb.root.visible=stage==='lift_climb';}
+ function reset(){climb.reset();galleryRoot.visible=groundRoot.visible=ledge.visible=false;shaft.visible=true;bounds.z=1.28;const index=solids.indexOf(ledgeBlock);if(index>=0)solids.splice(index,1);}
+ reset();
+ return{solids,targets,lamps,shoes:new T.Group(),figure,phoneGlow:new T.PointLight(),radioLight:new T.PointLight(),bounds,spawn:new T.Vector3(0,1.65,.7),heading:0,heightAt:(_x:number,_z:number)=>0,liftDoors:{left,right,blocks},setDisplay:display.update,fallingFigure:undefined,carDeparture:undefined,climb,updateStory,reset};
 }
