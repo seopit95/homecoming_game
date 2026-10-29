@@ -50,3 +50,5 @@
 참고한 방식: [프로젝트 지도 경험담](https://www.reddit.com/r/KoreanGameDev/comments/1wn1wuq/), [플레이어 피드백·UI 논의](https://www.reddit.com/r/KoreanGameDev/comments/1wvj3iz/), [결정·근거를 짧게 남기는 개발 워크플로](https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex). 토큰 절감률을 측정한 자료는 아니다.
 
 V132 속도 위치: `lib/pursuit.ts`의 구간별 고정 pace. 집/한서연의 집은 직전 대비 각각 약3.4%/4.9% 상향, 보관실·지하계단은 기본3.05. `game.ts`의 이동 계수/보폭/문 회전 제한을 그대로 거치며 순간이동·추가 보관함·필수 아이템은 추가하지 않는다.
+
+2026-10-29 아내·가족 이야기: `lib/family-story.ts`의 관리실 세 물건/사고 전 편지 → `expansion-story.ts`·`ground-support.ts`·`game.ts`의 기존 archive ID/라벨/상호작용, `investigation.ts`의 획득 범위, `app/ending-screen.tsx`의 경찰 다시방 조사와 전문. 기존 동선/저장 형식 유지. 검증은 `docs/quality/2026-10-29-family-story.md`. 여성 성우 울음 녹음은 `public/audio/ghost-v136/`(CC BY3.0), `lib/audio.ts`의 cry 경로와 자연 속도, 후일담 크레딧. 범위/직접 청취 제한은 `docs/quality/2026-10-29-female-sob.md`.

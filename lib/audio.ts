@@ -7,7 +7,7 @@ export {smartphoneRing} from './smartphone-audio.ts';
 export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'male-terror'|'lift-scratch'|'female-collision-scream'|'collision-impact'|'phone-ring'|'mobile-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
 const archiveCues={road:[['collision-impact',4.2]],call:[['archive-guard',.2],['archive-denial',8]],gate:[['archive-lock',5.8]]} as const;
 export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'capture'|'memory'|'no';
-const ghostVoiceFiles:Partial<Record<GhostLine,string>>={scream:'/audio/ghost-v126/capture-scream.wav',capture:'/audio/ghost-v127/capture.wav',no:'/audio/ghost-v127/refusal-ko.wav'};
+const ghostVoiceFiles:Partial<Record<GhostLine,string>>={cry:'/audio/ghost-v136/female-sob.wav',scream:'/audio/ghost-v126/capture-scream.wav',capture:'/audio/ghost-v127/capture.wav',no:'/audio/ghost-v127/refusal-ko.wav'};
 const recordedFiles:Partial<Record<RecordedClip,string>>={'passenger-line':'/audio/ghost-v127/passenger-line.wav','male-terror':'/audio/ghost-v127/male-terror.wav','lift-scratch':'/audio/ghost-v127/lift-scratch.wav'};
 // Local voice clips and procedural effects share a bounded master volume.
 export class HorrorAudio {
@@ -248,7 +248,7 @@ export class HorrorAudio {
     this.stopVoices();const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain(),panner=ctx.createStereoPanner(),delay=ctx.createDelay(.5),echo=ctx.createGain();
     // Keep the distress performance intact; only a quiet early room reflection follows it.
     const distress=line==='scream'||line==='no'||line==='capture';
-    source.buffer=buffer;source.playbackRate.value=distress||line==='memory'?1:line==='cry'?.94:.86;filter.type='lowpass';filter.frequency.value=occluded?650:distress?11000:line==='memory'?2800:2400;gain.gain.value=.64*level*(line==='scream'?1.2:1);panner.pan.value=Math.max(-1,Math.min(1,pan));delay.delayTime.value=distress?.035:.23;echo.gain.value=distress?.04:.22;
+    source.buffer=buffer;source.playbackRate.value=distress||line==='memory'||line==='cry'?1:.86;filter.type='lowpass';filter.frequency.value=occluded?650:distress?11000:line==='cry'?6000:line==='memory'?2800:2400;gain.gain.value=.64*level*(line==='scream'?1.2:1);panner.pan.value=Math.max(-1,Math.min(1,pan));delay.delayTime.value=distress?.035:.23;echo.gain.value=distress?.04:.22;
     source.connect(filter);filter.connect(gain);gain.connect(panner);gain.connect(delay);delay.connect(echo);echo.connect(panner);panner.connect(this.voiceBus!);
     this.voiceSource=source;this.voiceNodes=[source,filter,gain,panner,delay,echo];source.start();source.onended=()=>{this.cleanupTimer=setTimeout(()=>this.stopVoices(),350);};
   }

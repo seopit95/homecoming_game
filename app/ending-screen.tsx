@@ -49,7 +49,7 @@ export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRes
       <details className="epilogue-record"><summary>마지막 기록 · {duration}</summary><p>{endings.crashed}</p></details>
       <details className="epilogue-record"><summary>경찰이 회수한 편지 전문</summary><p>{wifeLetter}</p></details>
       <button type="button" className="epilogue-credits-toggle" aria-expanded={showCredits} onClick={()=>setShowCredits(!showCredits)}>크레딧 {showCredits?'−':'＋'}</button>
-      {showCredits&&<div className="epilogue-credits"><p>귀가 (歸家) · 한밤의 귀가 기록</p><dl><div><dt>주요 음향 자료</dt><dd>Kenney · dslrguide · tonsil5<br/>CC0</dd></div><div><dt>주요 환경 질감</dt><dd>Poly Haven · CC0</dd></div><div><dt>후일담 장면</dt><dd>게임 속 차량과 도로의 3D 장면</dd></div></dl><p>그리고 이 밤을 끝까지 걸어온 당신.</p></div>}
+      {showCredits&&<div className="epilogue-credits"><p>귀가 (歸家) · 한밤의 귀가 기록</p><dl><div><dt>주요 음향 자료</dt><dd>Kenney · dslrguide · tonsil5<br/>CC0</dd></div><div><dt>여성 흐느낌</dt><dd><a href="https://opengameart.org/content/crying-female-low-tone-voice-over-vocal-sound-for-character" target="_blank" rel="noreferrer">Crying female low tone Voice Over · JeanMyna_VA / Jean Myna</a><br/><a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a> · WAV 변환, 가장자리 페이드, 음량 조정</dd></div><div><dt>주요 환경 질감</dt><dd>Poly Haven · CC0</dd></div><div><dt>후일담 장면</dt><dd>게임 속 차량과 도로의 3D 장면</dd></div></dl><p>그리고 이 밤을 끝까지 걸어온 당신.</p></div>}
     </div>}
     <footer className="epilogue-footer"><span>귀가 (歸家)</span><span>{complete?'기록 종료':'마지막으로 남은 것'}</span></footer>
   </section>;

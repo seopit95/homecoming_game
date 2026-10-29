@@ -1,0 +1,20 @@
+female-sob.wav
+
+"Crying female low tone Voice Over | Vocal sound for character"
+by JeanMyna_VA / Jean Myna (@JeanMyna_VA)
+https://opengameart.org/content/crying-female-low-tone-voice-over-vocal-sound-for-character
+Original file: https://opengameart.org/sites/default/files/4_cry_1.ogg
+
+Licensed under Creative Commons Attribution 3.0 Unported (CC BY 3.0).
+https://creativecommons.org/licenses/by/3.0/
+https://creativecommons.org/licenses/by/3.0/legalcode
+
+Changes for Homecoming 03:17: converted the complete Ogg performance to
+24 kHz mono PCM16 WAV, applied 5 ms/15 ms edge fades, matched the RMS level
+to the previous game clip (approximately -0.10 dB gain). No dialogue was
+generated. Runtime playback uses natural speed, positional gain/panning,
+wall filtering and a quiet room reflection.
+
+This credit and license apply to this audio performance, not the entire
+game. The creator does not endorse the game. No additional restrictions
+on reuse of the licensed audio are imposed.

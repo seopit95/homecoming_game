@@ -293,3 +293,8 @@ bone lengths. Hands and rear feet spread farther sideways, elbows and knees
 flare above them around a low suspended torso. The clearance envelope reads
 the widened shape before gathering in narrow spaces. No extra insect limbs,
 root scale enlargement or separate passenger model was introduced.
+
+
+## 여성 성우 흐느낌 녹음 (2026-10-29)
+
+`public/audio/ghost-v136/female-sob.wav` uses **Crying female low tone Voice Over | Vocal sound for character** by **JeanMyna_VA / Jean Myna**, published as RAW female voice acting at [OpenGameArt](https://opengameart.org/content/crying-female-low-tone-voice-over-vocal-sound-for-character), under [CC BY 3.0 Unported](https://creativecommons.org/licenses/by/3.0/). The full performance was converted to 24 kHz mono PCM16 WAV, given 5/15 ms edge fades and approximately −0.10 dB gain to match the old clip RMS. Runtime uses natural speed, preserves positional gain/occlusion and room echo. Attribution, links, modifications and source/output hashes are in the adjacent LICENSE.txt and sources.json, and the ending credits link both creator work and license. This is a credited voice-actor performance, not generated dialogue or a claim of documentary distress.

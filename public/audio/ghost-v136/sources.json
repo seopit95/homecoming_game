@@ -1,0 +1,33 @@
+{
+  "creator": "JeanMyna_VA / Jean Myna",
+  "title": "Crying female low tone Voice Over | Vocal sound for character",
+  "sourcePage": "https://opengameart.org/content/crying-female-low-tone-voice-over-vocal-sound-for-character",
+  "sourceDownload": "https://opengameart.org/sites/default/files/4_cry_1.ogg",
+  "license": "CC BY 3.0 Unported",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "sourceSha256": "f1bdc965fb57827d803c0f4e07e8cad3a2a749a4f23d3a818a5bc499439957ab",
+  "outputFile": "female-sob.wav",
+  "outputSha256": "0b6daca2b9001b6140fafa2087f3642a1554b61d2cff2fe6d9c62b66190aed88",
+  "sampleRate": 24000,
+  "channels": 1,
+  "sampleFormat": "PCM16 WAV",
+  "duration": 5.566916666666667,
+  "bytes": 267256,
+  "changes": {
+    "trim": "none; complete performance retained",
+    "resample": "96000 Hz -> 24000 Hz mono with macOS afconvert",
+    "edgeFadesMs": [
+      5,
+      15
+    ],
+    "rmsGain": 0.9880751435183885,
+    "rmsGainDb": -0.10420051767202931,
+    "runtime": "natural speed 1, clear lowpass 6000 Hz; old 650 Hz occlusion, gain/pan, 230 ms 22% room echo and triggers retained"
+  },
+  "measurements": {
+    "oldRmsDbFS": -22.952909279125162,
+    "newRmsDbFS": -22.95290670835003,
+    "newPeakDbFS": -4.568648672752327,
+    "clippedSamples": 0
+  }
+}
