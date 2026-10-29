@@ -22,6 +22,25 @@ Object.defineProperty(globalThis,'document',{value:doc,configurable:true});
 const win=new EventTarget();Object.assign(win,{devicePixelRatio:1,matchMedia:()=>({matches:true})});Object.defineProperty(globalThis,'window',{value:win,configurable:true});
 Object.assign(globalThis,{ResizeObserver:class{observe(){}disconnect(){}},requestAnimationFrame:fn=>{nextFrame=fn;return 1;},cancelAnimationFrame:()=>{nextFrame=undefined;}});
 const {createGame}=await import('../lib/game.ts');
+
+test('V136 the three real management keepsakes reveal a wife without changing the safe CCTV escape flow',async()=>{
+ const f=await officeAgencyInput({stage:'archive_arrival',notes:[],elapsed:900});
+ const {buildWorld,disposeWorld}=await import('../lib/world.ts'),w=buildWorld(new THREE.Scene(),'archive');
+ try{
+  for(const [id,meaning] of [['archive_road',/결혼|아내/],['archive_call',/빚|상담/],['archive_gate',/편지|여보/]]){
+   const t=w.targets.find(t=>t.id===id),at=t.mesh.userData.approach;
+   f.use([at.x,1.65,at.z],t.point.toArray());
+   assert.match(f.game.snapshot().message,meaning,id+' actually shows its story on interaction');
+   assert.ok(f.game.snapshot().story.notes.includes(id));
+   assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);
+  }
+  assert.equal(f.game.snapshot().story.stage,'archive_reveal');
+  const t=w.targets.find(t=>t.id==='archive_play'),at=t.mesh.userData.approach;
+  f.use([at.x,1.65,at.z],t.point.toArray());tick(19.2);
+  assert.equal(f.game.snapshot().story.stage,'archive_escape');
+  assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);
+ }finally{f.close();disposeWorld(w.root);}
+});
 const event=(target,type,properties)=>{const e=new Event(type);Object.assign(e,properties);target.dispatchEvent(e);};
 function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.min(.025,left)*1000;nextFrame(clock);}}
 

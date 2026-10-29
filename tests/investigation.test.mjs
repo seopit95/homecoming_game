@@ -3,6 +3,25 @@ import assert from 'node:assert/strict';
 import {investigation} from '../lib/investigation.ts';
 import {journalEntry} from '../lib/story.ts';
 
+test('the wife relationship is earned from the family keepsake and does not expose the recovered letter',()=>{
+ const before=investigation({notes:['wake','annex_badge']});
+ assert.doesNotMatch(before.person.text??'',/아내/);
+ const after=investigation({notes:['wake','archive_road']});
+ assert.equal(after.person.name,'한서연');assert.match(after.person.text,/아내/);
+ assert.match(after.sections.flatMap(s=>s.records).find(r=>r.id==='archive_road').text,/결혼/);
+ assert.equal(after.pattern,null,'a family photograph is not proof of the missing nine seconds');
+ assert.doesNotMatch(JSON.stringify(after),/경찰이.*다시방|차량에서 회수한 편지/);
+});
+
+test('old earned family records survive loading without introducing a second home for the wife',()=>{
+ const result=investigation({notes:['belongings','resident_key','resident_shift','portrait','answerphone','archive_road']});
+ assert.equal(result.count,6);assert.equal(result.person.name,'한서연');
+ assert.doesNotMatch(JSON.stringify(result),/1704호|야간 당직/);
+ assert.ok(result.sections.flatMap(s=>s.records).some(r=>r.text.includes('2803호')));
+ const photo=investigation({notes:['portrait']});
+ assert.match(photo.person.text,/우리 셋이/);assert.doesNotMatch(photo.person.text,/오후 두 시/);
+});
+
 test('the notebook never turns an unheard recording into a confirmed confession',()=>{
  const empty=investigation({notes:[]});assert.equal(empty.count,0);assert.equal(empty.timeline.length,0);assert.ok(!JSON.stringify(empty).includes('한서연'));
  assert.ok(!JSON.stringify(investigation({notes:['wake']}).timeline).includes('원본'),'the opening memory cannot announce an undiscovered original recording');

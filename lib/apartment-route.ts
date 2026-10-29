@@ -1,7 +1,7 @@
 import type {Action,Stage,Story} from './story.ts';
 
 const records=['archive_road','archive_call','archive_gate'] as const;
-const labels=['사고 기록','통화 기록','입차 기록'];
+const labels=['결혼사진','상담 메모','전달 쪽지'];
 const readyFoyer=(s:Pick<Story,'notes'>):Stage=>['annex_map','annex_badge'].every(id=>s.notes.includes(id))?'annex_exit_ready':s.notes.some(id=>id==='annex_map'||id==='annex_badge')?'annex_unlock':'annex_arrival';
 const note=(s:Story,id:string,stage:Stage=s.stage):Story=>({...s,stage,notes:[...new Set([...s.notes,id])]});
 export function apartmentRouteTransition(s:Story,a:Action):Story|undefined{
@@ -46,7 +46,7 @@ export function apartmentRouteObjective(s:Story):string|undefined{
   const count=records.filter(id=>s.notes.includes(id)).length,missing=labels.filter((_,i)=>!s.notes.includes(records[i]));
   return `기록 확인 ${count}/3 · ${missing.join(' · ')}. 책상에 놓인 세 기록을 확인한다.`;
  }
- if(s.stage==='archive_reveal')return '세 기록의 시각이 이어졌다. 책상 CCTV의 「누락 영상 재생」을 누른다.';
+ if(s.stage==='archive_reveal')return '아내가 남긴 세 물건과 사고 기록이 이어졌다. 책상 CCTV의 「누락 영상 재생」을 누른다.';
  if(s.stage==='archive_playback')return 'CCTV 재생 중 · 문을 잠갔던 아홉 초. 아직 살아 있었다.';
  if(s.stage==='archive_escape')return '문밖에서 긁는 소리. 「B1 주차장」 방화문을 열어 내려간다.';
  if(s.stage==='archive_departure')return '뒤돌아보지 말고 지하계단으로!';

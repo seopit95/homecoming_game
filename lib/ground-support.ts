@@ -8,6 +8,7 @@ import {createCRT,createCrtSocket,crtCable} from './crt-monitor.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {createGhost} from './ghost.ts';
 import {archiveReplay} from './expansion-story.ts';
+import {familyRecords} from './family-story.ts';
 import {apartmentEscapeLayout} from './escape-layout.ts';
 import {createApartmentPlaque,apartmentEvacuationTexture} from './apartment-signage.ts';
 import type {Action,Stage,Story} from './story.ts';
@@ -92,8 +93,8 @@ export function buildGroundSupport(root:T.Group,area:'annex'|'archive',preview=f
   const street=new T.Group();street.name='annex-street-vista';root.add(street);box(bx+1.4,-.1,.5,2.8,.2,5.5,tile,false,street);box(bx+3.3,-.14,.5,1.2,.12,7,surface('asphalt','#484f48'),false,street);
   const barrier=new T.Group();barrier.name='annex-fallen-work-barrier';street.add(barrier);const warning=surface('paintedMetal','#b39d58');for(const z of[-.8,1.8]){box(bx+.95,.04,z,.65,.08,.14,steel,false,barrier);roundPipe(barrier,[bx+1.16,.08,z],[bx+.72,.72,z],.025,steel);roundPipe(barrier,[bx+.72,.72,z],[bx+.55,0,z],.025,steel);}for(const y of[.31,.67])box(bx+.72,y,.5,.06,.09,2.8,warning,false,barrier);print('보수 공사 · 통행 금지',bx+.68,.5,.5,1.7,.22,-Math.PI/2,barrier);box(bx+.53,.06,.15,.55,.12,.8,plaster,false,street);box(bx+1.05,.04,1.1,.7,.08,.4,lower,false,street);
  }else{
-  const board=box(-bx+.12,1.48,3.2,.06,.75,1.3,steel);board.name='archive-usage-board';const ledger=print('관리사무소 · 기록 확인\n세 기록을 읽고 CCTV 재생\n출구: B1 비상계단',-bx+.1505,1.48,3.2,1.2,.65,Math.PI/2);target('archive_ledger','관리사무소 기록 이용 안내',ledger,[-bx+.17,1.48,3.2],[-1.95,3.2]);
-  for(const [id,name,title,x,z,az]of[['archive_road','road','1 사고기록\n03:17 횡단보도',-1.85,1.7,2.75],['archive_call','call','2 통화기록\n03:20 비상벨',-1.85,-.7,.45],['archive_gate','gate','3 입차기록\n03:26 B1 주차장',1.85,1.7,2.75]] as const){const desk=table(`archive-${name}-desk`,x,z),record=folder(`archive-record-${name}`,title,x,z,desk);target(id,title.replace('\n',' · '),record,[x,.85,z+.04],[x,az]);}
+  const board=box(-bx+.12,1.48,3.2,.06,.75,1.3,steel);board.name='archive-usage-board';const ledger=print('관리사무소 · 2803호 보관물\n세 물건을 읽고 CCTV 재생\n출구: B1 비상계단',-bx+.1505,1.48,3.2,1.2,.65,Math.PI/2);target('archive_ledger','관리사무소 기록 이용 안내',ledger,[-bx+.17,1.48,3.2],[-1.95,3.2]);
+  for(const [id,name,title,x,z,az]of[['archive_road','road',familyRecords.archive_road.label,-1.85,1.7,2.75],['archive_call','call',familyRecords.archive_call.label,-1.85,-.7,.45],['archive_gate','gate',familyRecords.archive_gate.label,1.85,1.7,2.75]] as const){const desk=table(`archive-${name}-desk`,x,z),record=folder(`archive-record-${name}`,title,x,z,desk);target(id,title.replace('\n',' · '),record,[x,.85,z+.04],[x,az]);}
   chair(-1.85,-1.6);const shelf=storageShelf(1.5,.45,steel,storageMaterials(),13);shelf.name='archive-office-files';shelf.position.set(-2.86,0,-2.8);shelf.rotation.y=Math.PI/2;root.add(shelf);solids.push({x:-2.86,z:-2.8,w:.45,d:1.5,y:1.03,h:2.06});
   const desk=table('archive-cctv-desk',1.85,-1.65,1.8,.85),crt=createCRT();crt.root.name='archive-cctv-monitor';crt.root.position.set(1.85,.8205,-1.55);crt.root.userData.support=desk.name;root.add(crt.root);chair(1.85,-2.65);
   const screen=createSurveillance('archive');crt.screenMount.add(screen);surveillance=screen.userData.surveillance;target('archive_play','CCTV 누락 영상 재생',crt.root,[1.85,1.1575,-1.52],[1.85,-.45]);

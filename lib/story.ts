@@ -6,8 +6,8 @@ export type Action = ExpansionAction|'climbed'|'ground_arrived'|'shelter'|'home_
 export type Story = {stage:Stage;hidden:boolean;ending:'crashed'|'caught'|null;resume:Stage;notes:string[];circuit:Action[];officeSupply:boolean;tapeIndex:number;code?:string};
 export const chaseStages:Stage[]=['transfer_gallery','transfer_wait','transfer_enter','court_search','court_code','court_safe_open','court_unlocked','court_departure','office_departure','annex_arrival','annex_fuse','annex_restore','annex_search','annex_unlock','annex_exit_ready','annex_departure','archive_search','archive_edit','archive_reveal','archive_playback','archive_escape','archive_departure','plant_isolate','plant_power','plant_drain','plant_exit_ready','plant_departure','hide','escape','lift_call','lift_wait','lift_enter','corridor_run','corridor_departure','stairs_loop','stairs_descent','stairs_clue','stairs_reverse','stairs_passage','office_record','office_fuse','office_power','office_tape','office_playback','office_key','office_leave','parking_gate','parking_key','parking_pump','parking_alarm','parking_run','resident_arrival','resident_entry','resident_memory','resident_return','resident_departure'];
 export const opening:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={
-  drive:{duration:20,action:'collision',label:'사흘 전 · 새벽 03:17',text:'술을 마셨다.\n대리운전은 두 번 취소됐다.',cues:[
-    {at:4,text:'집까지 세 블록.\n그 정도는 괜찮다고 생각했다.'},
+  drive:{duration:20,action:'collision',label:'사흘 전 · 새벽 03:17',text:'사업이 무너진 뒤 술로 밤을 보냈다.\n그날도 술을 마신 채 운전대를 잡았다.',cues:[
+    {at:4,text:'집까지 세 블록.\n운전하면 안 됐지만, 괜찮다고 우겼다.'},
     {at:8.5,text:'백로아파트. 매일 다니던 길이었다.'},
     {at:12,text:''},
     {at:15.9,text:'휴대전화가 진동했다.'},
@@ -25,8 +25,8 @@ export const opening:Partial<Record<Stage,{duration:number;action:Action;label:s
     {at:2.6,text:'백미러 속 횡단보도가 멀어졌다.'},
     {at:5.4,text:'뒤를 다시 보지 않았다.'},
   ]},
-  sleep:{duration:8,action:'wake',label:'그날 새벽 · 28층 2803호',text:'집에 돌아와 젖은 신발을 벗었다.',cues:[
-    {at:3,text:'신고하지 않았다.\n아무에게도 말하지 않았다.'},
+  sleep:{duration:8,action:'wake',label:'그날 새벽 · 28층 2803호',text:'집에 돌아와 젖은 신발을 벗었다.\n아이는 외할머니 댁에 있었다.',cues:[
+    {at:3,text:'아이의 「아빠」라는 목소리만 떠올랐다.\n신고하지 않았다. 아무에게도 말하지 않았다.'},
     {at:6,text:''},
   ]},
 };
@@ -38,7 +38,7 @@ export const carExitSpeed=10;
 export const finale:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={
   car_departure:{duration:carDepartureDuration,action:'car_departed',label:'B1 · 운전석',text:'문을 연다.',cues:[{at:5.5,text:'문이 잠겼다.'},{at:6,text:'시동이 걸렸다. 차량 셔터가 올라간다.'},{at:8.4,text:'앞만 보고 액셀을 밟았다.'},{at:11.7,text:''}]},
   car_escape:{duration:10,action:'passenger',label:'제 11장 · 동승자',text:'경사로 끝. 도로가 보인다.',cues:[{at:3,text:'경사로가 뒤로 멀어졌다.'},{at:6,text:'이제… 빠져나왔다.'},{at:6.4,text:'딸깍. 처음 전화에서 들었던 잠금음.\n수화기 속 빗소리와 와이퍼… 이 차 안의 소리였다.'},{at:8.5,text:'처음부터 나를 밖으로 부른 것이 아니었다.\n다시 이 자리에 앉히고 있었다.'}]},
-  car_voice:{duration:3,action:'wreck',label:'03:17 · 조수석',text:'「이번에도… 혼자 가려고?」',cues:[{at:4.1,text:''}]},
+  car_voice:{duration:3,action:'wreck',label:'03:17 · 조수석의 아내',text:'「이번에도… 혼자 가려고?」',cues:[{at:4.1,text:''}]},
   car_crash:{duration:5.5,action:'fatal',label:'03:17',text:'',cues:[{at:3,text:'브레이크를 밟기에는 늦었다.'}]},
 };
 // Reuse the same bank clip at the first phone and after the final escape.
@@ -235,7 +235,7 @@ export const objectives:Record<Stage,string>={lift_climb:'문턱을 짚고 올�
   parking_gate:'주차장. 내 차만 그대로 서 있다. 출구 쪽에는 물이 차 있다.',parking_key:'내 차 오른쪽 조수석 문을 열고 가방에서 설비 열쇠를 찾으세요',parking_pump:'물이 계속 밀려든다. 펌프보다 먼저 유입을 멈춰야 한다.',parking_alarm:'열쇠를 챙겼다. 운전석으로. 경보기는 다섯 초 동안 시선을 돌릴 수 있다.',parking_run:'경보가 멎으면 달려온다. 기둥과 차체로 시야를 끊고 운전석으로!',resident_arrival:'1704호. 전화벨과 명패의 이름이 겹친다. 한서연.',resident_departure:'연결문이 열렸다. 뒤에서는 더 이상 발소리가 나지 않는다.',resident_entry:'1704호. 현관에 그 신발 한 짝이 남아 있다',resident_memory:'서재의 수첩과 서랍을 살펴 연결문 열쇠를 찾으세요',resident_return:'연결문 열쇠를 챙겼다. 뒤쪽 1703호로 피하세요',road_exit:'03:17. 이번에는 차 문을 연다',road_evidence:'횡단보도 위에 떨어진 가방을 확인한다',road_call:'가방 곁의 금 간 전화기를 든다. 이번에는 신고한다',road_wait:'도망치지 않고, 구조를 기다린다',car_departure:'',car_escape:'',car_voice:'',car_crash:'',dying:'',ended:'',
 };
 export const journal:Partial<Record<Action,{title:string;text:string}>>={
-  home_repair:{title:'2803호 · 신고보다 먼저',text:'식탁 위 차량 수리 견적. 앞범퍼와 우측 헤드램프. 내일 오전 입고 예약. 아래에 「고객 요청: 보험 접수 없이」라고 적혀 있다.\n\n사고 다음 날, 사진을 보내고 견적을 받았다. 어디에 부딪혔느냐는 물음에 주차장 기둥이라고 답했다. 신고 전화 대신 수리점을 찾아봤다. 내가 사흘 동안 아무것도 하지 않은 것은 아니었다.'},
+  home_repair:{title:'2803호 · 신고보다 먼저',text:'식탁 위 차량 수리 견적. 앞범퍼와 우측 헤드램프. 내일 오전 입고 예약. 아래에 「고객 요청: 보험 접수 없이」라고 적혀 있다.\n\n사업이 무너지고 빚이 쌓인 뒤 술로 밤을 넘겼다. 기억이 듬성듬성 비는 날이 있었지만, 이것은 내가 날짜까지 정해 예약한 일이었다.\n\n사고 다음 날, 사진을 보내고 견적을 받았다. 어디에 부딪혔느냐는 물음에 주차장 기둥이라고 답했다. 신고 전화 대신 수리점을 찾아봤다. 내가 사흘 동안 아무것도 하지 않은 것은 아니었다.'},
   gallery_notice:{title:'28층 · 열어 주지 않은 문',text:'101동 시설 점검 안내. 17층 외벽 공사로 관리실을 1703호로 옮겼다고 적혀 있다. 야간 당직 내선은 17. 아래에는 새 종이 한 장이 덧붙어 있다. 「2803호 방문 / 부재. 비상벨 통화 확인 요청.」\n\n나는 사흘 동안 집에 있었다. 초인종이 울려도 아무 소리도 내지 않았다. 집에 없는 척하면 그날도 지나갈 줄 알았다. 저 문이 내 문인데, 지금은 돌아갈 수가 없다.'},
   core_notice:{title:'24층 · 익숙한 안내판',text:'승강기 반대편에 비상계단이 있다. 관리실은 17층 공사 때문에 1703호로 옮겼고, 인접 세대와 이어진 연결문은 야간 통행 후 잠그라는 내용이다. 손때가 묻은 공용부 점검표. 평소에는 읽지도 않고 지나쳤다.\n\n층수는 24. 네 세대의 번호와 비상계단 위치까지 내가 알던 아파트 그대로다. 그런데 문 안에서는 아무 소리도 들리지 않는다. 집집마다 나처럼 숨을 죽이고 있는 것 같았다.'},
 
@@ -251,12 +251,12 @@ export const journal:Partial<Record<Action,{title:string;text:string}>>={
   valve_a:{title:'B1 · 서측 급수 밸브',text:'서측 급수관을 차단했다. 동측 밸브도 잠가야 펌프를 돌릴 수 있다.'},
   valve_b:{title:'B1 · 동측 급수 밸브',text:'동측 급수관을 차단했다. 두 급수관이 닫히면 서측 펌프를 가동한다.'},
   pump:{title:'B1 · 열린 퇴로',text:'차량 출구의 물이 빠졌다. 운전석으로 돌아가 경사로로 빠져나갈 수 있다. 차체와 기둥 뒤로 시야를 끊자. 필요하면 입구 경보로 반대쪽에서 소리를 낼 수 있다.'},
-  resident_drawer:{title:'1704호 · 서재의 서랍',text:'서재 책상의 가운데 서랍을 당겼다. 안에서 작은 금속이 나무에 부딪치는 소리가 난다. 서랍 앞을 막고 있다면 한 걸음 물러서야 한다.'},
-  resident_key:{title:'1704호 · 연결문 열쇠',text:'서랍 안의 닳은 열쇠. 작은 꼬리표에는 1703이라고 적혀 있다. 한서연이 집과 임시 관리실을 오가며 쓰던 연결문 열쇠다.\n\n열쇠를 집자 현관 쪽에서 젖은 발소리가 다시 들린다. 뒤쪽 연결문으로 나가야 한다.'},
-  resident_shift:{title:'1704호 · 끝내 지키지 못한 약속',text:'야간 당직 수첩 / 한서연.\n외벽 공사로 1703호를 임시 관리실로 사용한다. 퇴근 후 연결문은 잠글 것. 여벌 열쇠는 서재 책상 가운데 서랍에 보관.\n\n업무 기록 아래에 필체가 달라진다. 「내일 오후 두 시. 이번에는 꼭 갈 것.」 냉장고의 약속과 같은 시각이다. 사고 기록에는 사망자 한 명이라고 적힐 사람이, 여기에는 내일의 약속을 남겼다.'},
-  belongings:{title:'1704호 · 젖지 않은 신발 한 짝',text:'현관에는 검은 신발 한 짝과 접힌 우산이 있다. 찻잔은 식었고, 스마트폰에 남겨진 음성 메시지만 켜져 있다.\n\n신발장 위의 관리비 봉투. 1704호 / 한서연. 매일 이 문으로 돌아오던 사람이었다.\n\n벽에는 쪽지가 붙어 있다. 「야간 당직 한서연 / 내선 17. 외벽 공사 중 1703호를 임시 관리실로 사용합니다. 퇴근 후 연결문을 잠가 주세요. 여벌 열쇠 위치는 서재의 당직 수첩에 적어 두었습니다.」'},
-  portrait:{title:'1704호 · 냉장고의 약속',text:'비가 갠 강변에서 두 사람이 등을 보인 사진. 냉장고 문에 사진과 손으로 쓴 쪽지가 나란히 붙어 있다. 「다음에는 맑은 날에. 내일 오후 두 시.」\n\n누군가와 만나기로 한 약속. 사흘 전 그 사람에게는, 돌아와서 기다릴 내일이 있었다.'},
-  answerphone:{title:'1704호 · 마지막 음성메시지',text:'03:16. 「비가 너무 오네. 거의 다 왔어. 문 열어두지 말고 먼저 자. 내일 전화할게.」\n\n메시지가 끝난 줄 알았는데 녹음이 이어진다. 횡단보도 신호음. 타이어가 미끄러지는 소리.\n\n그 소리를 듣자 그날이 떠올랐다. 차에서 내려 쓰러진 사람을 봤다. 신고해야 한다는 걸 알면서도 다시 차로 돌아갔다. 문을 잠그고, 그 사람을 도로에 남겨 두었다.'},
+  resident_drawer:{title:"아내의 메모 · 서랍",text:"서연의 수첩에 적힌 서랍 위치. 작은 금속 열쇠가 들어 있었다. 열쇠를 찾는 나보다 먼저, 누군가는 이 길을 함께 나갈 생각을 했다."},
+  resident_key:{title:"공용부 · 연결문 열쇠",text:"관리용 연결문에 쓰던 닳은 열쇠. 한서연이 맡긴 물건에 여벌 열쇠의 위치가 함께 적혀 있었다. 지금의 관리사무소와 B1 주차장 동선은 1층 안내판에서 다시 확인해야 한다."},
+  resident_shift:{title:"아내의 수첩 · 다음 약속",text:"아내가 일하던 시간과 상담 예약이 같은 수첩에 적혀 있다. 「내일 오후 두 시. 이번에는 같이 갈 것.」 빚을 정리할 방법을 찾는 일도, 내 손을 놓지 않는 일도 혼자 애쓰고 있었다."},
+  belongings:{title:"가족의 보관물 · 한서연",text:"접힌 우산과 검은 신발, 한서연이 맡긴 보관 봉투. 실제 등록 주소는 2803호. 서연은 내 아내였다. 한때는 우리 셋이 돌아올 집이었다. 장을 보고 돌아오던 아내를 그날의 도로에 남겨 두었다."},
+  portrait:{title:"냉장고의 사진 · 함께 살던 날",text:"신혼집 앞에서 찍은 사진과 아이가 태어난 날의 사진. 뒷면에 「다음에는 맑은 날에. 우리 셋이.」라고 적혀 있다. 사고 기록의 한 사람이 아니라, 나와 내일을 약속하던 아내였다."},
+  answerphone:{title:"03:16 · 남겨진 음성메시지",text:"「비가 너무 오네. 거의 다 왔어.」 서연의 목소리 뒤로 횡단보도 신호음과 타이어 소리가 이어진다. 장을 보고 돌아오던 길이었다. 신고해야 한다는 걸 알면서도 나는 차로 돌아가 문을 잠갔다."},
   wake:{title:'사흘 전 · 내가 외면한 밤',text:'술을 마신 채 차를 몰았다. 백로아파트 앞 횡단보도에서 여성을 치었다. 새벽 03:17.\n\n차에서 내려 쓰러진 여자를 확인했다. 신고해야 했다. 그런데 나는 다시 차에 탔다. 문을 잠그고 현장을 떠나 2803호로 돌아왔다. 그 자리에서 죽었다고 생각했다. 숨을 확인하지도 않았으면서. 아무에게도 말하지 않았다.\n\n사흘이 지났다. 매일 그 시각에 눈이 떠진다. 오늘은 전화벨에 잠이 깼다. 스위치를 눌러도 불이 들어오지 않는다.'},
   phone:{title:'28층 · 정전 뒤의 전화',text:'스마트폰에서 빗소리와 와이퍼 소리, 차 문이 잠기는 소리가 들렸다.\n「문 잠가도… 소용없어.」\n\n현관에는 젖은 검은 신발이 놓여 있었다. 그날 차 앞에 떨어졌던 신발. 분명 도로에 두고 왔다.'},
   record:{title:'17층 · 사흘 전의 사고 기록',text:'백로아파트 임시 관리실 / 사고 다음 날 06:40\n인계 작성: 박정호. 전임 야간 당직: 한서연.\n17층 외벽 공사로 옮겨 쓰던 1703호는 이 인계를 끝으로 폐쇄됐다.\n03:17. 건물 앞 횡단보도에서 보행자 사망 사고. 검은 승용차가 현장을 이탈.\n03:26. 파손 차량 입차. 관리실 열람 영상에서 정차 직후 아홉 초가 누락됨. 다음 장면에는 문이 이미 닫혀 있고 운전자가 혼자 걸어감.\n\n아홉 초. 숫자를 보는 순간 손끝이 차가워졌다. 그 사이에 내가 무엇을 했는지 떠올리고 싶지 않다.\n\n시설 인계: 「관리용 승강기 열쇠는 CCTV 오른쪽 책상에 보관. 전원이 끊기면 서고의 예비 퓨즈를 사용할 것. 비상전원은 6A까지만 공급한다. 구역 조명 4A / 기록장치 2A / 승강기 제어 4A. 서고의 퓨즈를 배전반 빈 홀더에 설치하고 필요한 부하만 선택해 전원을 투입할 것. 탈출에는 승강기 제어 전원이 필요하다. CCTV를 열람한다면 입차 시각을 선택할 것. 누락 구간은 지하 기록보관실 원본과 대조 필요.」'},
@@ -271,7 +271,7 @@ export function journalEntry(id:Action,story:Pick<Story,'notes'>){
   return journal[id];
 }
 export const endings={
-  crashed:'차는 아파트 앞 도로에서 마주 오던 덤프트럭과 정면으로 충돌했다.\n운전자는 현장에서 사망했다.\n\n차량에서 발견된 탑승자는 한 명.\n블랙박스에는 충돌 직전, 여자의 목소리가 남아 있었다.\n\n「이번에도… 혼자 가려고?」',
+  crashed:'차는 아파트 앞 도로에서 마주 오던 덤프트럭과 정면으로 충돌했다.\n운전자는 현장에서 사망했다.\n\n차량에서 발견된 탑승자는 한 명.\n블랙박스에는 충돌 직전, 여자의 목소리가 남아 있었다.\n\n「이번에도… 혼자 가려고?」\n\n경찰은 조수석 다시방에서 아내 한서연이 사고 전에 써 둔 편지를 발견했다. 남편과 함께 상담받으러 가고, 아이와 다시 저녁을 먹고 싶다는 말이 남아 있었다. 사랑한다는 마지막 문장 아래에 서연의 이름이 있었다.',
   caught:'숨을 죽였다.\n발소리도 멎었다.\n\n바로 뒤에서 젖은 숨이 들렸다.',
 };
 

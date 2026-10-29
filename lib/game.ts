@@ -1,3 +1,4 @@
+import {familyRecords} from './family-story.ts';
 import {residentialRoute as R,isTransferStage} from './residential-route.ts';
 import {createHomeSearch,stepHomeSearch,type HomeSearch} from './home-search.ts';
 import {escapeMood,escapeLamp,escapeCue} from './escape-atmosphere.ts';
@@ -260,6 +261,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     gallery_notice:'「2803호 방문 / 부재. 비상벨 통화 확인 요청.」\n사흘 동안 집에 있었으면서… 나는 문을 열어 주지 않았다. 17층 임시 관리실은 1703호, 야간 당직 내선은 17이다.',
     core_notice:'24층 설비 점검표. 비상계단은 승강기 반대편이다.\n17층 관리실 공사 때문에 1703호를 쓴다는 안내. 매일 보던 글씨인데, 오늘은 집 안에서 아무 소리도 들리지 않는다.',
     ...Object.fromEntries(Object.entries(expansionJournal).map(([id,n])=>[id,n.text.split('\n\n')[0]])),
+    ...Object.fromEntries(Object.entries(familyRecords).map(([id,n])=>[id,n.reaction])),
     annex_exit:'관리실 연결문이 열렸다. 옆 서고의 출입 기록을 확인하자.',
     court_exit:'지하 계단 문이 열렸다. 기록보관실로 내려가자.',
     archive_exit:'B1 주차장 방화문이 열렸다. 계단을 따라 내려가야 한다.',
