@@ -44,6 +44,8 @@ const vehicleHitBox=new T.Box3(),vehicleHitPoint=new T.Vector3(),vehicleLocal=ne
 const doorActions=new Set<Action>(['car_board','car_passenger','door','stairs','up','down','resident_open','resident_leave','service_exit','annex_exit','court_exit','archive_exit','plant_exit','archive_booth_door','pry']);
 export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>void,onError:(error:string)=>void){
   const renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+  // Shader log reads synchronize with the GPU; retain diagnostics in development.
+  renderer.debug.checkShaderErrors=process.env.NODE_ENV!=='production';
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
   renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
   const skyBackground=courtyardSky()?.clone();
