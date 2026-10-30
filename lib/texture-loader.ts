@@ -1,6 +1,8 @@
 import * as T from 'three';
+import {assetUrl} from './asset-url.ts';
 
 export async function loadTexture(url:string,flipY=true){
+  url=assetUrl(url);
   if(typeof createImageBitmap!=='function'){
     const texture=await new T.TextureLoader().loadAsync(url);texture.flipY=flipY;return texture;
   }

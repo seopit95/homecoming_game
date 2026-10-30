@@ -1,3 +1,4 @@
+import {assetUrl} from './asset-url.ts';
 import type {ArchiveFrame} from './archive-review.ts';
 import type {FootSurface} from './footsteps.ts';
 import footBank from './footstep-bank.json' with {type:'json'};
@@ -75,7 +76,7 @@ export class HorrorAudio {
     }
     // Baked original score: wide bowed/brass clusters, low-string ostinato and drums.
     // Decoding happens once; pursuit only moves the existing gain/filter controls.
-    void fetch('/audio/chase-score.wav').then(r=>{if(!r.ok)throw new Error('Score unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{
+    void fetch(assetUrl('/audio/chase-score.wav')).then(r=>{if(!r.ok)throw new Error('Score unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{
       if(this.context!==ctx)return;
       const source=ctx.createBufferSource(),gain=ctx.createGain();source.buffer=buffer;source.loop=true;gain.gain.value=0;
       source.connect(gain);gain.connect(this.chaseFilter!);gain.gain.setTargetAtTime(.95,ctx.currentTime,.7);fallback.gain.setTargetAtTime(.17,ctx.currentTime,.7);source.start();this.chaseScore=source;
@@ -92,10 +93,10 @@ export class HorrorAudio {
     for(const hz of [43,57.4,86.3]){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=hz;g.gain.value=.015;o.connect(g);g.connect(this.musicBus!);o.start();}
     const lock=this.clips['archive-lock']=ctx.createBuffer(1,Math.round(ctx.sampleRate*.1),ctx.sampleRate),lockData=lock.getChannelData(0);
     for(let i=0;i<lockData.length;i++){const t=i/ctx.sampleRate;lockData[i]=Math.sin(t*2300)*Math.exp(-t*90)*.4;}
-    for(const clip of ['fire-bell','player-breath','male-surprise','male-terror','lift-scratch','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast','archive-guard','archive-denial'] as RecordedClip[])void fetch(recordedFiles[clip]??`/audio/overhaul/${clip}.${clip.startsWith('archive-')?'mp3':'wav'}`).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setExertion(this.exertionWanted);this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);this.setDevice('alarm',this.deviceWanted.alarm);}}).catch(()=>{});
+    for(const clip of ['fire-bell','player-breath','male-surprise','male-terror','lift-scratch','female-collision-scream','collision-impact','phone-ring','radio-tuning-broadcast','archive-guard','archive-denial'] as RecordedClip[])void fetch(assetUrl(recordedFiles[clip]??`/audio/overhaul/${clip}.${clip.startsWith('archive-')?'mp3':'wav'}`)).then(r=>{if(!r.ok)throw new Error('Clip unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx){this.clips[clip]=buffer;this.setExertion(this.exertionWanted);this.setDevice('phone',this.deviceWanted.phone);this.setDevice('radio',this.deviceWanted.radio);this.setDevice('alarm',this.deviceWanted.alarm);}}).catch(()=>{});
     this.clips['intercom-ringback']=intercomTone(ctx,false);this.clips['intercom-busy']=intercomTone(ctx,true);this.clips['mobile-ring']=smartphoneRing(ctx);
-    void fetch('/audio/footsteps/bank.wav').then(r=>{if(!r.ok)throw new Error('Footsteps unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.footstepBuffer=buffer;}).catch(()=>{});
-    for(const line of ['where','here','found','come','cry','scream','capture','memory','no'] as GhostLine[])void fetch(ghostVoiceFiles[line]??`/audio/${line}.wav`).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
+    void fetch(assetUrl('/audio/footsteps/bank.wav')).then(r=>{if(!r.ok)throw new Error('Footsteps unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.footstepBuffer=buffer;}).catch(()=>{});
+    for(const line of ['where','here','found','come','cry','scream','capture','memory','no'] as GhostLine[])void fetch(assetUrl(ghostVoiceFiles[line]??`/audio/${line}.wav`)).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
   }
   recorded(clip:RecordedClip,level=1,pan=0){
     const ctx=this.context,buffer=this.clips[clip];if(!ctx||!buffer||ctx.state!=='running')return;
