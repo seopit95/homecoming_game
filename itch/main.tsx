@@ -5,5 +5,6 @@ import '../app/title-screen.css';
 import '../app/investigation-notebook.css';
 import '../app/game-theme.css';
 import '../app/ending-screen.css';
+import '../app/game-hud.css';
 
 createRoot(document.getElementById('root')!).render(<Home/>);
