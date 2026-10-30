@@ -9,13 +9,18 @@ export function GameHud({view,obscured=false}:Props){
  // Simulation time freezes with pause and resumes from the saved checkpoint.
  useEffect(()=>{if(objective&&!view.paused&&!obscured)setNotice(previous=>previous.text!==objective||view.elapsed<previous.at?{text:objective,at:view.elapsed}:previous);},[objective,view.elapsed,view.paused,obscured]);
  const announcing=!!objective&&notice.text===objective&&view.elapsed-notice.at<5.5;
+ const showNotice=!view.paused&&!obscured&&announcing;
  return <>
-  <header className="hud">
+  <header className={`hud${showNotice?' has-objective-notice':''}`}>
    <div className="hud-position"><div className="room-label">{view.location}<span>{view.floor}</span></div><time className="clock">{view.clock}</time></div>
-   {objective&&<section className={`hud-objective${view.threat>.2?' urgent':''}`} aria-label="현재 목표"><span>현재 목표</span><p>{objective}</p>{view.objective!==view.mission&&<small className="hud-context">{view.objective}</small>}</section>}
+   {objective&&<section className={`hud-objective${view.threat>.2?' urgent':''}`} aria-label="현재 목표" aria-hidden={showNotice}><span>해야 할 일</span><MissionCopy text={objective}/>{view.objective!==view.mission&&<small className="hud-context">{view.objective}</small>}</section>}
   </header>
-  {!view.paused&&!obscured&&announcing&&<output className="objective-notice" role="status" aria-live="polite" aria-atomic="true"><span>새 목표</span><p>{objective}</p></output>}
+  {showNotice&&<output className="objective-notice" role="status" aria-live="polite" aria-atomic="true" aria-label="새 목표 안내"><span>잊지 마.</span><MissionCopy text={objective}/></output>}
  </>;
+}
+export function MissionCopy({text}:{text:string}){
+ const [action,...echo]=text.split('\n');
+ return <p><strong>{action}</strong>{echo.length>0&&<span className="objective-echo">{echo.join('\n')}</span>}</p>;
 }
 export function StaminaMeter({value,exhausted}:{value:number;exhausted:boolean}){
  if(value>=1&&!exhausted)return null;

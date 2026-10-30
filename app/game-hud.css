@@ -69,13 +69,13 @@
 }
 .game-shell.reduce-motion .stamina progress::-webkit-progress-value{transition:none}
 
-.game-shell .hud-objective{max-width:min(520px,85vw);width:fit-content;margin:0;border-left:2px solid #c7bda0;padding:7px 13px;background:#080b0be8;color:var(--ui-heading);text-align:left}
-.game-shell .hud-objective>span{display:block;color:#c8bda1;font-size:11px;letter-spacing:.09em;line-height:1.7}
+.game-shell .hud-objective{max-width:min(520px,85vw);width:fit-content;margin:0;border-left:1px solid #9e7566;padding:9px 14px;background:linear-gradient(90deg,#100d0df2,#0c0b0bed 80%,#0c0b0be8);color:var(--ui-heading);text-align:left}
+.game-shell .hud-objective>span{display:block;color:#c8ae9d;font-family:Batang,'Songti SC',serif;font-size:12px;letter-spacing:.13em;line-height:1.7}
 .game-shell .hud-objective p{margin:3px 0 0;max-width:none;color:inherit;font-size:calc(15px * var(--subtitle-scale,1));line-height:1.75;white-space:pre-line;text-wrap:pretty;word-break:keep-all;overflow-wrap:anywhere;text-shadow:none}
 .game-shell .hud-objective.urgent{border-color:#cd9c7b;color:#edd2bd}
-.game-shell .objective-notice{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:4;width:min(560px,86vw);padding:17px 24px 20px;border-block:1px solid #c6bea064;background:#070a09ed;color:#f2eee0;text-align:center;pointer-events:none;animation:objective-in .18s ease-out}
-.objective-notice>span{display:block;color:#c8bda1;font-size:12px;letter-spacing:.16em;line-height:1.8}
-.objective-notice p{margin:9px 0 0;font-size:calc(clamp(19px,2vw,24px) * var(--subtitle-scale,1));font-weight:500;line-height:1.7;white-space:pre-line;text-wrap:pretty;word-break:keep-all;overflow-wrap:anywhere}
+.game-shell .objective-notice{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:4;width:min(600px,88vw);padding:22px 30px 25px;border:0;background:transparent;isolation:isolate;color:#f2eade;text-align:left;pointer-events:none;animation:objective-in .18s ease-out}
+.objective-notice>span{display:block;color:#d1ae9e;font-family:Batang,'Songti SC',serif;font-size:17px;letter-spacing:.16em;line-height:1.8}
+.objective-notice p{margin:9px 0 0;font-size:calc(clamp(19px,2vw,24px) * var(--subtitle-scale,1));font-weight:400;line-height:1.7;white-space:pre-line;text-wrap:pretty;word-break:keep-all;overflow-wrap:anywhere}
 @keyframes objective-in{from{opacity:0}to{opacity:1}}
 .game-shell:has(.objective-notice) .chapter-card{display:none}
 .game-shell .menu-trigger{position:absolute;z-index:10;left:38px;bottom:20px;display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 10px;background:#080b0bde;border:1px solid #d5d3c333;color:var(--ui-paper);font-size:12px;letter-spacing:.03em}
@@ -103,3 +103,23 @@
 .game-shell.reduce-motion .objective-notice{animation:none}
 
 .hud-context{display:block;margin-top:6px;color:#b9bdaf;font-size:12px;line-height:1.7;white-space:pre-line}
+
+/* Wear belongs to the backing, never the instruction text. */
+.game-shell .hud.has-objective-notice .hud-objective{visibility:hidden}
+.objective-notice::before{content:"";position:absolute;inset:0;z-index:-1;clip-path:polygon(0 1%,98% 0,100% 5%,99% 96%,97% 100%,1% 98%);background:repeating-linear-gradient(0deg,#d6b5a004 0px,#d6b5a004 1px,transparent 1px,transparent 4px),linear-gradient(100deg,#171010f7,#0a0a0af5 62%);border-block:1px solid #957a6366}
+.objective-notice::after{content:"";position:absolute;left:12px;top:22px;bottom:22px;width:1px;background:linear-gradient(transparent,#9c7768 18%,#9c776877 83%,transparent);pointer-events:none}
+.game-shell :is(.hud-objective,.objective-notice,.pause-objective) p>strong{display:block;font-weight:500}
+.game-shell .objective-echo{display:block;margin-top:7px;color:#c8bdb2;font-size:max(13px,.88em);font-weight:400;line-height:1.75;letter-spacing:.015em}
+.hud-objective .objective-echo{margin-top:5px;color:#c0b5ac}
+.pause-objective .objective-echo{color:#c8bdb2}
+@media(max-width:760px){
+ .game-shell .objective-notice{padding:17px 23px 20px}
+ .objective-notice::after{left:10px;top:17px;bottom:17px}
+ .objective-notice>span{font-size:15px}
+}
+@media(max-height:620px){
+ .game-shell .objective-notice{top:43%;padding:13px 22px 15px}
+ .objective-notice p{font-size:calc(17px * var(--subtitle-scale,1));line-height:1.6;margin-top:5px}
+ .objective-notice>span{font-size:14px;line-height:1.6}
+ .objective-notice .objective-echo{margin-top:5px;line-height:1.6}
+}

@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useRef,type ReactNode} from 'react';
 import {Play,RotateCcw} from '../lib/icons';
+import {MissionCopy} from './game-hud';
 
 type Props={location:string;floor:string;clock:string;objective:string;onFullscreen:()=>void;showNotes:boolean;onContinue:()=>void;onRestart:()=>void;onSettings:()=>void;onNotes:()=>void;settingsPanel:ReactNode;controlsHelp:ReactNode;notebook:ReactNode};
 export function PauseMenu({location,floor,clock,objective,onFullscreen,showNotes,onContinue,onRestart,onSettings,onNotes,settingsPanel,controlsHelp,notebook}:Props){
@@ -23,7 +24,7 @@ export function PauseMenu({location,floor,clock,objective,onFullscreen,showNotes
     <p className="pause-key"><kbd>ESC</kbd> 계속하기</p>
    </header>
    <section className={`pause-detail${showNotes?' has-notebook':''}`} aria-label={showNotes?'수집한 기록':'환경 설정'}>
-    {objective&&<section className="pause-objective" aria-label="현재 목표"><span>현재 목표</span><p>{objective}</p></section>}
+    {objective&&<section className="pause-objective" aria-label="현재 목표"><span>현재 목표</span><MissionCopy text={objective}/></section>}
     {showNotes?notebook:<><div className="pause-detail-heading"><h3 className="pause-detail-title">환경 설정</h3><button type="button" onClick={onFullscreen}>전체 화면</button></div>{settingsPanel}<details className="controls-disclosure"><summary>조작 안내</summary>{controlsHelp}</details></>}
    </section>
   </div>
