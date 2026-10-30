@@ -438,6 +438,9 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function keydown(e:KeyboardEvent){
     if(!started)return;
+    // Leave native menu keys alone before applying gameplay preventDefault.
+    const pauseKey=e.code==='Escape'||e.code==='KeyP',nativeActivation=e.code==='Space'&&(e.target as Element|null)?.closest?.('button:not([data-game-interaction]),input,summary');
+    if(!pauseKey&&(paused||story.stage==='ended'||nativeActivation))return;
     const mapping=Object.entries(settings.bindings).find(([,code])=>code===e.code)?.[0] as keyof typeof settings.bindings|undefined;
     const code=mapping?defaultSettings.bindings[mapping]:['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Escape','KeyP'].includes(e.code)?e.code:'';
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyE','KeyF','KeyC','Escape','KeyP','ShiftLeft','ShiftRight','ControlLeft'].includes(code))e.preventDefault();

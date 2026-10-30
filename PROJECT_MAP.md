@@ -58,3 +58,5 @@ itch.io HTML5 빌드: `npm run build:itch` → `scripts/build-itch.mjs`, `vite.i
 2026-10-30 마지막 경적·충돌·후일담 음악: `audio.ts.prepareFinale/setEndingMusic`, `scripts/author-finale-audio.mjs`, `app/ending-screen.tsx`; 근거 `docs/quality/2026-10-30-finale-audio.md`. 초기 메뉴에서는 새 음원 미요청.
 
 2026-10-30 도입 음주운전·소주병: `lib/driving-bottles.ts`(원본 두 병/오른손 마시기) → `prologue.ts`(휴대폰 시선)·`story.ts`(독백 자막/반복 운전·수첩). `docs/quality/2026-10-30-drunk-driving-opening.md`.
+
+V139 시스템 UI: `app/game-hud.tsx`·`game-hud.css`(목표/하단 중앙 체력/자동 하단 배치), `app/pause-menu.tsx`·`pause-menu.css`(native dialog/포커스/설정·수첩 분리). `page.tsx`의 기존 게임 콜백과 `game.ts.keydown`의 메뉴 기본 키/상호작용 Space 구분. 두 CSS는 기존 테마 뒤, Sites와 itch에 같은 순서로 적용. `docs/quality/2026-10-30-ui-redesign.md`.

@@ -19,3 +19,10 @@ test('stamina appears during use and recovery with a named native meter, then di
  const use=render(h(StaminaMeter,{value:.42,exhausted:false}));assert.match(use,/<progress[^>]*aria-label="달리기 체력"[^>]*value="0.42"/);assert.match(use,/42%/);
  const tired=render(h(StaminaMeter,{value:.12,exhausted:true}));assert.match(tired,/숨 고르기/);assert.match(tired,/aria-valuetext="12%.*회복/);
 });
+
+const {PauseMenu}=await import(compiled('../app/pause-menu.tsx',{'../lib/icons':icons}));
+test('pause separates settings and notebook in a named modal without losing resume or restart',()=>{
+ const props={location:'관리사무소',floor:'1F',clock:'03:17',showNotes:false,onContinue:noop,onRestart:noop,onSettings:noop,onNotes:noop,settingsPanel:h('label',null,'전체 음량',h('input',{'aria-label':'전체 음량',type:'range',value:.42,readOnly:true})),controlsHelp:h('p',null,'WASD 이동'),notebook:h('section',{'aria-label':'조사 수첩'},'회수한 편지')};
+ const html=render(h(PauseMenu,props));assert.match(html,/<dialog[^>]*aria-modal="true"[^>]*aria-labelledby="pause-title"/);assert.match(html,/계속하기/);assert.match(html,/처음부터 다시/);assert.match(html,/aria-label="전체 음량"/);assert.doesNotMatch(html,/회수한 편지/);
+ const book=render(h(PauseMenu,{...props,showNotes:true}));assert.match(book,/회수한 편지/);assert.doesNotMatch(book,/aria-label="전체 음량"/);assert.match(book,/aria-label="일시정지 탐색"/);
+});

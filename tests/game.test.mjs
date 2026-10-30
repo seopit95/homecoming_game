@@ -795,7 +795,7 @@ test('continuing 1704 preserves the remaining clue or restores an already comple
 test('actual movement exhausts sprint, manual pause freezes recovery, and walls do not consume stamina',()=>{
  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'lift_call',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- try{tick();game.continueGame();tick();game.key('KeyW',true);game.key('ShiftLeft',true);tick(6.7);assert.equal(game.snapshot().stamina,0);assert.equal(game.snapshot().exhausted,true);assert.ok(breathLevel>.9,'exhaustion starts the panting loop');const before=renderedCamera.position.z;tick(.5);assert.ok(Math.abs(before-renderedCamera.position.z-1)<.06,'depleted player walks at 2 m/s');assert.ok(breathLevel>.5,'panting continues while walking');
+ try{tick();game.continueGame();tick();game.key('KeyW',true);game.key('ShiftLeft',true);tick(9.4);assert.equal(game.snapshot().stamina,0);assert.equal(game.snapshot().exhausted,true);assert.ok(breathLevel>.9,'exhaustion starts the panting loop');const before=renderedCamera.position.z;tick(.5);assert.ok(Math.abs(before-renderedCamera.position.z-1)<.06,'depleted player walks at 2 m/s');assert.ok(breathLevel>.5,'panting continues while walking');
  game.pause();const frozen=game.snapshot().stamina;tick(9);assert.equal(game.snapshot().stamina,frozen);game.pause(false);game.key('KeyW',true);tick(4.5);game.key('KeyW',false);assert.ok(game.snapshot().stamina>.25);assert.equal(game.snapshot().exhausted,false);assert.ok(breathLevel>0,'breathing fades through recovery');
  game.start(true);tick();assert.equal(breathLevel,0);renderedCamera.position.set(0,1.65,-22.86);game.key('KeyW',true);game.key('ShiftLeft',true);tick(2);assert.equal(game.snapshot().stamina,1,'pushing against the area boundary is not running');
  }finally{game.dispose();win.localStorage=previous;}
@@ -1284,9 +1284,9 @@ test('V88 real garage input finds the car first, cancels boarding and escapes wi
   aim([7.1,1.65,-17.8],[5.415,.31,-17.83]);game.interact();tick();assert.equal(game.snapshot().story.stage,'parking_alarm');assert.ok(!game.snapshot().story.notes.includes('exit'));
   aim([3.2,1.65,-17.8],[3.98,1.1,-17.8]);assert.equal(game.snapshot().holdAction,'car_board');
   game.interact();assert.equal(game.snapshot().story.stage,'parking_alarm','a tap cannot jump to cinematic immunity');
-  game.key('KeyE',true);const before=game.snapshot().elapsed;tick(.25);assert.ok(game.snapshot().holdProgress>0&&game.snapshot().holdProgress<1);assert.ok(game.snapshot().elapsed>before,'preparing to board cannot pause the game');
+  game.key('KeyE',true);const before=game.snapshot().elapsed;tick(.075);assert.ok(game.snapshot().holdProgress>0&&game.snapshot().holdProgress<1);assert.ok(game.snapshot().elapsed>before,'preparing to board cannot pause the game');
   game.key('KeyE',false);tick();assert.equal(game.snapshot().holdProgress,0);
-  game.hold(true);tick(.25);game.pause(true);assert.equal(game.snapshot().holdProgress,0);const pausedAt=game.snapshot().elapsed;tick(.2);assert.equal(game.snapshot().elapsed,pausedAt);game.pause(false);
+  game.hold(true);tick(.075);game.pause(true);assert.equal(game.snapshot().holdProgress,0);const pausedAt=game.snapshot().elapsed;tick(.2);assert.equal(game.snapshot().elapsed,pausedAt);game.pause(false);
   game.configure({bindings:{...game.getSettings().bindings,interact:'KeyQ'}});event(doc,'keydown',{code:'KeyQ',repeat:false,preventDefault(){}});tick(.95);event(doc,'keyup',{code:'KeyQ'});assert.equal(game.snapshot().story.stage,'car_departure');assert.equal(deviceStarts.alarm,0,'quiet departure must not start an unpressed bell');
   assert.ok(!game.snapshot().story.notes.includes('alarm'));assert.equal(JSON.parse(data.get('homecoming.progress.v2')).stage,'car_departure');
  }finally{f.dispose();}
@@ -1653,4 +1653,20 @@ test('V137 the final truck horn precedes one heavy impact and pauses with the sc
   assert.equal(calls().filter(s=>s==='truck-impact').length,1);assert.ok(calls().indexOf('truck-horn')<calls().indexOf('truck-impact'));
   tick(5);assert.equal(f.game.snapshot().story.ending,'crashed');assert.equal(calls().filter(s=>s==='truck-horn').length,1);assert.equal(calls().filter(s=>s==='truck-impact').length,1);
  }finally{f.close();}
+});
+
+
+test('V139 paused menus retain native range arrows and Space without losing Escape resume',async()=>{
+ const f=await officeAgencyInput({stage:'power',notes:['wake'],elapsed:1200});
+ try{f.game.pause(true);const elapsed=f.game.snapshot().elapsed;
+  for(const code of ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','Space']){const e=new Event('keydown',{cancelable:true});Object.defineProperty(e,'code',{value:code});doc.dispatchEvent(e);assert.equal(e.defaultPrevented,false,'paused game must leave native menu input available: '+code);}
+  tick(1);assert.equal(f.game.snapshot().elapsed,elapsed);assert.equal(f.game.snapshot().paused,true);
+  const esc=new Event('keydown',{cancelable:true});Object.defineProperty(esc,'code',{value:'Escape'});doc.dispatchEvent(esc);assert.equal(f.game.snapshot().paused,false,'Escape still returns to play');
+ }finally{f.close();}
+});
+
+
+test('V139 ending controls retain native keyboard activation',async()=>{
+ const f=await officeAgencyInput({stage:'car_escape',notes:['basement_route','car_search'],elapsed:1400});
+ try{tick(19);assert.equal(f.game.snapshot().story.stage,'ended');const space=new Event('keydown',{cancelable:true});Object.defineProperty(space,'code',{value:'Space'});doc.dispatchEvent(space);assert.equal(space.defaultPrevented,false,'the game must not block Space on ending buttons');}finally{f.close();}
 });

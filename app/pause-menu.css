@@ -1,0 +1,113 @@
+/* Native modal focus containment; flat typography follows the night setting. */
+.game-shell .system-menu{position:fixed;inset:0;width:100vw;height:100svh;max-width:none;max-height:100svh;margin:0;padding:clamp(24px,6vh,56px) clamp(24px,5vw,72px);border:0;border-radius:0;color:var(--ui-paper);background:linear-gradient(100deg,#090c0cf7,#0b0d0ef0);overflow:hidden;scrollbar-color:#6e7166 #111515;box-shadow:none}
+.game-shell .system-menu:not([open]){display:none}
+.game-shell .system-menu::backdrop{background:#0009}
+.pause-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:44px;width:100%;max-width:1160px;height:100%;margin:0 auto}
+.pause-sidebar{min-width:0;min-height:0;display:flex;flex-direction:column;border-right:1px solid var(--ui-rule);padding:12px 32px 6px 0;text-align:left}
+.pause-sidebar .overline{margin:0;font-size:11px;letter-spacing:.2em;color:#b5b2a4}
+.pause-sidebar .overline span{margin-left:12px;font-size:11px;color:#93978e}
+.game-shell .pause-sidebar h2{font-family:Batang,'Songti SC',serif;font-size:36px;font-weight:400;line-height:1.5;letter-spacing:.1em;color:var(--ui-heading);margin:23px 0 20px}
+.pause-location{display:grid;gap:3px;margin:0 0 37px;color:#b7b6aa;font-size:12px;line-height:1.8;letter-spacing:.04em}
+.pause-location time{font:11px ui-monospace,SFMono-Regular,monospace;letter-spacing:.2em;color:#9b9e93;margin-top:5px}
+.pause-resume{display:flex;align-items:center;justify-content:space-between;gap:20px;width:100%;min-height:48px;padding:13px 6px;border:0;border-block:1px solid #d1ccaf85;background:transparent;color:#f1eddf;font-size:15px;letter-spacing:.08em;text-align:left}
+.pause-resume:hover{background:#dbd9c30c}
+.pause-nav{display:grid;gap:4px;margin:24px 0}
+.pause-nav button{min-height:44px;text-align:left;padding:10px 12px;border:0;border-left:2px solid transparent;background:transparent;color:#adafa4;font-size:14px;letter-spacing:.04em}
+.pause-nav button[aria-pressed=true]{color:#f1eddf;border-color:#b9ac8b;background:linear-gradient(90deg,#d7d1b60c,transparent)}
+.pause-nav button:hover{color:#f1eddf;background:#d7d1b60a}
+.pause-restart{display:flex;align-items:center;gap:10px;margin-top:auto;min-height:44px;padding:14px 0;border:0;border-top:1px solid var(--ui-rule);background:transparent;color:#aaa99d;font-size:12px;letter-spacing:.03em;text-align:left}
+.pause-restart:hover{color:#e3b89d}
+.pause-key{margin:8px 0 0;color:#a0a396;font-size:11px;letter-spacing:.03em}
+.pause-key kbd{margin-right:8px}
+.pause-detail{min-width:0;min-height:0;padding:12px 12px 24px 0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#6e7166 transparent;text-align:left}
+.pause-detail-title{font-size:17px;font-weight:400;letter-spacing:.08em;line-height:1.7;color:var(--ui-heading);margin:0 0 24px}
+.game-shell .system-menu .settings-panel{width:100%;max-width:none;margin:0;padding:0;background:none}
+.system-menu .settings-panel details,.controls-disclosure{padding:0 0 12px;border:0;border-bottom:1px solid var(--ui-rule);margin:0 0 13px}
+.system-menu .settings-panel summary,.controls-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;list-style:none;min-height:48px;margin:0;padding:10px 0;color:#dedbce;font-size:14px;letter-spacing:.04em;cursor:pointer}
+.system-menu summary::-webkit-details-marker{display:none}
+.system-menu .settings-panel summary:after,.controls-disclosure>summary:after{content:'＋';font-size:15px;color:#a9aa9a}
+.system-menu .settings-panel details[open]>summary:after,.controls-disclosure[open]>summary:after{content:'−'}
+.game-shell .system-menu .settings-panel label:not(.check){display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,240px);gap:26px;align-items:center;min-height:44px;margin:15px 0;color:#cccbbd;font-size:14px;line-height:1.7}
+.system-menu .settings-panel label>span{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.game-shell .system-menu .settings-panel b{font:11px ui-monospace,SFMono-Regular,monospace;color:#b5b7a7;white-space:nowrap}
+.system-menu .settings-panel input[type=range]{width:100%;min-width:0;height:30px;accent-color:#c8bda0;margin:0}
+.game-shell .system-menu .settings-panel .check{display:flex;align-items:center;gap:12px;min-height:44px;margin:8px 0;font-size:13px;line-height:1.7}
+.system-menu .settings-panel .check input{width:17px;height:17px;flex-shrink:0;margin:0;accent-color:#c8bda0}
+.system-menu .settings-local{margin:20px 0 24px;font-size:12px;line-height:1.8;color:#a5a89a}
+.system-menu .binding-grid{gap:8px;margin:16px 0}
+.game-shell .system-menu .binding-grid button{min-height:44px;background:#d5d0b506;border:1px solid #a3a69a45;color:#dddccf;padding:10px 12px;font-size:13px}
+.game-shell .system-menu .binding-grid button.listening{border-color:#e1c79e;background:#3c3728}
+.system-menu .settings-panel .muted{font-size:12px;line-height:1.8;color:#adb0a2}
+.system-menu .pause-controls{border:0;padding:0;margin:0}
+.system-menu .pause-controls dl{display:grid;grid-template-columns:1fr 1fr;gap:13px 24px;margin:12px 0 20px}
+.system-menu .pause-controls dl>div{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.system-menu .pause-controls dt{font-size:12px;color:#b7b7aa}
+.system-menu .pause-controls dd{font-size:12px;margin:0;color:#d7d7c6;white-space:nowrap}
+.system-menu .pause-controls p{font-size:12px;color:#a8ac9c;line-height:1.8;margin:0 0 15px}
+.pause-detail.has-notebook{display:flex;flex-direction:column;overflow:hidden}
+.system-menu .investigation{margin:0;padding:0;min-height:0;flex:1}
+.system-menu .investigation-heading{margin-bottom:24px;padding-bottom:20px;border-color:var(--ui-rule)}
+.system-menu .investigation-heading h3{font-family:Batang,'Songti SC',serif;font-size:25px;font-weight:400;letter-spacing:.04em;color:var(--ui-heading)}
+.system-menu .investigation-heading span{font-size:11px;color:#a6aa9c}
+.game-shell .system-menu .investigation-heading-controls button{min-height:44px;min-width:80px;padding:9px 12px;background:transparent;border:1px solid #acb19d66;border-radius:0;color:#d4d6c7;font-size:12px}
+.system-menu .investigation-columns{gap:26px;grid-template-columns:minmax(0,.95fr) minmax(0,1.15fr)}
+.game-shell .system-menu .investigation p,.game-shell .system-menu .investigation-records article p{font-size:14px;line-height:1.95;color:#d0d0c0}
+.game-shell .system-menu .investigation .investigation-source{font-size:11px;line-height:1.7;color:#a3a899}
+.game-shell .system-menu .investigation h4,.game-shell .system-menu .investigation-records h5{font-size:14px;line-height:1.8;color:#e6e4d4}
+.game-shell .system-menu .investigation .investigation-muted{font-size:12px;color:#a4a999}
+.game-shell .system-menu .investigation-records details{margin:0;border:0;border-bottom:1px solid var(--ui-rule);background:transparent}
+.game-shell .system-menu .investigation-records summary{min-height:48px;padding:12px 0;font-size:13px;line-height:1.7;color:#d0d1c1}
+.game-shell .system-menu .investigation-records article{border:0;border-left:1px solid var(--ui-rule);padding:8px 0 18px 16px;margin-bottom:12px}
+.system-menu .investigation-records h5{margin-bottom:12px}
+.game-shell .system-menu .investigation-questions li{font-size:13px;line-height:1.9;color:#c7cbba}
+.system-menu .investigation-facts,.system-menu .investigation-records,.system-menu .investigation{scrollbar-color:#6d7461 transparent}
+/* Keep settings and retry actions in the same restrained visual language. */
+.game-shell .entrance-option.primary,.game-shell .entrance-option:hover,.game-shell .entrance-option:focus-visible{background:linear-gradient(90deg,#d5d0b516,transparent);border-left-color:#b4a689}
+.game-shell .entrance-header,.game-shell .entrance-footer{color:#aeb3a6}
+.game-shell .entrance-tagline{color:#c9c9b9}
+.game-shell .start-button{background:#d3d0b90b;border:1px solid #b6b5a75e;box-shadow:none;color:#e3e2d3}
+.game-shell .start-button:hover{background:#d3d0b91b;border-color:#c8c7b6}
+@media(max-width:760px){
+ .game-shell .system-menu{padding:22px 20px 30px;overflow-y:auto}
+ .pause-layout{display:block;height:auto;min-height:100%}
+ .pause-sidebar{display:block;border:0;border-bottom:1px solid var(--ui-rule);padding:0 0 18px}
+ .pause-sidebar .overline{display:none}
+ .game-shell .pause-sidebar h2{font-size:29px;margin:0 0 12px;line-height:1.5}
+ .pause-location{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 16px;font-size:11px}
+ .pause-location time{margin:0;font-size:11px;line-height:1.8}
+ .pause-nav{display:flex;gap:6px;margin:12px 0 0}
+ .pause-nav button{flex:1;text-align:center;border-left:0;border-bottom:1px solid transparent;padding:10px 6px}
+ .pause-restart{margin-top:12px;border:0;padding:10px 0;min-height:40px}
+ .pause-key{display:none}
+ .pause-detail,.pause-detail.has-notebook{display:block;overflow:visible;padding:24px 0 0}
+ .pause-detail-title{margin-bottom:16px;font-size:16px}
+ .game-shell .system-menu .settings-panel label:not(.check){display:block;margin:16px 0}
+ .system-menu .settings-panel label>span{margin-bottom:5px}
+ .system-menu .pause-controls dl{grid-template-columns:1fr;gap:13px}
+ .system-menu .investigation{display:block;overflow:visible;padding:0}
+ .system-menu .investigation-columns{display:block}
+ .system-menu .investigation-facts,.system-menu .investigation-records{overflow:visible;padding:0}
+ .system-menu .investigation-records{margin-top:24px;padding-top:24px;border-top:1px solid var(--ui-rule)}
+ .system-menu .investigation-heading{gap:12px;align-items:flex-start}
+ .system-menu .investigation-heading h3{font-size:21px}
+}
+@media(max-height:560px) and (orientation:landscape){
+ .game-shell .system-menu{padding:16px 24px;overflow:hidden}
+ .pause-layout{display:grid;grid-template-columns:180px minmax(0,1fr);gap:28px;min-height:0;height:100%}
+ .pause-sidebar{display:flex;border:0;border-right:1px solid var(--ui-rule);padding:0 22px 0 0}
+ .pause-sidebar .overline{display:none}
+ .game-shell .pause-sidebar h2{font-size:26px;margin:0 0 10px;line-height:1.3}
+ .pause-location{display:block;line-height:1.7;margin:0 0 12px;font-size:11px}
+ .pause-location span{margin-right:8px}
+ .pause-location time{display:block;margin:0;font-size:10px}
+ .pause-resume{min-height:44px;padding:10px 4px;font-size:13px}
+ .pause-nav{display:grid;gap:0;margin:10px 0}
+ .pause-nav button{text-align:left;padding:9px 10px;font-size:13px;border:0;border-left:2px solid transparent}
+ .pause-nav button[aria-pressed=true]{border-color:#b9ac8b}
+ .pause-restart{margin-top:auto;min-height:40px;padding:10px 0;font-size:11px;border-top:1px solid var(--ui-rule)}
+ .pause-key{display:none}
+ .pause-detail,.pause-detail.has-notebook{display:block;overflow-y:auto;padding:0 10px 18px 0}
+ .system-menu .investigation{display:block;overflow:visible}
+ .system-menu .investigation-columns{display:block}
+ .system-menu .investigation-facts,.system-menu .investigation-records{overflow:visible;padding:0}
+}
