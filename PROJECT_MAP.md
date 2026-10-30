@@ -54,3 +54,5 @@ V132 속도 위치: `lib/pursuit.ts`의 구간별 고정 pace. 집/한서연의 
 2026-10-29 아내·가족 이야기: `lib/family-story.ts`의 관리실 세 물건/사고 전 편지 → `expansion-story.ts`·`ground-support.ts`·`game.ts`의 기존 archive ID/라벨/상호작용, `investigation.ts`의 획득 범위, `app/ending-screen.tsx`의 경찰 다시방 조사와 전문. 기존 동선/저장 형식 유지. 검증은 `docs/quality/2026-10-29-family-story.md`. 여성 성우 울음 녹음은 `public/audio/ghost-v136/`(CC BY3.0), `lib/audio.ts`의 cry 경로와 자연 속도, 후일담 크레딧. 범위/직접 청취 제한은 `docs/quality/2026-10-29-female-sob.md`.
 
 itch.io HTML5 빌드: `npm run build:itch` → `scripts/build-itch.mjs`, `vite.itch.config.ts`, `itch/main.tsx`와 기존 Home. `dist/itch/`의 정적 파일과 `outputs/homecoming-0317-html5.zip`/JSON 생성. 미지의 하위 경로는 `lib/asset-url.ts`에서 처리하며 기존 Sites `/`는 유지한다. 검증·게시 상태는 `docs/quality/2026-10-30-itch-html5.md`.
+
+2026-10-30 마지막 경적·충돌·후일담 음악: `audio.ts.prepareFinale/setEndingMusic`, `scripts/author-finale-audio.mjs`, `app/ending-screen.tsx`; 근거 `docs/quality/2026-10-30-finale-audio.md`. 초기 메뉴에서는 새 음원 미요청.

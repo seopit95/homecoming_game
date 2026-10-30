@@ -10,9 +10,9 @@ const beats=[
   {at:14,id:'letter',label:'경찰이 회수한 편지 · 아내 한서연',heading:'함께 살아갈 내일을 기다리며.',text:wifeLetter},
 ] as const;
 const creditsAt=40;
-type Props={ending:'crashed'|'caught'|null;elapsed:number;checkpointLabel:string;reducedMotion:boolean;onRestart:()=>void};
+type Props={ending:'crashed'|'caught'|null;elapsed:number;checkpointLabel:string;reducedMotion:boolean;onRestart:()=>void;onMusic?:(level:number)=>void};
 
-export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRestart}:Props){
+export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRestart,onMusic}:Props){
   const [seconds,setSeconds]=useState(0),[showCredits,setShowCredits]=useState(false),[replay,setReplay]=useState(0);
   const crashed=ending==='crashed',complete=seconds>=creditsAt;
   useEffect(()=>{
@@ -24,6 +24,8 @@ export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRes
     },100);
     return()=>window.clearInterval(timer);
   },[crashed,complete,replay]);
+  useEffect(()=>{if(!crashed)return;onMusic?.(1);return()=>onMusic?.(0);},[crashed,replay,onMusic]);
+  useEffect(()=>{if(crashed)onMusic?.(complete?.5:1);},[crashed,complete,replay,onMusic]);
   const duration=`${Math.floor(elapsed/60)}분 ${Math.floor(elapsed%60)}초`;
   if(!crashed)return <section className="ending-screen caught-ending" aria-label="재시도 화면"><div>
     <p className="overline">끝나지 않은 밤</p><h2>발소리가 멎었다.</h2><p className="ending-copy">{endings.caught}</p>
@@ -49,7 +51,7 @@ export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRes
       <details className="epilogue-record"><summary>마지막 기록 · {duration}</summary><p>{endings.crashed}</p></details>
       <details className="epilogue-record"><summary>경찰이 회수한 편지 전문</summary><p>{wifeLetter}</p></details>
       <button type="button" className="epilogue-credits-toggle" aria-expanded={showCredits} onClick={()=>setShowCredits(!showCredits)}>크레딧 {showCredits?'−':'＋'}</button>
-      {showCredits&&<div className="epilogue-credits"><p>귀가 (歸家) · 한밤의 귀가 기록</p><dl><div><dt>주요 음향 자료</dt><dd>Kenney · dslrguide · tonsil5<br/>CC0</dd></div><div><dt>여성 흐느낌</dt><dd><a href="https://opengameart.org/content/crying-female-low-tone-voice-over-vocal-sound-for-character" target="_blank" rel="noreferrer">Crying female low tone Voice Over · JeanMyna_VA / Jean Myna</a><br/><a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a> · WAV 변환, 가장자리 페이드, 음량 조정</dd></div><div><dt>주요 환경 질감</dt><dd>Poly Haven · CC0</dd></div><div><dt>후일담 장면</dt><dd>게임 속 차량과 도로의 3D 장면</dd></div></dl><p>그리고 이 밤을 끝까지 걸어온 당신.</p></div>}
+      {showCredits&&<div className="epilogue-credits"><p>귀가 (歸家) · 한밤의 귀가 기록</p><dl><div><dt>주요 음향 자료</dt><dd>Kenney · dslrguide · tonsil5<br/>CC0</dd></div><div><dt>여성 흐느낌</dt><dd><a href="https://opengameart.org/content/crying-female-low-tone-voice-over-vocal-sound-for-character" target="_blank" rel="noreferrer">Crying female low tone Voice Over · JeanMyna_VA / Jean Myna</a><br/><a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a> · WAV 변환, 가장자리 페이드, 음량 조정</dd></div><div><dt>주요 환경 질감</dt><dd>Poly Haven · CC0</dd></div><div><dt>마지막 충돌 · 후일담 음악</dt><dd>오리지널 합성 음향 · 「남겨진 편지」<br/>CC0 · 외부 샘플 및 기존 곡 사용 없음</dd></div><div><dt>후일담 장면</dt><dd>게임 속 차량과 도로의 3D 장면</dd></div></dl><p>그리고 이 밤을 끝까지 걸어온 당신.</p></div>}
     </div>}
     <footer className="epilogue-footer"><span>귀가 (歸家)</span><span>{complete?'기록 종료':'마지막으로 남은 것'}</span></footer>
   </section>;

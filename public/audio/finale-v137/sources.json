@@ -1,0 +1,46 @@
+{
+  "title": "귀가 · 마지막 충돌과 남겨진 편지",
+  "created": "2026-10-30",
+  "method": "Original deterministic additive synthesis written for this game; no third-party recordings, samples, soundfonts, presets, MIDI or existing compositions.",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "generator": "scripts/author-finale-audio.mjs",
+  "assets": [
+    {
+      "file": "truck-horn.wav",
+      "sampleRate": 24000,
+      "channels": 1,
+      "duration": 1.05,
+      "bytes": 50444,
+      "peakDbFS": -3.3498217458752726,
+      "rmsDbFS": -11.534967539023313,
+      "clippedSamples": 0,
+      "maxAdjacentStep": 0.1116943359375,
+      "sha256": "7dd0fee0aae30ac68134ceae1b39afbfa72c1b4979b0d5632bd23c16cb9a23a2"
+    },
+    {
+      "file": "truck-impact.wav",
+      "sampleRate": 24000,
+      "channels": 1,
+      "duration": 2.7,
+      "bytes": 129644,
+      "peakDbFS": -1.1103465569966273,
+      "rmsDbFS": -23.91100184864644,
+      "clippedSamples": 0,
+      "maxAdjacentStep": 0.44921875,
+      "sha256": "ab4535874785cbd180deb93904eae290a50164326f6cbd90eeb0a738bd51a6a9"
+    },
+    {
+      "file": "last-letter.wav",
+      "sampleRate": 24000,
+      "channels": 2,
+      "duration": 48,
+      "bytes": 4608044,
+      "peakDbFS": -4.731440128741254,
+      "rmsDbFS": -16.85687541422733,
+      "clippedSamples": 0,
+      "maxAdjacentStep": 0.071807861328125,
+      "sha256": "7b68e97d195fe0f5418eb9ddb7a4469a25f9b96df5227e2f988969815f1abc5c"
+    }
+  ]
+}

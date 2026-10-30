@@ -1,0 +1,8 @@
+Original finale audio for 귀가 · 03:17 (2026-10-30)
+
+truck-horn.wav, truck-impact.wav and last-letter.wav were synthesized for this project with scripts/author-finale-audio.mjs. No third-party audio, composition, samples, presets or soundfonts were used. These are synthetic sound design and an original score, not recordings of a real truck or crash.
+
+The generated audio files are made available under CC0 1.0 Universal:
+https://creativecommons.org/publicdomain/zero/1.0/
+
+To the extent possible under law, the creators waive copyright and related rights in these audio files worldwide, without warranty. Attribution is not required. The generator and sources.json retain reproducible provenance. Other game assets retain their own licenses.

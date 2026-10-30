@@ -202,7 +202,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
     const next=transition(story,action);if(next===story)return false;
     if(next.stage==='wait'&&story.stage!=='wait'){searchTime=0;homeSearch=createHomeSearch(homeWitnessed,homeInterest);homeCue=0;lastSeen=null;tracking=false;}
     const keepInvestigationPhase=(area==='resident'||area==='office'||area==='annex'||action.startsWith('archive_booth_')||action==='home_repair'||action==='gallery_notice'||action==='core_notice')&&next.stage===story.stage;
-    story=next;if(area==='office')arrivalPursuit=['office_departure','office_boarding'].includes(story.stage);if(!keepInvestigationPhase){stageTime=0;scriptBeat=0;voiceBeat=0;enemyPath=[];repathAt=0;}holdProgress=0;
+    story=next;if(isFinale(story.stage))void audio.prepareFinale();if(area==='office')arrivalPursuit=['office_departure','office_boarding'].includes(story.stage);if(!keepInvestigationPhase){stageTime=0;scriptBeat=0;voiceBeat=0;enemyPath=[];repathAt=0;}holdProgress=0;
     if(story.stage==='ended'){stopRecording();stopAnnexCall();stopCourtCall();if(story.ending==='crashed'){try{storage?.removeItem(PROGRESS_KEY);}catch{}saved=null;}keys.clear();holding=false;hover=undefined;threat=0;audio.stopVoices();audio.setDrive(null);whisper='';if(document.pointerLockElement===canvas)document.exitPointerLock();audio.sound('dread');emit();return true;}
     if(story.stage==='dying'){
       gait.reset();
@@ -237,10 +237,12 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   }
   function start(retry:boolean|'continue'=false){
     if(preparing){void ready.then(()=>{if(!disposed)start(retry);});return;}
+    audio.setEndingMusic(0);
     try{audio.start();audio.setVolume(settings.volume);audio.mix(settings);}catch{onError('소리를 시작하지 못했습니다. 소리 없이도 플레이할 수 있습니다.');}
     const resumePursuit=retry?(retry==='continue'?saved?.pursuit:arrivalPursuit):false;
     const resumeWait=retry==='continue'?saved?.pursuitWait??0:Math.max(0,entranceDelay-areaTime);
     if(retry==='continue'&&saved){story={...initialStory(),stage:saved.stage,resume:saved.stage,notes:[...saved.notes],circuit:[...saved.circuit],officeSupply:saved.officeSupply,code:saved.code};elapsed=saved.elapsed;}else{story=retry?checkpoint(story):initialStory();elapsed=retry?elapsed:0;}if(story.stage==='resident_entry'&&story.notes.includes('resident_key'))story.stage='resident_return';started=true;paused=false;stageTime=0;stamina=freshStamina();breathLoad=0;heldBreath=freshHeldBreath();breathStrain=0;breathNotice=0;homeBreathCheck=-1;audio.setExertion(0);torch=hasFlashlight(story);message='';keys.clear();dragging=false;
+    if(isFinale(story.stage))void audio.prepareFinale();
     lastEmit=elapsed-1;loadArea(areaFor(story));
     // Legacy pursuit flags never override the office preparation phase.
     if(resumePursuit&&(area==='courtyard'||area==='archive'&&story.stage==='archive_departure'||area==='plant'||area==='parking')){carryPursuit(5.2,true,area==='parking'?layout.parking.z:expansionLayout[area].z);entranceDelay=Math.max(entranceDelay,resumeWait);persist();}
@@ -828,8 +830,8 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       if(story.stage==='car_departure'){if(world.figure.visible&&stageTime<8){const p=world.figure.position,x=p.x,z=p.z,heading=world.figure.rotation.y,stride=ghostStrideLength(world.figure,world.solids,true);followEnemy(departureOutside,2.7,dt);const turn=world.figure.rotation.y-heading,stroke=Math.hypot(p.x-x,p.z-z)+Math.abs(Math.atan2(Math.sin(turn),Math.cos(turn)))*.25;walkPhase+=stroke*Math.PI*2/stride;ghostMotion=T.MathUtils.clamp(stroke/Math.max(dt,.001)/2.5,0,1);}else ghostMotion=0;if(stageTime>=5.5&&scriptBeat===0){scriptBeat=1;audio.sound('slam',-.5,.45);}if(stageTime>=6&&scriptBeat===1){scriptBeat=2;audio.sound('motor',0,.5);}if(stageTime>=6&&Math.floor((stageTime-6)/.85)!==Math.floor((stageTime-dt-6)/.85))audio.sound('wiper',-.12,.8);}
       else if(Math.floor(stageTime/.85)!==Math.floor((stageTime-dt)/.85)&&story.stage!=='car_crash')audio.sound('wiper',-.12,.8);
       if(story.stage==='car_crash'){
-        if(scriptBeat===0){scriptBeat=1;audio.recorded('male-terror',1);audio.sound('brake',0,.8);}
-        if(stageTime>=endingBeats.impact&&scriptBeat===1){scriptBeat=2;audio.recorded('collision-impact',1.2);audio.sound('crash',0,.7);audio.sound('glass',0,.55);audio.sound('slam',0,.65);}
+        if(scriptBeat===0){scriptBeat=1;audio.recorded('male-terror',1);audio.recorded('truck-horn',.55,.25);audio.sound('brake',0,.8);}
+        if(stageTime>=endingBeats.impact&&scriptBeat===1){scriptBeat=2;audio.recorded('truck-impact',1);audio.recorded('collision-impact',.8);audio.sound('crash',0,.7);audio.sound('glass',0,.4);audio.sound('slam',0,.45);}
       }
       if(stageTime>=ending.duration)advance(ending.action);return;
     }
@@ -1193,7 +1195,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
   frameId=requestAnimationFrame(frame);emit();
   function crouch(){if(!started||paused||evidenceReaction||concealed()||isCinematic(story.stage)||story.stage==='tv'||story.stage==='ended'||story.stage==='dying')return;crouched=!crouched;emit();}
   function configure(next:Partial<Settings>){settings=normalizeSettings({...settings,...next});reducedMotion=systemReduced||settings.reducedMotion;audio.setVolume(settings.volume);audio.mix(settings);renderer.toneMappingExposure=settings.brightness;camera.fov=settings.fov;camera.updateProjectionMatrix();keys.clear();if(storage)writeSettings(storage,settings);emit();}
-  return {ready,start,pause,skipDeath(){if(story.stage==='dying'&&stageTime>.7)advance('dead');},getSettings:()=>({...settings,bindings:{...settings.bindings}}),continueGame(){if(saved)start('continue');},skipMemory(){if(started&&!paused&&isMemory(story.stage)){advance('skip_memory');lock();}},interact,snapshot,configure,crouch,hold(active:boolean){if(!paused&&!evidenceReaction&&!isCinematic(story.stage)&&story.stage!=='dying'&&story.stage!=='ended')holding=active;},torch(){if(!hasFlashlight(story)||paused||evidenceReaction||concealed()||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying'||story.stage==='tv'||story.stage==='wake_ring')return;torch=!torch;emit();},key(code:string,down:boolean){if(paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying')return;if(down)keys.add(code);else keys.delete(code);},dispose(){
+  return {ready,start,pause,endingMusic:(level:number)=>audio.setEndingMusic(level),skipDeath(){if(story.stage==='dying'&&stageTime>.7)advance('dead');},getSettings:()=>({...settings,bindings:{...settings.bindings}}),continueGame(){if(saved)start('continue');},skipMemory(){if(started&&!paused&&isMemory(story.stage)){advance('skip_memory');lock();}},interact,snapshot,configure,crouch,hold(active:boolean){if(!paused&&!evidenceReaction&&!isCinematic(story.stage)&&story.stage!=='dying'&&story.stage!=='ended')holding=active;},torch(){if(!hasFlashlight(story)||paused||evidenceReaction||concealed()||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying'||story.stage==='tv'||story.stage==='wake_ring')return;torch=!torch;emit();},key(code:string,down:boolean){if(paused||evidenceReaction||isCinematic(story.stage)||story.stage==='ended'||story.stage==='dying')return;if(down)keys.add(code);else keys.delete(code);},dispose(){
     if(disposed)return;
     disposed=true;cancelAnimationFrame(frameId);observer.disconnect();audio.dispose();if(document.pointerLockElement===canvas)document.exitPointerLock();
     document.removeEventListener('keydown',keydown);document.removeEventListener('keyup',keyup);document.removeEventListener('pointermove',pointermove);document.removeEventListener('pointerup',pointerup);document.removeEventListener('pointerlockchange',lockchange);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('blur',blur);canvas.removeEventListener('pointerdown',pointerdown);

@@ -5,7 +5,7 @@ import footBank from './footstep-bank.json' with {type:'json'};
 import {heartbeatBuffer,type GhostSoundPosition} from './ghost-sound.ts';
 import {smartphoneRing} from './smartphone-audio.ts';
 export {smartphoneRing} from './smartphone-audio.ts';
-export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'male-terror'|'lift-scratch'|'female-collision-scream'|'collision-impact'|'phone-ring'|'mobile-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy';
+export type RecordedClip='fire-bell'|'player-breath'|'passenger-line'|'male-surprise'|'male-terror'|'lift-scratch'|'female-collision-scream'|'collision-impact'|'phone-ring'|'mobile-ring'|'radio-tuning-broadcast'|'archive-guard'|'archive-denial'|'archive-plea'|'archive-lock'|'intercom-ringback'|'intercom-busy'|'truck-horn'|'truck-impact';
 const archiveCues={road:[['collision-impact',4.2]],call:[['archive-guard',.2],['archive-denial',8]],gate:[['archive-lock',5.8]]} as const;
 export type GhostLine='where'|'here'|'found'|'come'|'cry'|'scream'|'capture'|'memory'|'no';
 const ghostVoiceFiles:Partial<Record<GhostLine,string>>={cry:'/audio/ghost-v136/female-sob.wav',scream:'/audio/ghost-v126/capture-scream.wav',capture:'/audio/ghost-v127/capture.wav',no:'/audio/ghost-v127/refusal-ko.wav'};
@@ -44,6 +44,8 @@ export class HorrorAudio {
   ghostPosition:GhostSoundPosition|null=null;
   heartbeat:GainNode|null=null;heartbeatSource:AudioBufferSourceNode|null=null;heartbeatLevel=-1;heartbeatBpm=-1;breathStrain=0;
   ghostSounds=new Set<AudioScheduledSourceNode>();
+  finaleLoading:Promise<void>|null=null;
+  endingBuffer:AudioBuffer|null=null;endingSource:AudioBufferSourceNode|null=null;endingGain:GainNode|null=null;endingLevel=0;
   volume = .42;
   start() {
     this.prepare();void this.context!.resume();this.setVolume(this.volume);
@@ -97,6 +99,29 @@ export class HorrorAudio {
     this.clips['intercom-ringback']=intercomTone(ctx,false);this.clips['intercom-busy']=intercomTone(ctx,true);this.clips['mobile-ring']=smartphoneRing(ctx);
     void fetch(assetUrl('/audio/footsteps/bank.wav')).then(r=>{if(!r.ok)throw new Error('Footsteps unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.footstepBuffer=buffer;}).catch(()=>{});
     for(const line of ['where','here','found','come','cry','scream','capture','memory','no'] as GhostLine[])void fetch(assetUrl(ghostVoiceFiles[line]??`/audio/${line}.wav`)).then(r=>{if(!r.ok)throw new Error('Voice unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{if(this.context===ctx)this.voices[line]=buffer;}).catch(()=>{});
+  }
+  prepareFinale(){
+    const ctx=this.context;if(!ctx)return Promise.resolve();if(this.finaleLoading)return this.finaleLoading;
+    // Requested only after entering the final car sequence, never on the title screen.
+    return this.finaleLoading=Promise.all(['truck-horn','truck-impact','last-letter'].map(async name=>{
+      try{const response=await fetch(assetUrl(`/audio/finale-v137/${name}.wav`));if(!response.ok)throw new Error('Finale audio unavailable');
+        const buffer=await ctx.decodeAudioData(await response.arrayBuffer());if(this.context!==ctx)return;
+        if(name==='last-letter'){this.endingBuffer=buffer;this.setEndingMusic(this.endingLevel);}else this.clips[name as RecordedClip]=buffer;
+      }catch{/* Existing procedural crash remains available when a download fails. */}
+    })).then(()=>{});
+  }
+  setEndingMusic(level:number){
+    this.endingLevel=Math.max(0,Math.min(1,level));
+    if(!this.endingLevel){
+      if(this.endingSource){this.endingSource.stop();this.endingSource.disconnect();this.endingGain?.disconnect();}
+      this.endingSource=null;this.endingGain=null;return;
+    }
+    const ctx=this.context;if(!ctx||!this.musicBus)return;void this.prepareFinale();if(!this.endingBuffer)return;
+    if(!this.endingSource){
+      this.endingSource=ctx.createBufferSource();this.endingGain=ctx.createGain();this.endingGain.gain.value=0;
+      this.endingSource.buffer=this.endingBuffer;this.endingSource.loop=true;this.endingSource.connect(this.endingGain);this.endingGain.connect(this.musicBus);this.endingSource.start();
+    }
+    this.endingGain!.gain.setTargetAtTime(this.endingLevel*.34,ctx.currentTime,1.2);
   }
   recorded(clip:RecordedClip,level=1,pan=0){
     const ctx=this.context,buffer=this.clips[clip];if(!ctx||!buffer||ctx.state!=='running')return;
@@ -299,7 +324,7 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);if(spatial)this.ghostSounds.add(o);o.onended=()=>{this.ghostSounds.delete(o);o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.breathStrain=0;this.setGhostPosition(null);this.heartbeatSource?.stop();this.heartbeatSource=null;for(const node of [this.heartbeat,this.ghostFilter,this.ghostGain,this.ghostPanner])node?.disconnect();this.heartbeat=null;this.heartbeatLevel=-1;this.heartbeatBpm=-1;this.ghostPanner=null;this.ghostFilter=null;this.ghostGain=null;this.ghostPosition=null;this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('mobile',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.setEndingMusic(0);this.endingBuffer=null;this.finaleLoading=null;this.breathStrain=0;this.setGhostPosition(null);this.heartbeatSource?.stop();this.heartbeatSource=null;for(const node of [this.heartbeat,this.ghostFilter,this.ghostGain,this.ghostPanner])node?.disconnect();this.heartbeat=null;this.heartbeatLevel=-1;this.heartbeatBpm=-1;this.ghostPanner=null;this.ghostFilter=null;this.ghostGain=null;this.ghostPosition=null;this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('mobile',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }
 
 // A local private exchange: one-second ringback bursts and a shorter busy cadence.

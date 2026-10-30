@@ -14,7 +14,7 @@ let pendingCompiles=null,rendererDisposals=0,rendererDebug;
 class Renderer{debug={checkShaderErrors:true};constructor(){rendererDebug=this.debug;}shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name==='first-person-hands')renderedHands=scene;if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{...realLighting,roomReflections:()=>({dispose(){}})}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setBreathStrain(value){breathStrainLevel=value;}setGhostPosition(value){ghostSound=value;}setArchiveRecord(){}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}prepareFinale(){}setEndingMusic(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setBreathStrain(value){breathStrainLevel=value;}setGhostPosition(value){ghostSound=value;}setArchiveRecord(){}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){},arc(){},fill(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -1640,5 +1640,17 @@ test('V135 actual first-lift boarding stays level until forced doors expose the 
  const f=await officeAgencyInput({stage:'lift_button',notes:[],elapsed:300});try{
   const ledge=renderedScene.getObjectByName('lift-offset-ledge');assert.equal(ledge.visible,false);f.use([0,1.65,.3],[.92,1.3,-.45]);assert.equal(f.game.snapshot().story.stage,'descent');tick(2);assert.equal(ledge.visible,false);f.game.pause();tick(2);assert.equal(f.game.snapshot().story.stage,'descent');f.game.pause(false);tick(14.1);assert.equal(f.game.snapshot().story.stage,'pry');assert.equal(ledge.visible,true);
   f.aim([0,1.65,-.9],[0,1.3,-1.18]);assert.match(f.game.snapshot().prompt,/벌리기/);f.game.hold(true);for(let i=0;i<180&&f.game.snapshot().story.stage==='pry';i++)tick(.025);f.game.hold(false);assert.equal(f.game.snapshot().story.stage,'lift_exit');tick(.7);f.aim([0,1.65,-.72],[0,1.4,-3]);f.game.key('KeyW',true);tick(.35);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'lift_climb');tick(2.5);assert.equal(f.game.snapshot().story.stage,'corridor_run');assert.equal(f.game.snapshot().floor,'24F');
+ }finally{f.close();}
+});
+
+
+test('V137 the final truck horn precedes one heavy impact and pauses with the scene',async()=>{
+ const f=await officeAgencyInput({stage:'car_escape',notes:['basement_route','car_search'],elapsed:1400});
+ try{const start=soundCalls.length;tick(13.1);
+  assert.equal(f.game.snapshot().story.stage,'car_crash');const calls=()=>soundCalls.slice(start);
+  assert.equal(calls().filter(s=>s==='truck-horn').length,1);assert.equal(calls().filter(s=>s==='truck-impact').length,0);
+  f.game.pause();tick(2);assert.equal(calls().includes('truck-impact'),false);f.game.pause(false);tick(.8);
+  assert.equal(calls().filter(s=>s==='truck-impact').length,1);assert.ok(calls().indexOf('truck-horn')<calls().indexOf('truck-impact'));
+  tick(5);assert.equal(f.game.snapshot().story.ending,'crashed');assert.equal(calls().filter(s=>s==='truck-horn').length,1);assert.equal(calls().filter(s=>s==='truck-impact').length,1);
  }finally{f.close();}
 });
