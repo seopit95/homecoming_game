@@ -49,3 +49,15 @@ test('V133 real exit apertures and normalized receiving passages agree with the 
   assert.equal(labels.some(t=>t.includes('관리문서 보관실')),false,'the compact office is not labelled as a huge archive');assert.equal(b.root.getObjectByName('archive-exit-plaque-face').userData.text,'B1 비상계단');assert.equal(a.root.getObjectByName('annex-exit-plaque-face').userData.text,'관리사무소');
  }finally{close(a);close(b);}
 });
+
+test('V142 three addressed envelopes share one mail counter with a believable holding notice',()=>{
+ const w=build('archive');try{
+  const counter=w.root.getObjectByName('archive-mail-counter');assert.ok(counter,'one shared collection point');
+  for(const kind of ['road','call','gate']){
+   const envelope=w.root.getObjectByName('archive-record-'+kind);assert.ok(envelope);assert.equal(envelope.userData.support,counter.name);assert.equal(envelope.userData.kind,'mail');
+   assert.match(texts(envelope).join(' '),/2803호/);assert.ok(envelope.userData.sender.length>0);
+  }
+  assert.ok(texts(w.root).some(t=>/부재|대리수령/.test(t)),'the office explains why private mail is held here');
+  assert.equal(w.root.getObjectByName('archive-road-desk'),undefined);assert.equal(w.root.getObjectByName('archive-call-desk'),undefined);assert.equal(w.root.getObjectByName('archive-gate-desk'),undefined);
+ }finally{close(w);}
+});

@@ -25,7 +25,7 @@ test('old earned family records survive loading without introducing a second hom
 test('the notebook never turns an unheard recording into a confirmed confession',()=>{
  const empty=investigation({notes:[]});assert.equal(empty.count,0);assert.equal(empty.timeline.length,0);assert.ok(!JSON.stringify(empty).includes('한서연'));
  assert.ok(!JSON.stringify(investigation({notes:['wake']}).timeline).includes('원본'),'the opening memory cannot announce an undiscovered original recording');
- const unheard=investigation({notes:['archive_call']});assert.ok(!unheard.timeline[0].text.includes('차량 번호를 확인'),'a tape label cannot reveal the unplayed caller dialogue');
+ const unheard=investigation({notes:['archive_call']});assert.equal(unheard.timeline.some(e=>e.id==='call'),false,'a counselling reply is not a recovered03:20 call');
  const rawGate=investigation({notes:['archive_gate']});assert.ok(!rawGate.timeline[0].text.includes('문이 이미 닫혀'),'an unexamined gate label cannot grant skipped office CCTV observations');
  const partial=investigation({notes:['wake','annex_call','archive_call','archive_gate']});
  assert.ok(!partial.timeline.some(e=>e.id==='call'&&e.confirmed));assert.ok(!partial.timeline.some(e=>e.id==='gate'&&e.confirmed));assert.equal(partial.pattern,null);
@@ -47,4 +47,14 @@ test('the timeline orders observed events and never reveals the safe answer or a
  assert.deepEqual(result.timeline.map(e=>e.id),['voice','road','call','gate']);assert.equal(result.person.name,'한서연');assert.equal(result.pattern,null);
  assert.ok(!JSON.stringify(result).includes('2617'));assert.ok(!JSON.stringify(result).includes('현장에서 사망'));
  const life=investigation({notes:['portrait']});assert.equal(life.person.name,null,'a photograph without an identity record cannot grant the name');
+});
+
+test('V142 postal documents never grant unwatched video proof and earned mail remains readable',()=>{
+ const mixed=investigation({notes:['annex_call','archive_call']});assert.equal(mixed.timeline.find(e=>e.id==='call').source,'발신측 보조 녹음');
+ const result=investigation({notes:['archive_road','archive_call','archive_gate']});
+ assert.equal(result.count,3);assert.equal(result.pattern,null);
+ assert.equal(result.timeline.some(e=>e.confirmed),false);
+ assert.doesNotMatch(JSON.stringify(result.timeline),/원본 확보/);
+ assert.match(result.sections.find(s=>s.id==='archive').title,/우편/);
+ for(const record of result.sections.flatMap(s=>s.records))assert.match(record.text,/수신|발송|우편/);
 });

@@ -6,7 +6,7 @@ import {extremity} from './ghost-anatomy.ts';
 import {surface,boxUV} from './materials.ts';
 import {disposeWorld} from './world.ts';
 import {officeReplayDuration,type Stage} from './story.ts';
-import {archiveCamera,archiveClips,archiveReviewing,type ArchiveFrame} from './archive-review.ts';
+import {archiveCamera,archiveClips,archiveReviewing,archivePlaybackFrame,archiveOriginalsDuration,type ArchiveFrame} from './archive-review.ts';
 import {createObservedPlayer,type ObservedPlayer} from './observed-player.ts';
 
 // The small monitor has its own 10 fps recording, then switches to the real room.
@@ -61,10 +61,11 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
   const overlay=new T.Mesh(crtScreenGeometry(.72,.54),new T.MeshBasicMaterial({map:overlayMap,transparent:true,toneMapped:false,depthWrite:false}));overlay.position.z=.0006;root.add(overlay);
   let mode='idle',lastKey='',pending=true,clock=0,disposed=false;
   function update(stage:Stage,time:number,text:string,review?:ArchiveFrame){
+    if(kind==='archive'&&stage==='archive_playback')review=archivePlaybackFrame(time)??undefined;
     const office=kind==='office',warning=stage==='archive_escape'||stage==='archive_departure';
-    const preview=!office&&archiveReviewing(stage)&&!!review?.source;
+    const preview=!office&&(archiveReviewing(stage)||stage==='archive_playback')&&!!review?.source;
     const active=office?['office_playback','office_key','office_leave','office_departure'].includes(stage):preview||stage==='archive_playback'||warning;
-    clock=office?Math.min(officeReplayDuration,Math.max(0,time)):preview?(review!.source==='road'?review!.time:review!.source==='call'?5+review!.time:12+review!.time):stage==='archive_playback'||warning?12+Math.max(0,time):Math.max(0,time);
+    clock=office?Math.min(officeReplayDuration,Math.max(0,time)):preview?(review!.source==='road'?review!.time:review!.source==='call'?5+review!.time:12+review!.time):stage==='archive_playback'||warning?21+Math.max(0,time-archiveOriginalsDuration):Math.max(0,time);
     mode=!active?'idle':office?'office':preview?review!.source!:warning?'live':clock<5?'road':clock<12?'call':clock<21?'gate':'live';
     // The current-room camera raises gain in low light; recording exposure stays intact.
     if(mode==='live')image.material.color.setRGB(1.05,1.2,1.05);else image.material.color.set('#a2b3a8');

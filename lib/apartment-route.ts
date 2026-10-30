@@ -1,7 +1,7 @@
 import type {Action,Stage,Story} from './story.ts';
 
 const records=['archive_road','archive_call','archive_gate'] as const;
-const labels=['결혼사진','상담 메모','전달 쪽지'];
+const labels=['사진 배송봉투','상담 회신','영상보존 통지'];
 const readyFoyer=(s:Pick<Story,'notes'>):Stage=>['annex_map','annex_badge'].every(id=>s.notes.includes(id))?'annex_exit_ready':s.notes.some(id=>id==='annex_map'||id==='annex_badge')?'annex_unlock':'annex_arrival';
 const note=(s:Story,id:string,stage:Stage=s.stage):Story=>({...s,stage,notes:[...new Set([...s.notes,id])]});
 export function apartmentRouteTransition(s:Story,a:Action):Story|undefined{
@@ -44,9 +44,9 @@ export function apartmentRouteObjective(s:Story):string|undefined{
  if(s.stage.startsWith('annex_'))return s.stage==='annex_departure'?"관리사무소 안으로 들어간다.\nCCTV에는 내가 돌아온 시각이 남아 있다.":!s.notes.includes('annex_map')?"안내판에서 주차장으로 가는 길을 찾는다.\n정문은 열리지 않는다.":!s.notes.includes('annex_badge')?"경비실 책상에서 관리용 열쇠를 챙긴다.\n당직자의 자리는 비어 있다.":"열쇠로 「관리사무소」 문을 연다.\n불 꺼진 사무실에 내 기록이 남아 있다.";
  if(['archive_arrival','archive_search','archive_edit'].includes(s.stage)){
   const count=records.filter(id=>s.notes.includes(id)).length,missing=labels.filter((_,i)=>!s.notes.includes(records[i]));
-  return `책상 위 세 기록을 확인한다. ${count}/3\n${missing.join(' · ')} — 버리지 못한 것들.`;
+  return `보관대의 2803호 우편을 읽는다. ${count}/3\n${missing.join(' · ')} — 내가 받지 않은 우편.`;
  }
- if(s.stage==='archive_reveal')return "CCTV의 「누락 영상 재생」을 누른다.\n내가 지운 아홉 초가 남아 있다.";
+ if(s.stage==='archive_reveal')return "CCTV의 「누락 영상 재생」을 누른다.\n지우려 했던 아홉 초가 남아 있다.";
  if(s.stage==='archive_playback')return "CCTV 누락 영상을 끝까지 확인한다.\n문을 잠갔던 아홉 초. 아직 살아 있었다.";
  if(s.stage==='archive_escape')return "「B1 주차장」 방화문을 열어 내려간다.\n문밖의 긁는 소리가 가까워진다.";
  if(s.stage==='archive_departure')return '뒤돌아보지 말고 지하계단으로!';

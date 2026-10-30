@@ -8,7 +8,7 @@ import {archiveReplay} from '../lib/expansion-story.ts';
 globalThis.document={createElement:()=>{const text=[],context={fillRect(){},fillText(value){text.push(value);},beginPath(){},moveTo(){},lineTo(){},stroke(){}};return {width:0,height:0,text,getContext:()=>context};}};
 function renderer(){return {target:null,shadowMap:{autoUpdate:true},calls:[],getRenderTarget(){return this.target;},setRenderTarget(value){this.target=value;},render(scene,camera){this.calls.push({scene,camera,target:this.target});}};}
 
-test('archive replay renders the restored nine seconds before switching to the real room and resets on retry',()=>{
+test('V142 archive replay presents road, both call sides and all nine gate seconds before the real room',()=>{
   const scene=new T.Scene(),world=buildWorld(scene,'archive'),r=renderer();
   try{
     assert.ok(world.surveillance,'the archive monitor must show footage');
@@ -16,10 +16,16 @@ test('archive replay renders the restored nine seconds before switching to the r
     assert.notEqual(r.calls[0].scene,scene,'recorded footage must not show the current room');
     const recorded=r.calls[0].scene,car=recorded.getObjectByName('cctv-car'),first=car.position.clone();
     world.updateStory('archive_playback',100.03,false);world.surveillance.render(r,scene);assert.equal(r.calls.length,1,'paused or sub-frame updates do not upload/redraw footage');
-    const survivor=recorded.getObjectByName('cctv-surviving-victim');assert.equal(survivor.visible,false);world.updateStory('archive_playback',102,false);world.surveillance.render(r,scene);assert.equal(survivor.visible,true,'the restored interval reveals the living victim outside the passenger pane');recorded.updateMatrixWorld(true);assert.ok(new T.Box3().setFromObject(survivor,true).min.y>=-.001,'the living victim remains grounded');
-    world.updateStory('archive_playback',108.9,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,recorded,'the complete nine-second parking interval remains on screen');
-    world.updateStory('archive_playback',109,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,scene,'the last feed is this physical room');
-    const beforeEscape=r.calls.length;world.updateStory('archive_escape',132,false);world.surveillance.render(r,scene);assert.equal(r.calls.length,beforeEscape+1,'the current-room warning remains on the monitor when the chase starts');assert.equal(r.calls.at(-1).scene,scene);
+    const survivor=recorded.getObjectByName('cctv-surviving-victim');assert.equal(survivor.visible,false);const signal=recorded.getObjectByName('cctv-walk-signal');assert.ok(signal.parent.visible,'the road original is actually shown first');
+    const overlay=world.root.getObjectByName('surveillance-screen').children.find(m=>m.material.transparent),words=overlay.material.map.image.text;
+    world.updateStory('archive_playback',106,false);assert.ok(words.some(v=>String(v).includes('양방향 통화 원본')));
+    world.updateStory('archive_playback',114.2,false);assert.ok(words.some(v=>String(v).includes('잘못 거셨어요')));
+    world.updateStory('archive_playback',115.8,false);assert.ok(words.some(v=>String(v).includes('수신자 통화 종료')));
+    world.updateStory('archive_playback',120,false);world.surveillance.render(r,scene);assert.equal(survivor.visible,true,'the restored interval reveals the living victim outside the passenger pane');recorded.updateMatrixWorld(true);assert.ok(new T.Box3().setFromObject(survivor,true).min.y>=-.001,'the living victim remains grounded');
+    world.updateStory('archive_playback',126.9,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,recorded,'the complete nine-second parking interval remains on screen');
+    world.updateStory('archive_playback',127,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,scene,'the last feed is this physical room');
+    world.updateStory('archive_playback',136.9,false);assert.match(words.filter(v=>String(v).startsWith('LIVE')).at(-1),/03:17:09/);
+    const beforeEscape=r.calls.length;world.updateStory('archive_escape',137,false);world.surveillance.render(r,scene);assert.equal(r.calls.length,beforeEscape+1,'the current-room warning remains on the monitor when the chase starts');assert.equal(r.calls.at(-1).scene,scene);assert.match(words.filter(v=>String(v).startsWith('LIVE')).at(-1),/03:17:10/);
     world.reset();world.updateStory('archive_playback',200,false);world.surveillance.render(r,scene);assert.equal(r.calls.at(-1).scene,recorded);assert.ok(car.position.distanceTo(first)<.0001,'retry starts at the first recorded frame');
   }finally{disposeWorld(world.root);}
 });

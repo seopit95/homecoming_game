@@ -1,7 +1,7 @@
 import type {Action,Story,Stage} from './story.ts';
 import {annexCanCall} from './annex-call.ts';
-import {archiveReviewing} from './archive-review.ts';
-import {familyRecords} from './family-story.ts';
+import {archiveReviewing,archiveOriginalsDuration} from './archive-review.ts';
+import {familyRecords,mailLedger} from './family-story.ts';
 
 export const expansionObjectives={
  office_departure:'잠금장치가 풀렸다. 열린 승강기 안으로!',
@@ -37,13 +37,13 @@ export const expansionJournal={
  annex_map:{title:"1층 · 주차장 출입 안내",text:"공동현관의 안내도다. 경비실 옆 문서보관실을 지나 지하계단으로 내려가면 B1 주차장 출입 홀에 닿는다. 정문 앞에는 보수 작업대가 무너져 있다. 관리용 열쇠는 경비실 책상에 보관한다."},
  annex_front_exit:{title:'1층 정문 · 길은 보이는데',text:'손잡이를 당겼지만 잠긴 유리문은 움직이지 않았다. 두 손잡이에 쇠사슬이 감겨 있다. 바깥 셔터의 격자 사이로 젖은 도로와 가로등이 보인다. 바로 저기까지 가면 되는데.\n\n제어함은 젖어 있고, 전원 표시등은 꺼져 있다. 「누전 · 작동 금지. 북측 중정으로 우회.」 안내문이 남아 있다.\n\n안내판에 적힌 지하 통로를 찾아야 한다. 이 문을 억지로 열다 발소리를 놓칠 수는 없다.'},
  annex_fuse:{title:'세탁실 · 남아 있는 점검표',text:'세탁실 정비표. 한서연의 글씨로 「침수 시 외부조명 차단. 비상통신은 축전지 공급 유지」라고 적혀 있다.\n\n이 건물의 어두운 곳마다 그녀가 다녀간 흔적이 남아 있다. 중앙 교환기는 지금도 켜져 있다.'},
- annex_badge:{title:"경비실 · 관리용 열쇠",text:"손때 묻은 공용 열쇠. 관리사무소와 지하계단 출입문에 쓴다. 보관대장에 「2803호 한서연 · 남편에게 전달할 물건 세 점」이 적혀 있다. 누가 나에게 무언가를 남겼다."},
+ annex_badge:{title:"경비실 · 관리용 열쇠",text:"손때 묻은 공용 열쇠. 관리사무소와 지하계단 출입문에 쓴다. 인계란에 「2803호 세대 부재. 미수령 우편 3건은 관리사무소 보관대」라고 적혀 있다. 사흘 동안 집 안에 있었는데도, 나는 누구에게도 문을 열지 않았다."},
  annex_notice:{title:'우편실 · 반송된 안내문',text:'2803호 앞유리 파손 차량 확인 요청. 입주민께서는 관리실로 연락 바랍니다.\n\n수령란에는 내 서명이 있다. 사흘 전 오후. 「주차 중 파손」이라고 내가 적었다. 기억이 없는 것이 아니었다. 기억할 때마다 다른 말로 덮어 놓았던 것이다.\n\n뒷면의 교환기 점검 기록: 마지막 발신은 정문 비상벨, 수신은 사고 차량 소유자의 세대.'},
  annex_call:{title:'통신실 · 발신측 보조 녹음',text:'03:20 / 정문 비상벨 → 수신 표시 훼손 / 통화 종료.\n\n경비원 쪽 마이크만 남은 보조 녹음이다. 「차량 번호가 확인됐습니다. 내려와 주세요. 아직 현장에…」\n\n잠깐의 침묵 뒤에 연결이 끊긴다. 수신자 쪽 소리는 이 장치에 저장되지 않는다. 세대에서 받지 않으면 등록된 휴대전화로 넘어가는 회선. 나는 차 안에서 그 전화를 받았다. 통화 목록의 수신란은 번져 있다. 우편실 반송 안내문의 차량 소유 세대를 대조하면 마지막 호출을 다시 걸 수 있다.'},
  annex_line_home:{title:'교환기 · 2803호',text:'내 세대 번호를 입력하고 전화를 걸었다. 수화기에서 들리던 신호음이 끊겼다. 아무도 없어야 할 우리 집에서 전화를 받았다.\n「나오렴…」\n\n응답이 끝나자 북쪽 문에서 잠금쇠가 풀리는 소리가 났다. 이 교환기에는 그 문을 여는 버튼이 없는데. 바닥의 젖은 자국은 중정으로 이어진다. 통신실에 없는 수신자 쪽 목소리는 지하 기록보관실의 통화 원본에 남아 있다.'},
  annex_line_victim:{title:'교환기 · 돌아올 수 없는 1704호',text:'1704호로 전화를 걸었다. 빈집에서 신호음이 끊기고, 말을 알아들을 수 없는 여자의 울음이 들렸다. 응답이 없었던 것이 아니다. 누군가 받았다.\n\n그날 경비원의 호출을 받은 곳은 그녀의 집이 아니었다. 통신실의 보조 녹음에는 발신자 쪽 말이, 우편실의 반송 안내문에는 호출을 받았던 차량 소유 세대가 남아 있다.'},
  annex_line_office:{title:'교환기 · 당직 내선 17의 녹음',text:'당직 내선은 17. 사람이 받는 대신 「03:20 / 비상벨 발신측 보조 녹음」이라는 표시와 함께 녹음이 재생됐다.\n「차량 번호가 확인됐습니다. 내려와 주세요. 아직 현장에…」\n\n녹음은 발신자 쪽 말뿐이다. 전화를 받았던 세대에서 내려오지 않았다. 나는 그 호출을 차 안에서 받았고, 세대의 부재중 전화를 휴대전화로 넘기도록 등록해 뒀다. 이 단말에서는 세대와 당직 내선만 호출할 수 있다. 그날 전화를 받은 내 집에 다시 걸어야 한다.'},
- archive_ledger:{title:"관리사무소 · 보관 봉투",text:"2803호 한서연이 맡긴 사진, 상담 메모, 전달 쪽지. 남편에게 전해지지 못한 물건 곁에 사고 이후 모은 도로·통화·입차 자료가 놓여 있다.\n\n세 물건을 각각 확인하면 책상의 CCTV에서 누락 영상 재생을 누를 수 있다. 확인을 마치면 B1 주차장 표지의 문으로 내려간다."},
+ archive_ledger:{title:mailLedger.title,text:mailLedger.text},
  archive_road:{title:familyRecords.archive_road.title,text:familyRecords.archive_road.text},
  archive_call:{title:familyRecords.archive_call.title,text:familyRecords.archive_call.text},
  archive_gate:{title:familyRecords.archive_gate.title,text:familyRecords.archive_gate.text},
@@ -168,12 +168,17 @@ export function expansionTargetActive(s:Story,id:Action){
  return true;
 }
 
-export const archiveReplayDuration=19;
+export const archiveReplayDuration=archiveOriginalsDuration+10;
 export const archiveReplay=[
- {at:0,screen:'03:26 / 누락된 9초\n동시 녹음 복원',text:'충돌 아홉 분 뒤. 창밖에서 도움을 청하는 아내.\n서연은 아직 살아 있었다.'},
- {at:5.8,screen:'03:26 / 잠금음\n운전석 미하차',text:'딸깍. 도움을 청하는 아내를 밖에 두고 잠갔다.\n내가 지워 달라고 했던 아홉 초다.'},
- {at:9,screen:'현재 03:17 / 관리실 서고\n기록 작성 중',text:'영상이 끝났는데 화면이 꺼지지 않는다.\n저 책상… 내가 지금 서 있는 방이다.'},
- {at:15,screen:'현재 03:17 / 관리실 서고\n네 뒤에 있어',text:'「네 뒤에 있어」\n창 너머에서 손톱이 바닥을 긁는다. B1 주차장 표지의 방화문으로 가야 한다.'},
+ {at:0,screen:'03:17 / 도로 원본\n보행 신호와 제동등',text:'도로 카메라가 횡단보도를 비춘다.\n그날 내가 보지 않았던 신호다.'},
+ {at:3.8,screen:'03:17 / 녹색 보행 신호\n충돌 직전 제동',text:'보행 신호는 녹색이었다.\n제동등은 사람을 치기 직전에야 켜졌다.'},
+ {at:6,screen:'03:20 / 양방향 통화 원본\n정문 비상벨 → 등록 휴대전화',text:'현장으로 돌아와 달라는 전화.\n이번에는 수신자 쪽 목소리도 남아 있다.'},
+ {at:16,screen:'03:20 / 수신자 통화 종료',text:'「잘못 거셨어요.」 내 목소리다.\n돌아와 달라는 말을 듣고도 내가 먼저 끊었다.'},
+ {at:18,screen:'03:26 / 입차 원본\n누락된 아홉 초',text:'충돌 아홉 분 뒤, 내 차가 돌아왔다.\n지워 달라고 했던 구간이 시작된다.'},
+ {at:20,screen:'03:26 / 창밖의 사람\n동시 녹음 복원',text:'창밖에서 도움을 청하는 아내.\n서연은 아직 살아 있었다.'},
+ {at:23.8,screen:'03:26 / 잠금음\n운전석 미하차',text:'딸깍. 도움을 청하는 아내를 밖에 두고 잠갔다.\n내가 지우려 했던 아홉 초다.'},
+ {at:archiveOriginalsDuration,screen:'현재 03:17 / 관리사무소\n기록 작성 중',text:'영상이 끝났는데 화면이 꺼지지 않는다.\n저 책상… 내가 지금 서 있는 방이다.'},
+ {at:archiveOriginalsDuration+6,screen:'현재 03:17 / 관리사무소\n네 뒤에 있어',text:'「네 뒤에 있어」\n문밖에서 손톱이 바닥을 긁는다. B1 주차장 방화문으로 가야 한다.'},
 ] as const;
 
 // A continued investigation restarts the same entry approach as a carried pursuit.

@@ -8,7 +8,7 @@ import {createCRT,createCrtSocket,crtCable} from './crt-monitor.ts';
 import {createSurveillance,type Surveillance} from './surveillance.ts';
 import {createGhost} from './ghost.ts';
 import {archiveReplay} from './expansion-story.ts';
-import {familyRecords} from './family-story.ts';
+import {familyRecords,mailLedger} from './family-story.ts';
 import {apartmentEscapeLayout} from './escape-layout.ts';
 import {createApartmentPlaque,apartmentEvacuationTexture} from './apartment-signage.ts';
 import type {Action,Stage,Story} from './story.ts';
@@ -93,17 +93,24 @@ export function buildGroundSupport(root:T.Group,area:'annex'|'archive',preview=f
   const street=new T.Group();street.name='annex-street-vista';root.add(street);box(bx+1.4,-.1,.5,2.8,.2,5.5,tile,false,street);box(bx+3.3,-.14,.5,1.2,.12,7,surface('asphalt','#484f48'),false,street);
   const barrier=new T.Group();barrier.name='annex-fallen-work-barrier';street.add(barrier);const warning=surface('paintedMetal','#b39d58');for(const z of[-.8,1.8]){box(bx+.95,.04,z,.65,.08,.14,steel,false,barrier);roundPipe(barrier,[bx+1.16,.08,z],[bx+.72,.72,z],.025,steel);roundPipe(barrier,[bx+.72,.72,z],[bx+.55,0,z],.025,steel);}for(const y of[.31,.67])box(bx+.72,y,.5,.06,.09,2.8,warning,false,barrier);print('보수 공사 · 통행 금지',bx+.68,.5,.5,1.7,.22,-Math.PI/2,barrier);box(bx+.53,.06,.15,.55,.12,.8,plaster,false,street);box(bx+1.05,.04,1.1,.7,.08,.4,lower,false,street);
  }else{
-  const board=box(-bx+.12,1.48,3.2,.06,.75,1.3,steel);board.name='archive-usage-board';const ledger=print('관리사무소 · 2803호 보관물\n세 물건을 읽고 CCTV 재생\n출구: B1 비상계단',-bx+.1505,1.48,3.2,1.2,.65,Math.PI/2);target('archive_ledger','관리사무소 기록 이용 안내',ledger,[-bx+.17,1.48,3.2],[-1.95,3.2]);
-  for(const [id,name,title,x,z,az]of[['archive_road','road',familyRecords.archive_road.label,-1.85,1.7,2.75],['archive_call','call',familyRecords.archive_call.label,-1.85,-.7,.45],['archive_gate','gate',familyRecords.archive_gate.label,1.85,1.7,2.75]] as const){const desk=table(`archive-${name}-desk`,x,z),record=folder(`archive-record-${name}`,title,x,z,desk);target(id,title.replace('\n',' · '),record,[x,.85,z+.04],[x,az]);}
+  const board=box(-bx+.12,1.48,3.2,.06,.75,1.3,steel);board.name='archive-usage-board';const ledger=print(mailLedger.board,-bx+.1505,1.48,3.2,1.2,.65,Math.PI/2);target('archive_ledger',mailLedger.label,ledger,[-bx+.17,1.48,3.2],[-1.95,3.2]);
+  const counter=table('archive-mail-counter',-1.65,1.2,2.4,1.1);
+  for(const [id,name,x]of[['archive_road','road',-2.4],['archive_call','call',-1.65],['archive_gate','gate',-.9]] as const){
+   const data=familyRecords[id],envelope=new T.Group();envelope.name=`archive-record-${name}`;envelope.position.set(x,.8205,1.2);envelope.userData.support=counter.name;envelope.userData.kind='mail';envelope.userData.sender=data.sender;root.add(envelope);
+   box(0,.004,0,.52,.008,.36,paper,false,envelope);
+   print(`발송: ${data.sender}\n수신: 백로아파트 2803호\n${name==='road'?'한서연 님':name==='call'?'부부 동반 상담 회신':'등록 차량 소유자'}\n관리실 대리수령`,0,.0085,.015,.45,.25,0,envelope).rotation.x=-Math.PI/2;
+   const flap=new T.Shape();flap.moveTo(-.25,-.17);flap.lineTo(.25,-.17);flap.lineTo(0,-.09);flap.closePath();const seam=new T.Mesh(new T.ShapeGeometry(flap),new T.MeshStandardMaterial({color:'#a49b85',roughness:.96,side:T.DoubleSide}));seam.rotation.x=-Math.PI/2;seam.position.y=.0083;envelope.add(seam);
+   target(id,data.label.replace('\n',' · '),envelope,[x,.85,1.215],[x,2.55]);
+  }
   chair(-1.85,-1.6);const shelf=storageShelf(1.5,.45,steel,storageMaterials(),13);shelf.name='archive-office-files';shelf.position.set(-2.86,0,-2.8);shelf.rotation.y=Math.PI/2;root.add(shelf);solids.push({x:-2.86,z:-2.8,w:.45,d:1.5,y:1.03,h:2.06});
   const desk=table('archive-cctv-desk',1.85,-1.65,1.8,.85),crt=createCRT();crt.root.name='archive-cctv-monitor';crt.root.position.set(1.85,.8205,-1.55);crt.root.userData.support=desk.name;root.add(crt.root);chair(1.85,-2.65);
   const screen=createSurveillance('archive');crt.screenMount.add(screen);surveillance=screen.userData.surveillance;target('archive_play','CCTV 누락 영상 재생',crt.root,[1.85,1.1575,-1.52],[1.85,-.45]);
   const socket=createCrtSocket();socket.root.position.set(bx-.0905,.27,-1.9);socket.root.rotation.y=-Math.PI/2;root.add(socket.root);root.updateMatrixWorld(true);const power=crt.powerPort.clone().applyMatrix4(crt.root.matrixWorld),lead=socket.lead.clone().applyMatrix4(socket.root.matrixWorld);crtCable(root,[power,new T.Vector3(power.x,.85,-2.18),new T.Vector3(power.x,.0035,-2.18),new T.Vector3(lead.x,.0035,lead.z),lead]);
-  box(-1.95,1.65,-bz+.13,1.8,.55,.08,steel);const instruction=print('1 사고기록 · 2 통화기록 · 3 입차기록\n세 기록 확인 후 CCTV 재생',-1.95,1.65,-bz+.171,1.7,.46);instruction.name='archive-reading-instructions';
+  box(-1.95,1.65,-bz+.13,1.8,.55,.08,steel);const instruction=print('CCTV 보존영상 열람\nCAM-04 / 03:26 · 2803호 등록 차량\n요청한 구간은 삭제되지 않았습니다',-1.95,1.65,-bz+.171,1.7,.46);instruction.name='archive-reading-instructions';
   box(2.85,2.57,-3.85,.25,.11,.22,steel);roundPipe(root,[2.85,2.58,-3.85],[2.85,2.79,-3.85],.018,steel);const lens=new T.Mesh(new T.CylinderGeometry(.035,.04,.08,16),dark);lens.rotation.x=Math.PI/2+.12;lens.rotation.z=.55;lens.position.set(2.80,2.52,-3.75);lens.name='archive-room-cctv-lens';root.add(lens);
  }
  const figure=preview?new T.Group():createGhost(root);if(preview){figure.name='ground-preview-no-actor';root.add(figure);}figure.position.set(area==='annex'?-.5:-3,0,area==='annex'?4.4:bz+6.3);figure.rotation.y=Math.PI;figure.visible=false;
- const heightAt=(_x:number,_z:number)=>0,arrival:Stage=area==='annex'?'annex_arrival':'archive_arrival',idle='1 사고기록 · 2 통화기록 · 3 입차기록\n세 기록 확인 후 CCTV 재생';let opened=-1,replayAt=-1,currentStage:Stage=arrival,currentClock=0;
+ const heightAt=(_x:number,_z:number)=>0,arrival:Stage=area==='annex'?'annex_arrival':'archive_arrival',idle='CCTV 보존영상\nCAM-04 / 03:26 · 2803호 등록 차량';let opened=-1,replayAt=-1,currentStage:Stage=arrival,currentClock=0;
  function setDisplay(text:string){surveillance?.update(currentStage,currentClock,text);}
  function updateStory(stage:Stage,time:number,reduced=false,story?:Story,occupants:Occupant[]=[]){
   if(stage===`${area}_departure`&&opened<0)opened=time;if(opened>=0)setDoorAngle(hinge,doorBlock,1.5*T.MathUtils.smoothstep(time-opened,0,reduced?.2:.9),.7,0,occupants);if(key)key.visible=!story?.notes.includes('annex_badge');

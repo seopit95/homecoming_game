@@ -7,7 +7,7 @@ import * as T from 'three';
 import {expansionJournal,expansionTargetActive,isExpansion,archiveReplay,archiveReplayDuration,courtyardPursuitActive,plantProblem,plantRoute,annexTapeDuration,courtCallTimes,courtCallDuration} from './expansion-story.ts';
 import {expansionLayout} from './expansion-world.ts';
 import {annexCanCall,annexCallFor,annexCallLabel} from './annex-call.ts';
-import {archiveClips,archiveReviewing,type ArchiveSource} from './archive-review.ts';
+import {archiveClips,archiveReviewing,archivePlaybackFrame,type ArchiveSource} from './archive-review.ts';
 import {buildWorld,canStandAt,hasLineOfSight,disposeWorld,clampLightOrigin,type Target,type Solid} from './world.ts';
 import {animateGhost,animateGhostAttack,ghostStrideLength,ghostStep} from './ghost.ts';
 export {prepareVisuals} from './materials.ts';
@@ -1124,7 +1124,7 @@ export function createGame(canvas:HTMLCanvasElement,onChange:(view:GameView)=>vo
       camera.rotation.set(pitch+gait.pitch,yaw,gait.roll,'YXZ');camera.updateMatrixWorld();crossThresholds();findTarget();scripted(dt);if(!isCinematic(story.stage))danger(dt);
       if(message&&elapsed>messageUntil)message='';if(whisper&&elapsed>whisperUntil)whisper='';
     }
-    const archiveFrame=started&&archiveReviewing(story.stage)?world.archiveReview?.read(elapsed):started&&story.stage==='archive_playback'&&stageTime<9?{source:'gate' as const,time:stageTime,playing:true}:null;
+    const archiveFrame=started&&archiveReviewing(story.stage)?world.archiveReview?.read(elapsed):started&&story.stage==='archive_playback'?archivePlaybackFrame(stageTime):null;
     const recordPoint=area==='archive'?world.targets.find(t=>t.id==='archive_play')?.point:undefined;
     const recordDx=(recordPoint?.x??2.4)-camera.position.x,recordDz=(recordPoint?.z??-3.5)-camera.position.z,recordDistance=Math.hypot(recordDx,recordDz);
     audio.setArchiveRecord(archiveFrame??null,recordDistance<14?Math.min(1,2.5/Math.max(1,recordDistance)):0,T.MathUtils.clamp((recordDx*Math.cos(yaw)-recordDz*Math.sin(yaw))/Math.max(1,recordDistance),-1,1));

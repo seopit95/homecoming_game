@@ -9,12 +9,12 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
-let renderedCamera,renderedScene,renderedHands;const voiceCalls=[],soundCalls=[];let hauntLevel=0,chaseLevel=0,breathLevel=0,ghostSound=null,breathStrainLevel=0;const deviceLevels={phone:0,radio:0},deviceStarts={};
+let renderedCamera,renderedScene,renderedHands;const voiceCalls=[],soundCalls=[],archiveFrames=[];let hauntLevel=0,chaseLevel=0,breathLevel=0,ghostSound=null,breathStrainLevel=0;const deviceLevels={phone:0,radio:0},deviceStarts={};
 let pendingCompiles=null,rendererDisposals=0,rendererDebug;
 class Renderer{debug={checkShaderErrors:true};constructor(){rendererDebug=this.debug;}shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name==='first-person-hands')renderedHands=scene;if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{...realLighting,roomReflections:()=>({dispose(){}})}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}prepareFinale(){}setEndingMusic(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setBreathStrain(value){breathStrainLevel=value;}setGhostPosition(value){ghostSound=value;}setArchiveRecord(){}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}prepareFinale(){}setEndingMusic(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setBreathStrain(value){breathStrainLevel=value;}setGhostPosition(value){ghostSound=value;}setArchiveRecord(frame){if(frame?.source&&archiveFrames.at(-1)!==frame.source)archiveFrames.push(frame.source);}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){},arc(){},fill(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -1458,7 +1458,7 @@ test('V133 actual compact foyer and management office retain a connected B1 stai
   use('annex','annex_map');use('annex','annex_badge');assert.equal(f.game.snapshot().story.stage,'annex_exit_ready');use('annex','annex_exit');tick(1.1);
   assert.equal(g.visible,false);walk('annex',{x:3,z:-7.5},false);assert.equal(areaFor(f.game.snapshot().story),'archive');assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,world('archive').solids,.23,world('archive').bounds));
   assert.match(f.game.snapshot().objective,/0\/3/);for(const id of ['archive_gate','archive_road','archive_call'])use('archive',id);assert.equal(f.game.snapshot().story.stage,'archive_reveal');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);
-  use('archive','archive_play');tick(8);f.game.pause();const elapsed=f.game.snapshot().elapsed;tick(5);assert.equal(f.game.snapshot().elapsed,elapsed);assert.equal(f.game.snapshot().story.stage,'archive_playback');f.game.pause(false);tick(11.1);
+  use('archive','archive_play');tick(8);f.game.pause();const elapsed=f.game.snapshot().elapsed;tick(5);assert.equal(f.game.snapshot().elapsed,elapsed);assert.equal(f.game.snapshot().story.stage,'archive_playback');f.game.pause(false);tick(29.1);
   assert.equal(f.game.snapshot().story.stage,'archive_escape');assert.ok(f.game.snapshot().stamina>.99,'the safe investigation restores a usable escape budget');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the warning precedes the pursuer entering');
   const refusal=voiceCalls.filter(v=>v==='no').length;use('archive','archive_exit');assert.equal(voiceCalls.filter(v=>v==='no').length,refusal,'V127 removes the unnatural exit refusal');tick(1);
   walk('archive',{x:3,z:-6.5},true);assert.equal(areaFor(f.game.snapshot().story),'plant');assert.equal(f.game.snapshot().story.stage,'plant_exit_ready');assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,world('plant').solids,.23,world('plant').bounds));assert.ok(Math.abs(renderedCamera.position.y-1.65)<.12,'the shared B1 stair entrance keeps its floor height');
@@ -1678,4 +1678,18 @@ test('V140 current mission survives optional hint hiding and pause',async()=>{
   f.game.configure({hints:false});assert.equal(f.game.snapshot().objective,'');assert.equal(f.game.snapshot().mission,before);
   f.game.pause(true);assert.equal(f.game.snapshot().mission,before);
  }finally{f.close();}
+});
+
+test('V142 postal investigation cannot confirm all findings before the matching originals play',async()=>{
+ const f=await officeAgencyInput({stage:'archive_reveal',notes:['archive_road','archive_call','archive_gate'],elapsed:900});
+ const {buildWorld,disposeWorld}=await import('../lib/world.ts'),w=buildWorld(new THREE.Scene(),'archive');
+ try{
+  const t=w.targets.find(t=>t.id==='archive_play'),a=t.mesh.userData.approach;archiveFrames.length=0;f.use([a.x,1.65,a.z],t.point.toArray());
+  tick(6.1);assert.deepEqual(archiveFrames,['road','call']);assert.equal(f.game.snapshot().story.notes.includes('archive_sequence_call'),false);
+  tick(12);assert.deepEqual(archiveFrames,['road','call','gate']);
+  f.game.pause(true);const at=f.game.snapshot().elapsed;tick(5);assert.equal(f.game.snapshot().elapsed,at);f.game.pause(false);
+  tick(9.1);assert.equal(f.game.snapshot().story.stage,'archive_playback');assert.equal(f.game.snapshot().story.notes.includes('archive_sequence_gate'),false);
+  tick(10);assert.equal(f.game.snapshot().story.stage,'archive_escape');
+  for(const id of ['archive_sequence_road','archive_sequence_call','archive_sequence_gate'])assert.ok(f.game.snapshot().story.notes.includes(id));
+ }finally{f.close();disposeWorld(w.root);}
 });

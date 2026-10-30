@@ -9,6 +9,13 @@ export const archiveClips={
 } as const;
 export type ArchiveSource=keyof typeof archiveClips;
 export type ArchiveFrame={source:ArchiveSource|null;time:number;playing:boolean;question?:boolean};
+// One ordered timeline drives the compact office monitor and its recorded audio.
+export const archiveOriginalsDuration=archiveClips.road.duration+archiveClips.call.duration+archiveClips.gate.duration;
+export function archivePlaybackFrame(time:number):ArchiveFrame|null{
+ let offset=Math.max(0,time);
+ for(const source of ['road','call','gate'] as const){const duration=archiveClips[source].duration;if(offset<duration)return {source,time:offset,playing:true};offset-=duration;}
+ return null;
+}
 export function archiveReviewing(stage:Stage){return ['archive_arrival','archive_search','archive_edit'].includes(stage);}
 export function createArchiveReview(){
  let source:ArchiveSource|null=null,offset=0,started=0,playing=false,question=false;
