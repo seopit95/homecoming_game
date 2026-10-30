@@ -1,13 +1,21 @@
+'use client';
 import type {GameView} from '../lib/game';
-import {Pause,Expand} from '../lib/icons';
+import {useEffect,useState} from 'react';
 
-type Props={view:Pick<GameView,'location'|'floor'|'clock'|'objective'|'threat'>;recordCount:number;onPause:()=>void;onNotes:()=>void;onFullscreen:()=>void};
-export function GameHud({view,recordCount,onPause,onNotes,onFullscreen}:Props){
- return <header className="hud">
-  <div className="hud-position"><div className="room-label">{view.location}<span>{view.floor}</span></div><time className="clock">{view.clock}</time></div>
-  <nav className="hud-tools" aria-label="플레이 메뉴"><button className="notes-trigger" aria-label="수집한 기록 보기" onClick={onNotes}>기록 <b>{recordCount}</b></button><button aria-label="전체 화면" title="전체 화면" onClick={onFullscreen}><Expand size={17}/></button><button className="pause-trigger" aria-label="일시정지" title="일시정지 · ESC" onClick={onPause}><Pause size={17}/><span>일시정지</span></button></nav>
-  {view.objective&&<p className={`hud-objective${view.threat>.2?' urgent':''}`} role="status" aria-label="현재 목표">{view.objective}</p>}
- </header>;
+type Props={view:Pick<GameView,'location'|'floor'|'clock'|'objective'|'mission'|'threat'|'elapsed'|'paused'>;obscured?:boolean};
+export function GameHud({view,obscured=false}:Props){
+ const objective=view.objective?view.mission:'';
+ const [notice,setNotice]=useState({text:!obscured&&!view.paused?objective:'',at:view.elapsed});
+ // Simulation time freezes with pause and resumes from the saved checkpoint.
+ useEffect(()=>{if(objective&&!view.paused&&!obscured)setNotice(previous=>previous.text!==objective||view.elapsed<previous.at?{text:objective,at:view.elapsed}:previous);},[objective,view.elapsed,view.paused,obscured]);
+ const announcing=!!objective&&notice.text===objective&&view.elapsed-notice.at<5.5;
+ return <>
+  <header className="hud">
+   <div className="hud-position"><div className="room-label">{view.location}<span>{view.floor}</span></div><time className="clock">{view.clock}</time></div>
+   {objective&&<section className={`hud-objective${view.threat>.2?' urgent':''}`} aria-label="현재 목표"><span>현재 목표</span><p>{objective}</p>{view.objective!==view.mission&&<small className="hud-context">{view.objective}</small>}</section>}
+  </header>
+  {!view.paused&&!obscured&&announcing&&<output className="objective-notice" role="status" aria-live="polite" aria-atomic="true"><span>새 목표</span><p>{objective}</p></output>}
+ </>;
 }
 export function StaminaMeter({value,exhausted}:{value:number;exhausted:boolean}){
  if(value>=1&&!exhausted)return null;

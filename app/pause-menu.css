@@ -111,3 +111,11 @@
  .system-menu .investigation-columns{display:block}
  .system-menu .investigation-facts,.system-menu .investigation-records{overflow:visible;padding:0}
 }
+
+.pause-objective{flex-shrink:0;margin:0 0 24px;padding:0 0 18px;border-bottom:1px solid var(--ui-rule);color:var(--ui-heading)}
+.pause-objective>span{font-size:11px;line-height:1.7;letter-spacing:.1em;color:#c8bda1}
+.pause-objective p{margin:7px 0 0;font-size:calc(17px * var(--subtitle-scale,1));line-height:1.8;white-space:pre-line;text-wrap:pretty;word-break:keep-all;overflow-wrap:anywhere}
+.pause-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.pause-detail-heading .pause-detail-title{margin:0}
+.pause-detail-heading button{min-height:44px;padding:8px 12px;background:transparent;border:1px solid var(--ui-rule);color:var(--ui-paper);font-size:12px}
+@media(max-width:760px){.pause-objective{margin-bottom:20px}.pause-objective p{font-size:calc(16px * var(--subtitle-scale,1))}}

@@ -3,19 +3,11 @@
 .game-shell :is(button,summary,input,select,[tabindex]):focus-visible{outline:2px solid #efe4c9;outline-offset:4px}
 .game-shell button{border-radius:0}
 .game-shell kbd{border-radius:0;border-color:#e1ddc94d;background:#0d1010c9;font:11px ui-monospace,SFMono-Regular,monospace;box-shadow:none}
-.game-shell .hud{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:15px 24px;padding:30px 38px 50px;background:linear-gradient(#060807d6,transparent);pointer-events:none}
+.game-shell .hud{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:15px 24px;padding:30px 38px 50px;background:linear-gradient(#060807d6,transparent);pointer-events:none}
 .game-shell .hud-position{min-width:0;display:flex;align-items:center;gap:16px;padding-top:9px}
 .game-shell .room-label{display:flex;flex-wrap:wrap;gap:7px 12px;color:var(--ui-heading);font-size:13px;font-weight:500;letter-spacing:.08em;line-height:1.6;text-shadow:0 1px 5px #000}
 .game-shell .room-label span{padding-left:12px;border-left:1px solid var(--ui-rule);font-size:11px;letter-spacing:.08em;color:var(--ui-muted)}
 .game-shell .clock{font:11px ui-monospace,SFMono-Regular,monospace;letter-spacing:.14em;color:#c0beb3;white-space:nowrap}
-.game-shell .hud-tools{display:flex;align-items:center;gap:6px;pointer-events:auto}
-.game-shell .hud-tools button{display:flex;align-items:center;justify-content:center;gap:9px;min-width:44px;min-height:44px;padding:10px;background:#0b0e0eb8;border:1px solid #d5d3c323;color:var(--ui-paper);font-family:inherit;font-size:12px;box-shadow:none;transition:background .15s,border-color .15s}
-.game-shell .hud-tools button:hover{border-color:#d4cfb98c;background:#191c1ce6;color:var(--ui-heading)}
-.game-shell .hud-tools .notes-trigger{min-width:68px;font-size:12px!important;letter-spacing:.05em}
-.game-shell .notes-trigger b{font:11px ui-monospace,SFMono-Regular,monospace;color:#c7c3b4;font-weight:400}
-.game-shell .hud-tools .pause-trigger{padding:10px 13px;border-color:#d5d3c349}
-.game-shell .hud-objective{grid-column:1/-1;max-width:min(620px,100%);width:fit-content;margin:0!important;border-left:1px solid #cbc7b282;padding:4px 12px;background:linear-gradient(90deg,#070a09de,#070a09b0);color:var(--ui-paper);font-size:14px;line-height:1.8;letter-spacing:.02em;white-space:pre-line;text-wrap:pretty;text-shadow:none}
-.game-shell .hud-objective.urgent{color:#edd2bd;border-color:#cd9c7b}
 .game-shell .play-bottom{position:absolute;z-index:5;left:50%;bottom:calc(29px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(740px,86vw);display:grid;grid-template-rows:auto auto 41px;grid-template-areas:"subtitle" "interaction" "stamina";gap:20px;pointer-events:none}
 .game-shell .stamina{position:relative;grid-area:stamina;justify-self:center;align-self:end;left:auto;right:auto;top:auto;bottom:auto;transform:none;display:grid;justify-items:center;gap:9px;width:190px;max-width:50vw;padding:6px 14px 9px;background:#070a09cc;color:#d0cfc2;pointer-events:none;font-size:11px;line-height:1.2;letter-spacing:.14em}
 .game-shell .stamina progress{appearance:none;display:block;width:100%;height:3px;border:0;border-radius:0;background:#c5c8b42e;box-shadow:none}
@@ -31,7 +23,7 @@
 .game-shell .hold-meter{left:11px;right:11px;width:calc(100% - 22px);bottom:5px;height:2px;appearance:none;border:0;border-radius:0}
 .game-shell .subtitle{position:static;grid-area:subtitle;left:auto;bottom:auto;transform:none;width:100%}
 .game-shell .subtitle p{display:inline-block;margin:0;padding:8px 17px;border:0;background:#060a09e8;color:#f0eee3;font-size:calc(16px * var(--subtitle-scale,1));line-height:1.9;letter-spacing:.015em;text-shadow:none}
-.game-shell .play-footer{left:38px;right:38px;bottom:28px;opacity:1;color:#aaa99f;font-size:11px}
+.game-shell .play-footer{left:150px;right:38px;bottom:28px;opacity:1;color:#aaa99f;font-size:11px}
 .game-shell .save-notice{right:38px;bottom:76px;font-size:12px;line-height:1.7;color:#d0cabb;background:#080b0be0;padding:4px 8px;max-width:32vw}
 .game-shell .save-notice:empty{display:none}
 .game-shell .chapter-card{top:23%;animation:none}
@@ -50,11 +42,6 @@
  .game-shell .room-label{font-size:12px;gap:2px 8px;letter-spacing:.03em}
  .game-shell .room-label span{font-size:10px;padding-left:8px}
  .game-shell .clock{display:block;margin-top:6px;font-size:10px}
- .game-shell .hud-tools{gap:4px}
- .game-shell .hud-tools .pause-trigger span{display:none}
- .game-shell .hud-tools .pause-trigger{padding:10px}
- .game-shell .hud-tools .notes-trigger{min-width:62px;font-size:12px!important;padding:9px 8px}
- .game-shell .hud-objective{max-width:100%;font-size:13px;line-height:1.8;padding:4px 10px}
  .game-shell .memory-top{inset:16px 16px auto;font-size:10px;letter-spacing:.03em;align-items:flex-start}
  .game-shell .memory-top button{padding:9px 10px;font-size:11px}
  .game-shell .memory-caption{width:92vw}
@@ -72,7 +59,6 @@
 }
 @media(max-height:480px) and (orientation:landscape){
  .game-shell .hud{padding:12px 18px 24px;gap:6px 16px}
- .game-shell .hud-objective{max-width:65vw;font-size:12px}
  .game-shell .play-bottom{bottom:15px;width:min(600px,66vw);gap:14px}
  .game-shell .stamina{width:156px;gap:6px}
  .game-shell .interaction{max-width:min(100%,52vw)}
@@ -81,5 +67,39 @@
  .game-shell .play-footer{display:none}
  .game-shell .save-notice{right:18px;bottom:66px}
 }
-@media(prefers-reduced-motion:reduce){.game-shell .stamina progress::-webkit-progress-value,.game-shell .hud-tools button{transition:none}}
 .game-shell.reduce-motion .stamina progress::-webkit-progress-value{transition:none}
+
+.game-shell .hud-objective{max-width:min(520px,85vw);width:fit-content;margin:0;border-left:2px solid #c7bda0;padding:7px 13px;background:#080b0be8;color:var(--ui-heading);text-align:left}
+.game-shell .hud-objective>span{display:block;color:#c8bda1;font-size:11px;letter-spacing:.09em;line-height:1.7}
+.game-shell .hud-objective p{margin:3px 0 0;max-width:none;color:inherit;font-size:calc(15px * var(--subtitle-scale,1));line-height:1.75;white-space:pre-line;text-wrap:pretty;word-break:keep-all;overflow-wrap:anywhere;text-shadow:none}
+.game-shell .hud-objective.urgent{border-color:#cd9c7b;color:#edd2bd}
+.game-shell .objective-notice{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:4;width:min(560px,86vw);padding:17px 24px 20px;border-block:1px solid #c6bea064;background:#070a09ed;color:#f2eee0;text-align:center;pointer-events:none;animation:objective-in .18s ease-out}
+.objective-notice>span{display:block;color:#c8bda1;font-size:12px;letter-spacing:.16em;line-height:1.8}
+.objective-notice p{margin:9px 0 0;font-size:calc(clamp(19px,2vw,24px) * var(--subtitle-scale,1));font-weight:500;line-height:1.7;white-space:pre-line;text-wrap:pretty;word-break:keep-all;overflow-wrap:anywhere}
+@keyframes objective-in{from{opacity:0}to{opacity:1}}
+.game-shell:has(.objective-notice) .chapter-card{display:none}
+.game-shell .menu-trigger{position:absolute;z-index:10;left:38px;bottom:20px;display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 10px;background:#080b0bde;border:1px solid #d5d3c333;color:var(--ui-paper);font-size:12px;letter-spacing:.03em}
+.game-shell .menu-trigger:hover{border-color:#c8bda0;color:var(--ui-heading)}
+.menu-trigger kbd{font-size:10px;padding:3px 5px}
+@media(max-width:760px){
+ .game-shell .hud{padding-bottom:24px;gap:10px}
+ .game-shell .hud-objective{max-width:90vw;padding:6px 11px}
+ .game-shell .hud-objective p{font-size:calc(14px * var(--subtitle-scale,1))}
+ .game-shell .objective-notice{padding:14px 17px 17px}
+ .game-shell .menu-trigger{left:16px;bottom:16px}
+}
+@media(pointer:coarse){
+ .game-shell .menu-trigger{left:16px;bottom:calc(194px + env(safe-area-inset-bottom,0px));padding:8px 12px}
+ .menu-trigger kbd{display:none}
+}
+@media(max-height:480px) and (orientation:landscape){
+ .game-shell .hud-objective{max-width:62vw;padding:4px 10px}
+ .game-shell .hud-objective>span{font-size:10px}
+ .game-shell .hud-objective p{font-size:calc(12px * var(--subtitle-scale,1));line-height:1.6}
+ .game-shell .objective-notice{top:49%;width:min(560px,70vw);padding:10px 16px 12px}
+ .objective-notice p{font-size:calc(17px * var(--subtitle-scale,1));line-height:1.6;margin-top:4px}
+}
+@media(prefers-reduced-motion:reduce){.game-shell .objective-notice{animation:none}.game-shell .stamina progress::-webkit-progress-value{transition:none}}
+.game-shell.reduce-motion .objective-notice{animation:none}
+
+.hud-context{display:block;margin-top:6px;color:#b9bdaf;font-size:12px;line-height:1.7;white-space:pre-line}

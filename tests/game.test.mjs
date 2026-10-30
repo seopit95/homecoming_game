@@ -1670,3 +1670,12 @@ test('V139 ending controls retain native keyboard activation',async()=>{
  const f=await officeAgencyInput({stage:'car_escape',notes:['basement_route','car_search'],elapsed:1400});
  try{tick(19);assert.equal(f.game.snapshot().story.stage,'ended');const space=new Event('keydown',{cancelable:true});Object.defineProperty(space,'code',{value:'Space'});doc.dispatchEvent(space);assert.equal(space.defaultPrevented,false,'the game must not block Space on ending buttons');}finally{f.close();}
 });
+
+test('V140 current mission survives optional hint hiding and pause',async()=>{
+ const f=await officeAgencyInput({stage:'power',notes:['wake'],elapsed:1200});try{
+  const before=f.game.snapshot().mission;assert.equal(typeof before,'string');assert.ok(before.length>0);
+  assert.equal(f.game.snapshot().objective,before);
+  f.game.configure({hints:false});assert.equal(f.game.snapshot().objective,'');assert.equal(f.game.snapshot().mission,before);
+  f.game.pause(true);assert.equal(f.game.snapshot().mission,before);
+ }finally{f.close();}
+});

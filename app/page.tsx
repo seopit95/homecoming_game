@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState,type CSSProperties} from 'react';
-import {Pause,Volume2,Smartphone} from '../lib/icons';
+import {Volume2,Smartphone} from '../lib/icons';
 import type {Game,GameView,Settings} from '../lib/game';
 import {registerGameTools} from '../lib/webmcp';
 import {isMemory,isCinematic,areaFor} from '../lib/story';
@@ -9,7 +9,6 @@ import {TitleScreen} from './title-screen';
 import {EndingScreen} from './ending-screen';
 import {GameHud,StaminaMeter} from './game-hud';
 import {PauseMenu} from './pause-menu';
-import {investigation} from '../lib/investigation';
 import {defaultSettings,bindingLabels,keyLabel,allowedKey,type Binding} from '../lib/preferences';
 const initialSettings:Settings=defaultSettings;
 export default function Home(){
@@ -26,7 +25,8 @@ export default function Home(){
   const endHold=()=>game.current?.hold(false);
   function change<K extends keyof Settings>(key:K,value:Settings[K]){const next={...settings,[key]:value};setSettings(next);game.current?.configure(next);}
   const began=!!view?.started,ended=view?.story.stage==='ended',dying=view?.story.stage==='dying',memory=!!view&&isCinematic(view.story.stage),hidden=!!view?.story.hidden,paused=!!view?.paused;
-  const recordCount=view?investigation(view.story).count:0;
+  const currentObjective=view?.mission||'';
+  const fullscreen=()=>{if(document.fullscreenElement)void document.exitFullscreen();else void root.current?.requestFullscreen().catch(()=>{});};
   const controlsHelp=<section className="pause-controls" role="group" aria-label="조작 안내">
     <dl>{[
       ['이동',[settings.bindings.forward,settings.bindings.left,settings.bindings.back,settings.bindings.right].map(keyLabel).join(' ')],
@@ -62,23 +62,24 @@ export default function Home(){
     <div className="vignette"/><div className="film-grain"/><div className="lens-edge"/>
     {!began&&<TitleScreen ready={ready} phase={bootPhase} error={!ready?error:''} canContinue={!!view?.canContinue} savedLocation={view?.savedLocation} showSettings={showSettings} settingsPanel={settingsPanel} onStart={()=>game.current?.start()} onContinue={()=>game.current?.continueGame()} onSettings={()=>setShowSettings(!showSettings)} onRetry={()=>window.location.reload()}/>}
     {began&&!ended&&!dying&&!memory&&<>
-      <GameHud view={view!} recordCount={recordCount} onNotes={()=>{setShowNotes(true);game.current?.pause(true);}} onPause={()=>game.current?.pause(true)} onFullscreen={()=>{if(document.fullscreenElement)void document.exitFullscreen();else void root.current?.requestFullscreen().catch(()=>{});}}/>
+      <GameHud view={view!} obscured={!!view&&(view.story.stage==='tv'||view.story.stage==='wake_ring'||view.memoryFade>0)}/>
       {!paused&&view?.chapterCard&&<div className="chapter-card"><span>제 {view.chapterNumber} 장 · {view.floor}</span><p>{view.chapter}</p></div>}
       <output className="save-notice" aria-live="polite">{view?.saveNotice}</output><div className={`crosshair ${view?.prompt?'active':''}`}/>{hidden&&view&&areaFor(view.story)==='apartment'&&<div className="closet-slats" aria-hidden="true"/>}{!!view?.threat&&<div className="threat-haze" style={{opacity:view.threat*.45}}/>}
       {!paused&&<>{view?.whisper&&<output className="ghost-whisper">{view.whisper}</output>}<div className="play-bottom">{view?.prompt&&<button data-game-interaction className={`interaction ${view.holdAction?'hold-interaction':''}`} onPointerDown={beginHold} onPointerUp={endHold} onPointerCancel={endHold} onLostPointerCapture={endHold} onClick={()=>{if(!view.holdAction)game.current?.interact();}}><kbd>{view.interactKey}</kbd><span>{view.prompt}</span>{view.holdAction&&<progress className="hold-meter" aria-label={view.holdAction==='car_board'?'운전석 탑승':'문 벌리기'} max={1} value={view.holdProgress}/>}</button>}
         <output className="subtitle" aria-live="polite">{view?.message&&<p>{view.message}</p>}</output>
-        {view&&<StaminaMeter value={view.stamina} exhausted={view.exhausted}/>}</div><footer className="play-footer"><span><kbd>ESC</kbd> 설정 · 조작 <kbd>J</kbd> 기록</span><span><Smartphone size={14}/>{!view?.hasFlashlight?'스마트폰 없음':view?.flashlight?'켜짐':'꺼짐'}{view?.crouched?' · 몸을 낮춤':''}</span></footer>
+        {view&&<StaminaMeter value={view.stamina} exhausted={view.exhausted}/>}</div><footer className="play-footer"><span><kbd>J</kbd> 수첩</span><span><Smartphone size={14}/>{!view?.hasFlashlight?'스마트폰 없음':view?.flashlight?'켜짐':'꺼짐'}{view?.crouched?' · 몸을 낮춤':''}</span></footer>
         <div className="touch-controls"><div className="dpad"><button aria-label="앞으로 이동" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);game.current?.key("KeyW",true);}} onPointerUp={()=>game.current?.key("KeyW",false)} onPointerCancel={()=>game.current?.key("KeyW",false)} onLostPointerCapture={()=>game.current?.key("KeyW",false)}>↑</button><div><button aria-label="왼쪽 이동" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);game.current?.key("KeyA",true);}} onPointerUp={()=>game.current?.key("KeyA",false)} onPointerCancel={()=>game.current?.key("KeyA",false)} onLostPointerCapture={()=>game.current?.key("KeyA",false)}>←</button><button aria-label="뒤로 이동" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);game.current?.key("KeyS",true);}} onPointerUp={()=>game.current?.key("KeyS",false)} onPointerCancel={()=>game.current?.key("KeyS",false)} onLostPointerCapture={()=>game.current?.key("KeyS",false)}>↓</button><button aria-label="오른쪽 이동" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);game.current?.key("KeyD",true);}} onPointerUp={()=>game.current?.key("KeyD",false)} onPointerCancel={()=>game.current?.key("KeyD",false)} onLostPointerCapture={()=>game.current?.key("KeyD",false)}>→</button></div><button className="touch-run" aria-label="앞으로 달리기" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);game.current?.key("KeyW",true);game.current?.key("ShiftLeft",true);}} onPointerUp={()=>{game.current?.key("KeyW",false);game.current?.key("ShiftLeft",false);}} onPointerCancel={()=>{game.current?.key("KeyW",false);game.current?.key("ShiftLeft",false);}} onLostPointerCapture={()=>{game.current?.key("KeyW",false);game.current?.key("ShiftLeft",false);}}>달리기 ↑</button></div><div className="touch-actions"><button aria-label="몸 낮추기" aria-pressed={view?.crouched} onClick={()=>game.current?.crouch()}>{view?.crouched?'일어서기':'몸 낮추기'}</button><button aria-label="스마트폰 플래시 전환" onClick={()=>game.current?.torch()}><Smartphone size={19}/></button><button data-game-interaction onPointerDown={beginHold} onPointerUp={endHold} onPointerCancel={endHold} onLostPointerCapture={endHold} onClick={()=>{if(!view?.holdAction)game.current?.interact();}}>{view?.holdAction==='car_board'?'길게 눌러 탑승':view?.holdAction?'길게 누르기':'확인'}</button></div></div>
       </>}
     </>}
     {began&&memory&&<section className="memory-screen" aria-label={view&&isMemory(view.story.stage)?"사흘 전의 기억":"마지막 귀가"}>
       <div className="memory-black" style={{opacity:view?.memoryFade||0}}/>
-      <div className="memory-top"><span>{view?.memoryLabel}</span><div>{view&&isMemory(view.story.stage)&&<button disabled={paused} onClick={()=>game.current?.skipMemory()}>기억 건너뛰기</button>}<button aria-label="일시정지" onClick={()=>game.current?.pause(true)}><Pause size={18}/></button></div></div>
+      <div className="memory-top"><span>{view?.memoryLabel}</span><div>{view&&isMemory(view.story.stage)&&<button disabled={paused} onClick={()=>game.current?.skipMemory()}>기억 건너뛰기</button>}</div></div>
       <output className="memory-caption" aria-live="polite"><span key={`${view?.story.stage}:${view?.memoryText}`}>{view?.memoryText}</span></output>
     </section>}
     {began&&view&&(view.story.stage==='stairs_ground'||areaFor(view.story)==='annex'&&view.memoryFade>0)&&<div className="time-jump" style={{opacity:view.memoryFade}}><p>{view.memoryLabel}<span>{view.memoryText}</span></p></div>}
     {began&&view?.story.stage==='wake_ring'&&<div className="time-jump" aria-hidden="true" style={{opacity:view.memoryFade}}><p>사흘 뒤<span>28층 2803호 · 03:17</span></p></div>}
-    {began&&paused&&!ended&&view&&<PauseMenu location={view.location} floor={view.floor} clock={view.clock} showNotes={showNotes} onContinue={()=>game.current?.pause(false)} onRestart={()=>game.current?.start()} onSettings={()=>setShowNotes(false)} onNotes={()=>setShowNotes(true)} settingsPanel={settingsPanel} controlsHelp={controlsHelp} notebook={<InvestigationNotebook story={view.story} onClose={()=>game.current?.pause(false)}/>}/>}
+    {began&&!ended&&!dying&&<button className="menu-trigger" aria-label="일시정지 메뉴 열기" onClick={()=>game.current?.pause(true)}>메뉴 <kbd>ESC</kbd></button>}
+    {began&&paused&&!ended&&view&&<PauseMenu location={view.location} floor={view.floor} clock={view.clock} objective={currentObjective} onFullscreen={fullscreen} showNotes={showNotes} onContinue={()=>game.current?.pause(false)} onRestart={()=>game.current?.start()} onSettings={()=>setShowNotes(false)} onNotes={()=>setShowNotes(true)} settingsPanel={settingsPanel} controlsHelp={controlsHelp} notebook={<InvestigationNotebook story={view.story} onClose={()=>game.current?.pause(false)}/>}/>}
     {dying&&<div className="death-vignette" aria-hidden="true"><div style={{opacity:Math.max(0,((view?.deathProgress||0)-.42)/.18)}}/></div>}
     {dying&&(view?.deathProgress||0)>.4&&!paused&&<button className="skip-death" onClick={()=>game.current?.skipDeath()}>재시도 화면으로</button>}
     {ended&&view&&<EndingScreen ending={view.story.ending} elapsed={view.elapsed} checkpointLabel={view.checkpointLabel} reducedMotion={settings.reducedMotion} onMusic={game.current?.endingMusic} onRestart={()=>game.current?.start(view.story.ending==='caught')}/>}

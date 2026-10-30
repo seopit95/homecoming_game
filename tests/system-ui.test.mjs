@@ -8,11 +8,15 @@ function compiled(relative,imports={}){let js=ts.transpileModule(readFileSync(ne
 const icons=compiled('../lib/icons.tsx');
 const {GameHud,StaminaMeter}=await import(compiled('../app/game-hud.tsx',{'../lib/icons':icons}));
 const noop=()=>{};
-test('active objective and the three HUD actions remain named, while disabled hints leave no objective panel',()=>{
- const props={view:{location:'관리사무소',floor:'1F',clock:'03:17',objective:'세 기록을 확인한다.',threat:0},recordCount:3,onPause:noop,onNotes:noop,onFullscreen:noop};
- const html=render(h(GameHud,props));assert.match(html,/aria-label="현재 목표"/);assert.match(html,/세 기록을 확인한다/);
- for(const label of ['수집한 기록 보기','전체 화면','일시정지'])assert.match(html,new RegExp('aria-label="'+label+'"'));
- const quiet=render(h(GameHud,{...props,view:{...props.view,objective:''}}));assert.doesNotMatch(quiet,/현재 목표/);
+test('play HUD announces the first objective prominently without upper-right controls',()=>{
+ const props={view:{location:'관리사무소',floor:'1F',clock:'03:17',objective:'세 기록을 확인한다.',mission:'세 기록을 확인한다.',threat:0,elapsed:120,paused:false}};
+ const html=render(h(GameHud,props));
+ assert.match(html,/aria-label="현재 목표"/);assert.match(html,/새 목표/);assert.match(html,/<output[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
+ assert.doesNotMatch(html,/<button|플레이 메뉴|hud-tools/);
+ const quiet=render(h(GameHud,{view:{...props.view,objective:''}}));assert.doesNotMatch(quiet,/현재 목표|새 목표|<output/);
+ const status=render(h(GameHud,{view:{...props.view,objective:'통신실 녹음 재생 중'}}));assert.match(status,/<output[^>]*>[\s\S]*세 기록을 확인한다.[\s\S]*<\/output>/);assert.doesNotMatch(status.match(/<output[^>]*>[\s\S]*?<\/output>/)?.[0]||'',/통신실 녹음/);
+ const covered=render(h(GameHud,{...props,obscured:true}));assert.doesNotMatch(covered,/<output/);
+ const paused=render(h(GameHud,{view:{...props.view,paused:true}}));assert.doesNotMatch(paused,/<output/);assert.match(paused,/세 기록을 확인한다/);
 });
 test('stamina appears during use and recovery with a named native meter, then disappears when full',()=>{
  assert.equal(render(h(StaminaMeter,{value:1,exhausted:false})), '');
@@ -22,7 +26,7 @@ test('stamina appears during use and recovery with a named native meter, then di
 
 const {PauseMenu}=await import(compiled('../app/pause-menu.tsx',{'../lib/icons':icons}));
 test('pause separates settings and notebook in a named modal without losing resume or restart',()=>{
- const props={location:'관리사무소',floor:'1F',clock:'03:17',showNotes:false,onContinue:noop,onRestart:noop,onSettings:noop,onNotes:noop,settingsPanel:h('label',null,'전체 음량',h('input',{'aria-label':'전체 음량',type:'range',value:.42,readOnly:true})),controlsHelp:h('p',null,'WASD 이동'),notebook:h('section',{'aria-label':'조사 수첩'},'회수한 편지')};
- const html=render(h(PauseMenu,props));assert.match(html,/<dialog[^>]*aria-modal="true"[^>]*aria-labelledby="pause-title"/);assert.match(html,/계속하기/);assert.match(html,/처음부터 다시/);assert.match(html,/aria-label="전체 음량"/);assert.doesNotMatch(html,/회수한 편지/);
- const book=render(h(PauseMenu,{...props,showNotes:true}));assert.match(book,/회수한 편지/);assert.doesNotMatch(book,/aria-label="전체 음량"/);assert.match(book,/aria-label="일시정지 탐색"/);
+ const props={location:'관리사무소',floor:'1F',clock:'03:17',objective:'세 기록을 확인한다.',showNotes:false,onFullscreen:noop,onContinue:noop,onRestart:noop,onSettings:noop,onNotes:noop,settingsPanel:h('label',null,'전체 음량',h('input',{'aria-label':'전체 음량',type:'range',value:.42,readOnly:true})),controlsHelp:h('p',null,'WASD 이동'),notebook:h('section',{'aria-label':'조사 수첩'},'회수한 편지')};
+ const html=render(h(PauseMenu,props));assert.match(html,/<dialog[^>]*aria-modal="true"[^>]*aria-labelledby="pause-title"/);assert.match(html,/계속하기/);assert.match(html,/aria-label="현재 목표"/);assert.match(html,/세 기록을 확인한다/);assert.match(html,/전체 화면/);assert.match(html,/처음부터 다시/);assert.match(html,/aria-label="전체 음량"/);assert.doesNotMatch(html,/회수한 편지/);
+ const book=render(h(PauseMenu,{...props,showNotes:true}));assert.match(book,/회수한 편지/);assert.match(book,/세 기록을 확인한다/);assert.doesNotMatch(book,/aria-label="전체 음량"/);assert.match(book,/aria-label="일시정지 탐색"/);
 });

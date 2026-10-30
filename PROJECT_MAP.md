@@ -60,3 +60,5 @@ itch.io HTML5 빌드: `npm run build:itch` → `scripts/build-itch.mjs`, `vite.i
 2026-10-30 도입 음주운전·소주병: `lib/driving-bottles.ts`(원본 두 병/오른손 마시기) → `prologue.ts`(휴대폰 시선)·`story.ts`(독백 자막/반복 운전·수첩). `docs/quality/2026-10-30-drunk-driving-opening.md`.
 
 V139 시스템 UI: `app/game-hud.tsx`·`game-hud.css`(목표/하단 중앙 체력/자동 하단 배치), `app/pause-menu.tsx`·`pause-menu.css`(native dialog/포커스/설정·수첩 분리). `page.tsx`의 기존 게임 콜백과 `game.ts.keydown`의 메뉴 기본 키/상호작용 Space 구분. 두 CSS는 기존 테마 뒤, Sites와 itch에 같은 순서로 적용. `docs/quality/2026-10-30-ui-redesign.md`.
+
+V140 목표 발견성: `game-hud.tsx`의 게임 시간 기반 중앙 안내와 왼쪽 위 현재 목표. `GameView.mission`은 임시 통화/재생 상태와 분리한 파생 미션이며 `PauseMenu` 양쪽 화면에서 다시 확인. `page.tsx`의 왼쪽 아래 메뉴와 메뉴 내 전체 화면. `docs/quality/2026-10-30-objective-notice.md`.
