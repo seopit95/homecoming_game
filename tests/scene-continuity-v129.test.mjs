@@ -18,7 +18,7 @@ test('V129 the final passenger exposes the same native three-dimensional face as
 test('V129 the epilogue camera views the actual frozen wreck from outside the vehicle',()=>{
  const r=buildRoad(new T.Scene(),true),c=new T.PerspectiveCamera(72,16/9,.06,220);try{
   r.pose('ended',0,c,true);r.root.updateMatrixWorld(true);const car=r.root.getObjectByName('memory-car'),truck=r.root.getObjectByName('finale-dump-truck');
-  assert.ok(Math.abs(car.worldToLocal(c.position.clone()).x)>2.5,'aftermath is an exterior view of the game geometry,not the driver seat or a photo');assert.equal(truck.visible,true);assert.equal(r.root.getObjectByName('finale-passenger').visible,false,'the final aftermath seat is empty');assert.equal(r.root.getObjectByName('finale-shattered-windshield').visible,true);
+  assert.ok(Math.abs(car.worldToLocal(c.position.clone()).x)>2.5,'aftermath is an exterior view of the game geometry,not the driver seat or a photo');assert.equal(truck.visible,true);assert.equal(r.root.getObjectByName('finale-passenger').visible,false,'the final aftermath seat is empty');assert.equal(r.root.getObjectByName('finale-shattered-windshield').visible,false);assert.equal(r.root.getObjectByName('hero-vehicle-wreck').visible,true);
   const direction=c.getWorldDirection(new T.Vector3()),v=car.getWorldPosition(new T.Vector3()).sub(c.position).normalize();assert.ok(direction.dot(v)>.7,'the real car is in the aftermath view');const first=c.matrixWorld.toArray();r.pose('ended',0,c,true);assert.deepEqual(c.matrixWorld.toArray(),first,'manual pause/repeat of same simulation instant is stable');
  }finally{r.dispose();}
 });

@@ -66,27 +66,27 @@ test('V123 the bedside smartphone becomes the carried caller and flashlight with
   f.game.torch();tick();assert.equal(f.game.snapshot().flashlight,false);f.game.torch();tick();assert.equal(f.game.snapshot().flashlight,true);
  }finally{f.close();}
 });
-test('V122 a stair checkpoint restart approaches around the real blind corner instead of waiting at the player back',async()=>{
+test('V122 a stair checkpoint restart keeps a concealed, continuous grounded approach and capture',async()=>{
  const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:400});try{
-  const {hasLineOfSight,canStandAt}=await import('../lib/world.ts');
-  const {buildWorld,disposeWorld}=await import('../lib/world.ts');
+  const {canStandAt,buildWorld,disposeWorld}=await import('../lib/world.ts');
   const w=buildWorld(new THREE.Scene(),'stairs');
   try{const g=renderedScene.getObjectByName('resident-remains');
    // Exercise the user's death -> retry path, not just a hand-placed studio pose.
    g.visible=true;g.position.copy(renderedCamera.position);g.position.y=0;tick(.025);
    assert.equal(f.game.snapshot().story.stage,'dying');tick(1.3);f.game.skipDeath();assert.equal(f.game.snapshot().story.stage,'ended');f.game.start(true);tick(.025);
    assert.equal(f.game.snapshot().story.stage,'stairs_loop');
-   assert.ok(g.position.distanceTo(renderedCamera.position)>5,'retry cannot put a waiting body directly behind the player');
-   assert.equal(hasLineOfSight(renderedCamera.position,{x:g.position.x,y:.8,z:g.position.z},w.solids),false,'the existing two-turn passage must conceal the starting body');
-   const initial=g.position.clone();tick(.45);assert.ok(g.position.distanceTo(initial)>.15,'the approach starts physically, without a visible five-second freeze');
-   let revealed=false;let largestStep=0,previous=g.position.clone();
-   for(let i=0;i<360;i++){tick(.025);const step=g.position.distanceTo(previous);largestStep=Math.max(largestStep,step);previous.copy(g.position);
-    assert.ok(canStandAt(g.position.x,g.position.z,w.solids,.3,w.bounds),'the entry path cannot cross the corner wall');
-    if(hasLineOfSight(renderedCamera.position,{x:g.position.x,y:.8,z:g.position.z},w.solids)){revealed=true;break;}}
-   assert.ok(revealed,'the pursuer actually rounds the corner into view');assert.ok(largestStep<.12,'the reveal cannot teleport');
-   const before=g.position.clone();tick(.15);assert.ok(g.position.distanceTo(before)>.04,'the revealed pursuer keeps moving');
-   f.game.pause();const frozen=g.position.clone();tick(1);assert.deepEqual(g.position.toArray(),frozen.toArray());
-   f.game.pause(false);tick(8);assert.ok(['dying','ended'].includes(f.game.snapshot().story.stage),'rounding the corner must still lead to an actual capture if the player waits');
+   assert.equal(g.visible,false,'retry leaves the pursuer offscreen during the approach warning');
+   assert.ok(Math.hypot(g.position.x-renderedCamera.position.x,g.position.z-renderedCamera.position.z)>2,'retry leaves room at the current shaft entrance');
+   const initial=g.position.clone();tick(.45);assert.equal(g.visible,false);assert.ok(g.position.distanceTo(initial)<1e-8);
+   f.game.pause();const frozen=g.position.clone();tick(1);assert.deepEqual(g.position.toArray(),frozen.toArray());f.game.pause(false);
+   let moved=false,steps=0;
+   while(f.game.snapshot().story.stage==='stairs_loop'&&steps++<600){const previous=g.position.clone();tick(.025);
+    assert.ok(g.position.distanceTo(previous)<.12,'the approach cannot teleport');
+    assert.ok(canStandAt(g.position.x,g.position.z,w.stairRoute.navigationSolids(g.position.y),.3,w.bounds),'the entry path respects the current floor walls');
+    moved ||= g.position.distanceTo(initial)>.15;
+   }
+   assert.ok(moved,'the pursuer physically approaches after its warning');
+   assert.ok(['dying','ended'].includes(f.game.snapshot().story.stage),'the real approach still captures a waiting player');
   }finally{disposeWorld(w.root);}
  }finally{f.close();}
 });
@@ -100,7 +100,7 @@ for(const [stage,id,next,notes,circuit,officeSupply] of [
  ['office_leave','service_exit','office_departure',['service_key','fuse','office_install','security_power'],['circuit_c'],true],
  ['annex_exit_ready','annex_exit','annex_departure'],['court_unlocked','court_exit','court_departure',['court_key']],['archive_escape','archive_exit','archive_departure'],['plant_exit_ready','plant_exit','plant_departure']
 ])test(`V120 ${id} accepts the visible door face from close range without aiming below the player's eyes`,async()=>{
- const f=await officeAgencyInput({stage,notes:notes??[],circuit:circuit??[],officeSupply:officeSupply??false,elapsed:800});const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{areaFor}=await import('../lib/story.ts');if(id==='stairs'){renderedCamera.position.set(0,1.65,-1.8);tick(.1);assert.equal(f.game.snapshot().story.stage,'corridor_run');}const w=buildWorld(new THREE.Scene(),areaFor(f.game.snapshot().story));try{const t=w.targets.find(t=>t.id===id);assert.ok(t);const z=t.point.z+.35,y=w.heightAt(t.point.x,z)+1.65;f.use([t.point.x,y,z],[t.point.x,y,z-1]);assert.equal(f.game.snapshot().story.stage,next,JSON.stringify({id,state:f.game.snapshot().story.stage,prompt:f.game.snapshot().prompt,message:f.game.snapshot().message}));}finally{f.close();disposeWorld(w.root);}
+ const f=await officeAgencyInput({stage,notes:notes??[],circuit:circuit??[],officeSupply:officeSupply??false,elapsed:800});const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{areaFor}=await import('../lib/story.ts');if(id==='stairs'){renderedCamera.position.set(0,1.65,-1.8);tick(.1);assert.equal(f.game.snapshot().story.stage,'lift_climb');tick(2.5);assert.equal(f.game.snapshot().story.stage,'corridor_run');}const w=buildWorld(new THREE.Scene(),areaFor(f.game.snapshot().story));try{const t=w.targets.find(t=>t.id===id);assert.ok(t);if(id==='stairs')f.use([0,1.65,21.9],t.point.toArray());else{const z=t.point.z+.35,y=w.heightAt(t.point.x,z)+1.65;f.use([t.point.x,y,z],[t.point.x,y,z-1]);}assert.equal(f.game.snapshot().story.stage,next,JSON.stringify({id,state:f.game.snapshot().story.stage,prompt:f.game.snapshot().prompt,message:f.game.snapshot().message}));}finally{f.close();disposeWorld(w.root);}
 });
 test('V120 the stopped lift can be pried by holding while looking at its actual leaf at close eye height',async()=>{
  const f=await officeAgencyInput({stage:'lift_button',notes:[],elapsed:220});const {buildWorld,disposeWorld}=await import('../lib/world.ts'),w=buildWorld(new THREE.Scene(),'lift');try{f.use([0,1.65,.2],w.targets.find(t=>t.id==='panel').point.toArray());tick(16.1);assert.equal(f.game.snapshot().story.stage,'pry');f.aim([-.25,1.65,-.95],[-.25,1.65,-1.4]);assert.match(f.game.snapshot().prompt,/문 벌리기/);f.game.hold(true);tick(.5);assert.ok(f.game.snapshot().holdProgress>.05);}finally{f.close();disposeWorld(w.root);}
@@ -1472,7 +1472,10 @@ test('V126 retired archive editing shortcuts cannot crash the replacement CCTV s
 test('V126 reading the recovered ending stays safe until the player opens the archive escape door',async()=>{
  const f=await officeAgencyInput({stage:'archive_escape',notes:['archive_road','archive_call','archive_gate','archive_play'],pursuit:true,elapsed:950});try{
   const g=renderedScene.getObjectByName('resident-remains');tick(20);assert.equal(f.game.snapshot().story.stage,'archive_escape');assert.equal(g.visible,false);
-  const before=voiceCalls.filter(v=>v==='no').length;f.use([0,1.65,-5.45],[0,1.2,-6.53]);assert.equal(f.game.snapshot().story.stage,'archive_departure');assert.equal(voiceCalls.filter(v=>v==='no').length,before);assert.equal(g.visible,false);
+  const before=voiceCalls.filter(v=>v==='no').length;
+  const {buildWorld,disposeWorld}=await import('../lib/world.ts'),w=buildWorld(new THREE.Scene(),'archive');
+  try{const target=w.targets.find(t=>t.id==='archive_exit'),approach=target.mesh.userData.approach;f.use([approach.x,w.heightAt(approach.x,approach.z)+1.65,approach.z],target.point.toArray());}finally{disposeWorld(w.root);}
+  assert.equal(f.game.snapshot().story.stage,'archive_departure');assert.equal(voiceCalls.filter(v=>v==='no').length,before);assert.equal(g.visible,false);
   tick(2);assert.equal(g.visible,false,'the exit has an audible warning before approach');const at=g.position.clone();tick(1.4);assert.equal(g.visible,true);assert.ok(g.position.distanceTo(at)>.1,'pursuer walks out of the actual incoming passage');assert.equal(voiceCalls.filter(v=>v==='no').length,before);
  }finally{f.close();}
 });
@@ -1564,7 +1567,10 @@ test('V133 actual four-floor flight reaches the visibly open20F door without loc
   assert.ok(w.stairRoute,'the real vertically stacked support map is installed');
   const points=[];for(let k=0;k<4;k++){const y=-k*2.8;points.push({x:1,y:y-1.4,z:3.9},{x:-1,y:y-1.4,z:3.9},{x:-1,y:y-2.8,z:-.8});if(k<3)points.push({x:1,y:y-2.8,z:-.8});}
   for(const p of points){const pos=renderedCamera.position.toArray();f.aim(pos,[p.x,pos[1],p.z]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);let i=0;while(Math.hypot(renderedCamera.position.x-p.x,renderedCamera.position.z-p.z)>.13&&i++<700){tick(.025);assert.ok(!['dying','ended'].includes(f.game.snapshot().story.stage),JSON.stringify({at:renderedCamera.position.toArray(),ghost:renderedScene.getObjectByName('resident-remains')?.position.toArray(),goal:p,stamina:f.game.snapshot().stamina}));}f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.ok(i<700,JSON.stringify({stalled:renderedCamera.position.toArray(),goal:p}));assert.ok(Math.abs(renderedCamera.position.y-1.65-p.y)<.12,'continuous physical height on each landing');}
-  const pursuer=renderedScene.getObjectByName('resident-remains');assert.ok(pursuer.position.y< -5.6,`the pursuer keeps descending, groundY=${pursuer.position.y}`);
+  const pursuer=renderedScene.getObjectByName('resident-remains'),remaining=w.stairRoute.remainingToExit(pursuer.position);let waited=0;
+  while((pursuer.position.y>=-5.6-1e-6||w.stairRoute.remainingToExit(pursuer.position)>=remaining-.1)&&waited<5){tick(.025);waited+=.025;}
+  assert.ok(pursuer.position.y< -5.6-1e-6,'the pursuer continues down within a bounded time');
+  assert.ok(w.stairRoute.remainingToExit(pursuer.position)<remaining-.1,'ordered route distance must decrease');
   assert.equal(f.game.snapshot().floor,'20F');assert.equal(w.targets.length,1);const target=w.targets[0];f.aim(renderedCamera.position.toArray(),target.point.toArray());f.game.interact();assert.equal(f.game.snapshot().story.stage,'stairs_passage');
  }finally{f.close();disposeWorld(w.root);}
 });

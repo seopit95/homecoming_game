@@ -31,7 +31,7 @@ test('V126 ghost distress requests fresh asset URLs instead of cached synthetic 
  try{
   a.prepare();
   assert.ok(requested.includes('/audio/ghost-v126/capture-scream.wav'),'capture and chase must load the replacement scream');
-  assert.ok(requested.includes('/audio/ghost-v126/refusal-ko.wav'),'refusal must load the expressive Korean performance');
+  assert.ok(requested.includes('/audio/ghost-v127/refusal-ko.wav'),'refusal must load the expressive Korean performance');
   assert.ok(!requested.includes('/audio/scream.wav')&&!requested.includes('/audio/no.wav'),'an old browser cache cannot supply either replacement');
  }finally{a.dispose();globalThis.AudioContext=previousContext;globalThis.fetch=previousFetch;}
 });
