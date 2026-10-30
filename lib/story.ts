@@ -6,10 +6,11 @@ export type Action = ExpansionAction|'climbed'|'ground_arrived'|'shelter'|'home_
 export type Story = {stage:Stage;hidden:boolean;ending:'crashed'|'caught'|null;resume:Stage;notes:string[];circuit:Action[];officeSupply:boolean;tapeIndex:number;code?:string};
 export const chaseStages:Stage[]=['transfer_gallery','transfer_wait','transfer_enter','court_search','court_code','court_safe_open','court_unlocked','court_departure','office_departure','annex_arrival','annex_fuse','annex_restore','annex_search','annex_unlock','annex_exit_ready','annex_departure','archive_search','archive_edit','archive_reveal','archive_playback','archive_escape','archive_departure','plant_isolate','plant_power','plant_drain','plant_exit_ready','plant_departure','hide','escape','lift_call','lift_wait','lift_enter','corridor_run','corridor_departure','stairs_loop','stairs_descent','stairs_clue','stairs_reverse','stairs_passage','office_record','office_fuse','office_power','office_tape','office_playback','office_key','office_leave','parking_gate','parking_key','parking_pump','parking_alarm','parking_run','resident_arrival','resident_entry','resident_memory','resident_return','resident_departure'];
 export const opening:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={
-  drive:{duration:20,action:'collision',label:'사흘 전 · 새벽 03:17',text:'사업이 무너진 뒤 술로 밤을 보냈다.\n그날도 술을 마신 채 운전대를 잡았다.',cues:[
-    {at:4,text:'집까지 세 블록.\n운전하면 안 됐지만, 괜찮다고 우겼다.'},
+  drive:{duration:20,action:'collision',label:'사흘 전 · 새벽 03:17',text:'사업이 무너진 뒤 술을 놓지 못했다.\n그날도 술을 마셨다.',cues:[
+    {at:2.4,text:'「하… 취한다.」'},
+    {at:4,text:'술을 마시고 운전하는 일도 반복됐다.\n집까지 세 블록, 괜찮다고 우겼다.'},
     {at:8.5,text:'백로아파트. 매일 다니던 길이었다.'},
-    {at:12,text:''},
+    {at:12,text:'아내는 술 마신 날에는 운전하지 말라고 했다.\n나는 또 병째 한 모금을 삼켰다.'},
     {at:15.9,text:'휴대전화가 진동했다.'},
     {at:18.6,text:''},
   ]},
@@ -257,7 +258,7 @@ export const journal:Partial<Record<Action,{title:string;text:string}>>={
   belongings:{title:"가족의 보관물 · 한서연",text:"접힌 우산과 검은 신발, 한서연이 맡긴 보관 봉투. 실제 등록 주소는 2803호. 서연은 내 아내였다. 한때는 우리 셋이 돌아올 집이었다. 장을 보고 돌아오던 아내를 그날의 도로에 남겨 두었다."},
   portrait:{title:"냉장고의 사진 · 함께 살던 날",text:"신혼집 앞에서 찍은 사진과 아이가 태어난 날의 사진. 뒷면에 「다음에는 맑은 날에. 우리 셋이.」라고 적혀 있다. 사고 기록의 한 사람이 아니라, 나와 내일을 약속하던 아내였다."},
   answerphone:{title:"03:16 · 남겨진 음성메시지",text:"「비가 너무 오네. 거의 다 왔어.」 서연의 목소리 뒤로 횡단보도 신호음과 타이어 소리가 이어진다. 장을 보고 돌아오던 길이었다. 신고해야 한다는 걸 알면서도 나는 차로 돌아가 문을 잠갔다."},
-  wake:{title:'사흘 전 · 내가 외면한 밤',text:'술을 마신 채 차를 몰았다. 백로아파트 앞 횡단보도에서 여성을 치었다. 새벽 03:17.\n\n차에서 내려 쓰러진 여자를 확인했다. 신고해야 했다. 그런데 나는 다시 차에 탔다. 문을 잠그고 현장을 떠나 2803호로 돌아왔다. 그 자리에서 죽었다고 생각했다. 숨을 확인하지도 않았으면서. 아무에게도 말하지 않았다.\n\n사흘이 지났다. 매일 그 시각에 눈이 떠진다. 오늘은 전화벨에 잠이 깼다. 스위치를 눌러도 불이 들어오지 않는다.'},
+  wake:{title:'사흘 전 · 내가 외면한 밤',text:'술을 마시고도 차를 모는 일이 반복됐다. 그날은 운전 중에도 소주를 병째 마셨다. 아내가 운전하지 말라고 했지만 듣지 않았다. 백로아파트 앞 횡단보도에서 여성을 치었다. 새벽 03:17.\n\n차에서 내려 쓰러진 여자를 확인했다. 신고해야 했다. 그런데 나는 다시 차에 탔다. 문을 잠그고 현장을 떠나 2803호로 돌아왔다. 그 자리에서 죽었다고 생각했다. 숨을 확인하지도 않았으면서. 아무에게도 말하지 않았다.\n\n사흘이 지났다. 매일 그 시각에 눈이 떠진다. 오늘은 전화벨에 잠이 깼다. 스위치를 눌러도 불이 들어오지 않는다.'},
   phone:{title:'28층 · 정전 뒤의 전화',text:'스마트폰에서 빗소리와 와이퍼 소리, 차 문이 잠기는 소리가 들렸다.\n「문 잠가도… 소용없어.」\n\n현관에는 젖은 검은 신발이 놓여 있었다. 그날 차 앞에 떨어졌던 신발. 분명 도로에 두고 왔다.'},
   record:{title:'17층 · 사흘 전의 사고 기록',text:'백로아파트 임시 관리실 / 사고 다음 날 06:40\n인계 작성: 박정호. 전임 야간 당직: 한서연.\n17층 외벽 공사로 옮겨 쓰던 1703호는 이 인계를 끝으로 폐쇄됐다.\n03:17. 건물 앞 횡단보도에서 보행자 사망 사고. 검은 승용차가 현장을 이탈.\n03:26. 파손 차량 입차. 관리실 열람 영상에서 정차 직후 아홉 초가 누락됨. 다음 장면에는 문이 이미 닫혀 있고 운전자가 혼자 걸어감.\n\n아홉 초. 숫자를 보는 순간 손끝이 차가워졌다. 그 사이에 내가 무엇을 했는지 떠올리고 싶지 않다.\n\n시설 인계: 「관리용 승강기 열쇠는 CCTV 오른쪽 책상에 보관. 전원이 끊기면 서고의 예비 퓨즈를 사용할 것. 비상전원은 6A까지만 공급한다. 구역 조명 4A / 기록장치 2A / 승강기 제어 4A. 서고의 퓨즈를 배전반 빈 홀더에 설치하고 필요한 부하만 선택해 전원을 투입할 것. 탈출에는 승강기 제어 전원이 필요하다. CCTV를 열람한다면 입차 시각을 선택할 것. 누락 구간은 지하 기록보관실 원본과 대조 필요.」'},
   monitor:{title:'CCTV · 빠진 아홉 초',text:'사흘 전 03:26. 앞부분이 찌그러진 내 차가 멈춘다. 시간이 아홉 초를 건너뛴다. 다음 장면에서 차 문은 이미 닫혀 있고, 나는 혼자 걸어간다.\n\n조수석 유리에 흰 소매 같은 것이 비친다. 화면이 깨져 얼굴은 보이지 않는다. 아래쪽 숫자만 선명하다.\n「귀가자 2명 / 2803호」\n\n함께 내린 사람은 보이지 않는데 왜 둘이라고 적혀 있을까. CCTV 옆에 관리용 승강기 열쇠가 있다. 우선 1층으로 내려가야 한다.'},

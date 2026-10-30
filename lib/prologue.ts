@@ -6,6 +6,7 @@ import {createVehicleWreck} from './vehicle-wreck.ts';
 import {createDumpTruck} from './dump-truck.ts';
 import {createSedan,sedanWindshieldPoint} from './sedan.ts';
 import {createDrivingHands} from './driving-hands.ts';
+import {createDrivingBottles} from './driving-bottles.ts';
 import {createPedestrian} from './pedestrian.ts';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {sharePrintedTexture,surface,boxUV,softBox} from './materials.ts';
@@ -67,6 +68,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const wheel=drivingCar.root.getObjectByName('hero-steering-wheel')!;
   let memoryHands:T.Group|undefined;
   if(!escapeDrive)memoryHands=createDrivingHands(wheel);
+  const bottles=memoryHands?createDrivingBottles(car,memoryHands):undefined;
   const mirrorTarget=new T.WebGLRenderTarget(384,112),mirrorCamera=new T.PerspectiveCamera(32,384/112,.1,75);
   let mirrorFace:T.Mesh|undefined;
   if(!escapeDrive){
@@ -106,7 +108,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const phoneMount=new T.Group();phoneMount.visible=!escapeDrive;car.add(phoneMount);
   mesh(new T.CylinderGeometry(.034,.038,.008,20),rubber,[.12,.966,-.785],phoneMount);
   rod([.12,.969,-.785],[.12,1.025,-.75],.009,rubber,phoneMount);
-  const distraction=box(.12,1.04,-.735,.075,.012,.145,rubber,phoneMount);distraction.rotation.x=.8;
+  const distraction=box(.12,1.04,-.735,.075,.012,.145,rubber,phoneMount);distraction.rotation.x=.8;distraction.name='memory-distraction-phone';
   box(0,-.002,.058,.09,.022,.014,rubber,distraction);
   const message=label('새 메시지',.065,.119,[0,.007,0],distraction,'#1d343b','#a8c6c2');message.rotation.x=-Math.PI/2;
   const pedestrian=createPedestrian(root),victim=pedestrian.root,carryHand=victim.getObjectByName('pedestrian-carry-hand')!;
@@ -211,13 +213,14 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     camera.position.set(x-.38,1.22+(reduced?0:Math.sin(clock*15)*.003*speed/10)-jolt*.025,car.position.z-.24-jolt*.07);
     const glance=driving?T.MathUtils.smoothstep(t,beats.phoneBuzz,beats.phoneBuzz+.55)*(1-T.MathUtils.smoothstep(t,beats.lookUp,beats.lookUp+.65)):0;
     const lookAtMirror=stage==='flee'?T.MathUtils.smoothstep(t,.7,1.7)*(1-T.MathUtils.smoothstep(t,3,4.3)):0;
-    camera.rotation.set(-.055-jolt*.09-glance*.22,driving?-glance*.42:0,reduced?0:jolt*.018,'YXZ');
+    camera.rotation.set(-.055-jolt*.09-glance*.54,driving?-glance*(camera.aspect<1?.95:.87):0,reduced?0:jolt*.018,'YXZ');
     message.visible=driving&&t>=beats.phoneBuzz;
     distraction.position.x=.12+(driving&&t>=beats.phoneBuzz&&t<beats.phoneBuzz+.6?Math.sin(t*90)*.003:0);
 
     const steer=driving?Math.sin(t*.7)*.027:impact?-.04*T.MathUtils.smoothstep(t,0,.35):-.04*(1-T.MathUtils.smoothstep(t,0,2));
     const door=impact?1.08*(T.MathUtils.smoothstep(t,beats.doorOpen,beats.exit)*(1-T.MathUtils.smoothstep(t,beats.outside+.1,beats.doorShut))+T.MathUtils.smoothstep(t,beats.reopen,beats.board-.1)*(1-T.MathUtils.smoothstep(t,beats.close,beats.lock-.2))):0;
     drivingCar.pose(clock,door,true,steer,driving?0:.12*T.MathUtils.smoothstep(hitTime,0,.25),speed);
+    bottles?.pose(t,driving,reduced);
     if(memoryHands)memoryHands.visible=!impact||t<beats.exit-.15||t>beats.lock-.2;
     windshieldMat.uniforms.time.value=clock;cracks.visible=!driving;
     victim.visible=true;

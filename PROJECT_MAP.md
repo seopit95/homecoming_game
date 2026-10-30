@@ -56,3 +56,5 @@ V132 속도 위치: `lib/pursuit.ts`의 구간별 고정 pace. 집/한서연의 
 itch.io HTML5 빌드: `npm run build:itch` → `scripts/build-itch.mjs`, `vite.itch.config.ts`, `itch/main.tsx`와 기존 Home. `dist/itch/`의 정적 파일과 `outputs/homecoming-0317-html5.zip`/JSON 생성. 미지의 하위 경로는 `lib/asset-url.ts`에서 처리하며 기존 Sites `/`는 유지한다. 검증·게시 상태는 `docs/quality/2026-10-30-itch-html5.md`.
 
 2026-10-30 마지막 경적·충돌·후일담 음악: `audio.ts.prepareFinale/setEndingMusic`, `scripts/author-finale-audio.mjs`, `app/ending-screen.tsx`; 근거 `docs/quality/2026-10-30-finale-audio.md`. 초기 메뉴에서는 새 음원 미요청.
+
+2026-10-30 도입 음주운전·소주병: `lib/driving-bottles.ts`(원본 두 병/오른손 마시기) → `prologue.ts`(휴대폰 시선)·`story.ts`(독백 자막/반복 운전·수첩). `docs/quality/2026-10-30-drunk-driving-opening.md`.

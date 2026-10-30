@@ -200,3 +200,46 @@ test('the connected native body and legs fit inside the actual passenger cabin',
   }
  }
 });
+
+
+test('V138 opening shows an open soju bottle in the drinking hand, then loose bottles in the phone glance',()=>{
+ const road=buildRoad(new T.Scene()),camera=new T.PerspectiveCamera(72,16/9,.06,160);
+ try{
+  road.pose('drive',1.5,camera,true);road.root.updateMatrixWorld(true);
+  const drinking=road.root.getObjectByName('memory-drinking-hand'),bottle=road.root.getObjectByName('memory-held-soju');
+  assert.ok(drinking?.visible,'one hand must visibly leave the wheel for the bottle');assert.ok(bottle);
+  assert.ok(bottle.getObjectByName('soju-open-mouth'));assert.equal(road.root.getObjectByName('memory-driver-hand-right').parent.visible,false);
+  const still=bottle.matrixWorld.clone();road.pose('drive',1.5,camera,true);road.root.updateMatrixWorld(true);assert.deepEqual(bottle.matrixWorld.elements,still.elements,'the drinking action freezes with simulation time');
+  road.pose('drive',16.7,camera,true);road.root.updateMatrixWorld(true);camera.updateMatrixWorld();
+  for(const name of ['memory-held-soju','memory-soju-empty-2']){
+   const loose=road.root.getObjectByName(name);assert.ok(loose);
+   const p=loose.localToWorld(new T.Vector3(0,.1,0)),screen=p.clone().project(camera);assert.ok(screen.z>-1&&screen.z<1&&Math.abs(screen.x)<.92&&Math.abs(screen.y)<.92,'the phone glance must actually frame the passenger-seat bottles: '+name+' '+screen.toArray());
+   const local=road.root.getObjectByName('memory-car').worldToLocal(p);assert.ok(local.x>.1&&local.x<.7&&local.y>.27&&local.y<.37,'bottle rests on the passenger footwell floor');
+  }
+  assert.equal(drinking.visible,false);assert.equal(road.root.getObjectByName('memory-driver-hand-right').parent.visible,true);
+  road.pose('drive',0,camera,true);assert.equal(drinking.visible,false,'restart clears the drinking gesture');
+  const final=buildRoad(new T.Scene(),true);try{assert.equal(final.root.getObjectByName('memory-held-soju'),undefined,'the opening props cannot obscure the wife in the ending');}finally{final.dispose();}
+ }finally{road.dispose();}
+});
+
+
+test('V138 drinking bottle and phone clues remain visible at narrow portrait aspect and player FOV',()=>{
+ const road=buildRoad(new T.Scene()),c=new T.PerspectiveCamera(72,16/9,.06,160);try{
+  for(const aspect of [16/9,9/16,390/844])for(const fov of [60,72,90]){
+   c.aspect=aspect;c.fov=fov;c.updateProjectionMatrix();
+   for(const t of [1.5,13.4]){road.pose('drive',t,c,true);road.root.updateMatrixWorld(true);c.updateMatrixWorld();const b=road.root.getObjectByName('memory-held-soju');let shown=0;const label=b.children[1],p=label.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(label.matrixWorld).project(c);if(Math.abs(v.x)<.95&&Math.abs(v.y)<.95&&v.z>-1&&v.z<1)shown++;}assert.ok(shown>=12,'labelled bottle body must be visible while drinking: '+[aspect,fov,t,shown]);}
+   road.pose('drive',16.7,c,true);road.root.updateMatrixWorld(true);c.updateMatrixWorld();const phone=road.root.getObjectByName('memory-distraction-phone').getWorldPosition(new T.Vector3()).project(c);assert.ok(Math.abs(phone.x)<.92&&Math.abs(phone.y)<.92,'the vibrating phone remains in the same glance: '+[aspect,fov,phone.x,phone.y]);for(const name of ['memory-held-soju','memory-soju-empty-2']){const b=road.root.getObjectByName(name),v=b.localToWorld(new T.Vector3(0,.1,0)).project(c);assert.ok(Math.abs(v.x)<.92&&Math.abs(v.y)<.92,'passenger bottles remain in portrait frame: '+[aspect,fov,name,v.x,v.y]);}
+  }
+ }finally{road.dispose();}
+});
+
+
+test('V138 every remaining loose bottle has a clear view past the steering arm',()=>{
+ const r=buildRoad(new T.Scene()),c=new T.PerspectiveCamera(60,390/844,.06,160);
+ try{r.pose('drive',16.7,c,true);r.root.updateMatrixWorld(true);c.updateMatrixWorld();const bottles=[];r.root.traverse(o=>{if(o.name==='memory-held-soju'||o.name.startsWith('memory-soju-empty'))bottles.push(o);});
+  for(const bottle of bottles){const label=bottle.children[1],p=label.geometry.attributes.position,n=label.geometry.attributes.normal,blockers=[];r.root.traverse(o=>{if(!o.isMesh)return;for(let a=o;a;a=a.parent)if(!a.visible||a===bottle)return;const mats=Array.isArray(o.material)?o.material:[o.material];if(mats.every(m=>m.transparent))return;blockers.push(o);});let clear=0;
+   for(let i=0;i<p.count;i++){const point=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(label.matrixWorld),screen=point.clone().project(c),normal=new T.Vector3().fromBufferAttribute(n,i).transformDirection(label.matrixWorld);if(Math.abs(screen.x)>.95||Math.abs(screen.y)>.95||normal.dot(c.position.clone().sub(point))<=0)continue;const d=point.clone().sub(c.position),ray=new T.Raycaster(c.position,d.clone().normalize(),0,d.length()-.003);if(!ray.intersectObjects(blockers,false).length)clear++;}
+   assert.ok(clear>=4,'bottle must be seen past the actual arm and cabin: '+bottle.name+' clear='+clear);
+  }
+ }finally{r.dispose();}
+});
