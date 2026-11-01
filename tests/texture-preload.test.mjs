@@ -18,7 +18,7 @@ test('visual preloading decodes upload-ready bitmaps with the authored surface a
 });
 test('failed bitmap preparation closes unpublished images and a retry owns live images',async()=>{
  const html=T.TextureLoader.prototype.loadAsync,fetch=globalThis.fetch,previous=globalThis.createImageBitmap,images=[];let fail=true;
- globalThis.fetch=async url=>({ok:!(fail&&url.endsWith('/wood-normal.jpg')),status:404,blob:async()=>({url})});T.TextureLoader.prototype.loadAsync=async url=>{if(fail&&url.endsWith('/wood-normal.jpg'))throw Error('missing map');return new T.Texture({html:url});};
+ globalThis.fetch=async url=>({ok:!(fail&&/\/wood-normal\.(jpg|webp)$/.test(url)),status:404,blob:async()=>({url})});T.TextureLoader.prototype.loadAsync=async url=>{if(fail&&/\/wood-normal\.(jpg|webp)$/.test(url))throw Error('missing map');return new T.Texture({html:url});};
  globalThis.createImageBitmap=async()=>{const image={width:2,height:2,closed:false,close(){this.closed=true;}};images.push(image);return image;};
  try{
   const m=await import('../lib/materials.ts?bitmap-retry');await assert.rejects(m.prepareVisuals(),/Visual asset loading failed/);assert.ok(images.length>0);assert.ok(images.every(i=>i.closed),'failed preparation must release all successful unpublished bitmaps');

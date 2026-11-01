@@ -66,3 +66,5 @@ V140 목표 발견성: `game-hud.tsx`의 게임 시간 기반 중앙 안내와 �
 V141 미션 분위기: `GameHud.MissionCopy`가 첫 행동 줄과 나머지 분위기 문장을 구분해 HUD/일시정지·수첩에 공유한다. 문구 원본은 `story.ts`/`apartment-route.ts`, 배경만 거칠게 처리하는 CSS는 game-hud.css. `docs/quality/2026-10-30-eerie-missions.md`.
 
 V142 관리실 우편: `family-story.ts`의 각 발송처/2803호 수신인·`mailLedger` → `ground-support.ts`의 한 보관대와 실제 봉투3통. 기존 archive ID/저장/3통→CCTV→B1 유지. `archive-review.ts.archivePlaybackFrame`을 화면·음향이 공유해 도로6초/통화12초/입차9초/현재10초를 실제 재생한다. `investigation.ts`는 우편과 확인한 원본을 구별하고 `story.ts`는 재생 완료 전 결론을 보류한다. `docs/quality/2026-10-30-mail-story.md`.
+
+2026-11-01 전송용 질감: `runtime-textures.json` → `texture-loader.ts`에서 assetUrl 처리 전 선택/실패 시 원본 복구. 원본과 해상도를 보존하고 `scripts/author-runtime-textures.py`가 파생 WebP/해시/오차를 생성한다. 전체 공간 준비는 유지하며20Mbps와 무제한 실측/한계는 `docs/quality/2026-11-01-loading.md`. 공개 배포 없음.

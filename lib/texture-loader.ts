@@ -1,8 +1,13 @@
 import * as T from 'three';
 import {assetUrl} from './asset-url.ts';
+import runtimeTextures from './runtime-textures.json' with {type:'json'};
 
 export async function loadTexture(url:string,flipY=true){
-  url=assetUrl(url);
+  const compact=runtimeTextures[url as keyof typeof runtimeTextures];
+  if(compact){try{return await readTexture(assetUrl(compact),flipY);}catch{/* The retained source also recovers old or interrupted deployments. */}}
+  return readTexture(assetUrl(url),flipY);
+}
+async function readTexture(url:string,flipY:boolean){
   if(typeof createImageBitmap!=='function'){
     const texture=await new T.TextureLoader().loadAsync(url);texture.flipY=flipY;return texture;
   }

@@ -1,0 +1,16 @@
+{
+  "/textures/courtyard-night-sky-2k.jpg": "/textures/runtime/courtyard-night-sky-2k.webp",
+  "/textures/environment-v3.webp": "/textures/runtime/environment-v3.webp",
+  "/textures/ghost-surfaces-v4.webp": "/textures/runtime/ghost-surfaces-v4.webp",
+  "/textures/hand-skin.webp": "/textures/runtime/hand-skin.webp",
+  "/textures/pbr/asphalt-color.jpg": "/textures/runtime/pbr/asphalt-color.webp",
+  "/textures/pbr/cast-concrete-color.jpg": "/textures/runtime/pbr/cast-concrete-color.webp",
+  "/textures/pbr/concrete-color.jpg": "/textures/runtime/pbr/concrete-color.webp",
+  "/textures/pbr/cotton-color.jpg": "/textures/runtime/pbr/cotton-color.webp",
+  "/textures/pbr/plaster-color.jpg": "/textures/runtime/pbr/plaster-color.webp",
+  "/textures/pbr/terrazzo-color.jpg": "/textures/runtime/pbr/terrazzo-color.webp",
+  "/textures/pbr/terrazzo-normal.jpg": "/textures/runtime/pbr/terrazzo-normal.webp",
+  "/textures/pbr/wood-color.jpg": "/textures/runtime/pbr/wood-color.webp",
+  "/textures/pbr/wood-floor-color.jpg": "/textures/runtime/pbr/wood-floor-color.webp",
+  "/textures/pbr/wood-normal.jpg": "/textures/runtime/pbr/wood-normal.webp"
+}
