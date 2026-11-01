@@ -43,15 +43,23 @@ export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRes
       </div>}</div>
       <button type="button" className="epilogue-skip" onClick={()=>setSeconds(creditsAt)}>후일담 건너뛰기 <span aria-hidden="true">→</span></button>
     </>:<div className="epilogue-finish">
-      <p className="epilogue-label">배드 엔딩 · 남겨진 편지</p>
-      <h2 className="epilogue-title">귀가 <small lang="zh-Hant">(歸家)</small><span>03 : 17</span></h2>
-      <p className="epilogue-last">아내는 함께 돌아올 내일을 기다렸고,<br/>나는 끝내 혼자 달아나려 했다.</p>
-      <p className="epilogue-thanks">끝까지 플레이해 주셔서 감사합니다.</p>
-      <div className="epilogue-actions"><button type="button" className="start-button" onClick={onRestart}><span>처음부터 다시</span><RotateCcw size={17}/></button><button type="button" className="epilogue-secondary" onClick={again}>후일담 다시 보기</button></div>
-      <details className="epilogue-record"><summary>마지막 기록 · {duration}</summary><p>{endings.crashed}</p></details>
-      <details className="epilogue-record"><summary>경찰이 회수한 편지 전문</summary><p>{wifeLetter}</p></details>
+      <span className="epilogue-clock" aria-hidden="true">03:17</span>
+      <div className="epilogue-final-word">
+        <p className="epilogue-brand">귀가 <small lang="zh-Hant">(歸家)</small></p>
+        <p className="epilogue-label">배드 엔딩 · 03:17</p>
+        <h2 className="epilogue-title">남겨진 편지</h2>
+        <p className="epilogue-last">아내는 함께 돌아올 내일을 기다렸고,<br/>나는 끝내 혼자 달아나려 했다.</p>
+        <div className="epilogue-actions"><button type="button" className="epilogue-return" onClick={onRestart}><span>처음부터 다시</span><RotateCcw size={17}/></button><button type="button" className="epilogue-secondary" onClick={again}>후일담 다시 보기 <span aria-hidden="true">↺</span></button></div>
+      </div>
+      <aside className="epilogue-file" aria-label="보존된 마지막 기록">
+        <span className="epilogue-seal" aria-hidden="true">미전달</span>
+        <p className="epilogue-file-label">백로아파트 2803호 · 수신인, 남편</p>
+        <h3>봉투 안에 남은 것</h3>
+        <details className="epilogue-record"><summary>마지막 기록 · {duration}</summary><p>{endings.crashed}</p></details>
+        <details className="epilogue-record"><summary>경찰이 회수한 편지 전문</summary><p>{wifeLetter}</p></details>
       <button type="button" className="epilogue-credits-toggle" aria-expanded={showCredits} onClick={()=>setShowCredits(!showCredits)}>크레딧 {showCredits?'−':'＋'}</button>
-      {showCredits&&<div className="epilogue-credits"><p>귀가 (歸家) · 한밤의 귀가 기록</p><dl><div><dt>주요 음향 자료</dt><dd>Kenney · dslrguide · tonsil5<br/>CC0</dd></div><div><dt>여성 흐느낌</dt><dd><a href="https://opengameart.org/content/crying-female-low-tone-voice-over-vocal-sound-for-character" target="_blank" rel="noreferrer">Crying female low tone Voice Over · JeanMyna_VA / Jean Myna</a><br/><a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a> · WAV 변환, 가장자리 페이드, 음량 조정</dd></div><div><dt>주요 환경 질감</dt><dd>Poly Haven · CC0</dd></div><div><dt>마지막 충돌 · 후일담 음악</dt><dd>오리지널 합성 음향 · 「남겨진 편지」<br/>CC0 · 외부 샘플 및 기존 곡 사용 없음</dd></div><div><dt>후일담 장면</dt><dd>게임 속 차량과 도로의 3D 장면</dd></div></dl><p>그리고 이 밤을 끝까지 걸어온 당신.</p></div>}
+      {showCredits&&<div className="epilogue-credits"><p>귀가 (歸家) · 한밤의 귀가 기록</p><dl><div><dt>주요 음향 자료</dt><dd>Kenney · dslrguide · tonsil5<br/>CC0</dd></div><div><dt>여성 흐느낌</dt><dd><a href="https://opengameart.org/content/crying-female-low-tone-voice-over-vocal-sound-for-character" target="_blank" rel="noreferrer">Crying female low tone Voice Over · JeanMyna_VA / Jean Myna</a><br/><a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a> · WAV 변환, 가장자리 페이드, 음량 조정</dd></div><div><dt>주요 환경 질감</dt><dd>Poly Haven · CC0</dd></div><div><dt>마지막 충돌 · 후일담 음악</dt><dd>오리지널 합성 음향 · 「남겨진 편지」<br/>CC0 · 외부 샘플 및 기존 곡 사용 없음</dd></div><div><dt>추격 음악</dt><dd>오리지널 합성 작곡 · 144 BPM<br/>외부 샘플 및 기존 곡 사용 없음</dd></div><div><dt>후일담 장면</dt><dd>게임 속 차량과 도로의 3D 장면</dd></div></dl></div>}
+      </aside>
     </div>}
     <footer className="epilogue-footer"><span>귀가 (歸家)</span><span>{complete?'기록 종료':'마지막으로 남은 것'}</span></footer>
   </section>;
