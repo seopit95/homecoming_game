@@ -1,6 +1,6 @@
-import numpy as np, wave
+import numpy as np, wave, json, hashlib
 from pathlib import Path
-rate=32000; bpm=126; beat=60/bpm; duration=beat*64; n=int(round(duration*rate));rng=np.random.default_rng(317)
+rate=32000; bpm=144; beat=60/bpm; duration=beat*64; n=int(round(duration*rate));rng=np.random.default_rng(317)
 t=np.arange(n)/rate
 layers=np.zeros((2,n),dtype=np.float64)
 def place(sound,start,pan=0,level=1):
@@ -17,7 +17,12 @@ def note(hz,length,kind='strings'):
 # Low cello ostinato with a displaced semitone: tension rather than a triumphant tune.
 for i in range(128):
     hz=[55,55,58.27,55,73.416,55,51.913,55][i%8]
-    place(note(hz,beat*.8),i*beat/2,(-.4 if i%2 else .4),.18 if i%4 else .24)
+    place(note(hz,beat*.8),i*beat/2,(-.4 if i%2 else .4),.14 if i%4 else .20)
+# Tremolo upper strings keep a nervous sixteenth-note pulse above the low ostinato.
+for i in range(256):
+    hz=[440,466.164,415.304,440,523.252,466.164,493.884,440][i%8]
+    pressure=.085+.035*((i//16)%4)/3
+    place(note(hz,beat*.36),i*beat/4,(-.22 if i%2 else .22),pressure)
 # Broad, detuned bowed strings / muted brass clusters across the stereo field.
 for bar in range(16):
     base=[55,51.913,58.27,55][bar%4]
@@ -28,7 +33,7 @@ for i in range(64):
     u=np.arange(int(rate*1.1))/rate
     phase=2*np.pi*(45*u+62*.027*(1-np.exp(-u/.027)))
     drum=np.sin(phase)*np.exp(-u/ .25)+.19*rng.normal(size=len(u))*np.exp(-u/.013)
-    if i%4 in [0,2]:place(drum,i*beat,0,.48 if i%4==0 else .34)
+    if i%4 in [0,2]:place(drum,i*beat,0,.40 if i%4==0 else .28)
     if i%4==3:
         for j in range(3):place(note(88+j*21,beat*.4,'brass'),(i+j/3)*beat,(-.5+j*.5),.15)
     if i%2:
@@ -36,8 +41,11 @@ for i in range(64):
 # Reverb with decorrelated early reflections, wrapping keeps the exported loop seamless.
 wet=layers.copy()
 for delay,gain in [(.071,.16),(.139,.12),(.227,.09),(.383,.075),(.617,.065),(.971,.045), (1.337,.025)]:wet+=np.roll(layers[::-1],int(delay*rate),axis=1)*gain
-wet=np.tanh(wet*1.5);wet*=.82/max(.82,float(abs(wet).max()))
+wet=np.tanh(wet*1.5);wet*=.76/max(.76,float(abs(wet).max()))
 fade=np.linspace(0,1,160);wet[:,:160]*=fade;wet[:,-160:]*=fade[::-1]
-p=Path(__file__).resolve().parents[1]/'public/audio/chase-score.wav'
+p=Path(__file__).resolve().parents[1]/'public/audio/chase-v143/pursuit.wav'
+p.parent.mkdir(parents=True,exist_ok=True)
 with wave.open(str(p),'wb') as f:f.setnchannels(2);f.setsampwidth(2);f.setframerate(rate);f.writeframes((wet.T*32767).astype('<i2').tobytes())
 print({'seconds':n/rate,'peak':float(abs(wet).max()),'rms':float(np.sqrt(np.mean(wet**2))), 'loop_step':float(abs(wet[:,0]-wet[:,-1]).max()),'bytes':p.stat().st_size})
+
+(p.parent/'sources.json').write_text(json.dumps({'asset':'pursuit.wav','type':'Original synthesized composition created for this game','source':'scripts/compose-chase.py','rights':'Original project music. No third-party recordings, melodies or samples. May be used and distributed with this game.','bpm':bpm,'sampleRate':rate,'channels':2,'duration':n/rate,'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'notes':'Chromatic tremolo strings, low cello ostinato, dissonant brass and synthesized drums. Threat increases playback rate up to1.1 and opens the low-pass filter. Existing music/effects/voice buses remain separate.'},indent=2)+'\n')

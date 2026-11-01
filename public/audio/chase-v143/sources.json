@@ -1,0 +1,12 @@
+{
+  "asset": "pursuit.wav",
+  "type": "Original synthesized composition created for this game",
+  "source": "scripts/compose-chase.py",
+  "rights": "Original project music. No third-party recordings, melodies or samples. May be used and distributed with this game.",
+  "bpm": 144,
+  "sampleRate": 32000,
+  "channels": 2,
+  "duration": 26.66665625,
+  "sha256": "c3c27b93a89eb3ebe4b84a2e0b4027fcf677ef52d973c6b63de6746d6c3ac126",
+  "notes": "Chromatic tremolo strings, low cello ostinato, dissonant brass and synthesized drums. Threat increases playback rate up to1.1 and opens the low-pass filter. Existing music/effects/voice buses remain separate."
+}

@@ -48,13 +48,13 @@ export class HorrorAudio {
   endingBuffer:AudioBuffer|null=null;endingSource:AudioBufferSourceNode|null=null;endingGain:GainNode|null=null;endingLevel=0;
   volume = .42;
   start() {
-    this.prepare();void this.context!.resume();this.setVolume(this.volume);
+    this.prepare();void this.context!.resume().catch(()=>{});this.setVolume(this.volume);
   }
   prepare() {
     if(this.context)return;
     // Opening the device can block for over 100 ms. Do it while the game loads,
     // with both suspension and a silent master until the player's start gesture.
-    const ctx=this.context=new AudioContext();void ctx.suspend();
+    const ctx=this.context=new AudioContext();void ctx.suspend().catch(()=>{});
     this.master=ctx.createGain();this.master.gain.value=0;this.master.connect(ctx.destination);
     this.musicBus=ctx.createGain();this.effectsBus=ctx.createGain();this.voiceBus=ctx.createGain();for(const bus of [this.musicBus,this.effectsBus,this.voiceBus])bus.connect(this.master);this.mix(this.levels);
     const noise=this.noise=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate);const data=noise.getChannelData(0);
@@ -78,9 +78,9 @@ export class HorrorAudio {
     }
     // Baked original score: wide bowed/brass clusters, low-string ostinato and drums.
     // Decoding happens once; pursuit only moves the existing gain/filter controls.
-    void fetch(assetUrl('/audio/chase-score.wav')).then(r=>{if(!r.ok)throw new Error('Score unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{
+    void fetch(assetUrl('/audio/chase-v143/pursuit.wav')).then(r=>{if(!r.ok)throw new Error('Score unavailable');return r.arrayBuffer();}).then(data=>ctx.decodeAudioData(data)).then(buffer=>{
       if(this.context!==ctx)return;
-      const source=ctx.createBufferSource(),gain=ctx.createGain();source.buffer=buffer;source.loop=true;gain.gain.value=0;
+      const source=ctx.createBufferSource(),gain=ctx.createGain();source.buffer=buffer;source.loop=true;source.playbackRate.value=1+Math.max(0,this.chaseLevel)*.1;gain.gain.value=0;
       source.connect(gain);gain.connect(this.chaseFilter!);gain.gain.setTargetAtTime(.95,ctx.currentTime,.7);fallback.gain.setTargetAtTime(.17,ctx.currentTime,.7);source.start();this.chaseScore=source;
     }).catch(()=>{});
     // Distant rain and ventilation stay quiet underneath positional sounds.
@@ -192,9 +192,10 @@ export class HorrorAudio {
     this.tyres.gain.setTargetAtTime(.035+Math.max(0,value)*.012,t,.12);
   }
   setChase(value:number){
-    const level=Math.max(0,Math.min(1,value));if(!this.context||!this.chase||!this.chasePulse||!this.chaseFilter||Math.abs(level-this.chaseLevel)<.02)return;
-    const t=this.context.currentTime,fade=level>this.chaseLevel?.18:1.25;this.chaseLevel=level;
-    this.chase.gain.setTargetAtTime(level*.9,t,fade);this.chasePulse.frequency.setTargetAtTime(2.2+level*1.25,t,.45);this.chaseFilter.frequency.setTargetAtTime(650+level*1300,t,.6);
+    const level=Math.max(0,Math.min(1,value));if(!this.context||!this.chase||!this.chasePulse||!this.chaseFilter||(level===this.chaseLevel||level!==0&&Math.abs(level-this.chaseLevel)<.02))return;
+    const t=this.context.currentTime,fade=level>this.chaseLevel?.18:.65;this.chaseLevel=level;
+    this.chase.gain.setTargetAtTime(level*.85,t,fade);this.chasePulse.frequency.setTargetAtTime(2.2+level*1.25,t,.45);this.chaseFilter.frequency.setTargetAtTime(900+level*2800,t,.6);
+    this.chaseScore?.playbackRate.setTargetAtTime(1+level*.1,t,.8);
   }
   setGhostPosition(position:GhostSoundPosition|null){
     const ctx=this.context;if(!ctx||!this.effectsBus)return;
@@ -265,8 +266,8 @@ export class HorrorAudio {
   }
   setVolume(v:number){this.volume=v;if(this.master)this.master.gain.setTargetAtTime(v*.48,this.context!.currentTime,.1);}
   setTV(on:boolean){if(this.tv)this.tv.gain.value=on?.12:0;}
-  pause(){void this.context?.suspend();}
-  resume(){void this.context?.resume();}
+  pause(){void this.context?.suspend().catch(()=>{});}
+  resume(){void this.context?.resume().catch(()=>{});}
   stopVoices(){clearTimeout(this.cleanupTimer);if(this.voiceSource){this.voiceSource.onended=null;try{this.voiceSource.stop();}catch{}this.voiceSource=null;}this.voiceNodes.forEach(n=>n.disconnect());this.voiceNodes=[];}
   voice(line:GhostLine,pan=0,level=1,occluded=false){
     const ctx=this.context,buffer=this.voices[line];if(!ctx||!this.master||ctx.state!=='running')return;
@@ -324,7 +325,7 @@ export class HorrorAudio {
     if(kind==='alarm'||kind==='siren')o.frequency.exponentialRampToValueAtTime(950,t+.5);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(settings[2]*level,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+settings[1]);o.start(t);o.stop(t+settings[1]+.05);if(spatial)this.ghostSounds.add(o);o.onended=()=>{this.ghostSounds.delete(o);o.disconnect();g.disconnect();p.disconnect();};
   }
-  dispose(){this.setEndingMusic(0);this.endingBuffer=null;this.finaleLoading=null;this.breathStrain=0;this.setGhostPosition(null);this.heartbeatSource?.stop();this.heartbeatSource=null;for(const node of [this.heartbeat,this.ghostFilter,this.ghostGain,this.ghostPanner])node?.disconnect();this.heartbeat=null;this.heartbeatLevel=-1;this.heartbeatBpm=-1;this.ghostPanner=null;this.ghostFilter=null;this.ghostGain=null;this.ghostPosition=null;this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('mobile',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
+  dispose(){this.chaseScore?.stop();this.setEndingMusic(0);this.endingBuffer=null;this.finaleLoading=null;this.breathStrain=0;this.setGhostPosition(null);this.heartbeatSource?.stop();this.heartbeatSource=null;for(const node of [this.heartbeat,this.ghostFilter,this.ghostGain,this.ghostPanner])node?.disconnect();this.heartbeat=null;this.heartbeatLevel=-1;this.heartbeatBpm=-1;this.ghostPanner=null;this.ghostFilter=null;this.ghostGain=null;this.ghostPosition=null;this.stopRecording();this.stopArchiveRecord();this.exertionSource?.stop();this.exertionSource=null;this.exertionFilter=null;this.exertion=null;this.exertionWanted=0;this.exertionLevel=-1;this.footstepBuffer=null;this.lastFoot={};this.setDevice('phone',0);this.setDevice('mobile',0);this.setDevice('radio',0);this.setDevice('alarm',0);this.setDevice('ringback',0);this.setDevice('busy',0);this.clips={};this.stopVoices();this.setDrive(null);void this.context?.close();this.context=null;this.master=null;this.noise=null;this.tv=null;this.voices={};this.haunt=null;this.weather=null;this.hauntLevel=-1;this.chase=null;this.chaseScore=null;this.chasePulse=null;this.chaseFilter=null;this.chaseLevel=-1;this.driveBus=null;this.driveTone=null;this.tyres=null;this.driveSpeed=-2;}
 }
 
 // A local private exchange: one-second ringback bursts and a shorter busy cadence.

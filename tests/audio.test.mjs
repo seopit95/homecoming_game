@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {HorrorAudio} from '../lib/audio.ts';
 
-test('the apparition crossfades a connected music layer through volume and pause controls',()=>{
+test('the apparition crossfades a connected music layer through volume and pause controls',async()=>{
   class Param{value=0;targets=[];setTargetAtTime(...args){this.targets.push(args);}setValueAtTime(){}linearRampToValueAtTime(){}exponentialRampToValueAtTime(){}}
-  class Node{gain=new Param();frequency=new Param();Q=new Param();pan=new Param();delayTime=new Param();playbackRate=new Param();connections=[];connect(destination){this.connections.push(destination);return destination;}disconnect(){this.connections=[];}start(){}stop(...args){this.stopArgs=args;}}
-  class Context{sampleRate=22050;currentTime=17;state='running';destination=new Node();nodes=[];make(){const n=new Node();this.nodes.push(n);return n;}createGain(){return this.make();}createBufferSource(){return this.make();}createBiquadFilter(){return this.make();}createOscillator(){return this.make();}createStereoPanner(){return this.make();}createBuffer(_channels,length){const data=new Float32Array(length);return {getChannelData:()=>data};}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}}
-  const previousFetch=globalThis.fetch,previousContext=globalThis.AudioContext;globalThis.AudioContext=Context;globalThis.fetch=async()=>({ok:false});
+  class Node{gain=new Param();frequency=new Param();Q=new Param();pan=new Param();delayTime=new Param();playbackRate=new Param();connections=[];connect(destination){this.connections.push(destination);return destination;}disconnect(){this.connections=[];}start(){this.started=(this.started??0)+1;}stop(...args){this.stopArgs=args;}}
+  class Context{sampleRate=22050;currentTime=17;state='running';destination=new Node();nodes=[];make(){const n=new Node();this.nodes.push(n);return n;}createGain(){return this.make();}createBufferSource(){return this.make();}createBiquadFilter(){return this.make();}createOscillator(){return this.make();}createStereoPanner(){return this.make();}createBuffer(_channels,length){const data=new Float32Array(length);return {getChannelData:()=>data};}decodeAudioData(){return Promise.resolve({duration:26.66665625});}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}}
+  const previousFetch=globalThis.fetch,previousContext=globalThis.AudioContext;globalThis.AudioContext=Context;globalThis.fetch=async url=>({ok:url.endsWith('/chase-score.wav')||url.endsWith('/chase-v143/pursuit.wav'),arrayBuffer:async()=>new ArrayBuffer(8)});
   const audio=new HorrorAudio();try{
     audio.prepare();const prepared=audio.context;
     assert.equal(prepared.state,'suspended','loading prepares the audio device without playing sound');assert.equal(audio.master.gain.value,0);
@@ -14,6 +14,9 @@ test('the apparition crossfades a connected music layer through volume and pause
     audio.start();const ctx=audio.context;assert.equal(ctx,prepared,'the start gesture must reuse the already prepared device');assert.equal(ctx.state,'running');assert.ok(audio.master.gain.targets.at(-1)[0]>0,'only the start gesture enables sound');
     assert.ok(audio.haunt.connections.includes(audio.musicBus)&&audio.musicBus.connections.includes(audio.master));assert.ok(ctx.nodes.filter(n=>n.connections.includes(audio.haunt)).length>=7,'the drone voices and wind feed the music layer');assert.equal(audio.haunt.gain.value,0);
     assert.ok(audio.chase.connections.includes(audio.musicBus),'the chase score follows the music mixer');
+    await new Promise(setImmediate);const loop=audio.chaseScore;assert.ok(loop?.loop,'the decoded original music loops');assert.equal(loop.started,1);
+    audio.setChase(.5);const scoreTempo=loop.playbackRate.targets.at(-1)?.[0];audio.setChase(1);assert.ok(loop.playbackRate.targets.at(-1)?.[0]>scoreTempo,'the music itself accelerates as pursuit closes');
+    audio.setChase(.01);audio.setChase(0);assert.equal(audio.chase.gain.targets.at(-1)[0],0,'even a quiet pursuit ends at exactly zero');audio.setChase(.8);assert.equal(audio.chaseScore,loop);assert.equal(loop.started,1,'frames and new pursuits cannot layer duplicate scores');
     audio.setChase(.5);const tempo=audio.chasePulse.frequency.targets.at(-1)[0];audio.setChase(1);
     assert.ok(audio.chasePulse.frequency.targets.at(-1)[0]>tempo,'closer pursuit raises the pulse');
     audio.setChase(0);assert.equal(audio.chase.gain.targets.at(-1)[0],0,'hiding releases the chase score');
@@ -34,7 +37,7 @@ test('the apparition crossfades a connected music layer through volume and pause
     audio.clips['passenger-line']={duration:2.16};audio.recorded('passenger-line');const reaction=[...audio.roadSounds][0];
     assert.equal(reaction.connections[0].connections[0].connections[0],audio.voiceBus,'the passenger line follows dialogue volume');
     audio.pause();assert.equal(ctx.state,'suspended');audio.resume();audio.setDrive(null);assert.deepEqual(reaction.stopArgs,[],'restart stops the passenger line');
-    audio.setHaunt(0);assert.equal(audio.haunt.gain.targets.at(-1)[0],0);audio.dispose();assert.equal(ctx.state,'closed');assert.equal(audio.haunt,null);assert.equal(audio.deviceLoops.size,0);
+    audio.setHaunt(0);assert.equal(audio.haunt.gain.targets.at(-1)[0],0);audio.dispose();assert.equal(ctx.state,'closed');assert.deepEqual(loop.stopArgs,[],'disposing stops the score');assert.equal(audio.haunt,null);assert.equal(audio.deviceLoops.size,0);
   }finally{audio.dispose();globalThis.fetch=previousFetch;globalThis.AudioContext=previousContext;}
 });
 
@@ -64,4 +67,11 @@ test('V66 PBX tones have quiet intervals and bounded click-free audible bursts',
  const {intercomTone}=await import('../lib/audio.ts');assert.equal(typeof intercomTone,'function');
  const ctx={sampleRate:8000,createBuffer(_channels,length){const data=new Float32Array(length);return {getChannelData:()=>data,duration:length/8000};}};
  for(const busy of [false,true]){const buffer=intercomTone(ctx,busy),data=buffer.getChannelData(0),on=busy?.25:1,period=busy?.5:3;assert.equal(buffer.duration,period);const power=(a,b)=>Math.sqrt(data.slice(a*8000,b*8000).reduce((sum,x)=>sum+x*x,0)/((b-a)*8000));assert.ok(power(.03,.13)>.05);assert.equal(power(on+.02,period-.02),0);assert.equal(data[0],0);assert.ok(Math.abs(data[Math.round(on*8000)-1])<.01);assert.ok(Math.max(...data.map(Math.abs))<.3);}
+});
+
+
+test('blocked browser audio stays silent without an unhandled rejection and can resume on a later gesture',async()=>{
+ const audio=new HorrorAudio(),ctx={state:'suspended',suspend:()=>Promise.reject(new Error('device unavailable')),resume:()=>Promise.reject(new Error('NotAllowedError'))};audio.context=ctx;
+ try{audio.start();audio.pause();audio.resume();await new Promise(setImmediate);assert.equal(ctx.state,'suspended');ctx.resume=async()=>{ctx.state='running';};audio.resume();await Promise.resolve();assert.equal(ctx.state,'running');}
+ finally{audio.context=null;}
 });
