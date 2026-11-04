@@ -72,3 +72,5 @@ V142 관리실 우편: `family-story.ts`의 각 발송처/2803호 수신인·`ma
 2026-11-01 추격 고조: `audio.ts.setChase`가 `chase-v143/pursuit.wav`의 속도/필터/음량을 같은 source에서 조절한다. 직접 작곡144BPM·26.667초, 시작/종료 페이드/음악 믹서/정지·재개·해제. `docs/quality/2026-11-01-chase-music.md`.
 
 2026-11-01 마지막 엔딩: `ending-screen.tsx/css`의 남겨진 편지/미전달 보존 기록2열→모바일1열, 감사 문구 제거. 서사/타이머/기록/다시 보기·재시작은 유지. `docs/quality/2026-11-01-ending.md`.
+
+2026-11-04 첫 공간 준비: `lib/visual-stages.json` → `materials.prepareVisuals('initial'|공간명)` → `game.ts`의 별도 stagingScene/prepareSpace와 ensureStory 진입 대기. Game.ready는 첫 집+기존 도입 도로만 기다리며 가까운 다음 방의 자료를 먼저 요청한다. 이동/추격 중 무거운 생성은 미루고, 미준비 목적지는 시간·오디오·입력을 안전하게 정지한 후 재시도한다. 측정/회귀/한계는 `docs/quality/2026-11-04-room-streaming.md`.

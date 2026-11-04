@@ -82,7 +82,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
     const previous=renderer.getRenderTarget(),shadows=renderer.shadowMap.autoUpdate;
     car.visible=false;renderer.shadowMap.autoUpdate=false;
     mirrorCamera.position.set(car.position.x-.35,1.29,car.position.z+.75);mirrorCamera.rotation.y=Math.PI;mirrorCamera.position.applyMatrix4(root.matrix);mirrorCamera.quaternion.premultiply(root.quaternion);
-    try{renderer.setRenderTarget(mirrorTarget);renderer.render(scene,mirrorCamera);}
+    try{renderer.setRenderTarget(mirrorTarget);renderer.render(root.parent instanceof T.Scene?root.parent:scene,mirrorCamera);}
     finally{renderer.setRenderTarget(previous);renderer.shadowMap.autoUpdate=shadows;car.visible=true;}
   }
   const windshieldMat=new T.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{time:{value:0}},vertexShader:'varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`

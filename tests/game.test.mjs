@@ -2,6 +2,7 @@ import {archiveReplay} from '../lib/expansion-story.ts';
 import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import * as realMaterials from '../lib/materials.ts';
 import * as realLighting from '../lib/lighting.ts';
 import {opening,finale} from '../lib/story.ts';
 import {accidentCar} from '../lib/chapters.ts';
@@ -10,11 +11,15 @@ import {apartment as home,homePosition as H,apartmentScale as S} from '../lib/ap
 // Only device boundaries are replaced. Scene geometry, navigation, input,
 // simulation timers, ray targets and story transitions run unchanged.
 let renderedCamera,renderedScene,renderedHands;const voiceCalls=[],soundCalls=[],archiveFrames=[];let hauntLevel=0,chaseLevel=0,breathLevel=0,ghostSound=null,breathStrainLevel=0;const deviceLevels={phone:0,radio:0},deviceStarts={};
+let visualControl=async()=>{};const visualRequests=[];
+mock.module('../lib/materials.ts',{namedExports:{...realMaterials,prepareVisuals:scope=>{visualRequests.push(scope);return visualControl(scope);}}});
+let audioPauses=0,audioResumes=0;
+const compiledExitRoads=new Set();
 let pendingCompiles=null,rendererDisposals=0,rendererDebug;
-class Renderer{debug={checkShaderErrors:true};constructor(){rendererDebug=this.debug;}shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(){return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name==='first-person-hands')renderedHands=scene;if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
+class Renderer{debug={checkShaderErrors:true};constructor(){rendererDebug=this.debug;}shadowMap={};getRenderTarget(){return null;}setRenderTarget(){}setPixelRatio(){}setSize(){}clearDepth(){}compileAsync(scene){scene?.traverse(o=>{if(o.name==='escape-drive')compiledExitRoads.add(o.uuid);});return pendingCompiles?new Promise(resolve=>pendingCompiles.push(resolve)):Promise.resolve();}render(scene,camera){if(scene.name==='first-person-hands')renderedHands=scene;if(scene.name!=='first-person-hands'){renderedCamera=camera;renderedScene=scene;}}dispose(){rendererDisposals++;}}
 mock.module('three',{namedExports:{...THREE,WebGLRenderer:Renderer}});
 mock.module('../lib/lighting.ts',{namedExports:{...realLighting,roomReflections:()=>({dispose(){}})}});
-mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}prepareFinale(){}setEndingMusic(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setBreathStrain(value){breathStrainLevel=value;}setGhostPosition(value){ghostSound=value;}setArchiveRecord(frame){if(frame?.source&&archiveFrames.at(-1)!==frame.source)archiveFrames.push(frame.source);}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){}resume(){}sound(kind){soundCalls.push(kind);}dispose(){}}}});
+mock.module('../lib/audio.ts',{namedExports:{HorrorAudio:class{prepare(){}prepareFinale(){}setEndingMusic(){}start(){}voice(line){voiceCalls.push(line);}stopVoices(){}setTV(){}setDrive(){}setDevice(device,level){if(level>0&&!(deviceLevels[device]>0))deviceStarts[device]=(deviceStarts[device]??0)+1;deviceLevels[device]=level;}recorded(clip){soundCalls.push(clip);}setHaunt(value){hauntLevel=value;}setChase(value){chaseLevel=value;}setExertion(value){breathLevel=value;}setBreathStrain(value){breathStrainLevel=value;}setGhostPosition(value){ghostSound=value;}setArchiveRecord(frame){if(frame?.source&&archiveFrames.at(-1)!==frame.source)archiveFrames.push(frame.source);}setVolume(){}mix(){}setRecordingPosition(){}stopRecording(){}recording(clip='memory'){voiceCalls.push(clip);}footstep(kind){soundCalls.push(kind);}pause(){audioPauses++;}resume(){audioResumes++;}sound(kind){soundCalls.push(kind);}dispose(){}}}});
 let nextFrame,clock=0;
 const context={fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){},arc(){},fill(){}};
 const doc=new EventTarget();Object.assign(doc,{createElement:()=>({width:0,height:0,getContext:()=>context}),pointerLockElement:null,hidden:false});
@@ -44,9 +49,15 @@ test('V136 the three real management keepsakes reveal a wife without changing th
 const event=(target,type,properties)=>{const e=new Event(type);Object.assign(e,properties);target.dispatchEvent(e);};
 function tick(seconds=.05){for(let left=seconds;left>0;left-=.025){clock+=Math.min(.025,left)*1000;nextFrame(clock);}}
 
+async function settleLoading(game){
+ if(!game.snapshot().loading)return;
+ for(let i=0;i<600&&game.snapshot().loading&&!game.snapshot().loadingError;i++)await new Promise(r=>setTimeout(r,10));
+ assert.equal(game.snapshot().loadingError,'');assert.equal(game.snapshot().loading,false,'destination must finish preparing');tick();
+}
+
 async function officeAgencyInput(saved){
  const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'office_record',notes:[],elapsed:500,officeSupply:false,...saved})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
- const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick();
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();await game.continueGame();tick();
  function aim(pos,at){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...at).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
  function use(pos,at){aim(pos,at);assert.ok(game.snapshot().prompt,'actual office item/control remains usable');game.interact();tick();}
  return {game,data,use,aim,canvas,close(){game.dispose();win.localStorage=previous;}};
@@ -73,7 +84,7 @@ test('V122 a stair checkpoint restart keeps a concealed, continuous grounded app
   try{const g=renderedScene.getObjectByName('resident-remains');
    // Exercise the user's death -> retry path, not just a hand-placed studio pose.
    g.visible=true;g.position.copy(renderedCamera.position);g.position.y=0;tick(.025);
-   assert.equal(f.game.snapshot().story.stage,'dying');tick(1.3);f.game.skipDeath();assert.equal(f.game.snapshot().story.stage,'ended');f.game.start(true);tick(.025);
+   assert.equal(f.game.snapshot().story.stage,'dying');tick(1.3);f.game.skipDeath();assert.equal(f.game.snapshot().story.stage,'ended');await f.game.start(true);tick(.025);
    assert.equal(f.game.snapshot().story.stage,'stairs_loop');
    assert.equal(g.visible,false,'retry leaves the pursuer offscreen during the approach warning');
    assert.ok(Math.hypot(g.position.x-renderedCamera.position.x,g.position.z-renderedCamera.position.z)>2,'retry leaves room at the current shaft entrance');
@@ -197,7 +208,7 @@ test('V109 capture uses a full-screen face in different chapters, freezes on pau
    const worldScene=renderedScene,ghost=worldScene.getObjectByName('resident-remains');ghost.visible=true;ghost.position.copy(renderedCamera.position);ghost.position.z+=.3;ghost.position.y=renderedCamera.position.y-1.65;voiceCalls.length=0;tick(.1);
    assert.equal(f.game.snapshot().story.stage,'dying',stage);tick(.65);assert.equal(renderedScene.name,'capture-face',stage+' cannot let room walls cover the face');assert.ok(renderedScene.getObjectByName('ghost-attack-mouth').visible);assert.equal(voiceCalls.filter(v=>v==='scream').length,1);
    f.game.pause();const pose=renderedCamera.matrixWorld.toArray(),progress=f.game.snapshot().deathProgress;tick(2);assert.deepEqual(renderedCamera.matrixWorld.toArray(),pose);assert.equal(f.game.snapshot().deathProgress,progress);f.game.pause(false);tick(2.6);assert.equal(f.game.snapshot().story.ending,'caught');assert.equal(f.game.snapshot().story.stage,'ended');
-   f.game.start(true);tick();assert.notEqual(renderedScene.name,'capture-face');assert.equal(f.game.snapshot().deathProgress,0);
+   await f.game.start(true);tick();assert.notEqual(renderedScene.name,'capture-face');assert.equal(f.game.snapshot().deathProgress,0);
   }finally{f.close();}
  }
 });
@@ -249,7 +260,7 @@ test('V90 reading a real gallery notice cannot restart the lift arrival clock',a
  const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'lift_call',notes:[],elapsed:200})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  function aim(pos,target){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...target).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'actual mounted target is usable');}
- try{await game.ready;tick();game.continueGame();tick();aim([.2,1.65,-20.65],[.95,1.25,-22.55]);game.interact();assert.equal(game.snapshot().story.stage,'lift_wait');tick(3);
+ try{await game.ready;tick();await game.continueGame();tick();aim([.2,1.65,-20.65],[.95,1.25,-22.55]);game.interact();assert.equal(game.snapshot().story.stage,'lift_wait');tick(3);
   const paper=renderedScene.getObjectByName('gallery-notice-paper');assert.ok(paper,'notice is real world geometry');aim([.15,1.65,-19.8],paper.getWorldPosition(new THREE.Vector3()).toArray());game.interact();assert.ok(game.snapshot().story.notes.includes('gallery_notice'));assert.equal(game.snapshot().paused,false);tick(3.2);assert.equal(game.snapshot().story.stage,'lift_enter','the original arrival clock continues while reading');assert.ok(JSON.parse(data.get('homecoming.progress.v2')).notes.includes('gallery_notice'));
  }finally{game.dispose();win.localStorage=previous;}
 });
@@ -258,7 +269,7 @@ test('V77 real office input installs its fuse and chooses loads before operating
  const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'office_record',notes:[],elapsed:500,pursuit:false})]]);win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  function use(pos,target){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...target).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt,'real target prompt at '+target);game.interact();tick();}
- try{await game.ready;tick();game.continueGame();tick();use([-3.7,1.65,2.6],[-3.7,.86,1.8]);assert.equal(game.snapshot().story.stage,'office_fuse');use([-2.1,1.65,-4.95],[-2.1,1.17,-5.7]);assert.equal(game.snapshot().story.stage,'office_power');
+ try{await game.ready;tick();await game.continueGame();tick();use([-3.7,1.65,2.6],[-3.7,.86,1.8]);assert.equal(game.snapshot().story.stage,'office_fuse');use([-2.1,1.65,-4.95],[-2.1,1.17,-5.7]);assert.equal(game.snapshot().story.stage,'office_power');
   assert.ok(renderedScene.getObjectByName('office-fuse-installed'));use([4.55,1.65,-4.55],[5.39,1.02,-4.55]);assert.ok(game.snapshot().story.notes.includes('office_install'));
   use([4.55,1.65,-4],[5.34,1.45,-4]);use([4.55,1.65,-4.55],[5.34,1.45,-4.55]);use([4.55,1.65,-3.45],[5.39,.95,-3.45]);assert.equal(game.snapshot().story.stage,'office_tape');assert.equal(game.snapshot().story.officeSupply,true);assert.deepEqual(game.snapshot().story.circuit,['circuit_b','circuit_a']);
   use([4.55,1.65,-4.55],[5.34,1.45,-4.55]);use([4.55,1.65,-3.45],[5.34,1.45,-3.45]);const record=JSON.parse(data.get('homecoming.progress.v2'));assert.equal(record.stage,'office_power');assert.ok(record.notes.includes('office_install'));
@@ -267,7 +278,7 @@ test('V77 real office input installs its fuse and chooses loads before operating
 });
 test('V77 continuing a completed office recording releases the real waiting pursuer',async()=>{
  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'office_record',notes:['record','monitor'],elapsed:520,pursuit:false}):null,setItem(){}};const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- try{await game.ready;tick();game.continueGame();tick();assert.equal(game.snapshot().story.stage,'office_key');renderedCamera.position.set(-3.7,1.65,2.6);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(8);assert.ok(renderedScene.getObjectByName('connection-fire-door').rotation.y<-1.2,'restoring after CCTV cannot leave the pursuer locked outside');assert.ok(ghost.position.distanceTo(before)>.5);assert.equal(renderedScene.getObjectByName('office-fuse-installed').visible,true);
+ try{await game.ready;tick();await game.continueGame();tick();assert.equal(game.snapshot().story.stage,'office_key');renderedCamera.position.set(-3.7,1.65,2.6);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(8);assert.ok(renderedScene.getObjectByName('connection-fire-door').rotation.y<-1.2,'restoring after CCTV cannot leave the pursuer locked outside');assert.ok(ghost.position.distanceTo(before)>.5);assert.equal(renderedScene.getObjectByName('office-fuse-installed').visible,true);
  }finally{game.dispose();win.localStorage=previous;}
 });
 
@@ -276,19 +287,19 @@ test('V75 real resident input opens the physical drawer, earns its key and canno
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  function aim(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
  function use(pos,name){const mesh=renderedScene.getObjectByName(name);assert.ok(mesh,name);aim(pos,mesh.getWorldPosition(new THREE.Vector3()).toArray());assert.ok(game.snapshot().prompt,name+' must have a real input prompt');game.interact();}
- try{await game.ready;tick();game.continueGame();tick();assert.equal(game.snapshot().story.stage,'resident_entry','three old records do not imply physical key possession');aim([0,1.65,-4.6],[0,1.25,-5.65]);game.interact();assert.equal(game.snapshot().story.stage,'resident_entry');assert.match(game.snapshot().message,/열쇠/);
+ try{await game.ready;tick();await game.continueGame();tick();assert.equal(game.snapshot().story.stage,'resident_entry','three old records do not imply physical key possession');aim([0,1.65,-4.6],[0,1.25,-5.65]);game.interact();assert.equal(game.snapshot().story.stage,'resident_entry');assert.match(game.snapshot().message,/열쇠/);
   use([3,1.65,-3.1],'resident-drawer-handle');tick(1);assert.ok(game.snapshot().story.notes.includes('resident_drawer'));use([3.06,1.65,-3.1],'resident-study-key-tag');assert.equal(game.snapshot().story.stage,'resident_return');assert.ok(game.snapshot().story.notes.includes('resident_key'));tick();assert.equal(renderedScene.getObjectByName('resident-study-key').visible,false);assert.ok(JSON.parse(data.get('homecoming.progress.v2')).notes.includes('resident_key'));
   tick(3);use([2.45,1.65,-3.1],'resident-shift-page');assert.equal(game.snapshot().story.stage,'resident_return');const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(1.5);assert.ok(ghost.visible&&ghost.position.distanceTo(before)>.1,'a late optional record cannot reset the return grace period');aim([0,1.65,-4.6],[0,1.25,-5.65]);game.interact();assert.equal(game.snapshot().story.stage,'resident_departure');
  }finally{game.dispose();win.localStorage=previous;}
 });
 test('V75 continuing with the resident key preserves the open desk and consumed pickup',async()=>{
  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['resident_drawer','resident_key'],elapsed:200}):null,setItem(){}};const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- try{await game.ready;tick();game.continueGame();tick();assert.equal(game.snapshot().story.stage,'resident_return');assert.equal(renderedScene.getObjectByName('resident-study-key').visible,false);tick(1);assert.ok(renderedScene.getObjectByName('resident-study-drawer').position.z>.4);assert.match(game.snapshot().objective,/연결문/);}finally{game.dispose();win.localStorage=previous;}
+ try{await game.ready;tick();await game.continueGame();tick();assert.equal(game.snapshot().story.stage,'resident_return');assert.equal(renderedScene.getObjectByName('resident-study-key').visible,false);tick(1);assert.ok(renderedScene.getObjectByName('resident-study-drawer').position.z>.4);assert.match(game.snapshot().objective,/연결문/);}finally{game.dispose();win.localStorage=previous;}
 });
 
 test('V75 a new optional record after key restore does not restart the entrance scare',async()=>{
  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['resident_drawer','resident_key'],elapsed:200}):null,setItem(){}};const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- try{await game.ready;tick();game.continueGame();tick();const page=renderedScene.getObjectByName('resident-shift-page'),at=page.getWorldPosition(new THREE.Vector3()),pos=[2.45,1.65,-3.1];renderedCamera.position.set(...pos);const d=at.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();soundCalls.length=0;game.interact();assert.ok(game.snapshot().story.notes.includes('resident_shift'));assert.equal(soundCalls.includes('knock'),false,'an optional record is not another key pickup');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the original remaining entrance delay is retained');}finally{game.dispose();win.localStorage=previous;}
+ try{await game.ready;tick();await game.continueGame();tick();const page=renderedScene.getObjectByName('resident-shift-page'),at=page.getWorldPosition(new THREE.Vector3()),pos=[2.45,1.65,-3.1];renderedCamera.position.set(...pos);const d=at.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();soundCalls.length=0;game.interact();assert.ok(game.snapshot().story.notes.includes('resident_shift'));assert.equal(soundCalls.includes('knock'),false,'an optional record is not another key pickup');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the original remaining entrance delay is retained');}finally{game.dispose();win.localStorage=previous;}
 });
 
 for(const mode of ['production','development'])test(`startup keeps shader diagnostic readbacks off only in ${mode}`,async()=>{
@@ -337,9 +348,9 @@ test('leaving during the startup shader batch retains GPU resources until the en
  }finally{pendingCompiles=null;for(const resolve of jobs)resolve();await game.ready;game.dispose();}
 });
 
-test('a close divider stays within the held flashlight shadow frustum',()=>{
+test('a close divider stays within the held flashlight shadow frustum',async()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  const game=createGame(canvas,()=>{},()=>{});tick();game.start();game.skipMemory();tick(7);
+  const game=createGame(canvas,()=>{},()=>{});tick();await game.start();game.skipMemory();tick(7);
   renderedCamera.position.set(2.220584,1.65,0);
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
   event(doc,'pointermove',{clientX:-(-Math.PI/2-renderedCamera.rotation.y)/.0021,clientY:0});event(doc,'pointerup',{});tick();
@@ -354,7 +365,7 @@ test('a close divider stays within the held flashlight shadow frustum',()=>{
 test.skip('real interaction loop reaches the ending, requires a held pry, and freezes on pause',async()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const media=win.matchMedia;win.matchMedia=query=>({matches:query.includes('pointer:coarse')});
-  const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));await game.ready;win.matchMedia=media;tick();game.start();game.skipMemory();tick();
+  const errors=[];const game=createGame(canvas,()=>{},e=>errors.push(e));await game.ready;win.matchMedia=media;tick();await game.start();game.skipMemory();tick();
   event(win,'blur',{});event(doc,'pointerlockchange',{});assert.equal(game.snapshot().paused,false,'losing focus or pointer lock must not open a pause menu');
   doc.hidden=true;event(doc,'visibilitychange',{});const backgroundAt=game.snapshot().elapsed;tick(5);assert.equal(game.snapshot().paused,false);assert.equal(game.snapshot().elapsed,backgroundAt);doc.hidden=false;event(doc,'visibilitychange',{});
   assert.equal(game.snapshot().story.stage,'wake_ring');assert.equal(game.snapshot().hasFlashlight,false);
@@ -526,13 +537,13 @@ test.skip('real interaction loop reaches the ending, requires a held pry, and fr
   tick(finale.car_voice.duration);assert.equal(game.snapshot().story.stage,'car_crash');
   tick(.8);assert.ok(soundCalls.includes('collision-impact'));assert.equal(game.snapshot().story.ending,null,'death follows the visible crash');
   tick(finale.car_crash.duration);assert.equal(game.snapshot().story.stage,'ended');assert.equal(game.snapshot().story.ending,'crashed');assert.deepEqual(errors,[]);
-  game.start();tick(.2);assert.equal(game.snapshot().story.stage,'drive');game.skipMemory();assert.ok(game.snapshot().elapsed<.3,'fresh restart resets elapsed time');
+  await game.start();tick(.2);assert.equal(game.snapshot().story.stage,'drive');game.skipMemory();assert.ok(game.snapshot().elapsed<.3,'fresh restart resets elapsed time');
   tick(7.1);game.key('KeyW',true);tick(.5);game.key('KeyW',false);assert.ok(renderedCamera.position.distanceTo(new THREE.Vector3(...home.wakeStand))>.5,'the player can walk after waking');game.dispose();
 });
 
-test('contact screams once, locks controls and consumes the view before death; manual pause freezes it',()=>{
+test('contact screams once, locks controls and consumes the view before death; manual pause freezes it',async()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();game.start(true);tick();
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();await game.start(true);tick();
   voiceCalls.length=0;
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:0,clientY:0});event(doc,'pointerup',{});game.interact();tick(3);
   // The radio encounter opens the front door; leave and let pursuit catch up.
@@ -549,16 +560,16 @@ test('contact screams once, locks controls and consumes the view before death; m
   game.pause();const pose=renderedCamera.matrixWorld.toArray();tick(5);assert.equal(game.snapshot().deathProgress,progress);assert.deepEqual(renderedCamera.matrixWorld.toArray(),pose);game.pause(false);
   tick(2.6);assert.equal(game.snapshot().story.stage,'dying');assert.ok(renderedCamera.position.z<initialZ-.1);assert.ok(game.snapshot().deathProgress>.8);assert.equal(renderedScene.name,'capture-face','the face fills the viewport regardless of the place of contact');
   tick(.7);assert.equal(game.snapshot().story.stage,'ended');assert.equal(game.snapshot().story.ending,'caught');
-  game.start(true);tick();assert.equal(game.snapshot().story.stage,'lift_call');assert.equal(game.snapshot().deathProgress,0);assert.equal(renderedCamera.position.y,1.65);game.dispose();
+  await game.start(true);tick();assert.equal(game.snapshot().story.stage,'lift_call');assert.equal(game.snapshot().deathProgress,0);assert.equal(renderedCamera.position.y,1.65);game.dispose();
 });
 
-test('mandatory pry instructions follow rebound controls',()=>{
+test('mandatory pry instructions follow rebound controls',async()=>{
   const previousStorage=win.localStorage;
   win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'lift_button',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
   const game=createGame(canvas,()=>{},e=>assert.fail(e));
   try{
-    tick();game.configure({bindings:{...game.getSettings().bindings,forward:'KeyE',interact:'KeyQ',run:'ControlLeft'}});game.continueGame();tick();
+    tick();game.configure({bindings:{...game.getSettings().bindings,forward:'KeyE',interact:'KeyQ',run:'ControlLeft'}});await game.continueGame();tick();
     renderedCamera.position.set(0,1.65,.6);
     const yaw=Math.atan2(-.92,1.05),pitch=Math.atan2(-.35,Math.hypot(.92,1.05));
     event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
@@ -576,7 +587,7 @@ test('capture beside corridor walls keeps the ghost and falling camera inside th
     const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
     const game=createGame(canvas,()=>{},e=>assert.fail(e));
     try{
-      tick();game.continueGame();tick(.6);renderedCamera.position.set(0,1.65,-1.9);tick();renderedCamera.position.set(-2.6,1.65,16);tick(4.3);
+      tick();await game.continueGame();tick(.6);renderedCamera.position.set(0,1.65,-1.9);tick();renderedCamera.position.set(-2.6,1.65,16);tick(4.3);
       const ghost=renderedScene.getObjectByName('resident-remains');
       renderedCamera.position.set(playerX,1.65,playerZ);ghost.position.set(ghostX,0,ghostZ);ghost.visible=true;
       assert.ok(canStandAt(ghostX,ghostZ,w.solids,.43,w.bounds),'capture begins in a valid ghost position');
@@ -599,9 +610,9 @@ test('capture beside corridor walls keeps the ghost and falling camera inside th
   win.localStorage=previousStorage;
 });
 
-test('the remembered drive, fatal collision, escape and sleep lead to a ringing phone three nights later',()=>{
+test('the remembered drive, fatal collision, escape and sleep lead to a ringing phone three nights later',async()=>{
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();game.start();tick(.1);
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();await game.start();tick(.1);
   assert.equal(game.snapshot().story.stage,'drive');assert.match(game.snapshot().memoryText,/술을 마셨다/);
   const road=renderedScene.getObjectByName('accident-memory');assert.ok(road);assert.equal(renderedScene.getObjectByName('apartment-tv-light').parent.visible,false);
   assert.equal(road.getObjectByName('memory-cracked-glass').visible,false);
@@ -615,18 +626,18 @@ test('the remembered drive, fatal collision, escape and sleep lead to a ringing 
   tick(4.6);assert.equal(deviceLevels.phone,0,'leaving the victim fades the ringing out');tick(opening.flee.duration-4.6);assert.equal(game.snapshot().story.stage,'sleep');assert.equal(renderedScene.getObjectByName('accident-memory'),undefined);assert.equal(renderedCamera.position.y,.98);
   tick(6);assert.ok(game.snapshot().memoryFade>.95);tick(opening.sleep.duration-6);assert.equal(game.snapshot().story.stage,'wake_ring');assert.ok(game.snapshot().story.notes.includes('wake'));assert.match(game.snapshot().memoryLabel,/사흘 뒤/);assert.equal(renderedScene.getObjectByName('apartment-tv-light').intensity,0);
   tick(5);assert.equal(game.snapshot().story.stage,'light_switch');assert.equal(renderedScene.getObjectByName('apartment-lamp-0').intensity,0);
-  game.start();tick();const previous=renderedScene.getObjectByName('accident-memory');game.start();tick();assert.ok(renderedScene.getObjectByName('accident-memory')===previous,'restart reuses the prepared road');
+  await game.start();tick();const previous=renderedScene.getObjectByName('accident-memory');await game.start();tick();assert.ok(renderedScene.getObjectByName('accident-memory')===previous,'restart reuses the prepared road');
   game.skipMemory();tick();assert.equal(game.snapshot().story.stage,'wake_ring');assert.equal(renderedScene.getObjectByName('accident-memory'),undefined);assert.ok(game.snapshot().story.notes.includes('wake'));game.dispose();
 });
-test('desktop memory leaves the cursor available for skip, including after pause and restart',()=>{
+test('desktop memory leaves the cursor available for skip, including after pause and restart',async()=>{
   const previousMedia=win.matchMedia;win.matchMedia=()=>({matches:false});let locks=0;
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){},requestPointerLock(){locks++;doc.pointerLockElement=canvas;return Promise.resolve();}});
   doc.exitPointerLock=()=>{doc.pointerLockElement=null;event(doc,'pointerlockchange',{});};
   const game=createGame(canvas,()=>{},e=>assert.fail(e));
   try{
-    tick();game.start();tick();assert.equal(locks,0);assert.equal(doc.pointerLockElement,null);
+    tick();await game.start();tick();assert.equal(locks,0);assert.equal(doc.pointerLockElement,null);
     game.pause();game.pause(false);assert.equal(locks,0);game.skipMemory();tick();assert.equal(locks,1);assert.equal(doc.pointerLockElement,canvas);
-    game.start();tick();assert.equal(game.snapshot().story.stage,'drive');assert.equal(doc.pointerLockElement,null);assert.equal(locks,1);
+    await game.start();tick();assert.equal(game.snapshot().story.stage,'drive');assert.equal(doc.pointerLockElement,null);assert.equal(locks,1);
   }finally{game.dispose();win.matchMedia=previousMedia;doc.pointerLockElement=null;}
 });
 
@@ -634,9 +645,9 @@ test('the first ghost starts behind a real wall and walks continuously into view
   const {buildWorld,hasLineOfSight,canStandAt,disposeWorld}=await import('../lib/world.ts');
   const walls=buildWorld(new THREE.Scene());
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  const game=createGame(canvas,()=>{},e=>assert.fail(e));
+  const game=createGame(canvas,async()=>{},e=>assert.fail(e));
   try{
-    tick();game.start(true);tick();renderedCamera.position.set(...home.radioStart);
+    tick();await game.start(true);tick();renderedCamera.position.set(...home.radioStart);
     const pitch=Math.atan2(home.radio[1]-renderedCamera.position.y,1.25);
     event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
     event(doc,'pointermove',{clientX:-(-Math.PI-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
@@ -659,14 +670,14 @@ test('the first ghost starts behind a real wall and walks continuously into view
   }finally{game.dispose();disposeWorld(walls.root);}
 });
 
-test('all pursuit areas after the first apartment render the ghost crawling, including resumed games',()=>{
+test('all pursuit areas after the first apartment render the ghost crawling, including resumed games',async()=>{
   const previous=win.localStorage;
   for(const stage of ['lift_call','lift_exit','stairs_loop','resident_entry','office_record','parking_gate']){
     win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage,notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
     const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-    const game=createGame(canvas,()=>{},e=>assert.fail(e));
+    const game=createGame(canvas,async()=>{},e=>assert.fail(e));
     try{
-      tick();game.continueGame();tick(.6);
+      tick();await game.continueGame();tick(.6);
       if(stage==='lift_exit'){
         renderedCamera.position.set(0,1.65,-.15);
         event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});
@@ -683,7 +694,7 @@ test('all pursuit areas after the first apartment render the ghost crawling, inc
 
 async function wardrobeFixture(){
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();game.start(true);tick();
+  const game=createGame(canvas,()=>{},e=>assert.fail(e));tick();await game.start(true);tick();
   const aim=(pos,target)=>{
     renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));
     event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
@@ -727,7 +738,7 @@ test('the wardrobe search stops at a distance and the apparition changes the amb
     assert.ok(hauntLevel>.5,'the apparition fades in ominous music');game.interact();let nearest=Infinity;
     for(let i=0;i<2400&&game.snapshot().story.stage==='wait';i++){tick(.025);nearest=Math.min(nearest,Math.hypot(ghost.position.x-renderedCamera.position.x,ghost.position.z-renderedCamera.position.z));}
     assert.equal(game.snapshot().story.stage,'escape');assert.ok(nearest>1.1,`the closed wardrobe retains a gap: ${nearest}`);
-    game.start();tick();assert.equal(hauntLevel,0,'a new prologue restores the calm soundscape');
+    await game.start();tick();assert.equal(hauntLevel,0,'a new prologue restores the calm soundscape');
   }finally{game.dispose();}
 });
 test('seeing the player interrupts the bathroom route before its timer expires',async()=>{
@@ -738,19 +749,19 @@ test('seeing the player interrupts the bathroom route before its timer expires',
   }finally{game.dispose();}
 });
 
-test('continue restores an earned chapter after disposal and a new game instance',()=>{
+test('continue restores an earned chapter after disposal and a new game instance',async()=>{
   const previous=win.localStorage,data=new Map();win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
-  let game=createGame(canvas,()=>{},e=>assert.fail(e));
-  try{tick();game.start();game.skipMemory();tick(7.2);assert.equal(game.snapshot().story.stage,'light_switch');game.configure({fov:88});game.dispose();
-    game=createGame(canvas,()=>{},e=>assert.fail(e));tick();assert.equal(game.snapshot().canContinue,true);game.continueGame();tick();assert.equal(game.snapshot().story.stage,'light_switch');assert.equal(game.snapshot().story.hidden,false);assert.equal(renderedCamera.fov,88);
+  let game=createGame(canvas,async()=>{},e=>assert.fail(e));
+  try{tick();await game.start();game.skipMemory();tick(7.2);assert.equal(game.snapshot().story.stage,'light_switch');game.configure({fov:88});game.dispose();
+    game=createGame(canvas,()=>{},e=>assert.fail(e));tick();assert.equal(game.snapshot().canContinue,true);await game.continueGame();tick();assert.equal(game.snapshot().story.stage,'light_switch');assert.equal(game.snapshot().story.hidden,false);assert.equal(renderedCamera.fov,88);
   }finally{game.dispose();win.localStorage=previous;}
 });
 test('the resident return searches even when the player remains silent out of sight',async()=>{
   const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['resident_drawer','resident_key'],elapsed:0}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function use(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
-  try{tick();game.continueGame();tick();use([1.6,1.65,3.65],[1.6,.3,4.8]);use([-3.8,1.65,2.2],[-3.674,.785,3.51]);use([3.8,1.65,2.8],[3.8,1.5,3.95]);tick(10);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(2);assert.ok(ghost.position.distanceTo(before)>1,'silent players still face a searching pursuer');assert.equal(game.snapshot().story.stage,'resident_return');}
+  try{tick();await game.continueGame();tick();use([1.6,1.65,3.65],[1.6,.3,4.8]);use([-3.8,1.65,2.2],[-3.674,.785,3.51]);use([3.8,1.65,2.8],[3.8,1.5,3.95]);tick(10);const ghost=renderedScene.getObjectByName('resident-remains'),before=ghost.position.clone();tick(2);assert.ok(ghost.position.distanceTo(before)>1,'silent players still face a searching pursuer');assert.equal(game.snapshot().story.stage,'resident_return');}
   finally{game.dispose();win.localStorage=previous;}
 });
 
@@ -761,7 +772,7 @@ for(const replay of [false,true])test(`V65 resident message ${replay?'replays in
   const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function aim(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
   try{
-    await game.ready;tick();game.continueGame();tick(.1);voiceCalls.length=0;
+    await game.ready;tick();await game.continueGame();tick(.1);voiceCalls.length=0;
     aim([-2.4,1.65,4.6],[-3.8,.82,3.52]);assert.match(game.snapshot().prompt,/녹음/);
     game.interact();assert.deepEqual(voiceCalls,['memory']);
     assert.equal(game.snapshot().story.stage,replay?'resident_return':'resident_entry','pressing PLAY cannot pre-collect an unheard message');
@@ -778,35 +789,35 @@ test('V65 other clues stay usable while the message runs without ending the inve
   win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes:['belongings'],elapsed:100}):null,setItem(){},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function use(pos,target){renderedCamera.position.set(...pos);const dx=target[0]-pos[0],dy=target[1]-pos[1],dz=target[2]-pos[2],yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();assert.ok(game.snapshot().prompt);game.interact();}
-  try{await game.ready;tick();game.continueGame();tick();use([-2.4,1.65,4.6],[-3.8,.82,3.52]);use([3.8,1.65,2.8],[3.8,1.5,3.94]);assert.ok(game.snapshot().story.notes.includes('portrait'));assert.equal(game.snapshot().story.notes.includes('answerphone'),false);assert.notEqual(game.snapshot().story.stage,'resident_return');tick(5.5);assert.equal(game.snapshot().story.stage,'resident_memory');assert.equal(game.snapshot().story.notes.includes('resident_key'),false);}
+  try{await game.ready;tick();await game.continueGame();tick();use([-2.4,1.65,4.6],[-3.8,.82,3.52]);use([3.8,1.65,2.8],[3.8,1.5,3.94]);assert.ok(game.snapshot().story.notes.includes('portrait'));assert.equal(game.snapshot().story.notes.includes('answerphone'),false);assert.notEqual(game.snapshot().story.stage,'resident_return');tick(5.5);assert.equal(game.snapshot().story.stage,'resident_memory');assert.equal(game.snapshot().story.notes.includes('resident_key'),false);}
   finally{game.dispose();win.localStorage=previous;}
 });
 
-test('continuing 1704 preserves the remaining clue or restores an already completed investigation',()=>{
+test('continuing 1704 preserves the remaining clue or restores an already completed investigation',async()=>{
   const previous=win.localStorage;
   for(const notes of [['belongings','answerphone'],['belongings','answerphone','portrait'],['resident_drawer','resident_key']]){
     win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'resident_entry',notes,elapsed:200}):null,setItem(){},removeItem(){}};
     const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
-    try{tick();game.continueGame();tick();assert.deepEqual(game.snapshot().story.notes,notes);assert.match(game.snapshot().objective,/연결문|서재/);assert.equal(game.snapshot().story.stage,notes.includes('resident_key')?'resident_return':'resident_entry');}
+    try{tick();await game.continueGame();tick();assert.deepEqual(game.snapshot().story.notes,notes);assert.match(game.snapshot().objective,/연결문|서재/);assert.equal(game.snapshot().story.stage,notes.includes('resident_key')?'resident_return':'resident_entry');}
     finally{game.dispose();win.localStorage=previous;}
   }
 });
 
-test('actual movement exhausts sprint, manual pause freezes recovery, and walls do not consume stamina',()=>{
+test('actual movement exhausts sprint, manual pause freezes recovery, and walls do not consume stamina',async()=>{
  const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'lift_call',notes:[],elapsed:0}):null,setItem(){},removeItem(){}};
- const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- try{tick();game.continueGame();tick();game.key('KeyW',true);game.key('ShiftLeft',true);tick(9.4);assert.equal(game.snapshot().stamina,0);assert.equal(game.snapshot().exhausted,true);assert.ok(breathLevel>.9,'exhaustion starts the panting loop');const before=renderedCamera.position.z;tick(.5);assert.ok(Math.abs(before-renderedCamera.position.z-1)<.06,'depleted player walks at 2 m/s');assert.ok(breathLevel>.5,'panting continues while walking');
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,async()=>{},e=>assert.fail(e));
+ try{tick();await game.continueGame();tick();game.key('KeyW',true);game.key('ShiftLeft',true);tick(9.4);assert.equal(game.snapshot().stamina,0);assert.equal(game.snapshot().exhausted,true);assert.ok(breathLevel>.9,'exhaustion starts the panting loop');const before=renderedCamera.position.z;tick(.5);assert.ok(Math.abs(before-renderedCamera.position.z-1)<.06,'depleted player walks at 2 m/s');assert.ok(breathLevel>.5,'panting continues while walking');
  game.pause();const frozen=game.snapshot().stamina;tick(9);assert.equal(game.snapshot().stamina,frozen);game.pause(false);game.key('KeyW',true);tick(4.5);game.key('KeyW',false);assert.ok(game.snapshot().stamina>.25);assert.equal(game.snapshot().exhausted,false);assert.ok(breathLevel>0,'breathing fades through recovery');
- game.start(true);tick();assert.equal(breathLevel,0);renderedCamera.position.set(0,1.65,-22.86);game.key('KeyW',true);game.key('ShiftLeft',true);tick(2);assert.equal(game.snapshot().stamina,1,'pushing against the area boundary is not running');
+ await game.start(true);tick();assert.equal(breathLevel,0);renderedCamera.position.set(0,1.65,-22.86);game.key('KeyW',true);game.key('ShiftLeft',true);tick(2);assert.equal(game.snapshot().stamina,1,'pushing against the area boundary is not running');
  }finally{game.dispose();win.localStorage=previous;}
 });
 
-test('resuming a previously played archive record allows replay and shows the timed revelation without opening the journal',()=>{
+test('resuming a previously played archive record allows replay and shows the timed revelation without opening the journal',async()=>{
  const previous=win.localStorage,notes=['archive_ledger','archive_road','archive_call','archive_gate','archive_play'];
  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'archive_reveal',notes,circuit:['archive_sequence_road','archive_sequence_call','archive_sequence_gate'],elapsed:900}):null,setItem(){},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  try{
-  tick();game.continueGame();tick();renderedCamera.position.set(9,1.65,-18.9);const pitch=Math.atan2(1.17-1.65,.92);
+  tick();await game.continueGame();tick();renderedCamera.position.set(9,1.65,-18.9);const pitch=Math.atan2(1.17-1.65,.92);
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:0,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();assert.equal(game.snapshot().story.stage,'archive_playback');
   tick(12.2);assert.equal(game.snapshot().message,archiveReplay[2].text);
   game.pause();const at=game.snapshot().elapsed;tick(10);assert.equal(game.snapshot().elapsed,at);game.pause(false);
@@ -816,9 +827,9 @@ test('resuming a previously played archive record allows replay and shows the ti
 
 test('prepared areas retain geometry through a restart and reset apartment door state',async()=>{
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
- const game=createGame(canvas,()=>{},()=>{});await game.ready;tick();
+ const game=createGame(canvas,async()=>{},()=>{});await game.ready;tick();
  const original=renderedScene.getObjectByName('front-door');original.userData.openRequested=true;original.rotation.y=1.42;
- game.start();game.skipMemory();tick(7);
+ await game.start();game.skipMemory();tick(7);
  const again=renderedScene.getObjectByName('front-door');assert.ok(again===original,'restart must reuse the GPU-prepared world');assert.equal(again.rotation.y,0,'cached doors restart closed');
  game.dispose();
 });
@@ -836,7 +847,7 @@ for(const [from,crossing,area,newZ,activation] of [
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});
  const game=createGame(canvas,()=>{},e=>assert.fail(e)),reference=buildWorld(new THREE.Scene(),area);
  try{
-  tick();game.continueGame();tick();
+  tick();await game.continueGame();tick();
   const departing=renderedScene.getObjectByName('resident-remains');departing.position.set(crossing[0]-3,crossing[1]-1.65,crossing[2]);departing.visible=true;
   renderedCamera.position.set(...crossing);tick();
   assert.equal(game.snapshot().story.stage,({courtyard:'court_arrival',archive:'archive_arrival',plant:'plant_arrival',parking:'parking_gate'})[area]);
@@ -874,7 +885,7 @@ test.skip('the lower stair door opens in place and the repeated floor begins onl
   const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function aim(target){const p=renderedCamera.position,dx=target[0]-p.x,dy=target[1]-p.y,dz=target[2]-p.z;const y=Math.atan2(-dx,-dz),x=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(y-renderedCamera.rotation.y)/.0021,clientY:-(x-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
   try{
-    await game.ready;tick();game.continueGame();tick();
+    await game.ready;tick();await game.continueGame();tick();
     // One placement isolates the lower door; every crossing below uses physical input.
     // Isolate the lower door immediately; the old five-second frozen arrival is gone.
     renderedCamera.position.set(1,-1.15,-4.8);aim([1,-1.55,-5.65]);assert.ok(game.snapshot().prompt);
@@ -910,7 +921,7 @@ test.skip('the stair gallery transition waits for the visible fire door to close
   const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function aim(target){const p=renderedCamera.position,dx=target[0]-p.x,dy=target[1]-p.y,dz=target[2]-p.z,y=Math.atan2(-dx,-dz),x=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(y-renderedCamera.rotation.y)/.0021,clientY:-(x-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
   try{
-    await game.ready;tick();game.continueGame();tick();
+    await game.ready;tick();await game.continueGame();tick();
     // Isolate the upper door after completing the prerequisite interactions.
     renderedCamera.position.set(1,-1.15,-4.8);aim([1,-1.55,-5.65]);game.interact();tick(1);
     renderedCamera.position.set(4,-1.15,-12.2);tick();assert.equal(game.snapshot().story.stage,'stairs_reverse');
@@ -936,7 +947,7 @@ test('a pursuer already through the upper fire door remains visible and lethal a
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
   function aim(target){const p=renderedCamera.position,dx=target[0]-p.x,dy=target[1]-p.y,dz=target[2]-p.z,y=Math.atan2(-dx,-dz),x=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(y-renderedCamera.rotation.y)/.0021,clientY:-(x-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
   try{
-    await game.ready;tick();game.continueGame();tick();
+    await game.ready;tick();await game.continueGame();tick();
     renderedCamera.position.set(1,-1.15,-4.8);aim([1,-1.55,-5.65]);game.interact();tick(1);
     renderedCamera.position.set(4,-1.15,-12.2);tick();renderedCamera.position.set(5.25,-1.15,-13.35);aim([5.25,-1.15,-12.15]);game.interact();
     renderedCamera.position.set(3,1.65,-22.65);aim([3,1.25,-23.5]);game.interact();tick(6);
@@ -965,7 +976,7 @@ test('the two investigation boundaries retain a moving follower and save the car
   let raw=JSON.stringify({version:2,stage:c.stage,notes:c.notes,elapsed:0,circuit:[],pursuit:false});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
   const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
   try{
-   await game.ready;tick();game.continueGame();tick(.1);const before=renderedScene.getObjectByName('resident-remains');before.position.set(...c.ghost);before.visible=true;renderedCamera.position.set(...c.player);tick(.025);
+   await game.ready;tick();await game.continueGame();tick(.1);const before=renderedScene.getObjectByName('resident-remains');before.position.set(...c.ghost);before.visible=true;renderedCamera.position.set(...c.player);tick(.025);
    assert.equal(game.snapshot().story.stage,c.next);const after=renderedScene.getObjectByName('resident-remains'),at=after.position.clone();tick(.7);assert.equal(after.visible,true,'follower must emerge after its actual travel delay at '+c.next);
    tick(1);assert.ok(after.position.distanceTo(at)>.1,'follower freezes after entering '+c.next);assert.equal(JSON.parse(raw).pursuit,true,'an immediate quit cannot erase the just-carried follower');
   }finally{game.dispose();}
@@ -977,17 +988,17 @@ test('continuing a threatened archive investigation preserves conclusions and re
  win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  try{
-  await game.ready;tick();game.continueGame();tick(.1);assert.deepEqual(game.snapshot().story.circuit,['archive_sequence_road']);const g=renderedScene.getObjectByName('resident-remains'),at=g.position.clone();assert.equal(g.visible,false,'the checkpoint leaves a fair approach interval');
+  await game.ready;tick();await game.continueGame();tick(.1);assert.deepEqual(game.snapshot().story.circuit,['archive_sequence_road']);const g=renderedScene.getObjectByName('resident-remains'),at=g.position.clone();assert.equal(g.visible,false,'the checkpoint leaves a fair approach interval');
   tick(3.5);assert.equal(g.visible,true,'continue must not disable a previously carried hunt');assert.ok(g.position.distanceTo(at)>.05,'the restored follower must move through the actual entry route');assert.equal(game.snapshot().story.stage,'archive_edit','the player cannot be caught at spawn before the approach is announced');
  }finally{game.dispose();win.localStorage=previous;}
 });
 
 test('a threatened investigation retry preserves marked evidence and allows the follower to approach again',async()=>{
  const previous=win.localStorage;const raw=JSON.stringify({version:2,stage:'archive_edit',notes:['court_confirm','archive_ledger','archive_road','archive_call','archive_gate'],circuit:['archive_sequence_call'],elapsed:480,pursuit:true});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem(){},removeItem(){}};
- const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,async()=>{},e=>assert.fail(e));
  try{
-  await game.ready;tick();game.continueGame();tick(3.1);const g=renderedScene.getObjectByName('resident-remains');g.position.copy(renderedCamera.position);g.position.y=0;g.position.z+=.45;g.visible=true;tick(.025);assert.equal(game.snapshot().story.stage,'dying');tick(3.3);assert.equal(game.snapshot().story.stage,'ended');
-  game.start(true);tick(.1);assert.equal(game.snapshot().story.stage,'archive_edit');assert.deepEqual(game.snapshot().story.circuit,['archive_sequence_call']);assert.equal(g.visible,false,'retry starts outside contact range');tick(3.1);assert.equal(g.visible,true,'retry must restore the carried follower');assert.equal(game.snapshot().story.stage,'archive_edit');assert.equal(game.snapshot().paused,false);
+  await game.ready;tick();await game.continueGame();tick(3.1);const g=renderedScene.getObjectByName('resident-remains');g.position.copy(renderedCamera.position);g.position.y=0;g.position.z+=.45;g.visible=true;tick(.025);assert.equal(game.snapshot().story.stage,'dying');tick(3.3);assert.equal(game.snapshot().story.stage,'ended');
+  await game.start(true);tick(.1);assert.equal(game.snapshot().story.stage,'archive_edit');assert.deepEqual(game.snapshot().story.circuit,['archive_sequence_call']);assert.equal(g.visible,false,'retry starts outside contact range');tick(3.1);assert.equal(g.visible,true,'retry must restore the carried follower');assert.equal(game.snapshot().story.stage,'archive_edit');assert.equal(game.snapshot().paused,false);
  }finally{game.dispose();win.localStorage=previous;}
 });
 
@@ -996,7 +1007,7 @@ test('stopping an archive recording leaves a visible nearby pursuer moving',asyn
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  function aim(p,target){renderedCamera.position.set(...p);const dx=target[0]-p[0],dy=target[1]-p[1],dz=target[2]-p[2],y=Math.atan2(-dx,-dz),x=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(y-renderedCamera.rotation.y)/.0021,clientY:-(x-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick(.025);}
  try{
-  await game.ready;tick();game.continueGame();tick(2.1);const g=renderedScene.getObjectByName('resident-remains');g.position.set(6.6,0,-17.2);g.rotation.y=2.1;g.visible=true;
+  await game.ready;tick();await game.continueGame();tick(2.1);const g=renderedScene.getObjectByName('resident-remains');g.position.set(6.6,0,-17.2);g.rotation.y=2.1;g.visible=true;
   aim([9,1.65,-18.6],[9,.94,-19.76]);game.interact();assert.match(game.snapshot().message,/어느 쪽/);
   aim([8.88,1.65,-18.45],[8.88,.94,-19.61]);game.interact();assert.match(game.snapshot().message,/일시정지/);const at=g.position.clone(),elapsed=game.snapshot().elapsed;tick(.35);assert.ok(g.position.distanceTo(at)>.2,'record pause must not pause the actual hunt');assert.ok(game.snapshot().elapsed>elapsed+.3);assert.equal(game.snapshot().paused,false);assert.equal(game.snapshot().story.stage,'archive_edit');
  }finally{game.dispose();win.localStorage=previous;}
@@ -1006,7 +1017,7 @@ test('an active follower still travelling offscreen is carried through the next 
  const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'archive_departure',notes:['archive_ledger','archive_road','archive_call','archive_gate','archive_play'],circuit:[],elapsed:480,pursuit:true,pursuitWait:24});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  try{
-  await game.ready;tick();game.continueGame();tick(.1);assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the follower is still in transit');
+  await game.ready;tick();await game.continueGame();tick(.1);assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the follower is still in transit');
   renderedCamera.position.set(1.55,1.65,-34);tick(.025);assert.equal(game.snapshot().story.stage,'plant_arrival');const saved=JSON.parse(raw);assert.equal(saved.pursuit,true,'invisibility cannot cancel an existing hunt at the next boundary');assert.ok(saved.pursuitWait>=24,'the remaining old travel time must be added, not erased');
   tick(12);assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the player cannot be overtaken by teleporting the delayed pursuer');assert.equal(game.snapshot().story.stage,'plant_arrival');
  }finally{game.dispose();win.localStorage=previous;}
@@ -1016,7 +1027,7 @@ test('continuing a distant incoming hunt respects its saved remaining travel tim
  const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'plant_arrival',notes:['archive_play'],circuit:[],elapsed:500,pursuit:true,pursuitWait:12});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  try{
-  await game.ready;tick();game.continueGame();tick(3);const g=renderedScene.getObjectByName('resident-remains'),at=g.position.clone();assert.equal(g.visible,false,'continue may not turn12sec of transit into a2sec arrival');assert.equal(game.snapshot().story.stage,'plant_arrival');
+  await game.ready;tick();await game.continueGame();tick(3);const g=renderedScene.getObjectByName('resident-remains'),at=g.position.clone();assert.equal(g.visible,false,'continue may not turn12sec of transit into a2sec arrival');assert.equal(game.snapshot().story.stage,'plant_arrival');
   tick(10);assert.equal(g.visible,true,'the pending follower must eventually arrive');assert.ok(g.position.distanceTo(at)>.05,'the arrived follower resumes actual navigation');
  }finally{game.dispose();win.localStorage=previous;}
 });
@@ -1025,7 +1036,7 @@ test('using a plant valve cannot reveal a pursuer that is still physically in tr
  const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'plant_isolate',notes:['archive_play','plant_diagram'],circuit:[],elapsed:500,pursuit:true,pursuitWait:24});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
  try{
-  await game.ready;tick();game.continueGame();tick(.1);const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,false);
+  await game.ready;tick();await game.continueGame();tick(.1);const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,false);
   renderedCamera.position.set(-8,1.65,20.1);const target=new THREE.Vector3(-8,1.22,19.32),d=target.sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));
   event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
   assert.match(game.snapshot().prompt,/서측/);game.interact();assert.ok(game.snapshot().story.notes.includes('plant_valve_west'));assert.equal(ghost.visible,false,'operating the valve must not teleport the delayed follower into view');
@@ -1035,21 +1046,21 @@ test('using a plant valve cannot reveal a pursuer that is still physically in tr
 test('continuing into the garage retains a saved distant follower instead of spawning it beside the entrance',async()=>{
  const previous=win.localStorage;const raw=JSON.stringify({version:2,stage:'parking_gate',notes:['plant_drained'],circuit:[],elapsed:1200,pursuit:true,pursuitWait:12});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem(){},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- try{await game.ready;tick();game.continueGame();tick(.1);const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,false,'continue must retain the saved pending garage approach');tick(11);assert.equal(ghost.visible,false);tick(2);assert.equal(ghost.visible,true);}
+ try{await game.ready;tick();await game.continueGame();tick(.1);const ghost=renderedScene.getObjectByName('resident-remains');assert.equal(ghost.visible,false,'continue must retain the saved pending garage approach');tick(11);assert.equal(ghost.visible,false);tick(2);assert.equal(ghost.visible,true);}
  finally{game.dispose();win.localStorage=previous;}
 });
 
 test('a recovered parking key survives an older entry save and a death retry without another search',async()=>{
  const previous=win.localStorage;let raw=JSON.stringify({version:2,stage:'parking_gate',notes:['plant_drained','car_passenger','car_search'],circuit:[],elapsed:1200,pursuit:true,pursuitWait:12});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
- const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- try{await game.ready;tick();game.continueGame();tick(.1);assert.equal(game.snapshot().story.stage,'parking_alarm');assert.equal(renderedScene.getObjectByName('garage-car-key').visible,false);
-  const g=renderedScene.getObjectByName('resident-remains');g.visible=true;g.position.copy(renderedCamera.position);g.position.y=0;tick(.1);assert.equal(game.snapshot().story.stage,'dying');game.start(true);tick(.1);assert.equal(game.snapshot().story.stage,'parking_alarm');assert.equal(renderedScene.getObjectByName('garage-car-key').visible,false);
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,async()=>{},e=>assert.fail(e));
+ try{await game.ready;tick();await game.continueGame();tick(.1);assert.equal(game.snapshot().story.stage,'parking_alarm');assert.equal(renderedScene.getObjectByName('garage-car-key').visible,false);
+  const g=renderedScene.getObjectByName('resident-remains');g.visible=true;g.position.copy(renderedCamera.position);g.position.y=0;tick(.1);assert.equal(game.snapshot().story.stage,'dying');await game.start(true);tick(.1);assert.equal(game.snapshot().story.stage,'parking_alarm');assert.equal(renderedScene.getObjectByName('garage-car-key').visible,false);
  }finally{game.dispose();win.localStorage=previous;}
 });
 test('a boarding checkpoint never redisplays a key that has already been recovered',async()=>{
  const previous=win.localStorage;const raw=JSON.stringify({version:2,stage:'car_departure',notes:['plant_drained','car_passenger','car_search'],circuit:[],elapsed:1300});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem(){},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- try{await game.ready;tick();game.continueGame();tick(.1);assert.equal(game.snapshot().story.stage,'car_departure');const keys=[];renderedScene.traverse(o=>{if(o.name==='garage-car-key')keys.push(o);});assert.ok(keys.length);assert.ok(keys.every(k=>!k.visible),'the cinematic must reconcile recovered inventory before its early render return');}
+ try{await game.ready;tick();await game.continueGame();tick(.1);assert.equal(game.snapshot().story.stage,'car_departure');const keys=[];renderedScene.traverse(o=>{if(o.name==='garage-car-key')keys.push(o);});assert.ok(keys.length);assert.ok(keys.every(k=>!k.visible),'the cinematic must reconcile recovered inventory before its early render return');}
  finally{game.dispose();win.localStorage=previous;}
 });
 
@@ -1059,7 +1070,7 @@ async function parkingAlarmFixture(wait=0){
  const previous=win.localStorage,raw=JSON.stringify({version:2,stage:'parking_alarm',notes:['plant_drained','car_passenger','car_search'],circuit:[],elapsed:1400,pursuit:wait>0,pursuitWait:wait});
  win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem(){},removeItem(){}};
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
- await game.ready;tick();game.continueGame();tick(.1);const ghost=renderedScene.getObjectByName('resident-remains');
+ await game.ready;tick();await game.continueGame();tick(.1);const ghost=renderedScene.getObjectByName('resident-remains');
  if(!wait){ghost.position.set(-8,0,8);ghost.rotation.y=Math.PI;}
  renderedCamera.position.set(-10.8,1.65,17.4);const d=new THREE.Vector3(-10.8,1.4,16.18).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));
  event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();
@@ -1103,14 +1114,14 @@ test('after investigating a lost player the pursuer leaves the old sighting and 
 
 test('being caught leaves the latched bell ringing until the ended screen and retry resets it',async()=>{
  const f=await parkingAlarmFixture();try{
-  tick(.1);assert.ok(deviceLevels.alarm>.1);f.ghost.position.copy(renderedCamera.position);f.ghost.position.y=0;tick(.1);assert.equal(f.game.snapshot().story.stage,'dying');assert.ok(deviceLevels.alarm>.1,'the physical bell does not switch off at the contact frame');tick(3.3);assert.equal(f.game.snapshot().story.stage,'ended');assert.equal(deviceLevels.alarm,0);f.game.start(true);tick(.1);assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.equal(deviceLevels.alarm,0);assert.equal(renderedScene.getObjectByName('fire-call-button').position.z,16.117);
+  tick(.1);assert.ok(deviceLevels.alarm>.1);f.ghost.position.copy(renderedCamera.position);f.ghost.position.y=0;tick(.1);assert.equal(f.game.snapshot().story.stage,'dying');assert.ok(deviceLevels.alarm>.1,'the physical bell does not switch off at the contact frame');tick(3.3);assert.equal(f.game.snapshot().story.stage,'ended');assert.equal(deviceLevels.alarm,0);await f.game.start(true);tick(.1);assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.equal(deviceLevels.alarm,0);assert.equal(renderedScene.getObjectByName('fire-call-button').position.z,16.117);
  }finally{f.close();}
 });
 
 async function annexDialFixture(stage='annex_unlock',wait=0,earlyNotes){
  const previous=win.localStorage,notes=earlyNotes??['annex_map','annex_fuse','annex_badge','annex_notice',...(stage==='annex_unlock'?['annex_call']:[])];
  win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage,notes,circuit:[],elapsed:700,pursuit:wait>0,pursuitWait:wait}):null,setItem(){},removeItem(){}};
- const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick(.1);
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,async()=>{},e=>assert.fail(e));await game.ready;tick();await game.continueGame();tick(.1);
  const {buildWorld,disposeWorld}=await import('../lib/world.ts'),reference=buildWorld(new THREE.Scene(),'annex');
  function use(id){const target=reference.targets.find(t=>t.id===id);assert.ok(target,`physical control ${id} exists`);const at=target.mesh.userData.approach;renderedCamera.position.set(at.x,1.65,at.z);const dx=target.point.x-at.x,dy=target.point.y-1.65,dz=target.point.z-at.z,yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(dy,Math.hypot(dx,dz));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
  return {game,use,reference,close(){game.dispose();disposeWorld(reference.root);win.localStorage=previous;}};
@@ -1181,13 +1192,13 @@ test('V66 a hidden caller leaves a remembered sound at the console after ringbac
 });
 
 test('V66 retry cancels a pending call and restores the earned investigation with an empty dial',async()=>{
- const f=await annexDialFixture();try{for(const n of '2803')f.use('annex_digit_'+n);f.use('annex_dial');tick(1);f.game.start(true);tick(.1);assert.equal(f.game.snapshot().story.stage,'annex_unlock');assert.doesNotMatch(f.game.snapshot().objective,/호출 중/);assert.equal(deviceLevels.ringback,0);assert.ok(f.game.snapshot().story.notes.includes('annex_call'));for(const n of '1704')f.use('annex_digit_'+n);f.use('annex_dial');assert.match(f.game.snapshot().objective,/1704호 호출 중/);tick(8.1);assert.equal(f.game.snapshot().story.stage,'annex_unlock','the cancelled home callback cannot complete a later wrong call');}
+ const f=await annexDialFixture();try{for(const n of '2803')f.use('annex_digit_'+n);f.use('annex_dial');tick(1);await f.game.start(true);tick(.1);assert.equal(f.game.snapshot().story.stage,'annex_unlock');assert.doesNotMatch(f.game.snapshot().objective,/호출 중/);assert.equal(deviceLevels.ringback,0);assert.ok(f.game.snapshot().story.notes.includes('annex_call'));for(const n of '1704')f.use('annex_digit_'+n);f.use('annex_dial');assert.match(f.game.snapshot().objective,/1704호 호출 중/);tick(8.1);assert.equal(f.game.snapshot().story.stage,'annex_unlock','the cancelled home callback cannot complete a later wrong call');}
  finally{f.close();}
 });
 
 async function courtCallFixture(notes=['court_gate','court_log','court_evidence'],wait=0,stage='court_search'){
  const previous=win.localStorage;let raw=JSON.stringify({version:2,stage,notes,circuit:[],elapsed:900,pursuit:wait>0,pursuitWait:wait});win.localStorage={getItem:k=>k.includes('progress')?raw:null,setItem:(k,v)=>{if(k.includes('progress'))raw=v;},removeItem(){}};
- const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick(.1);
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,async()=>{},e=>assert.fail(e));await game.ready;tick();await game.continueGame();tick(.1);
  const {buildWorld,disposeWorld}=await import('../lib/world.ts'),reference=buildWorld(new THREE.Scene(),'courtyard');
  function use(id,position){const t=reference.targets.find(t=>t.id===id);assert.ok(t,`physical emergency control ${id}`);const at=position??t.mesh.userData.approach;renderedCamera.position.set(at.x,1.65,at.z);const d=t.point.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();game.interact();}
  return {game,use,close(){game.dispose();disposeWorld(reference.root);win.localStorage=previous;}};
@@ -1197,7 +1208,7 @@ test('V68 emergency call is heard before collection, repeats the own-voice recor
  finally{f.close();}
 });
 test('V68 emergency call cancellation and retry cannot award a partial or stale call',async()=>{
- const f=await courtCallFixture();try{f.use('court_phone');tick(1);f.use('court_hangup');assert.equal(deviceLevels.ringback,0);tick(11);assert.equal(f.game.snapshot().story.notes.includes('court_phone'),false);f.use('court_phone');tick(1);f.game.start(true);tick(.1);assert.equal(deviceLevels.ringback,0);assert.equal(f.game.snapshot().story.notes.includes('court_phone'),false);assert.doesNotMatch(f.game.snapshot().objective,/비상전화 연결 중/);f.use('court_phone');tick(11);assert.ok(f.game.snapshot().story.notes.includes('court_phone'));}
+ const f=await courtCallFixture();try{f.use('court_phone');tick(1);f.use('court_hangup');assert.equal(deviceLevels.ringback,0);tick(11);assert.equal(f.game.snapshot().story.notes.includes('court_phone'),false);f.use('court_phone');tick(1);await f.game.start(true);tick(.1);assert.equal(deviceLevels.ringback,0);assert.equal(f.game.snapshot().story.notes.includes('court_phone'),false);assert.doesNotMatch(f.game.snapshot().objective,/비상전화 연결 중/);f.use('court_phone');tick(11);assert.ok(f.game.snapshot().story.notes.includes('court_phone'));}
  finally{f.close();}
 });
 
@@ -1243,7 +1254,7 @@ test('all three supported archive conclusions through physical controls unlock t
  const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));const {buildWorld,disposeWorld}=await import('../lib/world.ts'),reference=buildWorld(new THREE.Scene(),'archive');
  const press=code=>event(doc,'keydown',{code,repeat:false});
  function aim(id='archive_record_pause'){const t=reference.targets.find(t=>t.id===id),a=t.mesh.userData.approach;renderedCamera.position.set(a.x,1.65,a.z);const d=t.point.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
- try{await game.ready;tick();game.continueGame();tick(.1);
+ try{await game.ready;tick();await game.continueGame();tick(.1);
   for(const [source,key,time,choice] of [['road','Digit1',6.1,1],['call','Digit2',12.1,0],['gate','Digit3',9.1,1]]){
    aim('archive_preview_'+source);press(key);tick(time);aim('archive_record_mark');game.interact();const count=game.snapshot().story.circuit.length;
    assert.match(game.snapshot().message,/확인한 사실|끊은 쪽|확인한 행동/);assert.equal(game.snapshot().paused,false);
@@ -1260,7 +1271,7 @@ test('V86 partial archive investigation works from the nearby monitor, checks a 
  const press=code=>event(doc,'keydown',{code,repeat:false});
  function aim(id){const t=reference.targets.find(t=>t.id===id);assert.ok(t,'real physical target '+id);const a=t.mesh.userData.approach;renderedCamera.position.set(a.x,1.65,a.z);const d=t.point.clone().sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
  try{
-  await game.ready;tick();game.continueGame();tick(.1);press('Digit3');tick(9.1);press('Enter');assert.equal(game.snapshot().story.circuit.length,0,'entry corridor cannot operate a distant recorder');
+  await game.ready;tick();await game.continueGame();tick(.1);press('Digit3');tick(9.1);press('Enter');assert.equal(game.snapshot().story.circuit.length,0,'entry corridor cannot operate a distant recorder');
   aim('archive_play');press('Digit1');assert.match(game.snapshot().message,/A실|도로.*회수/,'unrecovered sources explain where to find them');
   press('Digit3');tick(9.1);press('Enter');assert.match(game.snapshot().message,/확인한 행동/);assert.equal(game.snapshot().story.circuit.length,0,'a marked frame alone is not a conclusion');
   const at=game.snapshot().elapsed;press('Digit4');assert.match(game.snapshot().message,/맞지 않는다/);tick(3);assert.ok(game.snapshot().elapsed>at+2.9);assert.equal(game.snapshot().paused,false);
@@ -1272,7 +1283,7 @@ test('V86 partial archive investigation works from the nearby monitor, checks a 
 async function v88Garage(stage,notes){
  const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage,notes,elapsed:1400,pursuit:false})]]);
  win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};deviceLevels.alarm=0;deviceStarts.alarm=0;
- const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();game.continueGame();tick();
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));await game.ready;tick();await game.continueGame();tick();
  function aim(pos,target){renderedCamera.position.set(...pos);const d=new THREE.Vector3(...target).sub(renderedCamera.position),yaw=Math.atan2(-d.x,-d.z),pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));event(canvas,'pointerdown',{clientX:0,clientY:0,pointerType:'touch',pointerId:1});event(doc,'pointermove',{clientX:-(yaw-renderedCamera.rotation.y)/.0021,clientY:-(pitch-renderedCamera.rotation.x)/.0021});event(doc,'pointerup',{});tick();}
  return {game,data,aim,dispose(){game.dispose();win.localStorage=previous;}};
 }
@@ -1413,7 +1424,7 @@ test('V124 office preparation stays safe, then one exit action starts the rush a
 test('V124 delaying outside the open office lift is lethal and retry retains preparation with a closed exit',async()=>{
  const f=await officeAgencyInput({stage:'office_leave',notes:['fuse','office_install','security_power','service_key'],circuit:['circuit_c'],officeSupply:true});try{
   f.use([0,1.65,-6.3],[0,1.25,-7.48]);assert.equal(f.game.snapshot().story.stage,'office_departure');tick(18);assert.equal(f.game.snapshot().story.stage,'ended');assert.equal(f.game.snapshot().story.ending,'caught');
-  f.game.start(true);tick();assert.equal(f.game.snapshot().story.stage,'office_leave');assert.ok(f.game.snapshot().story.notes.includes('service_key'));assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);assert.ok(renderedScene.getObjectByName('office-service-door').rotation.y<.001,'reset restores the locked door and its collision');
+  await f.game.start(true);tick();assert.equal(f.game.snapshot().story.stage,'office_leave');assert.ok(f.game.snapshot().story.notes.includes('service_key'));assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);assert.ok(renderedScene.getObjectByName('office-service-door').rotation.y<.001,'reset restores the locked door and its collision');
  }finally{f.close();}
 });
 
@@ -1446,22 +1457,22 @@ test('V133 actual compact foyer and management office retain a connected B1 stai
  const {buildWorld,disposeWorld,canStandAt}=await import('../lib/world.ts'),{areaFor}=await import('../lib/story.ts'),{findPath}=await import('../lib/navigation.ts');
  const maps=new Map();const world=area=>{if(!maps.has(area))maps.set(area,buildWorld(new THREE.Scene(),area));return maps.get(area);};
  function use(area,id){const w=world(area),t=w.targets.find(t=>t.id===id);assert.ok(t,id);const p=t.mesh.userData.approach;f.use([p.x,w.heightAt(p.x,p.z)+1.65,p.z],t.point.toArray());}
- function walk(area,goal,sprint=false){const w=world(area);w.updateStory?.(f.game.snapshot().story.stage,0,false,f.game.snapshot().story);w.updateStory?.(f.game.snapshot().story.stage,2,false,f.game.snapshot().story);
+ async function walk(area,goal,sprint=false){const w=world(area);w.updateStory?.(f.game.snapshot().story.stage,0,false,f.game.snapshot().story);w.updateStory?.(f.game.snapshot().story.stage,2,false,f.game.snapshot().story);
   const path=findPath(renderedCamera.position,goal,w.solids,w.bounds,.25);assert.ok(path.length,`physical path ${area} ${JSON.stringify(goal)}`);
   for(const p of path){if(areaFor(f.game.snapshot().story)!==area)break;const start=renderedCamera.position.toArray();f.aim(start,[p.x,start[1],p.z]);f.game.key('KeyW',true);f.game.key('ShiftLeft',sprint);
-   let steps=0;while(areaFor(f.game.snapshot().story)===area&&Math.hypot(renderedCamera.position.x-p.x,renderedCamera.position.z-p.z)>.16&&steps++<1000){tick(.025);assert.ok(!['dying','ended'].includes(f.game.snapshot().story.stage),JSON.stringify({area,at:renderedCamera.position.toArray(),ghost:renderedScene.getObjectByName('resident-remains').position.toArray(),stamina:f.game.snapshot().stamina}));}
+   let steps=0;while(areaFor(f.game.snapshot().story)===area&&Math.hypot(renderedCamera.position.x-p.x,renderedCamera.position.z-p.z)>.16&&steps++<1000){tick(.025);await settleLoading(f.game);assert.ok(!['dying','ended'].includes(f.game.snapshot().story.stage),JSON.stringify({area,at:renderedCamera.position.toArray(),ghost:renderedScene.getObjectByName('resident-remains').position.toArray(),stamina:f.game.snapshot().stamina}));}
    f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.ok(steps<1000,`stalled ${area} ${JSON.stringify({at:renderedCamera.position.toArray(),goal:p})}`);
   }
  }
  try{
-  assert.equal(f.game.snapshot().story.stage,'annex_arrival');const g=renderedScene.getObjectByName('resident-remains');g.visible=true;g.position.copy(renderedCamera.position);tick(.1);assert.equal(g.visible,false);assert.equal(f.game.snapshot().threat,0);
+  await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'annex_arrival');const g=renderedScene.getObjectByName('resident-remains');g.visible=true;g.position.copy(renderedCamera.position);tick(.1);assert.equal(g.visible,false);assert.equal(f.game.snapshot().threat,0);
   use('annex','annex_map');use('annex','annex_badge');assert.equal(f.game.snapshot().story.stage,'annex_exit_ready');use('annex','annex_exit');tick(1.1);
-  assert.equal(g.visible,false);walk('annex',{x:3,z:-7.5},false);assert.equal(areaFor(f.game.snapshot().story),'archive');assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,world('archive').solids,.23,world('archive').bounds));
+  assert.equal(g.visible,false);await walk('annex',{x:3,z:-7.5},false);assert.equal(areaFor(f.game.snapshot().story),'archive');assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,world('archive').solids,.23,world('archive').bounds));
   assert.match(f.game.snapshot().objective,/0\/3/);for(const id of ['archive_gate','archive_road','archive_call'])use('archive',id);assert.equal(f.game.snapshot().story.stage,'archive_reveal');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);
   use('archive','archive_play');tick(8);f.game.pause();const elapsed=f.game.snapshot().elapsed;tick(5);assert.equal(f.game.snapshot().elapsed,elapsed);assert.equal(f.game.snapshot().story.stage,'archive_playback');f.game.pause(false);tick(29.1);
   assert.equal(f.game.snapshot().story.stage,'archive_escape');assert.ok(f.game.snapshot().stamina>.99,'the safe investigation restores a usable escape budget');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'the warning precedes the pursuer entering');
   const refusal=voiceCalls.filter(v=>v==='no').length;use('archive','archive_exit');assert.equal(voiceCalls.filter(v=>v==='no').length,refusal,'V127 removes the unnatural exit refusal');tick(1);
-  walk('archive',{x:3,z:-6.5},true);assert.equal(areaFor(f.game.snapshot().story),'plant');assert.equal(f.game.snapshot().story.stage,'plant_exit_ready');assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,world('plant').solids,.23,world('plant').bounds));assert.ok(Math.abs(renderedCamera.position.y-1.65)<.12,'the shared B1 stair entrance keeps its floor height');
+  await walk('archive',{x:3,z:-6.5},true);assert.equal(areaFor(f.game.snapshot().story),'plant');assert.equal(f.game.snapshot().story.stage,'plant_exit_ready');assert.ok(canStandAt(renderedCamera.position.x,renderedCamera.position.z,world('plant').solids,.23,world('plant').bounds));assert.ok(Math.abs(renderedCamera.position.y-1.65)<.12,'the shared B1 stair entrance keeps its floor height');
  }finally{f.close();for(const w of maps.values())disposeWorld(w.root);}
 });
 
@@ -1501,7 +1512,7 @@ test('home hiding keeps its controls and capture screams on first play and check
    const before=voiceCalls.length;f.ghost.position.set(renderedCamera.position.x+.3,0,renderedCamera.position.z);tick(.025);
    assert.equal(f.game.snapshot().story.stage,'dying');assert.deepEqual(voiceCalls.slice(before),['scream'],round+' must play the female scream, not the impact-only capture cue');
    tick(1.4);assert.equal(f.game.snapshot().story.stage,'ended');
-   if(round==='first play'){f.game.start(true);tick();assert.equal(f.game.snapshot().story.stage,'radio');f.aim([home.radio[0],1.65,home.radio[2]-1.25],home.radio);f.game.interact();tick(3);assert.equal(f.game.snapshot().story.stage,'hide');}
+   if(round==='first play'){await f.game.start(true);tick();assert.equal(f.game.snapshot().story.stage,'radio');f.aim([home.radio[0],1.65,home.radio[2]-1.25],home.radio);f.game.interact();tick(3);assert.equal(f.game.snapshot().story.stage,'hide');}
   }
  }finally{f.game.dispose();}
 });
@@ -1518,7 +1529,7 @@ test('V127 the remodeled passenger door still exposes a collectible key',async()
  const f=await officeAgencyInput({stage:'parking_gate',notes:['basement_route'],elapsed:1200});try{const g=renderedScene.getObjectByName('resident-remains');g.position.set(0,0,21);f.aim([7.1,1.65,-17.8],[6.02,1.1,-17.8]);assert.match(f.game.snapshot().prompt,/조수석/);f.game.interact();tick(1);f.use([7.1,1.65,-17.8],[5.415,.31,-17.83]);assert.ok(f.game.snapshot().story.notes.includes('car_search'));assert.equal(f.game.snapshot().story.stage,'parking_alarm');}finally{f.close();}
 });
 test('V127 parking retry and continue restore one usable five-second alarm attempt',async()=>{
- const f=await officeAgencyInput({stage:'parking_alarm',notes:['basement_route','car_search','alarm'],elapsed:1500});try{assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.ok(!f.game.snapshot().story.notes.includes('alarm'));f.use([-10.8,1.65,17.4],[-10.8,1.4,16.18]);assert.ok(deviceLevels.alarm>0);const g=renderedScene.getObjectByName('resident-remains');g.position.copy(renderedCamera.position);g.position.y=0;tick(.025);assert.equal(f.game.snapshot().story.stage,'dying');tick(1.4);f.game.start(true);tick();assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.ok(!f.game.snapshot().story.notes.includes('alarm'));f.use([-10.8,1.65,17.4],[-10.8,1.4,16.18]);assert.ok(deviceLevels.alarm>0);}finally{f.close();}
+ const f=await officeAgencyInput({stage:'parking_alarm',notes:['basement_route','car_search','alarm'],elapsed:1500});try{assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.ok(!f.game.snapshot().story.notes.includes('alarm'));f.use([-10.8,1.65,17.4],[-10.8,1.4,16.18]);assert.ok(deviceLevels.alarm>0);const g=renderedScene.getObjectByName('resident-remains');g.position.copy(renderedCamera.position);g.position.y=0;tick(.025);assert.equal(f.game.snapshot().story.stage,'dying');tick(1.4);await f.game.start(true);tick();assert.equal(f.game.snapshot().story.stage,'parking_alarm');assert.ok(!f.game.snapshot().story.notes.includes('alarm'));f.use([-10.8,1.65,17.4],[-10.8,1.4,16.18]);assert.ok(deviceLevels.alarm>0);}finally{f.close();}
 });
 test('V132 parking alarm leaves a tight but achievable physical sprint to the driver',async()=>{
  const f=await officeAgencyInput({stage:'parking_alarm',notes:['basement_route','car_passenger','car_search'],elapsed:1600});const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{findPath}=await import('../lib/navigation.ts'),w=buildWorld(new THREE.Scene(),'parking');try{
@@ -1557,7 +1568,7 @@ test('V133 actual stalled-lift input climbs the half-storey sill and pause freez
   assert.ok(renderedScene.getObjectByName('lift-offset-ledge'),'the raised physical landing exists');
   f.aim([0,1.65,-.72],[0,1.4,-3]);f.game.key('KeyW',true);tick(.35);assert.equal(f.game.snapshot().story.stage,'lift_climb');f.game.key('KeyW',false);
   tick(.6);f.game.pause();const before=renderedCamera.position.clone();tick(2);assert.ok(before.distanceTo(renderedCamera.position)<1e-8);f.game.pause(false);tick(2);
-  assert.equal(f.game.snapshot().story.stage,'corridor_run');assert.equal(f.game.snapshot().floor,'24F');assert.ok(Math.abs(renderedCamera.position.y-1.65)<.02);assert.ok(renderedCamera.position.z< -20,'same bank end of the long gallery');
+  await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'corridor_run');assert.equal(f.game.snapshot().floor,'24F');assert.ok(Math.abs(renderedCamera.position.y-1.65)<.02);assert.ok(renderedCamera.position.z< -20,'same bank end of the long gallery');
  }finally{f.close();}
 });
 
@@ -1579,9 +1590,9 @@ test('V133 actual20F escape calls bankB, boards under pursuit and walks out at1F
  const f=await officeAgencyInput({stage:'transfer_gallery',notes:[],elapsed:600});try{
   for(const p of [[0,-20.7],[2.2,-21.6]]){const pos=renderedCamera.position.toArray();f.aim(pos,[p[0],pos[1],p[1]]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);let i=0;while(Math.hypot(renderedCamera.position.x-p[0],renderedCamera.position.z-p[1])>.15&&i++<1000){tick(.025);assert.equal(f.game.snapshot().story.stage,'transfer_gallery',JSON.stringify({at:renderedCamera.position.toArray(),ghost:renderedScene.getObjectByName('resident-remains').position.toArray(),stamina:f.game.snapshot().stamina}));}f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.ok(i<1000);}
   f.aim(renderedCamera.position.toArray(),[3.1,1.25,-22.74]);assert.match(f.game.snapshot().prompt,/2호기/);f.game.interact();tick(.7);assert.equal(f.game.snapshot().story.stage,'transfer_enter');
-  f.aim(renderedCamera.position.toArray(),[2.2,1.65,-27]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);for(let i=0;i<200&&f.game.snapshot().story.stage!=='transfer_panel';i++)tick(.025);f.game.key('KeyW',false);f.game.key('ShiftLeft',false);assert.equal(f.game.snapshot().story.stage,'transfer_panel',JSON.stringify({at:renderedCamera.position.toArray(),ghost:renderedScene.getObjectByName('resident-remains').position.toArray()}));
+  f.aim(renderedCamera.position.toArray(),[2.2,1.65,-27]);f.game.key('KeyW',true);f.game.key('ShiftLeft',true);for(let i=0;i<200&&f.game.snapshot().story.stage!=='transfer_panel';i++)tick(.025);f.game.key('KeyW',false);f.game.key('ShiftLeft',false);await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'transfer_panel',JSON.stringify({at:renderedCamera.position.toArray(),ghost:renderedScene.getObjectByName('resident-remains').position.toArray()}));
   f.aim(renderedCamera.position.toArray(),[.92,1.3,-.45]);assert.match(f.game.snapshot().prompt,/1층/);f.game.interact();assert.equal(f.game.snapshot().story.stage,'transfer_ride');tick(20.1);assert.equal(f.game.snapshot().story.stage,'transfer_exit');assert.equal(f.game.snapshot().floor,'1F');
-  f.aim(renderedCamera.position.toArray(),[0,1.65,-6]);f.game.key('KeyW',true);for(let i=0;i<100&&f.game.snapshot().story.stage!=='annex_arrival';i++)tick(.025);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'annex_arrival',JSON.stringify({at:renderedCamera.position.toArray(),prompt:f.game.snapshot().prompt}));assert.ok(renderedCamera.position.z>4&&renderedCamera.position.z<5.5);assert.ok(Math.abs(renderedCamera.position.y-1.65)<.03);
+  f.aim(renderedCamera.position.toArray(),[0,1.65,-6]);f.game.key('KeyW',true);for(let i=0;i<100&&f.game.snapshot().story.stage!=='annex_arrival';i++)tick(.025);f.game.key('KeyW',false);await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'annex_arrival',JSON.stringify({at:renderedCamera.position.toArray(),prompt:f.game.snapshot().prompt}));assert.ok(renderedCamera.position.z>4&&renderedCamera.position.z<5.5);assert.ok(Math.abs(renderedCamera.position.y-1.65)<.03);
  }finally{f.close();}
 });
 
@@ -1598,21 +1609,21 @@ test('V133 actual home search distinguishes a witnessed entry and retreats by wa
 
 test('V133 actual20F open firedoor crosses into the matching gallery without a vertical jump',async()=>{
  const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:590});try{
-  f.aim([0,-9.55,-.8],[0,-10,-1.75]);assert.match(f.game.snapshot().prompt,/문/);f.game.interact();tick(.8);assert.equal(f.game.snapshot().story.stage,'stairs_passage');f.game.key('KeyW',true);for(let i=0;i<100&&f.game.snapshot().story.stage!=='transfer_gallery';i++)tick(.025);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'transfer_gallery');assert.ok(Math.abs(renderedCamera.position.y-1.65)<.04);assert.ok(renderedCamera.position.z<23&&renderedCamera.position.z>22.5);assert.ok(Math.cos(renderedCamera.rotation.y)>.9);
+  f.aim([0,-9.55,-.8],[0,-10,-1.75]);assert.match(f.game.snapshot().prompt,/문/);f.game.interact();tick(.8);assert.equal(f.game.snapshot().story.stage,'stairs_passage');f.game.key('KeyW',true);for(let i=0;i<100&&f.game.snapshot().story.stage!=='transfer_gallery';i++)tick(.025);f.game.key('KeyW',false);await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'transfer_gallery');assert.ok(Math.abs(renderedCamera.position.y-1.65)<.04);assert.ok(renderedCamera.position.z<23&&renderedCamera.position.z>22.5);assert.ok(Math.cos(renderedCamera.rotation.y)>.9);
  }finally{f.close();}
 });
 
 test('V133 actual jamb alignment preserves earned stair distance instead of respawning a close follower',async()=>{
  const f=await officeAgencyInput({stage:'stairs_loop',notes:[],elapsed:590});try{
-  f.aim([.28,-9.55,-.8],[0,-10,-1.75]);f.game.interact();tick(.8);assert.equal(f.game.snapshot().story.stage,'stairs_passage');f.aim(renderedCamera.position.toArray(),[.28,-9.55,-4]);f.game.key('KeyW',true);for(let i=0;i<100&&f.game.snapshot().story.stage!=='transfer_gallery';i++)tick(.025);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'transfer_gallery');assert.ok(Math.abs(renderedCamera.position.x-.28)<.015);const g=renderedScene.getObjectByName('resident-remains');assert.equal(g.visible,false,'an upper-floor pursuer cannot instantly reappear at20F');const start=renderedCamera.position.z;f.game.key('KeyW',true);tick(.5);f.game.key('KeyW',false);assert.ok(renderedCamera.position.z<start-.8,'the receiving door has the same hinge and no jamb overlap');tick(2);assert.equal(g.visible,false);
-  const saved=JSON.parse(f.data.get('homecoming.progress.v2'));assert.equal(saved.stage,'transfer_gallery');assert.ok(saved.pursuitWait>5);f.game.continueGame();tick();assert.equal(f.game.snapshot().story.stage,'transfer_gallery');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);tick(2);assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'continue preserves the earned off-screen approach');
+  f.aim([.28,-9.55,-.8],[0,-10,-1.75]);f.game.interact();tick(.8);assert.equal(f.game.snapshot().story.stage,'stairs_passage');f.aim(renderedCamera.position.toArray(),[.28,-9.55,-4]);f.game.key('KeyW',true);for(let i=0;i<100&&f.game.snapshot().story.stage!=='transfer_gallery';i++)tick(.025);f.game.key('KeyW',false);await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'transfer_gallery');assert.ok(Math.abs(renderedCamera.position.x-.28)<.015);const g=renderedScene.getObjectByName('resident-remains');assert.equal(g.visible,false,'an upper-floor pursuer cannot instantly reappear at20F');const start=renderedCamera.position.z;f.game.key('KeyW',true);tick(.5);f.game.key('KeyW',false);assert.ok(renderedCamera.position.z<start-.8,'the receiving door has the same hinge and no jamb overlap');tick(2);assert.equal(g.visible,false);
+  const saved=JSON.parse(f.data.get('homecoming.progress.v2'));assert.equal(saved.stage,'transfer_gallery');assert.ok(saved.pursuitWait>5);await f.game.continueGame();tick();await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'transfer_gallery');assert.equal(renderedScene.getObjectByName('resident-remains').visible,false);tick(2);assert.equal(renderedScene.getObjectByName('resident-remains').visible,false,'continue preserves the earned off-screen approach');
  }finally{f.close();}
 });
 
 test('V133 actual24F stair entry preserves heading and position through the same door',async()=>{
  const f=await officeAgencyInput({stage:'lift_exit',notes:[],elapsed:400});try{
-  f.aim([0,1.65,-.72],[0,1.4,-3]);f.game.key('KeyW',true);tick(.35);f.game.key('KeyW',false);tick(2.5);assert.equal(f.game.snapshot().story.stage,'corridor_run');const g=renderedScene.getObjectByName('resident-remains');g.visible=false;
-  f.aim([.28,1.65,21.9],[0,1.2,22.95]);f.game.interact();tick(.85);assert.equal(f.game.snapshot().story.stage,'corridor_departure');f.aim(renderedCamera.position.toArray(),[.28,1.65,27]);f.game.key('KeyW',true);for(let i=0;i<120&&f.game.snapshot().story.stage!=='stairs_loop';i++)tick(.025);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'stairs_loop');assert.ok(Math.abs(renderedCamera.position.x-.28)<.02);assert.ok(renderedCamera.position.z>-1.4&&renderedCamera.position.z<-1.2);assert.ok(Math.cos(renderedCamera.rotation.y)<-.9);
+  f.aim([0,1.65,-.72],[0,1.4,-3]);f.game.key('KeyW',true);tick(.35);f.game.key('KeyW',false);tick(2.5);await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'corridor_run');const g=renderedScene.getObjectByName('resident-remains');g.visible=false;
+  f.aim([.28,1.65,21.9],[0,1.2,22.95]);f.game.interact();tick(.85);assert.equal(f.game.snapshot().story.stage,'corridor_departure');f.aim(renderedCamera.position.toArray(),[.28,1.65,27]);f.game.key('KeyW',true);for(let i=0;i<120&&f.game.snapshot().story.stage!=='stairs_loop';i++)tick(.025);f.game.key('KeyW',false);await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'stairs_loop');assert.ok(Math.abs(renderedCamera.position.x-.28)<.02);assert.ok(renderedCamera.position.z>-1.4&&renderedCamera.position.z<-1.2);assert.ok(Math.cos(renderedCamera.rotation.y)<-.9);
  }finally{f.close();}
 });
 
@@ -1639,7 +1650,7 @@ test('V134 the existing CCTV dialogue consumes new room-cue beats silently witho
 test('V135 actual first-lift boarding stays level until forced doors expose the raised landing and climb',async()=>{
  const f=await officeAgencyInput({stage:'lift_button',notes:[],elapsed:300});try{
   const ledge=renderedScene.getObjectByName('lift-offset-ledge');assert.equal(ledge.visible,false);f.use([0,1.65,.3],[.92,1.3,-.45]);assert.equal(f.game.snapshot().story.stage,'descent');tick(2);assert.equal(ledge.visible,false);f.game.pause();tick(2);assert.equal(f.game.snapshot().story.stage,'descent');f.game.pause(false);tick(14.1);assert.equal(f.game.snapshot().story.stage,'pry');assert.equal(ledge.visible,true);
-  f.aim([0,1.65,-.9],[0,1.3,-1.18]);assert.match(f.game.snapshot().prompt,/벌리기/);f.game.hold(true);for(let i=0;i<180&&f.game.snapshot().story.stage==='pry';i++)tick(.025);f.game.hold(false);assert.equal(f.game.snapshot().story.stage,'lift_exit');tick(.7);f.aim([0,1.65,-.72],[0,1.4,-3]);f.game.key('KeyW',true);tick(.35);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'lift_climb');tick(2.5);assert.equal(f.game.snapshot().story.stage,'corridor_run');assert.equal(f.game.snapshot().floor,'24F');
+  f.aim([0,1.65,-.9],[0,1.3,-1.18]);assert.match(f.game.snapshot().prompt,/벌리기/);f.game.hold(true);for(let i=0;i<180&&f.game.snapshot().story.stage==='pry';i++)tick(.025);f.game.hold(false);assert.equal(f.game.snapshot().story.stage,'lift_exit');tick(.7);f.aim([0,1.65,-.72],[0,1.4,-3]);f.game.key('KeyW',true);tick(.35);f.game.key('KeyW',false);assert.equal(f.game.snapshot().story.stage,'lift_climb');tick(2.5);await settleLoading(f.game);assert.equal(f.game.snapshot().story.stage,'corridor_run');assert.equal(f.game.snapshot().floor,'24F');
  }finally{f.close();}
 });
 
@@ -1692,4 +1703,41 @@ test('V142 postal investigation cannot confirm all findings before the matching 
   tick(10);assert.equal(f.game.snapshot().story.stage,'archive_escape');
   for(const id of ['archive_sequence_road','archive_sequence_call','archive_sequence_gate'])assert.ok(f.game.snapshot().story.notes.includes(id));
  }finally{f.close();disposeWorld(w.root);}
+});
+
+
+test('room streaming keeps a cold destination safe, supports retry and preserves threshold coordinates',async()=>{
+ const firstRequest=visualRequests.length;
+ const previous=win.localStorage,data=new Map([['homecoming.progress.v2',JSON.stringify({version:2,stage:'transfer_exit',elapsed:120,notes:['wake','phone','shoes']})]]);
+ win.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
+ let unblock,fail=true;visualControl=scope=>scope==='annex'?new Promise((resolve,reject)=>{unblock=()=>fail?reject(Error('offline')):resolve();}):Promise.resolve();
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));
+ async function waitFor(test){for(let i=0;i<400&&!test();i++)await new Promise(r=>setTimeout(r,10));assert.ok(test(),'preparation must settle');}
+ try{
+  await game.ready;assert.equal(visualRequests.slice(firstRequest).includes('parking'),false,'distant rooms are not part of initial readiness');
+  await game.continueGame();tick();assert.equal(game.snapshot().story.stage,'transfer_exit');
+  await waitFor(()=>!!unblock);tick(2);renderedCamera.position.set(0,1.65,-1.7);tick();
+  assert.equal(game.snapshot().loading,true);assert.equal(game.snapshot().story.stage,'transfer_exit');
+  const frozen=game.snapshot().elapsed,position=renderedCamera.position.clone();game.key('KeyW',true);game.interact();tick(8);
+  assert.equal(game.snapshot().elapsed,frozen,'loading cannot consume pursuit or story time');assert.deepEqual(renderedCamera.position,position,'pending entry keeps the old room and camera');
+  game.pause(true);const resumes=audioResumes,torch=game.snapshot().flashlight;game.torch();assert.equal(game.snapshot().flashlight,torch);
+  doc.hidden=true;event(doc,'visibilitychange',{});doc.hidden=false;event(doc,'visibilitychange',{});assert.equal(audioResumes,resumes,'tab visibility cannot resume loading audio');
+  unblock();await waitFor(()=>!!game.snapshot().loadingError);assert.equal(game.snapshot().loading,true);assert.equal(game.snapshot().story.stage,'transfer_exit');
+  fail=false;unblock=undefined;game.retryLoading();await waitFor(()=>!!unblock);unblock();await waitFor(()=>!game.snapshot().loading);
+  assert.equal(game.snapshot().paused,true);assert.equal(audioResumes,resumes,'loading completion respects manual pause');game.pause(false);tick();assert.equal(game.snapshot().story.stage,'annex_arrival');assert.ok(renderedCamera.position.z>0,'entry applies the original lift-to-foyer transform once');
+ }finally{game.dispose();visualControl=async()=>{};win.localStorage=previous;}
+});
+
+test('disposing during background room compilation retains graphics until that compiler settles',async()=>{
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,async()=>{},e=>assert.fail(e));
+ await game.ready;pendingCompiles=[];const jobs=pendingCompiles,before=rendererDisposals;
+ try{await game.start();for(let i=0;i<100&&!jobs.length;i++)await new Promise(r=>setTimeout(r,10));assert.ok(jobs.length);game.dispose();assert.equal(rendererDisposals,before);pendingCompiles=null;for(const resolve of jobs)resolve();for(let i=0;i<100&&rendererDisposals===before;i++)await new Promise(r=>setTimeout(r,10));assert.equal(rendererDisposals,before+1);}
+ finally{pendingCompiles=null;for(const resolve of jobs)resolve();game.dispose();}
+});
+
+test('an ending retry retains the existing prepared road',async()=>{
+ const previous=win.localStorage;win.localStorage={getItem:k=>k.includes('progress')?JSON.stringify({version:2,stage:'car_escape',notes:['basement_route','car_search'],elapsed:1400}):null,setItem(){},removeItem(){}};
+ const canvas=new EventTarget();Object.assign(canvas,{clientWidth:1280,clientHeight:720,setPointerCapture(){}});const game=createGame(canvas,()=>{},e=>assert.fail(e));compiledExitRoads.clear();
+ try{await game.ready;await game.continueGame();tick();assert.equal(game.snapshot().story.stage,'car_escape');assert.equal(compiledExitRoads.size,1);await game.start(true);tick();assert.equal(game.snapshot().story.stage,'car_escape');assert.equal(compiledExitRoads.size,1,'retry cannot orphan the existing road and render target');}
+ finally{game.dispose();win.localStorage=previous;}
 });

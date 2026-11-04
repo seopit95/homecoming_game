@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {prepareFacilityModels} from './facility-models.ts';
+import stages from './visual-stages.json' with {type:'json'};
 import {loadTexture} from './texture-loader.ts';
 
 // Static printed pixels share GPU storage; each caller still owns its Texture.
@@ -15,30 +16,33 @@ export function clearPrintedSources(){printedSources.clear();}
 // Decode each source once; floor changes own disposable texture clones.
 const sources:Partial<Record<'night-sky'|'surfaces'|'remains'|'face'|'teeth'|'hand'|'decay'|'hand-view'|'hair'|'hair-locks'|'cloth'|'pedestrian-skin'|'pedestrian-shirt'|'pedestrian-shirt-normal'|'pedestrian-hair'|'resident-photo',T.Texture>>={};
 const physicalSources:Partial<Record<`${'asphalt'|'soil'|'plaster'|'concrete'|'cast-concrete'|'worn-concrete'|'wood'|'wood-floor'|'painted-metal'|'bag-leather'|'cotton'|'paving'|'terrazzo'}-${'color'|'normal'|'arm'}`,T.Texture>>={};
-let loading:Promise<void>|undefined,legacyLoading:Promise<void>|undefined;
-// The campaign does not visit the retired courtyard/resident/old facility routes.
-// Authoring tools can still request their original materials through the default.
-export function prepareVisuals(scope:'game'|'all'='all'){
-  if(!loading)loading=prepareVisualSources(false).catch(error=>{loading=undefined;throw error;});
-  if(scope==='game')return loading;
-  if(!legacyLoading)legacyLoading=loading.then(()=>prepareVisualSources(true)).catch(error=>{legacyLoading=undefined;throw error;});
-  return legacyLoading;
+let sequence:Promise<void>=Promise.resolve();
+// Serialize batches so overlapping rooms share decoded sources. A failed batch
+// publishes nothing and leaves completed earlier rooms alive for retry.
+export function prepareVisuals(scope:'game'|'all'|keyof typeof stages='all'){
+  const selected=scope==='all'||scope==='game'?undefined:new Set(stages[scope]);
+  const job=sequence.then(async()=>{await prepareVisualSources(false,selected);if(scope==='all')await prepareVisualSources(true);});
+  sequence=job.catch(()=>{});return job;
 }
-async function prepareVisualSources(legacy:boolean){
+async function prepareVisualSources(legacy:boolean,selected?:Set<string>){
     const jobs=(['night-sky','surfaces','remains','face','teeth','hand','hand-view','cloth','resident-photo'] as const).filter(key=>legacy===(key==='resident-photo')).map(async key=>{
       const file=key==='hand-view'?'smartphone-hand-v1.webp':key==='night-sky'?'courtyard-night-sky-2k.jpg':key==='teeth'?'ghost-teeth-v1.webp':key==='resident-photo'?'resident-memory-photo-v1.webp':key==='cloth'?'ghost-cloth-v5.webp':`${key==='face'?'ghost-face-v4':key==='surfaces'?'environment-v3':key==='remains'?'ghost-surfaces-v4':key==='hand'?'hand-skin':key}.webp`;
+      if(sources[key]||selected&&!selected.has(`/textures/${file}`))return;
       const texture=await loadTexture(`/textures/${file}`);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=8;if(key==='night-sky')texture.mapping=T.EquirectangularReflectionMapping;return {key,texture};
     });
     const livingJobs=(['pedestrian-skin','pedestrian-shirt','pedestrian-shirt-normal','pedestrian-hair'] as const).filter(key=>legacy===(key==='pedestrian-shirt')).map(async key=>{
+      if(sources[key]||selected&&!selected.has('/textures/'+key+'-v1.webp'))return;
       const texture=await loadTexture('/textures/'+key+'-v1.webp');texture.colorSpace=key.endsWith('-normal')?T.NoColorSpace:T.SRGBColorSpace;texture.anisotropy=8;return {key,texture};
     });
     const physicalJobs=(['asphalt-color','asphalt-normal','asphalt-arm','soil-color','soil-normal','soil-arm','plaster-color','plaster-normal','plaster-arm','concrete-color','concrete-normal','concrete-arm','cast-concrete-color','cast-concrete-normal','cast-concrete-arm','worn-concrete-color','worn-concrete-normal','worn-concrete-arm','wood-color','wood-normal','wood-arm','wood-floor-color','wood-floor-normal','wood-floor-arm','painted-metal-color','painted-metal-normal','painted-metal-arm','bag-leather-color','bag-leather-normal','bag-leather-arm','cotton-color','cotton-normal','cotton-arm','paving-color','paving-normal','paving-arm','terrazzo-color','terrazzo-normal','terrazzo-arm'] as const).filter(key=>legacy===key.startsWith('soil-')).map(async key=>{
-      const texture=await loadTexture(`/textures/pbr/${key}.${key.startsWith('painted-metal')||key.startsWith('bag-leather')||key.startsWith('paving')?'webp':'jpg'}`);texture.colorSpace=key.endsWith('color')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.setScalar(.9);return {key,texture};
+      const file=`/textures/pbr/${key}.${key.startsWith('painted-metal')||key.startsWith('bag-leather')||key.startsWith('paving')?'webp':'jpg'}`;
+      if(physicalSources[key]||selected&&!selected.has(file))return;
+      const texture=await loadTexture(file);texture.colorSpace=key.endsWith('color')?T.SRGBColorSpace:T.NoColorSpace;texture.anisotropy=8;texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.repeat.setScalar(.9);return {key,texture};
     });
-    const [results,physical,facility]=await Promise.all([Promise.allSettled([...jobs,...livingJobs]),Promise.allSettled(physicalJobs),Promise.allSettled([prepareFacilityModels(legacy?undefined:['metal_office_desk'])])]);
-    if([...results,...physical,...facility].some(r=>r.status==='rejected')){for(const r of [...results,...physical])if(r.status==='fulfilled'){r.value.texture.dispose();r.value.texture.image?.close?.();}throw new Error('Visual asset loading failed');}
-    for(const r of results)if(r.status==='fulfilled')sources[r.value.key]=r.value.texture;
-    for(const r of physical)if(r.status==='fulfilled')physicalSources[r.value.key]=r.value.texture;
+    const [results,physical,facility]=await Promise.all([Promise.allSettled([...jobs,...livingJobs]),Promise.allSettled(physicalJobs),Promise.allSettled([selected&&![...selected].some(file=>file.startsWith('/models/'))?Promise.resolve():prepareFacilityModels(legacy?undefined:['metal_office_desk'])])]);
+    if([...results,...physical,...facility].some(r=>r.status==='rejected')){for(const r of [...results,...physical])if(r.status==='fulfilled'&&r.value){r.value.texture.dispose();r.value.texture.image?.close?.();}throw new Error('Visual asset loading failed');}
+    for(const r of results)if(r.status==='fulfilled'&&r.value)sources[r.value.key]=r.value.texture;
+    for(const r of physical)if(r.status==='fulfilled'&&r.value)physicalSources[r.value.key]=r.value.texture;
 }
 export function courtyardSky(){return sources['night-sky'];}
 

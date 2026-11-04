@@ -7,14 +7,23 @@ const {prepareVisuals,surface,livingMaterial,residentPhotoMaterial}=await import
 const {facilityModel}=await import('../lib/facility-models.ts');
 globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({fillRect(){},fillText(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},arc(){},fill(){}})})};
 const {buildWorld,disposeWorld}=await import('../lib/world.ts'),{buildRoad}=await import('../lib/prologue.ts'),{createViewmodel}=await import('../lib/viewmodel.ts');
-function campaignMaterials(){
+function campaignMaterials(areas=['apartment','landing','lift','corridor','transfer','stairs','annex','archive','plant','parking','aftermath','opening-road','ending-road','hands']){
  const result={};
- for(const area of ['apartment','landing','lift','corridor','transfer','stairs','annex','archive','plant','parking','aftermath','opening-road','ending-road','hands']){
+ for(const area of areas){
   const scene=new T.Scene(),world=area==='hands'?createViewmodel():area.endsWith('-road')?buildRoad(scene,area==='ending-road'):buildWorld(scene,area),root=area==='hands'?world.scene:world.root,materials=[];
   root.traverse(o=>{if(o.isMesh)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.push({name:m.name,type:m.type,color:m.color?.getHexString(),roughness:m.roughness,metalness:m.metalness,maps:Object.fromEntries(Object.entries(m).filter(([,v])=>v?.isTexture).map(([key,v])=>[key,v.name]))});});
   result[area]=materials;disposeWorld(root);
  }return result;
 }
+
+test('initial preparation contains the first apartment and opening but defers distant-only images',async()=>{
+ await prepareVisuals('initial');
+ assert.equal(requested.some(url=>/cast-concrete|bag-leather|metal_office_desk/.test(url)),false,'later rooms must not block the first apartment');
+ const first=campaignMaterials(['apartment','opening-road','hands']);
+ for(const area of ['landing','lift','corridor','stairs','transfer','annex','archive','plant','parking','aftermath','ending-road']){await prepareVisuals(area);Object.assign(first,campaignMaterials([area]));}
+ await prepareVisuals('game');
+ assert.deepEqual(campaignMaterials(),first,'each staged room retains every original material and map');
+});
 
 test('game preparation excludes retired photos, soil and facility models while retaining current materials',async()=>{
  await prepareVisuals('game');

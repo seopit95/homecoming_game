@@ -67,3 +67,5 @@
 .game-shell .room-label span{border-color:var(--ui-rule)}
 .game-shell .error-note{background:#241318;border-color:var(--ui-accent);color:var(--ui-paper)}
 .game-shell .error-note button{color:var(--ui-paper)}
+
+.space-loading{position:absolute;inset:0;z-index:100;display:grid;place-items:center;background:#080909e8;color:#e1ded4;padding:24px;text-align:center}.space-loading>div{max-width:32rem;border-block:1px solid #756c5c;padding:28px 12px}.space-loading p{font-family:var(--font-serif),serif;font-size:1.2rem;line-height:1.7}.space-loading span{display:block;font-size:.85rem;color:#b9b6ac;line-height:1.6}.space-loading button{margin-top:20px;padding:12px 28px;min-height:48px;border:1px solid #8e8070;background:#1e1c18;color:#f0ece3}.space-loading button:focus-visible{outline:2px solid #ddd4bd;outline-offset:4px}

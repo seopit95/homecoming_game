@@ -243,3 +243,11 @@ test('V138 every remaining loose bottle has a clear view past the steering arm',
   }
  }finally{r.dispose();}
 });
+
+
+test('a prepared road mirror follows the scene that currently owns the road',()=>{
+ const preparedScene=new T.Scene(),liveScene=new T.Scene(),road=buildRoad(preparedScene);let rendered;
+ const renderer={shadowMap:{autoUpdate:true},getRenderTarget:()=>null,setRenderTarget(){},render(scene){rendered=scene;}};
+ try{liveScene.add(road.root);road.renderMirror(renderer);assert.equal(rendered,liveScene);assert.equal(renderer.shadowMap.autoUpdate,true);assert.equal(road.root.getObjectByName('memory-car').visible,true);}
+ finally{road.dispose();}
+});

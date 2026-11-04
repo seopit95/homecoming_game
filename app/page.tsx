@@ -17,7 +17,7 @@ export default function Home(){
   const [bootPhase,setBootPhase]=useState('게임 자료를 불러오는 중');
   useEffect(()=>{
     let dead=false;let instance:Game|null=null;let unregister=()=>{};
-    import('../lib/game').then(async({createGame,prepareVisuals})=>{if(dead)return;setBootPhase('공간의 질감을 준비하는 중');await prepareVisuals('game');if(dead||!canvas.current)return;setBootPhase('공간과 조명을 준비하는 중');try{instance=createGame(canvas.current,setView,setError);game.current=instance;setSettings(instance.getSettings());unregister=registerGameTools(instance);await instance.ready;if(!dead)setReady(true);}catch(e){console.error(e);if(!dead)setError('화면을 열 수 없습니다. 하드웨어 가속을 지원하는 최신 브라우저에서 다시 열어주세요.');}}).catch(()=>{if(!dead)setError('게임을 불러오지 못했습니다. 연결을 확인하고 다시 불러와 주세요.');});
+    import('../lib/game').then(async({createGame,prepareVisuals})=>{if(dead)return;setBootPhase('공간의 질감을 준비하는 중');await prepareVisuals('initial');if(dead||!canvas.current)return;setBootPhase('공간과 조명을 준비하는 중');try{instance=createGame(canvas.current,setView,setError);game.current=instance;setSettings(instance.getSettings());unregister=registerGameTools(instance);await instance.ready;if(!dead)setReady(true);}catch(e){console.error(e);if(!dead)setError('화면을 열 수 없습니다. 하드웨어 가속을 지원하는 최신 브라우저에서 다시 열어주세요.');}}).catch(()=>{if(!dead)setError('게임을 불러오지 못했습니다. 연결을 확인하고 다시 불러와 주세요.');});
     return()=>{dead=true;unregister();instance?.dispose();game.current=null;};
   },[]);
   useEffect(()=>{const key=(e:KeyboardEvent)=>{const state=game.current?.snapshot();if(e.code==='KeyJ'&&!e.repeat&&state?.started&&state.story.stage!=='ended'){e.preventDefault();if(state.paused&&showNotes){setShowNotes(false);game.current?.pause(false);}else{setShowNotes(true);game.current?.pause(true);}}};document.addEventListener('keydown',key);return()=>document.removeEventListener('keydown',key);},[showNotes]);
@@ -59,6 +59,7 @@ export default function Home(){
 
   return <main className={`game-shell ${began?'is-playing':''} ${hidden?'is-hidden':''} ${!settings.filmGrain?'no-grain':''} ${settings.reducedMotion?'reduce-motion':''}`} style={{'--subtitle-scale':settings.subtitleScale} as CSSProperties} ref={root}>
     <canvas ref={canvas} className="world" style={{filter:view?.breathBlur?`blur(${view.breathBlur.toFixed(2)}px)`:undefined,transition:paused?'none':'filter .12s linear'}} aria-label="정전된 아파트를 탐색하는 1인칭 공포게임 화면"/>
+    {view?.loading&&<section className="space-loading" aria-label="다음 공간 준비" aria-busy={!view.loadingError}><div><p role={view.loadingError?'alert':'status'}>{view.loadingError||'문 너머의 공간을 준비하고 있습니다…'}</p><span>준비하는 동안 시간과 추격이 멈춥니다.</span>{view.loadingError&&<button autoFocus onClick={()=>game.current?.retryLoading()}>다시 시도</button>}</div></section>}
     <div className="vignette"/><div className="film-grain"/><div className="lens-edge"/>
     {!began&&<TitleScreen ready={ready} phase={bootPhase} error={!ready?error:''} canContinue={!!view?.canContinue} savedLocation={view?.savedLocation} showSettings={showSettings} settingsPanel={settingsPanel} onStart={()=>game.current?.start()} onContinue={()=>game.current?.continueGame()} onSettings={()=>setShowSettings(!showSettings)} onRetry={()=>window.location.reload()}/>}
     {began&&!ended&&!dying&&!memory&&<>
