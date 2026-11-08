@@ -1,0 +1,87 @@
+import * as T from 'three';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {boxUV,softBox} from './materials.ts';
+import {roundPipe} from './props.ts';
+
+// Local static assemblies share caller-owned finishes; the world disposes the result.
+function assembly(name:string){
+ const group=new T.Group();group.name=name;
+ const box=(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material)=>{const mesh=new T.Mesh(boxUV(softBox(w,h,d,Math.min(.006,h/4)),x,y,z),m);mesh.position.set(x,y,z);group.add(mesh);return mesh;};
+ const mesh=(g:T.BufferGeometry,m:T.Material,x:number,y:number,z:number)=>{const part=new T.Mesh(g,m);part.position.set(x,y,z);group.add(part);return part;};
+ const pipe=(a:[number,number,number],b:[number,number,number],r:number,m:T.Material)=>roundPipe(group,a,b,r,m);
+ function finish(floor=true){
+  group.userData.floorProp=floor;const parts=new Map<T.Material,T.BufferGeometry[]>();
+  for(const object of [...group.children])if(object instanceof T.Mesh){object.updateMatrix();const g=object.geometry.clone().applyMatrix4(object.matrix),flat=g.index?g.toNonIndexed():g;if(flat!==g)g.dispose();const material=object.material as T.Material;const list=parts.get(material)??[];list.push(flat);parts.set(material,list);object.geometry.dispose();group.remove(object);}
+  for(const [material,geometries] of parts){const g=mergeGeometries(geometries)!;geometries.forEach(p=>p.dispose());const part=new T.Mesh(g,material);part.castShadow=part.receiveShadow=true;group.add(part);}return group;
+ }
+ return {group,box,mesh,pipe,finish};
+}
+
+export function facilityTable(w:number,d:number,wood:T.Material,metal:T.Material){
+ const a=assembly('grounded-worktable');a.box(0,.7975,0,w,.045,d,wood);
+ for(const x of [-w/2+.075,w/2-.075])for(const z of [-d/2+.075,d/2-.075]){a.box(x,.391,z,.038,.758,.038,metal);a.box(x,.006,z,.05,.012,.05,metal);}
+ for(const z of [-d/2+.065,d/2-.065])a.box(0,.742,z,w-.11,.065,.025,metal);
+ for(const x of [-w/2+.065,w/2-.065]){a.box(x,.742,0,.025,.065,d-.11,metal);a.box(x,.19,0,.025,.025,d-.11,metal);}
+ a.box(0,.19,-d/2+.065,w-.11,.025,.025,metal);a.box(0,.49,-d/2+.055,w-.17,.37,.018,wood);return a.finish();
+}
+export function facilityChair(wood:T.Material,metal:T.Material){
+ const a=assembly('grounded-desk-chair');
+ for(const x of [-.21,.21])for(const z of [-.21,.21]){a.box(x,.22,z,.026,.44,.026,metal);a.box(x,.004,z,.034,.008,.034,metal);}
+ a.box(0,.455,0,.48,.03,.48,wood);for(const x of [-.21,.21]){a.box(x,.64,-.21,.025,.42,.025,metal);a.box(x,.19,0,.018,.018,.42,metal);}a.box(0,.78,-.213,.47,.19,.025,wood);a.box(0,.19,-.21,.42,.018,.018,metal);return a.finish();
+}
+export function laundryMachine(enamel:T.Material,metal:T.Material,dark:T.Material,glass:T.Material){
+ const a=assembly('grounded-laundry-machine');
+ // The annular front and inset drum leave a real opening, not a glass disc over a box.
+ a.box(0,.05,0,.8,.1,.74,dark);a.box(0,1.02,0,.88,.04,.84,enamel);a.box(0,.54,-.4,.86,.94,.04,enamel);
+ for(const x of [-.42,.42])a.box(x,.54,0,.04,.94,.8,enamel);
+ a.box(0,.885,.397,.8,.23,.046,enamel);a.box(0,.175,.397,.8,.15,.046,enamel);
+ for(const x of [-.36,.36])a.box(x,.515,.397,.08,.53,.046,enamel);
+ const ring=new T.RingGeometry(.30,.405,40);a.mesh(ring,enamel,0,.515,.422);a.mesh(new T.TorusGeometry(.297,.035,10,40),metal,0,.515,.443);
+ const drum=new T.CylinderGeometry(.278,.278,.30,40,1,true);drum.rotateX(Math.PI/2);a.mesh(drum,metal,0,.515,.24);a.mesh(new T.CircleGeometry(.278,40),dark,0,.515,.085);a.mesh(new T.CircleGeometry(.26,40),glass,0,.515,.448);
+ a.box(.29,.51,.473,.042,.13,.04,dark);a.box(-.29,.51,.446,.038,.15,.045,metal);a.box(-.15,.9,.427,.43,.09,.016,dark);
+ const dial=new T.CylinderGeometry(.045,.045,.035,20);dial.rotateX(Math.PI/2);a.mesh(dial,metal,.26,.9,.443);
+ for(let i=0;i<5;i++)a.box(-.08,.145+i*.014,.426,.53,.005,.01,dark);
+ for(const x of [-.30,.30])a.box(x,.04,.29,.10,.08,.10,dark);
+ a.pipe([.28,.75,-.42],[.28,.75,-.52],.022,metal);a.pipe([.28,.75,-.52],[.28,.12,-.52],.022,dark);a.pipe([.28,.12,-.52],[.4,.12,-.52],.022,dark);a.pipe([.4,.12,-.52],[.4,0,-.52],.028,metal);
+ a.pipe([-.25,.9,-.42],[-.25,.9,-.52],.016,dark);a.pipe([-.25,.9,-.52],[-.25,.02,-.52],.016,dark);
+ return a.finish();
+}
+export function dryingRail(metal:T.Material,cloth:T.Material,pale:T.Material){
+ const a=assembly('ceiling-fixed-drying-rail');a.pipe([-3.1,2.15,0],[3.1,2.15,0],.022,metal);
+ for(const x of [-2.8,2.8]){a.pipe([x,2.15,0],[x,2.79,0],.012,metal);a.box(x,2.79,0,.16,.02,.12,metal);}
+ for(let i=0;i<5;i++){
+  const x=-2+i*.85,m=i===2?pale:cloth;
+  // Wire hooks enclose the rail; shoulder triangles physically meet the cloth top.
+  const hook=new T.TorusGeometry(.034,.004,6,18,Math.PI*1.65);hook.rotateZ(-.5);a.mesh(hook,metal,x,2.15,0);
+  a.pipe([x,2.12,0],[x,2.045,0],.004,metal);a.pipe([x,2.045,0],[x-.27,1.96,0],.004,metal);a.pipe([x,2.045,0],[x+.27,1.96,0],.004,metal);a.pipe([x-.27,1.96,0],[x+.27,1.96,0],.004,metal);
+  const shape=new T.Shape();shape.moveTo(-.12,.40);shape.lineTo(-.29,.31);shape.lineTo(-.38,.06);shape.lineTo(-.27,0);shape.lineTo(-.23,.17);shape.lineTo(-.24,-.42);shape.lineTo(.24,-.42);shape.lineTo(.23,.17);shape.lineTo(.27,0);shape.lineTo(.38,.06);shape.lineTo(.29,.31);shape.lineTo(.12,.40);shape.lineTo(.08,.31);shape.lineTo(-.08,.31);shape.closePath();
+  const g=new T.ExtrudeGeometry(shape,{depth:.018,bevelEnabled:true,bevelThickness:.003,bevelSize:.003,bevelSegments:1,steps:1});g.translate(0,0,-.009);const vertices=g.getAttribute('position');for(let j=0;j<vertices.count;j++){const y=vertices.getY(j),drape=T.MathUtils.clamp((.30-y)*2,0,1);vertices.setZ(j,vertices.getZ(j)+Math.sin(vertices.getX(j)*37+i)*.018*drape);vertices.setY(j,y-Math.max(0,-y)*(.05*(i%3)));}g.computeVertexNormals();a.mesh(g,m,x,1.62,0);
+ }
+ return a.finish(false);
+}
+export function waterTank(metal:T.Material,dark:T.Material,rust:T.Material){
+ const a=assembly('grounded-water-tank');
+ a.box(0,.055,0,2.65,.11,2.65,dark);
+ for(const x of [-.85,.85])for(const z of [-.65,.65]){a.box(x,.17,z,.19,.23,.19,metal);a.box(x,.115,z,.28,.012,.28,metal);}
+ a.mesh(new T.CylinderGeometry(1.28,1.28,1.92,40),metal,0,1.31,0);
+ const cap=new T.SphereGeometry(1.28,40,16);cap.scale(1,.195,1);a.mesh(cap.clone(),metal,0,.35,0);a.mesh(cap,metal,0,2.27,0);
+ for(const y of [.38,1.31,2.24]){const g=new T.TorusGeometry(1.285,.018,6,40);g.rotateX(Math.PI/2);a.mesh(g,rust,0,y,0);}
+ a.mesh(new T.CylinderGeometry(.25,.25,.055,24),dark,0,2.525,0);a.mesh(new T.CylinderGeometry(.27,.27,.025,24),metal,0,2.565,0);
+ a.pipe([0,2.57,0],[0,2.64,0],.10,rust);
+ // Sight glass secured to the tank with upper/lower tees and guard rods.
+ for(const y of [.65,1.95])a.pipe([-.38,y,1.21],[-.38,y,1.36],.025,metal);
+ a.pipe([-.38,.65,1.36],[-.38,1.95,1.36],.018,dark);for(const x of [-.43,-.33])a.pipe([x,.64,1.36],[x,1.96,1.36],.006,metal);
+ return a.finish();
+}
+export function pumpSkid(metal:T.Material,paint:T.Material,dark:T.Material,rust:T.Material){
+ const a=assembly('grounded-pump-skid');a.box(0,.06,0,1.7,.12,1.1,dark);
+ for(const x of [-.65,.65])a.box(x,.16,0,.14,.2,.84,metal);
+ const motor=new T.CylinderGeometry(.24,.24,.72,24);motor.rotateZ(Math.PI/2);a.mesh(motor,paint,-.27,.45,0);
+ for(let i=0;i<8;i++){const g=new T.TorusGeometry(.245,.008,6,24);g.rotateY(Math.PI/2);a.mesh(g,metal,-.59+i*.09,.45,0);}
+ a.box(-.27,.17,0,.62,.10,.40,metal);a.box(-.27,.29,0,.62,.16,.36,paint);a.box(-.32,.70,0,.28,.12,.22,paint);
+ const volute=new T.SphereGeometry(.30,24,16);volute.scale(.7,1,1);a.mesh(volute,paint,.4,.44,0);a.pipe([.06,.45,0],[.43,.45,0],.09,metal);
+ a.pipe([.4,.44,.23],[.4,.44,.48],.085,rust);a.pipe([.4,.44,.48],[.4,0,.48],.085,rust);a.pipe([.4,.65,0],[.4,1,0],.075,rust);
+ for(const y of [.73,.92])a.mesh(new T.CylinderGeometry(.12,.12,.035,20),metal,.4,y,0);
+ a.box(-.32,.66,-.14,.08,.08,.06,dark);a.pipe([-.32,.66,-.17],[-.32,.13,-.5],.012,dark);
+ return a.finish();
+}
