@@ -1,0 +1,46 @@
+[
+  {
+    "language": "en",
+    "file": "public/fonts/mission-caveat.woff2",
+    "family": "Mission Caveat",
+    "bytes": 42972,
+    "glyphCodepoints": 105,
+    "missingInOwnFont": "※←↑→↓▶✓。〈〉《》「」『』【】家歸！（），：；？［］｜",
+    "sourceSha256": "0bdb6b660482d31531b3945849fba5916b3ef8695da7024a9e6b9ee3c4157988",
+    "sha256": "3b35a45379782d08ca1f3a9cf5825759d12472f5bcda5b1cf531e9b26233fe3e",
+    "missingWithHandwrittenFallback": ""
+  },
+  {
+    "language": "ko",
+    "file": "public/fonts/mission-nanum-pen.woff2",
+    "family": "Mission Pen Script",
+    "bytes": 164168,
+    "glyphCodepoints": 755,
+    "missingInOwnFont": "·–—•…※←↑→↓▶✓。〈〉《》「」『』【】井家歸水集",
+    "sourceSha256": "6f0d1ab29c7894010dc88831fb7a0a51edb79136e450344183de5b1a8b52bd43",
+    "sha256": "14a7c8a2b5020f2c8ad2719621659f6959e4e5d3483ccdd63222383215edcdc7",
+    "missingWithHandwrittenFallback": ""
+  },
+  {
+    "language": "ja",
+    "file": "public/fonts/mission-klee-one.woff2",
+    "family": "Mission Klee One",
+    "bytes": 503696,
+    "glyphCodepoints": 988,
+    "missingInOwnFont": "✓",
+    "sourceSha256": "bf4063f030cc2ae6adf0a11424a1888e5c0eb4438f1f6d02f52294af868e9b3a",
+    "sha256": "90daad936c692f223bef769dbef198b5dd387446b24d1eae35c35a578d59d483",
+    "missingWithHandwrittenFallback": ""
+  },
+  {
+    "language": "zh-CN",
+    "file": "public/fonts/mission-wenkai.woff2",
+    "family": "Mission WenKai",
+    "bytes": 259520,
+    "glyphCodepoints": 1167,
+    "missingInOwnFont": "",
+    "sourceSha256": "2d73eea94ad808999d90c0000c239a84a33b09d4bc6ab6c5b8bbf1eda8a7fc8b",
+    "sha256": "ee340bc00205a28b282ff8bc4d72cb72c97a50b0a03a0fcee8fd4fcae485690c",
+    "missingWithHandwrittenFallback": ""
+  }
+]

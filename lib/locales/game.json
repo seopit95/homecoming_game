@@ -1,0 +1,1422 @@
+{
+  "다음 공간을 불러오지 못했습니다. 연결을 확인하고 다시 시도해 주세요.": {
+    "en": "Could not load the next area. Check your connection and try again.",
+    "ja": "次のエリアを読み込めませんでした。接続を確認して、もう一度お試しください。",
+    "zh-CN": "无法加载下一区域。请检查连接后重试。"
+  },
+  "지하 주차장 · 운전석": {
+    "en": "Underground Parking · Driver's Seat",
+    "ja": "地下駐車場 · 運転席",
+    "zh-CN": "地下停车场 · 驾驶座"
+  },
+  "아파트 밖 · 운전석": {
+    "en": "Outside the Apartments · Driver's Seat",
+    "ja": "アパートの外 · 運転席",
+    "zh-CN": "公寓外 · 驾驶座"
+  },
+  "사흘 전 · 침실": {
+    "en": "Three Days Earlier · Bedroom",
+    "ja": "三日前 · 寝室",
+    "zh-CN": "三天前 · 卧室"
+  },
+  "사흘 전 · 귀갓길": {
+    "en": "Three Days Earlier · On the Way Home",
+    "ja": "三日前 · 帰り道",
+    "zh-CN": "三天前 · 回家途中"
+  },
+  "침실": {
+    "en": "Bedroom",
+    "ja": "寝室",
+    "zh-CN": "卧室"
+  },
+  "욕실": {
+    "en": "Bathroom",
+    "ja": "浴室",
+    "zh-CN": "浴室"
+  },
+  "다용도실": {
+    "en": "Utility Room",
+    "ja": "家事室",
+    "zh-CN": "杂物间"
+  },
+  "서재": {
+    "en": "Study",
+    "ja": "書斎",
+    "zh-CN": "书房"
+  },
+  "주방": {
+    "en": "Kitchen",
+    "ja": "キッチン",
+    "zh-CN": "厨房"
+  },
+  "현관": {
+    "en": "Entryway",
+    "ja": "玄関",
+    "zh-CN": "玄关"
+  },
+  "거실 · 다이닝": {
+    "en": "Living / Dining Room",
+    "ja": "リビング・ダイニング",
+    "zh-CN": "客厅 · 餐厅"
+  },
+  "17층 복도 · 1704호 앞": {
+    "en": "17F Hallway · Outside Unit 1704",
+    "ja": "17階廊下 · 1704号室前",
+    "zh-CN": "17楼走廊 · 1704室门前"
+  },
+  "한서연의 집": {
+    "en": "Han Seo-yeon's Home",
+    "ja": "ハン・ソヨンの家",
+    "zh-CN": "韩瑞妍的家"
+  },
+  "사흘 전의 횡단보도": {
+    "en": "The Crosswalk, Three Days Ago",
+    "ja": "三日前の横断歩道",
+    "zh-CN": "三天前的人行横道"
+  },
+  "외부 중정 · 공사 구역": {
+    "en": "Outdoor Courtyard · Construction Area",
+    "ja": "屋外中庭 · 工事区域",
+    "zh-CN": "室外中庭 · 施工区"
+  },
+  "외부 중정 · 서측 통로": {
+    "en": "Outdoor Courtyard · West Passage",
+    "ja": "屋外中庭 · 西側通路",
+    "zh-CN": "室外中庭 · 西侧通道"
+  },
+  "외부 중정 · 동측 통로": {
+    "en": "Outdoor Courtyard · East Passage",
+    "ja": "屋外中庭 · 東側通路",
+    "zh-CN": "室外中庭 · 东侧通道"
+  },
+  "1층 · 경비실": {
+    "en": "1F · Security Office",
+    "ja": "1階 · 警備室",
+    "zh-CN": "1楼 · 保安室"
+  },
+  "1층 · 관리사무소": {
+    "en": "1F · Management Office",
+    "ja": "1階 · 管理事務所",
+    "zh-CN": "1楼 · 物业办公室"
+  },
+  "B1 · 방화전실": {
+    "en": "B1 · Fire Lobby",
+    "ja": "B1 · 防火前室",
+    "zh-CN": "B1 · 防火前室"
+  },
+  "지하계단": {
+    "en": "Basement Stairs",
+    "ja": "地下階段",
+    "zh-CN": "地下楼梯"
+  },
+  "문서 보관실": {
+    "en": "Records Room",
+    "ja": "書類保管室",
+    "zh-CN": "档案室"
+  },
+  "야간 관리실": {
+    "en": "Night Duty Office",
+    "ja": "夜間管理室",
+    "zh-CN": "夜间值班室"
+  },
+  "전기실": {
+    "en": "Electrical Room",
+    "ja": "電気室",
+    "zh-CN": "配电室"
+  },
+  "관리실 복도": {
+    "en": "Management Office Hallway",
+    "ja": "管理室廊下",
+    "zh-CN": "管理室走廊"
+  },
+  "28층 · 외부 복도": {
+    "en": "28F · Outdoor Walkway",
+    "ja": "28階 · 外廊下",
+    "zh-CN": "28楼 · 外走廊"
+  },
+  "엘리베이터": {
+    "en": "Elevator",
+    "ja": "エレベーター",
+    "zh-CN": "电梯"
+  },
+  "24층 · 외부 복도": {
+    "en": "24F · Outdoor Walkway",
+    "ja": "24階 · 外廊下",
+    "zh-CN": "24楼 · 外走廊"
+  },
+  "20층 · 외부 복도": {
+    "en": "20F · Outdoor Walkway",
+    "ja": "20階 · 外廊下",
+    "zh-CN": "20楼 · 外走廊"
+  },
+  "지하 주차장": {
+    "en": "Underground Parking",
+    "ja": "地下駐車場",
+    "zh-CN": "地下停车场"
+  },
+  "관리용 승강기": {
+    "en": "Service Elevator",
+    "ja": "管理用エレベーター",
+    "zh-CN": "管理专用电梯"
+  },
+  "1층 공동현관부터 다시": {
+    "en": "Restart at the 1F Main Entrance",
+    "ja": "1階共用玄関から再開",
+    "zh-CN": "从1楼公共入口重新开始"
+  },
+  "관리사무소부터 다시": {
+    "en": "Restart at the Management Office",
+    "ja": "管理事務所から再開",
+    "zh-CN": "从物业办公室重新开始"
+  },
+  "지하계단부터 다시": {
+    "en": "Restart at the Basement Stairs",
+    "ja": "地下階段から再開",
+    "zh-CN": "从地下楼梯重新开始"
+  },
+  "관리용 승강기부터 다시": {
+    "en": "Restart at the Service Elevator",
+    "ja": "管理用エレベーターから再開",
+    "zh-CN": "从管理专用电梯重新开始"
+  },
+  "28층 외부 복도부터 다시": {
+    "en": "Restart at the 28F Outdoor Walkway",
+    "ja": "28階外廊下から再開",
+    "zh-CN": "从28楼外走廊重新开始"
+  },
+  "24층 엘리베이터부터 다시": {
+    "en": "Restart at the 24F Elevator",
+    "ja": "24階エレベーターから再開",
+    "zh-CN": "从24楼电梯重新开始"
+  },
+  "엘리베이터 안에서 다시": {
+    "en": "Restart Inside the Elevator",
+    "ja": "エレベーター内から再開",
+    "zh-CN": "从电梯内重新开始"
+  },
+  "24층 비상계단부터 다시": {
+    "en": "Restart at the 24F Emergency Stairs",
+    "ja": "24階非常階段から再開",
+    "zh-CN": "从24楼紧急楼梯重新开始"
+  },
+  "20층 두 번째 승강기부터 다시": {
+    "en": "Restart at the Second Elevator on 20F",
+    "ja": "20階の二基目のエレベーターから再開",
+    "zh-CN": "从20楼第二部电梯重新开始"
+  },
+  "두 번째 승강기 안에서 다시": {
+    "en": "Restart Inside the Second Elevator",
+    "ja": "二基目のエレベーター内から再開",
+    "zh-CN": "从第二部电梯内重新开始"
+  },
+  "1704호 입구부터 다시": {
+    "en": "Restart at the Entrance to Unit 1704",
+    "ja": "1704号室の入口から再開",
+    "zh-CN": "从1704室入口重新开始"
+  },
+  "주차장 차량 탑승부터 다시": {
+    "en": "Restart at Boarding the Car",
+    "ja": "駐車場で車に乗る場面から再開",
+    "zh-CN": "从停车场上车处重新开始"
+  },
+  "차량 탈출부터 다시": {
+    "en": "Restart at Escaping the Car",
+    "ja": "車からの脱出から再開",
+    "zh-CN": "从逃离车辆处重新开始"
+  },
+  "17층 관리실부터 다시": {
+    "en": "Restart at the 17F Management Office",
+    "ja": "17階管理室から再開",
+    "zh-CN": "从17楼管理室重新开始"
+  },
+  "지하 주차장 입구부터 다시": {
+    "en": "Restart at the Underground Parking Entrance",
+    "ja": "地下駐車場入口から再開",
+    "zh-CN": "从地下停车场入口重新开始"
+  },
+  "주차장 경보기부터 다시": {
+    "en": "Restart at the Parking Alarm",
+    "ja": "駐車場の警報器から再開",
+    "zh-CN": "从停车场警报器处重新开始"
+  },
+  "비상계단 · 17층 → 1층": {
+    "en": "Emergency Stairs · 17F → 1F",
+    "ja": "非常階段 · 17階 → 1階",
+    "zh-CN": "紧急楼梯 · 17楼 → 1楼"
+  },
+  "사흘 뒤 · 새벽 03:17": {
+    "en": "Three Days Later · 03:17 AM",
+    "ja": "三日後 · 午前03:17",
+    "zh-CN": "三天后 · 凌晨03:17"
+  },
+  "{0}층 · 계단을 계속 내려갔다.": {
+    "en": "Floor {0} · I kept going down the stairs.",
+    "ja": "{0}階 · 階段を下り続けた。",
+    "zh-CN": "{0}楼 · 我继续沿楼梯向下走。"
+  },
+  "문틈에서 나가기": {
+    "en": "Leave the Door Gap",
+    "ja": "ドアの隙間から出る",
+    "zh-CN": "从门缝离开"
+  },
+  "장롱에서 나오기": {
+    "en": "Leave the Wardrobe",
+    "ja": "クローゼットから出る",
+    "zh-CN": "走出衣柜"
+  },
+  "확인 완료 ·": {
+    "en": "Checked ·",
+    "ja": "確認済み ·",
+    "zh-CN": "已查看 ·"
+  },
+  "문틈 너머의 움직임과 소리에 귀를 기울인다.": {
+    "en": "Watch and listen through the gap in the door.",
+    "ja": "ドアの隙間の向こうの動きと音に注意する。",
+    "zh-CN": "留意门缝外的动静。"
+  },
+  "스마트폰 음성 메시지": {
+    "en": "Phone Voice Message",
+    "ja": "スマートフォンの音声メッセージ",
+    "zh-CN": "手机语音留言"
+  },
+  "통신실 녹음": {
+    "en": "Communications Room Recording",
+    "ja": "通信室の録音",
+    "zh-CN": "通信室录音"
+  },
+  "재생 중 · 주변을 계속 살펴볼 수 있습니다": {
+    "en": "Playing · You can keep looking around",
+    "ja": "再生中 · 周囲を見回すことができます",
+    "zh-CN": "播放中 · 可以继续观察周围"
+  },
+  "호출 중 · 주변의 발소리를 살피세요": {
+    "en": "Calling · Listen for footsteps nearby",
+    "ja": "呼び出し中 · 周囲の足音に注意",
+    "zh-CN": "呼叫中 · 留意附近的脚步声"
+  },
+  "비상전화 연결 중 · 움직이거나 옆의 종료 버튼으로 끊을 수 있습니다": {
+    "en": "Emergency call connecting · Move or press the End button beside it to hang up",
+    "ja": "非常電話に接続中 · 移動するか隣の終了ボタンで切断できます",
+    "zh-CN": "紧急电话连接中 · 移动或按旁边的结束按钮可挂断"
+  },
+  "· 조사 이어하기": {
+    "en": "· Continue Investigating",
+    "ja": "· 調査を続ける",
+    "zh-CN": "· 继续调查"
+  },
+  "28층 라디오 장면부터 다시": {
+    "en": "Restart at the 28F Radio Scene",
+    "ja": "28階のラジオの場面から再開",
+    "zh-CN": "从28楼收音机场景重新开始"
+  },
+  "03:20 · 발신측 보조 녹음이 재생된다.": {
+    "en": "03:20 · The caller-side backup recording plays.",
+    "ja": "03:20 · 発信側の補助録音が再生される。",
+    "zh-CN": "03:20 · 正在播放呼出端备份录音。"
+  },
+  "03:16 · 남겨진 메시지가 재생된다.": {
+    "en": "03:16 · The message left behind plays.",
+    "ja": "03:16 · 残されたメッセージが再生される。",
+    "zh-CN": "03:16 · 正在播放留下的语音留言。"
+  },
+  "통화를 끊었다. 다시 통화 버튼을 누를 수 있다.": {
+    "en": "I hung up. I can press the call button again.",
+    "ja": "電話を切った。もう一度通話ボタンを押せる。",
+    "zh-CN": "挂断了。可以再次按下通话按钮。"
+  },
+  "연결 중이다. 옆의 종료 버튼으로 끊을 수 있다.": {
+    "en": "Connecting. Use the End button beside it to hang up.",
+    "ja": "接続中だ。隣の終了ボタンで切断できる。",
+    "zh-CN": "正在连接。可按旁边的结束按钮挂断。"
+  },
+  "비상통화 버튼을 눌렀다.\n「여보세요. 누구 없어요?」": {
+    "en": "I pressed the emergency call button.\n“Hello? Is anyone there?”",
+    "ja": "非常通話ボタンを押した。\n「もしもし。誰かいませんか？」",
+    "zh-CN": "我按下了紧急通话按钮。\n“喂？有人吗？”"
+  },
+  "번호를 지웠다. 세대 네 자리 / 내선 두 자리 → CALL.": {
+    "en": "Number cleared. Unit: four digits / Extension: two digits → CALL.",
+    "ja": "番号を消した。住戸は四桁 / 内線は二桁 → CALL。",
+    "zh-CN": "号码已清除。房号四位 / 分机两位 → CALL。"
+  },
+  "호출 중이다. CLEAR로 통화를 끊을 수 있다.": {
+    "en": "Calling. Press CLEAR to hang up.",
+    "ja": "呼び出し中だ。CLEARで通話を切れる。",
+    "zh-CN": "正在呼叫。按CLEAR可挂断。"
+  },
+  "네 자리를 입력했다. CALL 또는 CLEAR.": {
+    "en": "Four digits entered. CALL or CLEAR.",
+    "ja": "四桁入力した。CALLまたはCLEAR。",
+    "zh-CN": "已输入四位号码。按CALL或CLEAR。"
+  },
+  "세대는 네 자리, 당직 내선은 두 자리다. 기록이나 교환기 안내를 확인하자.": {
+    "en": "Units use four digits, the duty extension two. Check the records or switchboard instructions.",
+    "ja": "住戸は四桁、当直の内線は二桁だ。記録か交換機の案内を確認しよう。",
+    "zh-CN": "房号是四位，值班分机是两位。查看记录或总机说明。"
+  },
+  "호출.": {
+    "en": "Calling.",
+    "ja": "呼び出し。",
+    "zh-CN": "呼叫。"
+  },
+  "구내 전용 단말이다. 이 단말에서는 외부 번호로 발신할 수 없다.": {
+    "en": "An internal terminal. It cannot call outside numbers.",
+    "ja": "構内専用の端末だ。外部の番号には発信できない。",
+    "zh-CN": "这是内部专用终端，无法拨打外线号码。"
+  },
+  "교환기에서 호출음이 울린다.": {
+    "en": "A ringback tone sounds from the switchboard.",
+    "ja": "交換機から呼び出し音が響く。",
+    "zh-CN": "总机传来回铃音。"
+  },
+  "「어디 있지…?」": {
+    "en": "“Where are you…?”",
+    "ja": "「どこにいるの…？」",
+    "zh-CN": "“你在哪儿……？”"
+  },
+  "「여기 있었는데…」": {
+    "en": "“You were right here…”",
+    "ja": "「ここにいたのに…」",
+    "zh-CN": "“刚才还在这里……”"
+  },
+  "「찾았다. 놓치지 않을 거야.」": {
+    "en": "“Found you. I won't let you go.”",
+    "ja": "「見つけた。もう逃がさない。」",
+    "zh-CN": "“找到你了。不会再让你逃了。”"
+  },
+  "「나오렴…」": {
+    "en": "“Come out…”",
+    "ja": "「出ておいで…」",
+    "zh-CN": "“出来吧……”"
+  },
+  "어둠 속에서 여자가 흐느낀다.": {
+    "en": "A woman sobs in the darkness.",
+    "ja": "暗闇で女がすすり泣いている。",
+    "zh-CN": "黑暗中，一个女人在抽泣。"
+  },
+  "끄아아아아아악!!!": {
+    "en": "AAAAAAAGH!!!",
+    "ja": "ぎゃあああああっ!!!",
+    "zh-CN": "啊啊啊啊啊！！！"
+  },
+  "「거의 다 왔어. 내일 전화할게.」": {
+    "en": "“I'm almost home. I'll call tomorrow.”",
+    "ja": "「もうすぐ着くよ。明日電話するね。」",
+    "zh-CN": "“快到了。明天给你打电话。”"
+  },
+  "「안 돼!!!」": {
+    "en": "“No!!!”",
+    "ja": "「だめ!!!」",
+    "zh-CN": "“不！！！”"
+  },
+  "화면 드래그 또는 ← → 키로 둘러보세요.": {
+    "en": "Drag the screen or use ← → to look around.",
+    "ja": "画面をドラッグするか、← → キーで見回してください。",
+    "zh-CN": "拖动屏幕或使用← →键环顾四周。"
+  },
+  "화면을 드래그해서 둘러보세요.": {
+    "en": "Drag the screen to look around.",
+    "ja": "画面をドラッグして見回してください。",
+    "zh-CN": "拖动屏幕环顾四周。"
+  },
+  "이 기기에 진행 상황 저장됨": {
+    "en": "Progress saved on this device",
+    "ja": "この端末に進行状況を保存しました",
+    "zh-CN": "进度已保存到此设备"
+  },
+  "저장 공간을 사용할 수 없습니다": {
+    "en": "Storage is unavailable",
+    "ja": "保存領域を利用できません",
+    "zh-CN": "无法使用存储空间"
+  },
+  "휴대전화를 주머니에 끼우고 문턱을 짚었다.": {
+    "en": "I tucked my phone into my pocket and braced myself against the door sill.",
+    "ja": "スマートフォンをポケットに差し込み、ドアの敷居に手をついた。",
+    "zh-CN": "我把手机塞进衣袋，撑住门槛。"
+  },
+  "전화벨에 잠이 깼다. 방이 너무 어둡다. 침실 입구 스위치를 눌러 보자.": {
+    "en": "The phone woke me. The room is too dark. Try the switch by the bedroom door.",
+    "ja": "電話の音で目が覚めた。部屋が暗すぎる。寝室の入口のスイッチを押してみよう。",
+    "zh-CN": "电话铃声把我吵醒了。房间太暗，试试卧室门口的开关。"
+  },
+  "사고 후 사흘이 지났다. 그날 이후 밤마다 03:17에 눈이 떠진다.\nTV에서는 사흘 전 뺑소니 사고를 보도하고 있었다.": {
+    "en": "Three days since the accident. Every night since then, I wake at 03:17.\nThe TV was reporting on the hit-and-run from three days ago.",
+    "ja": "事故から三日。あの日から毎晩03:17に目が覚める。\nテレビでは三日前のひき逃げ事故を報じていた。",
+    "zh-CN": "事故已经过去三天。那天之后，每晚我都会在03:17醒来。\n电视正在报道三天前的肇事逃逸事故。"
+  },
+  "소리를 시작하지 못했습니다. 소리 없이도 플레이할 수 있습니다.": {
+    "en": "Audio could not start. You can still play without sound.",
+    "ja": "音声を開始できませんでした。音声なしでもプレイできます。",
+    "zh-CN": "无法启动声音。仍可在无声模式下游玩。"
+  },
+  "기억이 이어진다.": {
+    "en": "The memory continues.",
+    "ja": "記憶がつながる。",
+    "zh-CN": "记忆继续浮现。"
+  },
+  "앞범퍼와 헤드램프. 내일 입고 예약. 「보험 접수 없이.」\n신고할 생각보다 차부터 고칠 생각을 했다.": {
+    "en": "Front bumper and headlamp. Booked in for tomorrow. “No insurance claim.”\nI thought about fixing the car before reporting what I'd done.",
+    "ja": "フロントバンパーとヘッドライト。明日入庫予約。「保険は使わずに。」\n通報より先に、車を直すことを考えていた。",
+    "zh-CN": "前保险杠和前灯。预约明天送修。“不走保险。”\n比起报警，我先想到的是修车。"
+  },
+  "「2803호 방문 / 부재. 비상벨 통화 확인 요청.」\n사흘 동안 집에 있었으면서… 나는 문을 열어 주지 않았다. 17층 임시 관리실은 1703호, 야간 당직 내선은 17이다.": {
+    "en": "“Visited unit 2803 / No answer. Requested confirmation of the emergency call.”\nI'd been home for three days… and never opened the door. The temporary 17F office is in 1703. Night duty extension: 17.",
+    "ja": "「2803号室訪問 / 不在。非常ベルの通話確認を依頼。」\n三日間ずっと家にいたのに…ドアを開けなかった。17階の臨時管理室は1703号室、夜間当直の内線は17だ。",
+    "zh-CN": "“走访2803室 / 无人应答。请求核实紧急铃通话。”\n明明这三天一直在家……我却没有开门。17楼临时管理室在1703室，夜间值班分机是17。"
+  },
+  "24층 설비 점검표. 비상계단은 승강기 반대편이다.\n17층 관리실 공사 때문에 1703호를 쓴다는 안내. 매일 보던 글씨인데, 오늘은 집 안에서 아무 소리도 들리지 않는다.": {
+    "en": "24F equipment checklist. The emergency stairs are opposite the elevator.\nA notice says the 17F office has moved to 1703 during construction. I see these words every day, but today there's no sound inside the apartment.",
+    "ja": "24階の設備点検表。非常階段はエレベーターの反対側だ。\n17階管理室の工事中は1703号室を使うという案内。毎日見ていた文字なのに、今日は家の中から何の音もしない。",
+    "zh-CN": "24楼设备检查表。紧急楼梯在电梯对面。\n通知说17楼管理室施工，暂用1703室。每天都看见这些字，可今天屋里一点声音也没有。"
+  },
+  "관리실 연결문이 열렸다. 옆 서고의 출입 기록을 확인하자.": {
+    "en": "The connecting door to the office is open. Check the access log in the archive next door.",
+    "ja": "管理室への連絡扉が開いた。隣の書庫で入退室記録を確認しよう。",
+    "zh-CN": "通往管理室的连接门开了。去旁边的档案室查看出入记录。"
+  },
+  "지하 계단 문이 열렸다. 기록보관실로 내려가자.": {
+    "en": "The basement stairwell door is open. Head down to the records room.",
+    "ja": "地下階段の扉が開いた。記録保管室へ下りよう。",
+    "zh-CN": "地下楼梯的门开了。下楼去档案室。"
+  },
+  "B1 주차장 방화문이 열렸다. 계단을 따라 내려가야 한다.": {
+    "en": "The B1 parking fire door is open. I need to go down the stairs.",
+    "ja": "B1駐車場の防火扉が開いた。階段を下りなければ。",
+    "zh-CN": "B1停车场的防火门开了。得沿楼梯下去。"
+  },
+  "주차장 연결문이 열렸다. 이제 내 차로 갈 수 있다.": {
+    "en": "The connecting door to the parking garage is open. I can get to my car now.",
+    "ja": "駐車場への連絡扉が開いた。これで自分の車へ行ける。",
+    "zh-CN": "通往停车场的连接门开了。现在可以去我的车那里了。"
+  },
+  "딸깍. 아무 반응이 없다.\n침대 옆에서 스마트폰 화면이 켜졌다. 진동이 협탁을 울린다.": {
+    "en": "Click. Nothing.\nThe phone screen lights up beside the bed. Its vibration rattles the nightstand.",
+    "ja": "カチッ。何も起きない。\nベッドの横でスマートフォンの画面が光った。振動がサイドテーブルを震わせる。",
+    "zh-CN": "咔嗒。毫无反应。\n床边的手机屏幕亮了，震动声响在床头柜上。"
+  },
+  "스마트폰을 집었다. 발신자 표시 제한.\n손 안에서 벨소리가 울린다.": {
+    "en": "I picked up the phone. Caller ID withheld.\nIt rings in my hand.",
+    "ja": "スマートフォンを手に取った。非通知。\n手の中で着信音が鳴る。",
+    "zh-CN": "我拿起手机。来电号码隐藏。\n铃声在手中响着。"
+  },
+  "조수석 가방에서 배수 설비 열쇠를 찾았다.\n꼬리표에 적힌 대로 양쪽 급수 밸브를 잠근 뒤 서측 펌프로 가야 한다.": {
+    "en": "I found the drainage key in the bag on the passenger side.\nThe tag says to shut both water supply valves, then go to the west pump.",
+    "ja": "助手席のバッグから排水設備の鍵を見つけた。\n札にあるとおり、両側の給水バルブを閉めてから西側のポンプへ行こう。",
+    "zh-CN": "在副驾驶的包里找到了排水设备钥匙。\n按标签所写，先关上两侧供水阀，再去西侧水泵。"
+  },
+  "서측 급수관을 잠갔다. 금속 마찰음이 주차장에 울렸다.": {
+    "en": "I shut the west water supply. Metal scraped through the parking garage.",
+    "ja": "西側の給水管を閉めた。金属のこすれる音が駐車場に響いた。",
+    "zh-CN": "关上了西侧供水管。金属摩擦声回荡在停车场里。"
+  },
+  "동측 급수관을 잠갔다. 금속 마찰음이 주차장에 울렸다.": {
+    "en": "I shut the east water supply. Metal scraped through the parking garage.",
+    "ja": "東側の給水管を閉めた。金属のこすれる音が駐車場に響いた。",
+    "zh-CN": "关上了东侧供水管。金属摩擦声回荡在停车场里。"
+  },
+  "차량 출구의 물이 빠졌다. 운전석으로 돌아가자.\n차체와 기둥 뒤로 이동하고, 필요하면 입구 쪽 경보로 유인할 수 있다.": {
+    "en": "The vehicle exit has drained. Get back to the driver's seat.\nMove behind cars and pillars. Use the alarm near the entrance as a lure if needed.",
+    "ja": "車両出口の水が引いた。運転席へ戻ろう。\n車体や柱に隠れて移動し、必要なら入口の警報でおびき寄せられる。",
+    "zh-CN": "车辆出口的积水排干了。回驾驶座。\n借车身和柱子掩护移动，必要时用入口附近的警报引开它。"
+  },
+  "스피커에서 빗소리와 와이퍼, 차 문이 잠기는 소리가 들린다.\n「문 잠가도… 소용없어.」\n통화가 끊겼다. 다용도실 쪽에서 전기 타는 냄새가 난다.": {
+    "en": "Rain, wipers, and a car door locking come through the speaker.\n“Locking the door… won't help.”\nThe call ends. A smell of burning wiring drifts from the utility room.",
+    "ja": "スピーカーから雨、ワイパー、車のドアがロックされる音がする。\n「鍵をかけても…無駄だよ。」\n通話が切れた。家事室の方から電気が焦げる臭いがする。",
+    "zh-CN": "扬声器里传来雨声、雨刷声和车门落锁的声音。\n“锁上门……也没用。”\n电话断了。杂物间方向传来电线烧焦的气味。"
+  },
+  "차단기를 올려도 불은 돌아오지 않는다.\n현관 안쪽에서 젖은 무언가가 타일에 떨어졌다.": {
+    "en": "The lights won't come on, even with the breaker up.\nSomething wet dropped onto the tiles inside the entryway.",
+    "ja": "ブレーカーを上げても明かりは戻らない。\n玄関の内側で、濡れた何かがタイルに落ちた。",
+    "zh-CN": "合上断路器，灯也没亮。\n玄关里面，有什么湿漉漉的东西掉在瓷砖上。"
+  },
+  "와이퍼 같은 소리가 나던 라디오를 껐다.\n…창밖의 빗소리만 남았다.": {
+    "en": "I turned off the radio that sounded like wipers.\n…Only the rain outside remained.",
+    "ja": "ワイパーのような音がするラジオを切った。\n…窓の外の雨音だけが残った。",
+    "zh-CN": "我关掉了发出雨刷般声音的收音机。\n……只剩下窗外的雨声。"
+  },
+  "낡은 외부 복도로 나왔다. 난간 너머로 빗소리가 쏟아진다.\n난간을 때리는 비가 발소리를 삼킨다. 끝에 엘리베이터 불빛이 보인다.": {
+    "en": "I stepped onto the old outdoor walkway. Rain roars beyond the railing.\nRain beating on the railing swallows the footsteps. An elevator light glows at the far end.",
+    "ja": "古びた外廊下に出た。手すりの向こうから雨音が降り注ぐ。\n手すりを叩く雨が足音をかき消す。突き当たりにエレベーターの明かりが見える。",
+    "zh-CN": "走上陈旧的外走廊，栏杆外雨声倾泻而来。\n敲打栏杆的雨声吞没了脚步声。尽头亮着电梯的灯。"
+  },
+  "호출등이 들어왔다. 문이 벌어질 때까지 버텨야 한다.": {
+    "en": "The call light is on. Hold out until the doors open.",
+    "ja": "呼び出しランプがついた。扉が開くまで持ちこたえよう。",
+    "zh-CN": "呼叫灯亮了。得撑到门打开。"
+  },
+  "문이 닫힌다.\n오른쪽 조작반에서 1층을 누르자.": {
+    "en": "The doors are closing.\nPress 1F on the panel to the right.",
+    "ja": "扉が閉まる。\n右側の操作盤で1階を押そう。",
+    "zh-CN": "门正在关闭。\n按右侧面板上的1楼。"
+  },
+  "1층. 제발, 멈추지 마.\n천장에서 내 것보다 한 박자 늦은 숨소리가 들린다.": {
+    "en": "1F. Please, don't stop.\nBreathing comes from the ceiling, one beat behind mine.",
+    "ja": "1階。お願いだから止まらないで。\n天井から、自分より一拍遅れた息遣いが聞こえる。",
+    "zh-CN": "1楼。求你，别停。\n天花板上传来呼吸声，比我的慢了一拍。"
+  },
+  "문이 벌어졌다. 24층 복도가 보인다.\n밖으로 나갈 수 있다.": {
+    "en": "The doors are pried open. I can see the 24F hallway.\nI can get out.",
+    "ja": "扉が開いた。24階の廊下が見える。\n外に出られる。",
+    "zh-CN": "门撬开了。能看到24楼走廊。\n可以出去了。"
+  },
+  "바로 옆에 있다.\n중앙 설비실을 피해 좌우 복도로 돌아! 반대편 녹색 비상계단으로!": {
+    "en": "It's right beside me.\nGo around the central equipment room, left or right! Head for the green emergency stairs on the other side!",
+    "ja": "すぐ隣にいる。\n中央の設備室を避けて左右の廊下を回れ！反対側の緑の非常階段へ！",
+    "zh-CN": "它就在旁边。\n绕开中央设备间，从左右走廊跑！去对面的绿色紧急楼梯！"
+  },
+  "비상문을 닫자, 손톱 긁는 소리가 따라 내려온다.\n아래층으로 가야 한다.": {
+    "en": "I shut the emergency door. Scratching follows me down.\nI have to go lower.",
+    "ja": "非常扉を閉めると、爪で引っかく音が追ってくる。\n下の階へ行かなければ。",
+    "zh-CN": "关上紧急通道门，指甲抓挠声追着我往下。\n必须下楼。"
+  },
+  "아래층 방화문이 열렸다.\n연결 통로를 지나 내려가 보자.": {
+    "en": "The fire door downstairs opened.\nGo through the connecting passage and head down.",
+    "ja": "下の階の防火扉が開いた。\n連絡通路を通って下りてみよう。",
+    "zh-CN": "楼下的防火门开了。\n穿过连接通道，再往下走。"
+  },
+  "방화문이 열렸다. 문 너머로 낡은 복도가 이어진다.\n전화는 복도 끝 1704호 안에서 울리고 있다.": {
+    "en": "The fire door opened onto an old hallway.\nA phone is ringing inside unit 1704 at the far end.",
+    "ja": "防火扉が開いた。古びた廊下が続いている。\n突き当たりの1704号室で電話が鳴っている。",
+    "zh-CN": "防火门开了，门后是一条陈旧的走廊。\n走廊尽头1704室里响着电话铃声。"
+  },
+  "잠겨 있지 않다. 전화벨은 거실에서 울린다.\n현관의 신발… 도로에 떨어져 있던 것과 같은 신발이다.": {
+    "en": "It's unlocked. The phone is ringing in the living room.\nThe shoe in the entryway… it's the same as the one on the road.",
+    "ja": "鍵はかかっていない。電話はリビングで鳴っている。\n玄関の靴…道路に落ちていたものと同じ靴だ。",
+    "zh-CN": "门没锁。电话铃声从客厅传来。\n玄关的鞋……和路上掉落的是同一只。"
+  },
+  "검은 신발 한 짝. 봉투에는 「1704호 한서연」.\n야간 당직 안내에는 관리실 내선 17이 적혀 있다.": {
+    "en": "A single black shoe. The envelope reads “Unit 1704, Han Seo-yeon.”\nThe night duty notice lists the office extension: 17.",
+    "ja": "黒い靴が片方。封筒には「1704号室 ハン・ソヨン」。\n夜間当直の案内には管理室の内線17とある。",
+    "zh-CN": "一只黑鞋。信封上写着“1704室 韩瑞妍”。\n夜间值班通知上写着管理室分机：17。"
+  },
+  "「다음에는 맑은 날에.」\n내일도 살아 있을 거라 믿고 적은 약속이다.": {
+    "en": "“Next time, on a sunny day.”\nA promise written by someone who believed she'd still be alive tomorrow.",
+    "ja": "「次は晴れた日に。」\n明日も生きていると信じて書いた約束だ。",
+    "zh-CN": "“下次，选个晴天。”\n写下这个约定的人，相信自己还能活到明天。"
+  },
+  "03:16. 「거의 다 왔어. 먼저 자. 내일 전화할게.」\n메시지가 끝난 뒤에도, 젖은 발소리는 계속된다.": {
+    "en": "03:16. “I'm almost home. Go to bed. I'll call tomorrow.”\nThe message ends, but the wet footsteps continue.",
+    "ja": "03:16。「もうすぐ着くよ。先に寝てて。明日電話するね。」\nメッセージが終わっても、濡れた足音は続いている。",
+    "zh-CN": "03:16。“快到了。你先睡吧，明天给你打电话。”\n留言结束了，湿漉漉的脚步声却还在继续。"
+  },
+  "연결문이 열렸다. 1703호, 외벽 공사 중 임시로 옮긴 관리실.\n봉투에 적힌 한서연의 근무 기록이 저 안에 있다.": {
+    "en": "The connecting door opened. Unit 1703, the temporary office during exterior repairs.\nHan Seo-yeon's work records are in there. The name from the envelope.",
+    "ja": "連絡扉が開いた。1703号室。外壁工事中に移った臨時管理室だ。\n封筒にあったハン・ソヨンの勤務記録が、中にある。",
+    "zh-CN": "连接门开了。1703室，外墙施工期间搬来的临时管理室。\n信封上那个韩瑞妍的值班记录就在里面。"
+  },
+  "서랍을 당긴다. 안에서 작은 금속이 부딪쳤다.\n앞을 막고 있다면 한 걸음 물러서자.": {
+    "en": "I pull the drawer. Something small and metal rattles inside.\nTake a step back if you're blocking it.",
+    "ja": "引き出しを引く。中で小さな金属がぶつかった。\n開く邪魔をしているなら一歩下がろう。",
+    "zh-CN": "拉开抽屉，里面有小小的金属碰撞声。\n如果挡住了抽屉，就后退一步。"
+  },
+  "한서연의 당직 수첩. 「여벌 연결문 열쇠는 책상 가운데 서랍.」\n업무 기록 아래에는 「내일 오후 두 시. 이번에는 꼭 갈 것.」이라고 적혀 있다.": {
+    "en": "Han Seo-yeon's duty notebook. “Spare connecting-door key: middle desk drawer.”\nBelow the work notes: “Tomorrow at two. This time, I must go.”",
+    "ja": "ハン・ソヨンの当直手帳。「連絡扉の予備鍵は机の中央の引き出し。」\n業務記録の下に「明日午後二時。今度こそ必ず行くこと。」とある。",
+    "zh-CN": "韩瑞妍的值班手册。“连接门备用钥匙在书桌中间的抽屉里。”\n工作记录下面写着：“明天下午两点。这次一定要去。”"
+  },
+  "1703호 연결문 열쇠다.\n현관 쪽에서… 다시 발소리가 들린다. 뒤쪽 연결문으로 가자.": {
+    "en": "The connecting-door key for unit 1703.\nFootsteps… at the entryway again. Head for the connecting door at the back.",
+    "ja": "1703号室の連絡扉の鍵だ。\n玄関の方から…また足音がする。奥の連絡扉へ行こう。",
+    "zh-CN": "1703室连接门的钥匙。\n玄关那边……又有脚步声。去后面的连接门。"
+  },
+  "문을 열었다. 차가운 비가 손등을 때린다.\n그날은 이 문을 열고도 다시 차로 돌아갔다. 이번에는 떠나지 않겠다.": {
+    "en": "I opened the door. Cold rain hits the backs of my hands.\nThat night, I opened this door, then went back to the car. This time, I won't leave.",
+    "ja": "ドアを開けた。冷たい雨が手の甲を打つ。\nあの日はこのドアを開けても車に戻った。今度は立ち去らない。",
+    "zh-CN": "我打开门，冰冷的雨打在手背上。\n那天打开这扇门后，我还是回了车里。这次，我不会离开。"
+  },
+  "1704호 열쇠. 가방 곁의 전화기는 화면에 금이 갔지만 아직 켜져 있다.\n「도착하면 연락할게.」": {
+    "en": "The key to unit 1704. The phone beside the bag is still on, its screen cracked.\n“I'll call when I get there.”",
+    "ja": "1704号室の鍵。バッグのそばの電話は画面が割れているが、まだついている。\n「着いたら連絡するね。」",
+    "zh-CN": "1704室的钥匙。包旁的手机屏幕裂了，却还亮着。\n“到了给你打电话。”"
+  },
+  "「제가 사람을 치었습니다. 술을 마셨고, 도망쳤습니다.」\n「이번에는 여기 있겠습니다.」": {
+    "en": "“I hit someone. I'd been drinking, and I drove away.”\n“This time, I'll stay right here.”",
+    "ja": "「人をはねました。酒を飲んでいて、逃げました。」\n「今度は、ここにいます。」",
+    "zh-CN": "“我撞了人。我喝了酒，然后逃走了。”\n“这次，我会留在这里。”"
+  },
+  "사고 다음 날 06:40, 인계자 박정호. 전임 야간 당직은 한서연이었다.\n승강기는 C 4A, CCTV는 B 2A. 비상 공급은 6A다. 열쇠는 CCTV 오른쪽, 예비 퓨즈는 서고.\n03:26 입차 영상에서 아홉 초가 빠져 있다. 알고 싶지 않은데… 화면을 켜면 확인할 수 있다.": {
+    "en": "06:40, the morning after the accident. Handover: Park Jeong-ho. The previous night attendant was Han Seo-yeon.\nElevator: C 4A. CCTV: B 2A. Emergency supply: 6A. Key to the right of CCTV; spare fuse in the archive.\nNine seconds are missing from the 03:26 entry footage. I don't want to know… but turning on the screen will show me.",
+    "ja": "事故の翌朝06:40、引き継ぎ担当パク・ジョンホ。前任の夜間当直はハン・ソヨンだった。\nエレベーターはC 4A、CCTVはB 2A。非常電源は6A。鍵はCCTVの右、予備ヒューズは書庫。\n03:26の入庫映像から九秒が抜けている。知りたくないのに…画面をつければ確認できる。",
+    "zh-CN": "事故次日06:40，交接人朴正浩。前任夜间值班员是韩瑞妍。\n电梯C 4A，CCTV B 2A，应急供电6A。钥匙在CCTV右侧，备用保险丝在档案室。\n03:26的入库录像缺了九秒。我不想知道……但打开屏幕就能确认。"
+  },
+  "예비 퓨즈를 챙겼다.\n오른쪽 전기실 배전반의 빈 홀더에 먼저 설치하자.": {
+    "en": "I took the spare fuse.\nFit it into the empty holder on the panel in the electrical room to the right.",
+    "ja": "予備ヒューズを手に入れた。\nまず右の電気室にある配電盤の空のホルダーに取り付けよう。",
+    "zh-CN": "拿到了备用保险丝。\n先装进右侧配电室配电盘的空卡座里。"
+  },
+  "CCTV가 켜졌다. 사흘 전 주차장 기록이다.\n찌그러진 내 차가 들어오고 있다.": {
+    "en": "CCTV is on. Parking footage from three days ago.\nMy dented car is pulling in.",
+    "ja": "CCTVがついた。三日前の駐車場の記録だ。\nへこんだ自分の車が入ってくる。",
+    "zh-CN": "CCTV亮了。是三天前的停车场录像。\n我那辆撞瘪的车正在驶入。"
+  },
+  "관리용 승강기 열쇠다. C 회로에 전원을 공급해야 승강기가 움직인다.": {
+    "en": "The service elevator key. The elevator needs power on circuit C to move.",
+    "ja": "管理用エレベーターの鍵だ。動かすにはC回路への給電が必要だ。",
+    "zh-CN": "管理专用电梯的钥匙。必须给C回路供电，电梯才能运行。"
+  },
+  "관리용 승강기 문이 열렸다. 비상 전원으로 1층까지 내려갈 수 있다.\n승강기 안으로 들어가자.": {
+    "en": "The service elevator doors opened. Emergency power can take me down to 1F.\nStep inside.",
+    "ja": "管理用エレベーターの扉が開いた。非常電源で1階まで下りられる。\n中に入ろう。",
+    "zh-CN": "管理专用电梯门开了。应急电源能送我下到1楼。\n进去吧。"
+  },
+  "보행자 출구는 바깥에서 봉쇄됐다. 내 차로 나가야 한다.\n차량 출구도 침수됐다. 조수석의 배수 설비 열쇠를 찾아 물부터 빼자.": {
+    "en": "The pedestrian exit is sealed from outside. I have to use my car.\nThe vehicle exit is flooded too. Find the drainage key on the passenger side and drain it first.",
+    "ja": "歩行者出口は外から封鎖されている。自分の車で出るしかない。\n車両出口も浸水している。助手席の排水設備の鍵を探して、先に水を抜こう。",
+    "zh-CN": "行人出口被从外面封住了。只能开车出去。\n车辆出口也淹了。先找副驾驶那边的排水设备钥匙，把水排掉。"
+  },
+  "벨이 울린다. 차체와 기둥으로 몸을 가려야 한다.\n나를 보지 못하면 소리 쪽으로 갈 것이다. 운전석으로 돌아가자.": {
+    "en": "The bell is ringing. Stay hidden behind cars and pillars.\nIf it can't see me, it'll follow the sound. Get back to the driver's seat.",
+    "ja": "ベルが鳴っている。車体や柱で姿を隠さなければ。\nこちらが見えなければ音へ向かうはずだ。運転席へ戻ろう。",
+    "zh-CN": "铃声响了。得用车身和柱子遮住自己。\n看不到我的话，它就会追着声音去。回驾驶座。"
+  },
+  "서측 A실에서 도로 원본을 먼저 회수하자.": {
+    "en": "Recover the original road footage from west room A first.",
+    "ja": "まず西側A室で道路映像の原本を回収しよう。",
+    "zh-CN": "先去西侧A室取回道路录像原件。"
+  },
+  "동측 B실에서 통화 원본을 먼저 회수하자.": {
+    "en": "Recover the original call recording from east room B first.",
+    "ja": "まず東側B室で通話録音の原本を回収しよう。",
+    "zh-CN": "先去东侧B室取回通话录音原件。"
+  },
+  "서측 C실에서 입차 원본을 먼저 회수하자.": {
+    "en": "Recover the original entry footage from west room C first.",
+    "ja": "まず西側C室で入庫映像の原本を回収しよう。",
+    "zh-CN": "先去西侧C室取回入库录像原件。"
+  },
+  "이미 기록한 장면이다. 다른 원본을 대조하자.": {
+    "en": "This scene is already logged. Compare another original.",
+    "ja": "この場面は記録済みだ。別の原本を照合しよう。",
+    "zh-CN": "这个场景已经记录过了。对照其他原件。"
+  },
+  "사고, 통화, 입차. 세 기록이 이어졌다. 모니터에서 누락된 아홉 초를 재생하자.": {
+    "en": "The crash, the call, the arrival. All three records connect. Play the missing nine seconds on the monitor.",
+    "ja": "事故、通話、入庫。三つの記録がつながった。モニターで欠けた九秒を再生しよう。",
+    "zh-CN": "事故、通话、入库。三份记录串起来了。在监视器上播放缺失的九秒。"
+  },
+  "정면으로 조금 더 다가가야 들어갈 수 있다.": {
+    "en": "Move a little closer, straight ahead, to get in.",
+    "ja": "入るには正面からもう少し近づこう。",
+    "zh-CN": "再正面靠近一点才能进去。"
+  },
+  "몸을 낮추고 철문 안으로 들어간다.": {
+    "en": "I crouch and slip through the iron door.",
+    "ja": "身をかがめて鉄扉の中に入る。",
+    "zh-CN": "我压低身子，钻进铁门。"
+  },
+  "문 바로 곁에 있다. 닫을 틈이 없다. 다른 쪽으로 거리를 벌려야 한다.": {
+    "en": "It's right by the door. No time to close it. I need to put some distance between us another way.",
+    "ja": "扉のすぐそばにいる。閉める暇がない。別の方向へ逃げて距離を取らなければ。",
+    "zh-CN": "它就在门边。来不及关门了，得往别处跑开拉开距离。"
+  },
+  "건전지 라디오를 켰다.\n소리를 다른 곳에 남겨 두고 움직일 수 있다. 나를 보고 있다면 소용없겠지만.": {
+    "en": "I turned on the battery radio.\nI can leave the sound here and move away. It won't help if it sees me, though.",
+    "ja": "電池式ラジオをつけた。\n音だけをここに残して移動できる。見られていたら無駄だろうけど。",
+    "zh-CN": "我打开了电池收音机。\n可以把声音留在这里，自己移开。但要是被它看见，就没用了。"
+  },
+  "라디오를 껐다. 발소리가 가까워졌는지 들어 보자.": {
+    "en": "I turned off the radio. Listen for footsteps getting closer.",
+    "ja": "ラジオを切った。足音が近づいていないか耳を澄まそう。",
+    "zh-CN": "关掉了收音机。听听脚步声有没有靠近。"
+  },
+  "운전석을 바라보며 E를 짧게 눌러 문을 당긴다.": {
+    "en": "Look at the driver's seat and tap E to pull the door open.",
+    "ja": "運転席を見ながらEを短く押してドアを引く。",
+    "zh-CN": "看向驾驶座，短按E拉开车门。"
+  },
+  "차량 출구 앞에 물이 남아 있다. 배수 설비부터 확인하자.": {
+    "en": "There's still water at the vehicle exit. Check the drainage equipment first.",
+    "ja": "車両出口にまだ水がある。まず排水設備を確認しよう。",
+    "zh-CN": "车辆出口还有积水。先检查排水设备。"
+  },
+  "시동 키가 없다. 잠그지 않은 조수석 문을 열고 내 가방을 확인하자.": {
+    "en": "I don't have the ignition key. Open the unlocked passenger door and check my bag.",
+    "ja": "車のキーがない。鍵のかかっていない助手席のドアを開けてバッグを調べよう。",
+    "zh-CN": "没有车钥匙。打开没锁的副驾驶车门，检查我的包。"
+  },
+  "문을 바라본 채 E 또는 화면의 문 벌리기 버튼을 길게 누르세요.": {
+    "en": "Face the door and hold E or the on-screen Pry Door button.",
+    "ja": "ドアを見たままE、または画面の「扉をこじ開ける」ボタンを長押ししてください。",
+    "zh-CN": "面向门，长按E或屏幕上的“撬开门”按钮。"
+  },
+  "태엽이 다 풀렸다.": {
+    "en": "The spring has wound down.",
+    "ja": "ぜんまいが切れた。",
+    "zh-CN": "发条走完了。"
+  },
+  "태엽 소리가 울린다. 멀리서 발소리가 방향을 바꿨다.": {
+    "en": "The clockwork rattles. Distant footsteps change direction.",
+    "ja": "ぜんまいの音が響く。遠くの足音が向きを変えた。",
+    "zh-CN": "发条声响起，远处的脚步声改变了方向。"
+  },
+  "전화 너머에서 주소를 확인한다. 사이렌이 가까워진다.": {
+    "en": "They confirm the address on the phone. Sirens draw closer.",
+    "ja": "電話の向こうで住所を確認している。サイレンが近づく。",
+    "zh-CN": "电话那头正在核实地址。警笛声越来越近。"
+  },
+  "통화를 유지한 채 잠시 기다리자.": {
+    "en": "Stay on the line and wait a moment.",
+    "ja": "電話を切らずに、少し待とう。",
+    "zh-CN": "保持通话，等一会儿。"
+  },
+  "빈 퓨즈 홀더에 예비 퓨즈를 먼저 설치하자.": {
+    "en": "Fit the spare fuse into the empty holder first.",
+    "ja": "まず空のヒューズホルダーに予備ヒューズを取り付けよう。",
+    "zh-CN": "先把备用保险丝装进空卡座。"
+  },
+  "선택한 회로가 없다. 승강기 C 4A, CCTV B 2A 중 필요한 회로를 선택하자.": {
+    "en": "No circuit selected. Choose what you need: Elevator C 4A, CCTV B 2A.",
+    "ja": "回路が選択されていない。エレベーターC 4A、CCTV B 2Aから必要な回路を選ぼう。",
+    "zh-CN": "未选择回路。按需要选择：电梯C 4A，CCTV B 2A。"
+  },
+  "선택한 부하가 6A를 넘는다.": {
+    "en": "The selected load exceeds 6A.",
+    "ja": "選択した負荷が6Aを超えている。",
+    "zh-CN": "所选负载超过6A。"
+  },
+  "이미 전원을 연결했다.": {
+    "en": "Power is already connected.",
+    "ja": "電源はすでに接続されている。",
+    "zh-CN": "已经接通电源了。"
+  },
+  "서고에서 예비 퓨즈를 먼저 챙겨야 한다.": {
+    "en": "I need the spare fuse from the archive first.",
+    "ja": "まず書庫で予備ヒューズを手に入れよう。",
+    "zh-CN": "得先去档案室拿备用保险丝。"
+  },
+  "보관함이 잠겨 있다. 서측 초소 인계판에 열쇠와 인계서가 남아 있다.": {
+    "en": "The locker is locked. The key and handover form are on the west guard post's handover board.",
+    "ja": "保管庫は施錠されている。西側詰所の引き継ぎ板に鍵と引継書がある。",
+    "zh-CN": "储物柜锁着。西侧岗亭的交接板上留有钥匙和交接单。"
+  },
+  "유입이 계속된다. 양쪽 급수 차단 밸브부터 잠가야 한다.": {
+    "en": "Water is still flowing in. Shut both water supply isolation valves first.",
+    "ja": "まだ水が流れ込んでいる。先に両側の給水遮断バルブを閉めよう。",
+    "zh-CN": "水还在流入。先关闭两侧供水截止阀。"
+  },
+  "모터가 짧게 울다 멎었다. 서측 펌프실로 돌아가 흡입망과 계기의 노란 시험 바늘을 확인하자.": {
+    "en": "The motor hummed briefly, then stopped. Return to the west pump room and check the intake strainer and the gauge's yellow test needle.",
+    "ja": "モーターが短く唸って止まった。西側ポンプ室に戻り、吸込口の網と計器の黄色い試験針を確認しよう。",
+    "zh-CN": "电机短暂响了一下就停了。回西侧泵房检查进水滤网和仪表的黄色测试指针。"
+  },
+  "모터 보호 장치가 시험 운전을 멈췄다. 서측 토출 계기의 노란 시험 바늘과 선택기를 확인하자.": {
+    "en": "The motor protection device stopped the test run. Check the west discharge gauge's yellow test needle and the selector.",
+    "ja": "モーター保護装置が試運転を止めた。西側吐出計の黄色い試験針と切替弁を確認しよう。",
+    "zh-CN": "电机保护装置停止了试运行。检查西侧排水仪表的黄色测试指针和选择阀。"
+  },
+  "펌프가 시험 회전했지만 수위가 그대로다. 서측 토출 선택기와 외부 배관을 따라가 보자.": {
+    "en": "The pump ran a test, but the water level hasn't changed. Check the west discharge selector and follow the outside pipe.",
+    "ja": "ポンプは試運転したが、水位が変わらない。西側の吐出切替弁と外部配管をたどってみよう。",
+    "zh-CN": "水泵试转了，但水位没变。查看西侧排水选择阀，再沿着外部管道检查。"
+  },
+  "모터 전원이 꺼져 있다. 바로 옆 배수 회로를 확인하자.": {
+    "en": "The motor has no power. Check the drainage circuit right beside it.",
+    "ja": "モーターの電源が切れている。すぐ隣の排水回路を確認しよう。",
+    "zh-CN": "电机没有通电。检查旁边的排水回路。"
+  },
+  "환기 연동이 잠겨 있다. 환기 회로를 연결해야 기동할 수 있다.": {
+    "en": "The ventilation interlock is engaged. Connect the ventilation circuit before starting.",
+    "ja": "換気インターロックが作動している。始動するには換気回路を接続しよう。",
+    "zh-CN": "通风联锁未解除。接通通风回路后才能启动。"
+  },
+  "침수된 조명 회로에 누전이 있다.": {
+    "en": "The flooded lighting circuit has a ground fault.",
+    "ja": "浸水した照明回路で漏電している。",
+    "zh-CN": "被水淹的照明回路发生了漏电。"
+  },
+  "보행자 출구는 바깥에서 막혔다. 내 차를 타고 차량 출구로 나가야 한다.": {
+    "en": "The pedestrian exit is blocked from outside. I need to drive my car out through the vehicle exit.",
+    "ja": "歩行者出口は外から塞がれている。自分の車で車両出口から出るしかない。",
+    "zh-CN": "行人出口被从外面堵住了。得开我的车从车辆出口出去。"
+  },
+  "연결문이 잠겼다. 열쇠가 필요하다. 현관 관리비 봉투나 서재의 수첩을 살펴보자.": {
+    "en": "The connecting door is locked. I need a key. Check the maintenance-fee envelope in the entryway or the notebook in the study.",
+    "ja": "連絡扉は施錠されている。鍵が必要だ。玄関の管理費封筒か書斎の手帳を調べよう。",
+    "zh-CN": "连接门锁着，需要钥匙。看看玄关的物业费信封，或书房里的手册。"
+  },
+  "서랍이 걸려 있다면 앞에서 한 걸음 물러서자. 안의 1703호 열쇠를 챙겨야 한다.": {
+    "en": "If the drawer is stuck, take a step back. I need the key to 1703 inside.",
+    "ja": "引き出しが引っかかるなら一歩下がろう。中の1703号室の鍵を取らなければ。",
+    "zh-CN": "抽屉如果卡住了，就后退一步。得拿到里面的1703室钥匙。"
+  },
+  "문이 꿈쩍하지 않는다. 안쪽 잠금쇠는 풀려 있는데…": {
+    "en": "The door won't budge. The latch on this side is open, though…",
+    "ja": "ドアがびくともしない。内側の掛け金は外れているのに…",
+    "zh-CN": "门纹丝不动。里面的门闩明明已经打开了……"
+  },
+  "장롱 안에 몸을 숨길 수 있다.": {
+    "en": "I can hide inside the wardrobe.",
+    "ja": "クローゼットの中に隠れられる。",
+    "zh-CN": "可以藏进衣柜里。"
+  },
+  "외벽 공사로 폐쇄됐다. 아래층으로 내려가야 한다.": {
+    "en": "Closed for exterior repairs. I need to go downstairs.",
+    "ja": "外壁工事で閉鎖されている。下の階へ行こう。",
+    "zh-CN": "因外墙施工关闭。得往楼下走。"
+  },
+  "먼저 관리실 책상의 근무일지를 살펴보자.": {
+    "en": "Check the duty log on the office desk first.",
+    "ja": "まず管理室の机にある勤務日誌を調べよう。",
+    "zh-CN": "先查看管理室桌上的值班日志。"
+  },
+  "퓨즈가 빠져 있다. 서고의 예비 부품을 찾아야 한다.": {
+    "en": "The fuse is missing. Find a spare in the archive.",
+    "ja": "ヒューズが抜けている。書庫で予備部品を探そう。",
+    "zh-CN": "保险丝不见了。去档案室找备用零件。"
+  },
+  "이 시각에는 내 차가 없다. 근무일지의 입차 시각을 다시 확인하자.": {
+    "en": "My car isn't here at this time. Check the entry time in the duty log again.",
+    "ja": "この時刻には自分の車がいない。勤務日誌の入庫時刻をもう一度確認しよう。",
+    "zh-CN": "这个时间没有我的车。再核对一下值班日志里的入库时间。"
+  },
+  "CCTV 전원이 꺼져 있다. 배전반의 B 회로 2A가 필요하다.": {
+    "en": "CCTV has no power. It needs circuit B, 2A, on the distribution panel.",
+    "ja": "CCTVの電源が切れている。配電盤のB回路、2Aが必要だ。",
+    "zh-CN": "CCTV没电。需要配电盘的B回路，2A。"
+  },
+  "열쇠는 있다. 전기실에서 C 승강기 제어 회로에 비상전원을 공급해야 한다.": {
+    "en": "I have the key. Supply emergency power to elevator control circuit C in the electrical room.",
+    "ja": "鍵はある。電気室でCのエレベーター制御回路に非常電源を供給しよう。",
+    "zh-CN": "钥匙有了。去配电室给C电梯控制回路接通应急电源。"
+  },
+  "비상 열쇠가 필요하다. CCTV 오른쪽 책상에 보인다.": {
+    "en": "I need the emergency key. It's on the desk to the right of CCTV.",
+    "ja": "非常用の鍵が必要だ。CCTVの右側の机に見える。",
+    "zh-CN": "需要应急钥匙。能看见它在CCTV右侧的桌上。"
+  },
+  "동측 급수관이 아직 열려 있다. 물부터 차단해야 한다.": {
+    "en": "The east water supply is still open. Shut off the water first.",
+    "ja": "東側の給水管がまだ開いている。先に水を止めよう。",
+    "zh-CN": "东侧供水管还开着。先把水关掉。"
+  },
+  "서측 급수관이 아직 열려 있다. 물부터 차단해야 한다.": {
+    "en": "The west water supply is still open. Shut off the water first.",
+    "ja": "西側の給水管がまだ開いている。先に水を止めよう。",
+    "zh-CN": "西侧供水管还开着。先把水关掉。"
+  },
+  "압력계가 흔들린다. 양쪽 급수 밸브를 먼저 잠가야 한다.": {
+    "en": "The pressure gauge is shaking. Shut both supply valves first.",
+    "ja": "圧力計が揺れている。先に両側の給水バルブを閉めよう。",
+    "zh-CN": "压力表在晃动。先关闭两侧供水阀。"
+  },
+  "전화벨이 끊이지 않는다. 먼저 다용도실 차단기를 확인하자.": {
+    "en": "The phone won't stop ringing. Check the utility room breaker first.",
+    "ja": "電話が鳴りやまない。まず家事室のブレーカーを確認しよう。",
+    "zh-CN": "电话铃声一直不停。先检查杂物间的断路器。"
+  },
+  "어둡다. 침실 스위치부터 확인하자. 스마트폰은 침대 옆에 뒀다.": {
+    "en": "It's dark. Check the bedroom switch first. I left my phone beside the bed.",
+    "ja": "暗い。まず寝室のスイッチを確認しよう。スマートフォンはベッドの横に置いた。",
+    "zh-CN": "好暗。先检查卧室开关。手机放在床边了。"
+  },
+  "이미 확인했다. 다음 단서를 찾아야 한다.": {
+    "en": "I've checked this already. Find the next clue.",
+    "ja": "もう確認した。次の手がかりを探そう。",
+    "zh-CN": "已经查看过了。得找下一条线索。"
+  },
+  "문을 닫는다. 잠금장치는 없다. 창 너머를 살피며 나갈 길을 남겨 두자.": {
+    "en": "I close the door. There's no lock. Watch through the window and keep an escape route open.",
+    "ja": "ドアを閉める。鍵はない。窓の向こうを見ながら、逃げ道を確保しておこう。",
+    "zh-CN": "关上门。没有锁。注意窗外，给自己留条退路。"
+  },
+  "문을 연다. 통로의 소리가 다시 들린다.": {
+    "en": "I open the door. I can hear the passage again.",
+    "ja": "ドアを開ける。通路の音がまた聞こえる。",
+    "zh-CN": "打开门。又能听见通道里的声音了。"
+  },
+  "잠긴 문손잡이에서 쇠사슬이 울린다. 바깥 셔터도 내려와 있다.\n젖은 제어함에 북측 중정으로 우회하라는 안내가 붙어 있다.": {
+    "en": "A chain rattles against the locked handle. The shutter outside is down too.\nA notice on the wet control box says to detour through the north courtyard.",
+    "ja": "施錠されたドアノブで鎖が鳴る。外のシャッターも下りている。\n濡れた制御箱に、北側の中庭へ迂回するよう案内が貼ってある。",
+    "zh-CN": "锁住的门把手上响起铁链声，外面的卷帘门也关着。\n湿透的控制箱上贴着通知，要绕行北侧中庭。"
+  },
+  "누전 보호기가 떨어졌다. 배수와 외부조명 스위치가 내려갔다. 침수된 외부조명은 끄고 배수 전원만 다시 연결하자.": {
+    "en": "The ground-fault breaker tripped. The drainage and exterior lighting switches dropped. Leave the flooded exterior lights off and reconnect only the drainage power.",
+    "ja": "漏電遮断器が落ちた。排水と外灯のスイッチが下がった。浸水した外灯は切ったまま、排水電源だけを入れ直そう。",
+    "zh-CN": "漏电保护器跳闸了，排水和室外照明开关都断开了。关掉被淹的室外照明，只重新接通排水电源。"
+  },
+  "토출 → 외부 우수관. 배관이 서쪽 벽으로 이어진다.": {
+    "en": "Discharge → External storm drain. The pipe runs toward the west wall.",
+    "ja": "吐出 → 外部雨水管。配管は西の壁へ続いている。",
+    "zh-CN": "排水 → 室外雨水管。管道沿西侧墙延伸。"
+  },
+  "토출 → 차단. 이 위치에서는 물이 나갈 수 없다.": {
+    "en": "Discharge → Shut off. Water cannot leave in this position.",
+    "ja": "吐出 → 遮断。この位置では水が外に出ない。",
+    "zh-CN": "排水 → 截止。这个位置无法排水。"
+  },
+  "토출 → 집수정 환수. 물이 다시 이 방으로 돌아온다.": {
+    "en": "Discharge → Sump return. The water comes back into this room.",
+    "ja": "吐出 → 集水槽へ還流。水がこの部屋へ戻ってくる。",
+    "zh-CN": "排水 → 回流集水井。水会重新流回这个房间。"
+  },
+  "인계 열쇠가 맞았다. 문이 열리도록 한 걸음 물러서자.\n안쪽에 지하문 열쇠와 내 서명이 남아 있다.": {
+    "en": "The handover key fits. Step back so the door can open.\nInside are the basement door key and my signature.",
+    "ja": "引き継ぎの鍵が合った。扉が開くように一歩下がろう。\n中には地下扉の鍵と、自分の署名が残っている。",
+    "zh-CN": "交接钥匙对上了。后退一步，让门打开。\n里面留着地下门钥匙和我的签名。"
+  },
+  "수첩을 펴자, 건너편 비상전화가 울리기 시작한다.": {
+    "en": "As I open the notebook, the emergency phone across the room starts ringing.",
+    "ja": "手帳を開くと、向かいの非常電話が鳴り始めた。",
+    "zh-CN": "翻开手册，对面的紧急电话开始响了。"
+  },
+  "사고, 통화, 입차. 세 기록이 이어졌다.\n모니터에서 지워진 아홉 초를 재생하자.": {
+    "en": "The crash, the call, the arrival. All three records connect.\nPlay the erased nine seconds on the monitor.",
+    "ja": "事故、通話、入庫。三つの記録がつながった。\nモニターで消された九秒を再生しよう。",
+    "zh-CN": "事故、通话、入库。三份记录串起来了。\n在监视器上播放被抹去的九秒。"
+  },
+  "장롱 문틈으로 복도가 보인다. 숨을 죽였다.": {
+    "en": "I can see the hallway through the wardrobe doors. I hold my breath.",
+    "ja": "クローゼットの隙間から廊下が見える。息を潜めた。",
+    "zh-CN": "从衣柜门缝能看见走廊。我屏住呼吸。"
+  },
+  "문을 조금 밀고 밖으로 나왔다.": {
+    "en": "I pushed the door slightly and stepped out.",
+    "ja": "ドアを少し押して外へ出た。",
+    "zh-CN": "我轻轻推开门，走了出去。"
+  },
+  "바닥은 통행할 수 있지만 보행자 출구는 공사 셔터에 막혀 있다. 차량 경사로로 나가야 한다.": {
+    "en": "The floor is passable, but a construction shutter blocks the pedestrian exit. I have to use the vehicle ramp.",
+    "ja": "床は歩けるが、歩行者出口は工事用シャッターに塞がれている。車両用スロープから出るしかない。",
+    "zh-CN": "地面可以通行，但施工卷帘门挡住了行人出口。得从车辆坡道出去。"
+  },
+  "보행자 출구는 봉쇄됐고 차량 출구에 물이 고여 있다. 양쪽 급수 밸브를 잠근 뒤 펌프를 돌리자.": {
+    "en": "The pedestrian exit is sealed and the vehicle exit is flooded. Shut both water supply valves, then run the pump.",
+    "ja": "歩行者出口は封鎖され、車両出口には水がたまっている。両側の給水バルブを閉めてからポンプを回そう。",
+    "zh-CN": "行人出口被封住，车辆出口有积水。关上两侧供水阀，再启动水泵。"
+  },
+  "열쇠는 챙겼다.": {
+    "en": "I have the key.",
+    "ja": "鍵は手に入れた。",
+    "zh-CN": "钥匙拿到了。"
+  },
+  "운전석으로 돌아가자.": {
+    "en": "Get back to the driver's seat.",
+    "ja": "運転席へ戻ろう。",
+    "zh-CN": "回驾驶座。"
+  },
+  "서측 배수 설비로 가자.": {
+    "en": "Head to the west drainage equipment.",
+    "ja": "西側の排水設備へ行こう。",
+    "zh-CN": "去西侧排水设备处。"
+  },
+  "내 차 조수석 가방에서 열쇠를 찾자.": {
+    "en": "Find the key in my bag on the passenger side.",
+    "ja": "自分の車の助手席にあるバッグから鍵を探そう。",
+    "zh-CN": "去我的车里，在副驾驶的包中找钥匙。"
+  },
+  "열쇠고리가 문틀에 부딪혀 주차장에 울렸다.\n멀리서 나던 긁는 소리가 멎었다. 운전석으로 돌아가야 한다.": {
+    "en": "The key ring struck the door frame, echoing through the parking garage.\nThe distant scraping stopped. I have to get back to the driver's seat.",
+    "ja": "キーホルダーがドア枠に当たり、駐車場に響いた。\n遠くの引っかく音が止んだ。運転席へ戻らなければ。",
+    "zh-CN": "钥匙圈撞到门框，声音回荡在停车场里。\n远处的抓挠声停了。得回到驾驶座。"
+  },
+  "승강기 열쇠를 챙겼다. 연결문 밖에서 긁는 소리가 들린다.": {
+    "en": "I took the elevator key. Scratching comes from beyond the connecting door.",
+    "ja": "エレベーターの鍵を手に入れた。連絡扉の外から引っかく音がする。",
+    "zh-CN": "拿到了电梯钥匙。连接门外传来抓挠声。"
+  },
+  "회로 {0} · {1}/6A. {2}필요한 부하를 고른 뒤 전원을 다시 투입하자.": {
+    "en": "Circuit {0} · {1}/6A. {2}Choose the loads you need, then switch the power back on.",
+    "ja": "回路{0} · {1}/6A。{2}必要な負荷を選び、電源を入れ直そう。",
+    "zh-CN": "回路{0} · {1}/6A。{2}选择所需负载，再重新送电。"
+  },
+  "선택": {
+    "en": "Selected",
+    "ja": "選択",
+    "zh-CN": "已选择"
+  },
+  "해제": {
+    "en": "Deselected",
+    "ja": "解除",
+    "zh-CN": "已取消"
+  },
+  "선택 변경으로 공급이 끊겼다.": {
+    "en": "Changing the selection cut the supply.",
+    "ja": "選択の変更で供給が切れた。",
+    "zh-CN": "更改选择后供电已断开。"
+  },
+  "퓨즈를 홀더에 끼웠다. 승강기는 C 4A, CCTV는 B 2A. 필요한 회로에 공급할 수 있다. 비상 한도는 6A다.": {
+    "en": "I fitted the fuse. Elevator: C 4A. CCTV: B 2A. I can power the circuits I need. The emergency limit is 6A.",
+    "ja": "ヒューズを取り付けた。エレベーターはC 4A、CCTVはB 2A。必要な回路に給電できる。非常電源の上限は6Aだ。",
+    "zh-CN": "装好了保险丝。电梯C 4A，CCTV B 2A。可以给所需回路供电。应急供电上限是6A。"
+  },
+  "선택된 기록: {0}. 화면을 확인해 재생한다.": {
+    "en": "Selected recording: {0}. Check the screen to play it.",
+    "ja": "選択中の記録：{0}。画面を調べて再生する。",
+    "zh-CN": "所选记录：{0}。查看屏幕进行播放。"
+  },
+  "두 급수관을 모두 잠갔다. 서측 펌프를 가동하자.": {
+    "en": "Both water supplies are shut. Start the west pump.",
+    "ja": "両方の給水管を閉めた。西側のポンプを動かそう。",
+    "zh-CN": "两侧供水管都关上了。启动西侧水泵。"
+  },
+  "서측 급수관을 잠갔다. 동측 밸브가 아직 남아 있다.": {
+    "en": "The west water supply is shut. The east valve is still open.",
+    "ja": "西側の給水管を閉めた。東側のバルブがまだ残っている。",
+    "zh-CN": "西侧供水管关上了。东侧阀门还没关。"
+  },
+  "동측 급수관을 잠갔다. 서측 밸브가 아직 남아 있다.": {
+    "en": "The east water supply is shut. The west valve is still open.",
+    "ja": "東側の給水管を閉めた。西側のバルブがまだ残っている。",
+    "zh-CN": "东侧供水管关上了。西侧阀门还没关。"
+  },
+  "부하 초과. 보호계전기가 떨어져 선택 회로가 해제됐다. 퓨즈는 그대로다. 필요한 회로만 골라 다시 투입하자.": {
+    "en": "Overload. The protection relay tripped and cleared the selected circuits. The fuse is intact. Select only what you need and switch the power back on.",
+    "ja": "過負荷。保護リレーが落ち、選択回路が解除された。ヒューズは無事だ。必要な回路だけを選んで入れ直そう。",
+    "zh-CN": "负载超限。保护继电器跳闸，所选回路已取消。保险丝完好。只选需要的回路，再重新送电。"
+  },
+  "선택한 회로에 비상전원이 들어왔다.": {
+    "en": "Emergency power is on for the selected circuits.",
+    "ja": "選択した回路に非常電源が入った。",
+    "zh-CN": "所选回路已接通应急电源。"
+  },
+  "경보가 울린다. 소리가 끊기기 전에 차 쪽으로 거리를 벌려야 한다.": {
+    "en": "The alarm is ringing. Move away toward the car before it stops.",
+    "ja": "警報が鳴っている。音が止む前に車の方へ離れよう。",
+    "zh-CN": "警报响了。趁声音还没停，往车那边拉开距离。"
+  },
+  "문은 잠겨 있지 않았다. 조수석 뒤 발밑의 내 가방이 벌어져 있다. 열쇠가 보인다.": {
+    "en": "The door wasn't locked. My bag is open on the floor behind the passenger seat. I can see the key.",
+    "ja": "ドアは施錠されていなかった。助手席の後ろの足元でバッグが開いている。鍵が見える。",
+    "zh-CN": "车门没锁。副驾驶后方脚下的包敞开着，能看见钥匙。"
+  },
+  "건전지 라디오 끄기": {
+    "en": "Turn Off Battery Radio",
+    "ja": "電池式ラジオを切る",
+    "zh-CN": "关闭电池收音机"
+  },
+  "운전석 문 열기 · 짧게 누르기": {
+    "en": "Open Driver's Door · Tap",
+    "ja": "運転席のドアを開ける · 短く押す",
+    "zh-CN": "打开驾驶座车门 · 短按"
+  },
+  "운전석 확인": {
+    "en": "Check Driver's Seat",
+    "ja": "運転席を調べる",
+    "zh-CN": "查看驾驶座"
+  },
+  "문이 밀려 열린다!": {
+    "en": "The door is being forced open!",
+    "ja": "ドアが押し開けられる！",
+    "zh-CN": "门被推开了！"
+  },
+  "문을 밀고 있다. 오래 버티지 못한다.": {
+    "en": "It's pushing the door. I can't hold it much longer.",
+    "ja": "ドアを押されている。長くは持たない。",
+    "zh-CN": "它在推门。我撑不了多久了。"
+  },
+  "문 앞이 막혔다. 아직 나갈 틈이 없다.": {
+    "en": "Something is blocking the doorway. No chance to get out yet.",
+    "ja": "ドアの前が塞がれている。まだ出る隙がない。",
+    "zh-CN": "门前被挡住了。还没有出去的空隙。"
+  },
+  "철문 너머에서 발을 끄는 소리가 난다.": {
+    "en": "Dragging footsteps scrape beyond the iron door.",
+    "ja": "鉄扉の向こうで足を引きずる音がする。",
+    "zh-CN": "铁门外传来拖着脚走路的声音。"
+  },
+  "문을 조금 밀고 빠져나왔다.": {
+    "en": "I nudged the door open and slipped out.",
+    "ja": "ドアを少し押して抜け出した。",
+    "zh-CN": "我轻轻推开门，溜了出去。"
+  },
+  "숨이 새어 나갔다. 문밖의 발소리가 멈췄다.": {
+    "en": "A breath slipped out. The footsteps outside stopped.",
+    "ja": "息が漏れた。ドアの外の足音が止まった。",
+    "zh-CN": "一口气漏了出来。门外的脚步声停了。"
+  },
+  "문틈의 그림자가 천천히 돌아섰다. 아직 발소리가 가까이 있다.": {
+    "en": "The shadow in the gap slowly turned away. The footsteps are still close.",
+    "ja": "隙間の影がゆっくり背を向けた。まだ足音は近い。",
+    "zh-CN": "门缝里的影子缓缓转过身去。脚步声还在附近。"
+  },
+  "먼 방에서 물이 떨어지는 소리가 난다. 현관으로 나가야 한다.": {
+    "en": "Water drips in a distant room. I need to get to the entryway.",
+    "ja": "離れた部屋で水の落ちる音がする。玄関へ出なければ。",
+    "zh-CN": "远处的房间传来滴水声。得往玄关走。"
+  },
+  "그것이 고개를 돌렸다. 나를 찾고 있다!": {
+    "en": "It turned its head. It's looking for me!",
+    "ja": "それが振り向いた。こちらを探している！",
+    "zh-CN": "它转过了头。它在找我！"
+  },
+  "승강기 안에서 비명이 터졌다. 반대편 비상계단으로!": {
+    "en": "A scream burst from the elevator. Head for the emergency stairs on the other side!",
+    "ja": "エレベーターの中から悲鳴が上がった。反対側の非常階段へ！",
+    "zh-CN": "电梯里爆发出尖叫声。快去对面的紧急楼梯！"
+  },
+  "아래에서 문이 바람에 부딪히는 소리가 난다.": {
+    "en": "A door bangs in the wind below.",
+    "ja": "下から、風で扉がぶつかる音がする。",
+    "zh-CN": "下面传来门被风吹得撞击的声音。"
+  },
+  "「저기… 열려 있어.」": {
+    "en": "“Over there… it's open.”",
+    "ja": "「あそこ…開いてる。」",
+    "zh-CN": "“那边……开着。”"
+  },
+  "1층 공동현관. 안내판에서 지하주차장으로 가는 길을 확인하자.": {
+    "en": "The 1F main entrance. Check the sign for the way to underground parking.",
+    "ja": "1階の共用玄関。案内板で地下駐車場への道を確認しよう。",
+    "zh-CN": "1楼公共入口。看指示牌，确认去地下停车场的路。"
+  },
+  "통신실 보조 녹음 · 「차량 번호가 확인됐습니다. 내려와 주세요. 아직 현장에…」": {
+    "en": "Communications room backup recording · “We've identified the license plate. Please come down. Still at the scene…”",
+    "ja": "通信室の補助録音 · 「車両番号が確認できました。下りてきてください。まだ現場に…」",
+    "zh-CN": "通信室备份录音 · “已经确认车牌号码。请下来。还在现场……”"
+  },
+  "스마트폰 음성 메시지 · 「거의 다 왔어. 먼저 자. 내일 전화할게.」": {
+    "en": "Phone voice message · “I'm almost home. Go to bed. I'll call tomorrow.”",
+    "ja": "スマートフォンの音声メッセージ · 「もうすぐ着くよ。先に寝てて。明日電話するね。」",
+    "zh-CN": "手机语音留言 · “快到了。你先睡吧，明天给你打电话。”"
+  },
+  "호출음이 끊겼다. 아무도 없어야 할 우리 집에서… 「나오렴…」": {
+    "en": "The ringing stopped. From my apartment, where no one should be… “Come out…”",
+    "ja": "呼び出し音が止んだ。誰もいないはずの自分の家から…「出ておいで…」",
+    "zh-CN": "回铃音停了。我家明明不该有人，却传来……“出来吧……”"
+  },
+  "1704호. 빈집에서 전화를 받았다. 스피커 너머에서 여자가 흐느낀다.": {
+    "en": "Unit 1704. Someone answered in the empty apartment. A woman sobs through the speaker.",
+    "ja": "1704号室。空き家で電話が取られた。スピーカーの向こうで女がすすり泣く。",
+    "zh-CN": "1704室。空屋里有人接起了电话。扬声器那头，一个女人在抽泣。"
+  },
+  "당직 내선 17 · 03:20 발신측 보조 녹음.\n「차량 번호가 확인됐습니다. 내려와 주세요. 아직 현장에…」": {
+    "en": "Duty extension 17 · 03:20 caller-side backup recording.\n“We've identified the license plate. Please come down. Still at the scene…”",
+    "ja": "当直内線17 · 03:20発信側の補助録音。\n「車両番号が確認できました。下りてきてください。まだ現場に…」",
+    "zh-CN": "值班分机17 · 03:20呼出端备份录音。\n“已经确认车牌号码。请下来。还在现场……”"
+  },
+  "2803 · 응답 종료\n북쪽 문 잠금 해제": {
+    "en": "2803 · Response ended\nNorth door unlocked",
+    "ja": "2803 · 応答終了\n北側の扉を解錠",
+    "zh-CN": "2803 · 应答结束\n北门已解锁"
+  },
+  "우리 집에서 같은 목소리가 다시 들렸다. 북쪽 문의 잠금은 이미 풀려 있다.": {
+    "en": "The same voice came from my apartment again. The north door is already unlocked.",
+    "ja": "自分の家から、また同じ声がした。北側の扉の鍵はもう開いている。",
+    "zh-CN": "我家又传来了同样的声音。北门已经解锁了。"
+  },
+  "1704 · 울음 응답 종료": {
+    "en": "1704 · Sobbing response ended",
+    "ja": "1704 · 泣き声の応答終了",
+    "zh-CN": "1704 · 哭声应答结束"
+  },
+  "북쪽 문 잠금 해제 유지": {
+    "en": "North door remains unlocked",
+    "ja": "北側の扉は解錠状態",
+    "zh-CN": "北门保持解锁"
+  },
+  "그날의 수신 세대를 확인": {
+    "en": "Identify the unit called that night",
+    "ja": "あの日の着信先の住戸を確認",
+    "zh-CN": "确认那天接到电话的住户"
+  },
+  "1704호에서 울음이 들렸다. 잠금이 풀린 북쪽 문으로 나갈 수 있다.": {
+    "en": "Sobbing came from 1704. I can leave through the unlocked north door.",
+    "ja": "1704号室から泣き声がした。解錠された北側の扉から出られる。",
+    "zh-CN": "1704室传来哭声。可以从已经解锁的北门离开。"
+  },
+  "내선 17 · 녹음 안내 종료": {
+    "en": "Extension 17 · Recorded message ended",
+    "ja": "内線17 · 録音案内終了",
+    "zh-CN": "分机17 · 录音提示结束"
+  },
+  "그날의 수신 세대는 2803": {
+    "en": "The unit called that night was 2803",
+    "ja": "あの日の着信先は2803",
+    "zh-CN": "那天接到电话的是2803室"
+  },
+  "구내 전용 · 외부 발신 불가\n세대 4자리 / 내선 2자리": {
+    "en": "Internal use only · No external calls\nUnit: 4 digits / Extension: 2 digits",
+    "ja": "構内専用 · 外部発信不可\n住戸4桁 / 内線2桁",
+    "zh-CN": "内部专用 · 无法拨打外线\n房号4位 / 分机2位"
+  },
+  "구내 전용 단말이다. 여기서는 112·119 같은 외부 번호로 발신할 수 없다. 세대 번호나 당직 내선으로 걸어야 한다.": {
+    "en": "This is an internal terminal. It cannot call outside numbers like 112 or 119. Dial a unit number or the duty extension.",
+    "ja": "構内専用の端末だ。112・119など外部の番号には発信できない。住戸番号か当直の内線にかけよう。",
+    "zh-CN": "这是内部专用终端，无法拨打112、119等外线号码。得拨房号或值班分机。"
+  },
+  "등록되지 않은 번호\nCLEAR로 지우고 다시 입력": {
+    "en": "Unregistered number\nPress CLEAR and enter again",
+    "ja": "未登録の番号\nCLEARで消して再入力",
+    "zh-CN": "号码未登记\n按CLEAR清除后重新输入"
+  },
+  "교환기에서 짧은 통화 불가음만 돌아온다. 등록된 세대나 당직 내선을 확인하자.": {
+    "en": "Only a short failure tone comes from the switchboard. Check the registered units or duty extension.",
+    "ja": "交換機から短い通話不可音だけが返る。登録済みの住戸か当直の内線を確認しよう。",
+    "zh-CN": "总机只传回一声短促的无法接通提示音。确认登记的房号或值班分机。"
+  },
+  "스피커에서 내 목소리가 들린다.\n「잘못 거셨어요.」": {
+    "en": "My own voice comes from the speaker.\n“You have the wrong number.”",
+    "ja": "スピーカーから自分の声が聞こえる。\n「間違い電話ですよ。」",
+    "zh-CN": "扬声器里传来了我自己的声音。\n“你打错了。”"
+  },
+  "나는 입을 다물고 있는데…\n「잘못 거셨어요.」": {
+    "en": "My mouth is closed…\n“You have the wrong number.”",
+    "ja": "口を閉じたままなのに…\n「間違い電話ですよ。」",
+    "zh-CN": "我明明闭着嘴……\n“你打错了。”"
+  },
+  "문밖에서 손톱이 긁힌다. B1 주차장 표지의 방화문으로!": {
+    "en": "Nails scrape outside the door. Head for the fire door marked B1 Parking!",
+    "ja": "ドアの外で爪が引っかく。B1駐車場の表示がある防火扉へ！",
+    "zh-CN": "门外响起指甲抓挠声。快去标着B1停车场的防火门！"
+  },
+  "쾅! 철문 바로 너머에서 손톱이 긁힌다.": {
+    "en": "BANG! Nails scrape just beyond the iron door.",
+    "ja": "ドン！鉄扉のすぐ向こうで爪が引っかく。",
+    "zh-CN": "砰！铁门外紧贴着响起指甲抓挠声。"
+  },
+  "17… 12… 8… 층수가 내려간다.\n1704호 관리비 봉투의 이름이 떠오른다. 한서연. 정말 아래로 내려가고 있는 걸까.": {
+    "en": "17… 12… 8… The floors count down.\nI remember the name on 1704's maintenance-fee envelope. Han Seo-yeon. Am I really going down?",
+    "ja": "17…12…8…階数が下がる。\n1704号室の管理費封筒にあった名前が浮かぶ。ハン・ソヨン。本当に下りているのだろうか。",
+    "zh-CN": "17……12……8……楼层不断下降。\n我想起1704室物业费信封上的名字。韩瑞妍。我真的在往下走吗？"
+  },
+  "1층. 정문으로 나갈 수 있을까. 문이 열리고 있다.": {
+    "en": "1F. Can I get out through the front door? The doors are opening.",
+    "ja": "1階。正面玄関から出られるだろうか。扉が開いていく。",
+    "zh-CN": "1楼。能从正门出去吗？门正在打开。"
+  },
+  "수위가 내려갔다. 북쪽 주차장 연결문으로!": {
+    "en": "The water has receded. Head for the north connecting door to the parking garage!",
+    "ja": "水位が下がった。北側の駐車場連絡扉へ！",
+    "zh-CN": "水位降下来了。快去北侧通往停车场的连接门！"
+  },
+  "「뭐야, 이게…?」": {
+    "en": "“What… is this?”",
+    "ja": "「何だ、これ…？」",
+    "zh-CN": "“这……是什么？”"
+  },
+  "이 신발… 도로에 두고 왔는데.\n물자국이 집 안쪽으로 이어져 있다.": {
+    "en": "This shoe… I left it on the road.\nWet marks lead deeper into the apartment.",
+    "ja": "この靴…道路に置いてきたのに。\n水の跡が家の奥へ続いている。",
+    "zh-CN": "这只鞋……明明留在路上了。\n水渍一直延伸到屋里。"
+  },
+  "침실에서 라디오가 혼자 켜졌다.": {
+    "en": "The bedroom radio switched on by itself.",
+    "ja": "寝室のラジオが勝手についた。",
+    "zh-CN": "卧室的收音机自己打开了。"
+  },
+  "툭. TV와 조명이 동시에 꺼졌다.\n스마트폰 플래시를 켰다. 다용도실 차단기를 확인하자.": {
+    "en": "Click. The TV and lights went out together.\nI switched on my phone's flashlight. Check the utility room breaker.",
+    "ja": "プツッ。テレビと照明が同時に消えた。\nスマートフォンのライトをつけた。家事室のブレーカーを確認しよう。",
+    "zh-CN": "啪嗒。电视和灯同时熄灭。\n我打开手机手电筒。去检查杂物间的断路器。"
+  },
+  "현관은 닫혀 있다. 소리는 다용도실 안에서 난다.\n이미 집 안에 있었다. 장롱에 숨어야 한다.": {
+    "en": "The front door is closed. The sound is coming from inside the utility room.\nIt was already in the apartment. I have to hide in the wardrobe.",
+    "ja": "玄関は閉まっている。音は家事室の中からする。\nもう家の中にいた。クローゼットに隠れなければ。",
+    "zh-CN": "大门关着。声音来自杂物间里。\n它早就在屋内了。得藏进衣柜。"
+  },
+  "층수만 다를 뿐, 집 앞과 같은 복도다.": {
+    "en": "A different floor, but the same hallway as outside my home.",
+    "ja": "階数が違うだけで、家の前と同じ廊下だ。",
+    "zh-CN": "只是楼层不同，走廊和我家门前一模一样。"
+  },
+  "1층. 지하주차장은 계단으로 가야 한다.": {
+    "en": "1F. I need the stairs to reach underground parking.",
+    "ja": "1階。地下駐車場へは階段で行くしかない。",
+    "zh-CN": "1楼。去地下停车场得走楼梯。"
+  },
+  "문이 열렸다. 바로 들어가자.": {
+    "en": "The doors opened. Get in now.",
+    "ja": "扉が開いた。今すぐ入ろう。",
+    "zh-CN": "门开了。马上进去。"
+  },
+  "문이 닫혔다. 오른쪽 조작반에서 1층을 누르자.": {
+    "en": "The doors closed. Press 1F on the right-hand panel.",
+    "ja": "扉が閉まった。右側の操作盤で1階を押そう。",
+    "zh-CN": "门关上了。按右侧面板上的1楼。"
+  },
+  "27 … 26 … 25 …\n천장 위에서 무언가 천천히 긁고 있다.": {
+    "en": "27 … 26 … 25 …\nSomething slowly scratches above the ceiling.",
+    "ja": "27 … 26 … 25 …\n天井の上で何かがゆっくり引っかいている。",
+    "zh-CN": "27 … 26 … 25 …\n有什么东西在天花板上缓缓抓挠。"
+  },
+  "24층. 엘리베이터가 멈췄다. 호출 버튼도 먹통이다.\n문 가까이에서 E를 길게 눌러 벌려야 한다.": {
+    "en": "24F. The elevator stopped. Even the call button is dead.\nStand close to the doors and hold E to pry them open.",
+    "ja": "24階。エレベーターが止まった。呼び出しボタンも反応しない。\n扉の近くでEを長押ししてこじ開けよう。",
+    "zh-CN": "24楼。电梯停了，呼叫按钮也没反应。\n靠近门，长按E把门撬开。"
+  },
+  "현관 밖에서 손톱 긁는 소리가 들린다. 뒤쪽 연결문으로 빠져나가야 한다.": {
+    "en": "Nails scratch outside the front door. I have to escape through the connecting door at the back.",
+    "ja": "玄関の外から爪で引っかく音がする。奥の連絡扉から逃げなければ。",
+    "zh-CN": "大门外传来指甲抓挠声。得从后面的连接门逃出去。"
+  },
+  "「주소 확인했습니다. 그 자리에 계세요.」": {
+    "en": "“We've confirmed your address. Stay where you are.”",
+    "ja": "「住所を確認しました。その場にいてください。」",
+    "zh-CN": "“地址已确认。请留在原地。”"
+  },
+  "영상이 끝났다. 화면에 비친 사람은 여전히 둘이다.": {
+    "en": "The footage ended. There are still two people reflected in the screen.",
+    "ja": "映像が終わった。画面に映る人影はまだ二つある。",
+    "zh-CN": "录像结束了。屏幕上倒映的人影仍然是两个。"
+  },
+  "잠금쇠를 풀고 문을 밀었다. 복도로 나가야 한다!": {
+    "en": "I released the latch and pushed the door. I have to get into the hallway!",
+    "ja": "掛け金を外してドアを押した。廊下へ出なければ！",
+    "zh-CN": "我拉开门闩，推开门。得逃到走廊里！"
+  },
+  "공동현관. 경비실 옆으로 지하계단 표지가 이어진다.": {
+    "en": "The main entrance. Signs beside the security office lead to the basement stairs.",
+    "ja": "共用玄関。警備室の横に地下階段への表示が続いている。",
+    "zh-CN": "公共入口。保安室旁的标识指向地下楼梯。"
+  },
+  "철문이 닫힌다. 바깥에서 기어오는 소리가 빨라진다.": {
+    "en": "The iron door is closing. The crawling outside grows faster.",
+    "ja": "鉄扉が閉まる。外で這い寄る音が速くなる。",
+    "zh-CN": "铁门正在关闭。外面爬行的声音越来越快。"
+  },
+  "1층. 오른쪽 창 너머에 로비 정문이 보인다.\n왼쪽 안내판에서 나갈 길을 확인하자.": {
+    "en": "1F. The lobby's front doors are visible through the window on the right.\nCheck the sign on the left for a way out.",
+    "ja": "1階。右の窓の向こうにロビーの正面玄関が見える。\n左の案内板で出口への道を確認しよう。",
+    "zh-CN": "1楼。透过右侧窗户能看见大厅正门。\n看看左边的指示牌，找出去的路。"
+  },
+  "꺼져 있던 2호기 표시등이 켜져 있다. 이번에는 1층으로.": {
+    "en": "Elevator 2's dark indicator is now lit. This time, to 1F.",
+    "ja": "消えていた2号機の表示灯がついている。今度こそ1階へ。",
+    "zh-CN": "原本熄灭的2号电梯指示灯亮了。这次，去1楼。"
+  },
+  "연결문을 닫았다. 임시 관리실이다.\n야간 근무일지에서 그녀의 이름을 찾아보자.": {
+    "en": "I closed the connecting door. The temporary management office.\nLook for her name in the night duty log.",
+    "ja": "連絡扉を閉めた。臨時の管理室だ。\n夜間勤務日誌で彼女の名前を探そう。",
+    "zh-CN": "关上了连接门。这里是临时管理室。\n在夜间值班日志里找她的名字。"
+  },
+  "문을 닫을 틈이 없다. 복도 끝 엘리베이터로!": {
+    "en": "No time to close the door. Head for the elevator at the end of the hallway!",
+    "ja": "ドアを閉める暇がない。廊下の突き当たりのエレベーターへ！",
+    "zh-CN": "没时间关门了。快去走廊尽头的电梯！"
+  },
+  "탔다. 문이 닫히고 있다.": {
+    "en": "I'm in. The doors are closing.",
+    "ja": "乗れた。扉が閉まっていく。",
+    "zh-CN": "进来了。门正在关闭。"
+  },
+  "호출 중": {
+    "en": "Calling",
+    "ja": "呼び出し中",
+    "zh-CN": "呼叫中"
+  },
+  "녹음 안내 · CLEAR 종료": {
+    "en": "Recorded message · CLEAR to end",
+    "ja": "録音案内 · CLEARで終了",
+    "zh-CN": "录音提示 · CLEAR结束"
+  },
+  "응답 중 · CLEAR로 종료": {
+    "en": "Connected · CLEAR to end",
+    "ja": "応答中 · CLEARで終了",
+    "zh-CN": "应答中 · CLEAR结束"
+  },
+  "수신 응답 대기": {
+    "en": "Waiting for answer",
+    "ja": "応答待ち",
+    "zh-CN": "等待接听"
+  },
+  "세대 4자리 / 내선 2자리 → CALL\n당직 녹음 내선 17 · 구내 전용": {
+    "en": "Unit: 4 digits / Extension: 2 digits → CALL\nDuty recording: extension 17 · Internal only",
+    "ja": "住戸4桁 / 内線2桁 → CALL\n当直録音は内線17 · 構内専用",
+    "zh-CN": "房号4位 / 分机2位 → CALL\n值班录音分机17 · 内部专用"
+  },
+  "통신 전원 없음\n동측 통신실 전원함 확인": {
+    "en": "No communications power\nCheck the power box in the east communications room",
+    "ja": "通信電源なし\n東側通信室の電源箱を確認",
+    "zh-CN": "通信电源未接通\n检查东侧通信室的电源箱"
+  }
+}

@@ -1,0 +1,1107 @@
+{
+  "숨을 참는 중": {
+    "en": "Holding breath",
+    "ja": "息を止めている",
+    "zh-CN": "正在屏息"
+  },
+  "호흡을 가다듬는 중": {
+    "en": "Catching your breath",
+    "ja": "息を整えている",
+    "zh-CN": "正在调整呼吸"
+  },
+  "누르고 숨 참기": {
+    "en": "Hold to hold your breath",
+    "ja": "長押しで息を止める",
+    "zh-CN": "长按屏息"
+  },
+  "남은 숨": {
+    "en": "Breath remaining",
+    "ja": "残りの息",
+    "zh-CN": "剩余气息"
+  },
+  "숨 참기": {
+    "en": "Hold breath",
+    "ja": "息を止める",
+    "zh-CN": "屏息"
+  },
+  "03:17 · 마지막 충돌": {
+    "en": "03:17 · The final crash",
+    "ja": "03:17 · 最後の衝突",
+    "zh-CN": "03:17 · 最后的碰撞"
+  },
+  "운전자는 현장에서 사망했다.": {
+    "en": "The driver died at the scene.",
+    "ja": "運転手は現場で死亡した。",
+    "zh-CN": "司机当场死亡。"
+  },
+  "아파트 앞 도로. 덤프트럭과 승용차의 정면충돌.\n현장에서 확인된 탑승자는 한 명이었다.": {
+    "en": "On the road outside the apartments, a car collided head-on with a dump truck.\nOnly one occupant was found at the scene.",
+    "ja": "アパート前の道路。ダンプカーと乗用車の正面衝突。\n現場で確認された乗員は一人だった。",
+    "zh-CN": "公寓前的道路上，轿车与自卸卡车正面相撞。\n现场只发现了一名乘员。"
+  },
+  "경찰 현장 조사 · 조수석": {
+    "en": "Police investigation · Passenger seat",
+    "ja": "警察の現場検証 · 助手席",
+    "zh-CN": "警方现场调查 · 副驾驶座"
+  },
+  "그 자리는 비어 있었다.": {
+    "en": "The seat was empty.",
+    "ja": "その席は空だった。",
+    "zh-CN": "那个座位是空的。"
+  },
+  "젖은 시트에는 아무도 없었다.\n경찰은 조수석 다시방에서 「여보에게」라고 쓴 봉투를 발견했다.\n아내가 사고 전에 넣어 둔 편지였다.": {
+    "en": "There was no one on the wet seat.\nIn the glove compartment, police found an envelope marked “To my husband.”\nMy wife had left the letter there before the accident.",
+    "ja": "濡れたシートには誰もいなかった。\n警察は助手席のグローブボックスで「あなたへ」と書かれた封筒を見つけた。\n妻が事故の前に入れておいた手紙だった。",
+    "zh-CN": "潮湿的座位上没有人。\n警方在副驾驶前的手套箱里发现了一个写着“致亲爱的”的信封。\n那是妻子在事故前放进去的信。"
+  },
+  "경찰이 회수한 편지 · 아내 한서연": {
+    "en": "Letter recovered by police · My wife, Han Seo-yeon",
+    "ja": "警察が回収した手紙 · 妻、ハン・ソヨン",
+    "zh-CN": "警方取回的信 · 妻子韩瑞妍"
+  },
+  "함께 살아갈 내일을 기다리며.": {
+    "en": "Waiting for a tomorrow we could share.",
+    "ja": "ともに生きる明日を待ちながら。",
+    "zh-CN": "等待着共同生活的明天。"
+  },
+  "{0}분 {1}초": {
+    "en": "{0}m {1}s",
+    "ja": "{0}分 {1}秒",
+    "zh-CN": "{0}分{1}秒"
+  },
+  "재시도 화면": {
+    "en": "Retry screen",
+    "ja": "再挑戦画面",
+    "zh-CN": "重试画面"
+  },
+  "끝나지 않은 밤": {
+    "en": "The night is not over",
+    "ja": "終わらない夜",
+    "zh-CN": "尚未结束的夜晚"
+  },
+  "발소리가 멎었다.": {
+    "en": "The footsteps stopped.",
+    "ja": "足音が止まった。",
+    "zh-CN": "脚步声停了。"
+  },
+  "해당 구간부터 다시 시작합니다. 읽은 기록은 남습니다.": {
+    "en": "Resume from this checkpoint. Read records are kept.",
+    "ja": "この区間から再開します。読んだ記録は残ります。",
+    "zh-CN": "从此检查点重新开始，已读记录将保留。"
+  },
+  "귀가 후일담": {
+    "en": "Homecoming epilogue",
+    "ja": "帰家の後日談",
+    "zh-CN": "归家后记"
+  },
+  "백로아파트 · 귀가 기록": {
+    "en": "Baekro Apartments · Homecoming record",
+    "ja": "白鷺アパート · 帰家の記録",
+    "zh-CN": "白鹭公寓 · 归家记录"
+  },
+  "후일담 건너뛰기": {
+    "en": "Skip epilogue",
+    "ja": "後日談をスキップ",
+    "zh-CN": "跳过后记"
+  },
+  "귀가": {
+    "en": "Homecoming",
+    "ja": "帰家",
+    "zh-CN": "归家"
+  },
+  "배드 엔딩 · 03:17": {
+    "en": "Bad ending · 03:17",
+    "ja": "バッドエンド · 03:17",
+    "zh-CN": "坏结局 · 03:17"
+  },
+  "남겨진 편지": {
+    "en": "The Letter Left Behind",
+    "ja": "残された手紙",
+    "zh-CN": "留下的信"
+  },
+  "아내는 함께 돌아올 내일을 기다렸고,": {
+    "en": "My wife waited for a tomorrow we would share.",
+    "ja": "妻はともに帰る明日を待ち、",
+    "zh-CN": "妻子等待着一同归来的明天，"
+  },
+  "나는 끝내 혼자 달아나려 했다.": {
+    "en": "Even then, I tried to run away alone.",
+    "ja": "私は最後まで一人で逃げようとした。",
+    "zh-CN": "而我到最后仍想独自逃走。"
+  },
+  "처음부터 다시": {
+    "en": "Start over",
+    "ja": "最初から",
+    "zh-CN": "重新开始"
+  },
+  "후일담 다시 보기": {
+    "en": "Replay epilogue",
+    "ja": "後日談をもう一度",
+    "zh-CN": "重看后记"
+  },
+  "보존된 마지막 기록": {
+    "en": "The final preserved record",
+    "ja": "保全された最後の記録",
+    "zh-CN": "保存下来的最后记录"
+  },
+  "미전달": {
+    "en": "Undelivered",
+    "ja": "未配達",
+    "zh-CN": "未送达"
+  },
+  "백로아파트 2803호 · 수신인, 남편": {
+    "en": "Baekro Apartments, Unit 2803 · To my husband",
+    "ja": "白鷺アパート2803号室 · 宛先、夫",
+    "zh-CN": "白鹭公寓2803室 · 收件人：丈夫"
+  },
+  "봉투 안에 남은 것": {
+    "en": "What remained in the envelope",
+    "ja": "封筒に残されたもの",
+    "zh-CN": "留在信封里的东西"
+  },
+  "마지막 기록 ·": {
+    "en": "Final record ·",
+    "ja": "最後の記録 ·",
+    "zh-CN": "最后记录 ·"
+  },
+  "경찰이 회수한 편지 전문": {
+    "en": "The recovered letter, in full",
+    "ja": "警察が回収した手紙の全文",
+    "zh-CN": "警方取回的信件全文"
+  },
+  "크레딧": {
+    "en": "Credits",
+    "ja": "クレジット",
+    "zh-CN": "制作名单"
+  },
+  "귀가 (歸家) · 한밤의 귀가 기록": {
+    "en": "Homecoming (歸家) · A record of a midnight return",
+    "ja": "帰家 (歸家) · 真夜中の帰家記録",
+    "zh-CN": "归家 (歸家) · 午夜归家记录"
+  },
+  "주요 음향 자료": {
+    "en": "Principal sound sources",
+    "ja": "主な音響素材",
+    "zh-CN": "主要音效素材"
+  },
+  "여성 흐느낌": {
+    "en": "Female sobbing",
+    "ja": "女性のすすり泣き",
+    "zh-CN": "女性啜泣声"
+  },
+  "· WAV 변환, 가장자리 페이드, 음량 조정": {
+    "en": "· Converted to WAV, edge fades, volume adjusted",
+    "ja": "· WAV変換、両端のフェード、音量調整",
+    "zh-CN": "· 转为WAV、首尾淡化、音量调整"
+  },
+  "주요 환경 질감": {
+    "en": "Principal environment textures",
+    "ja": "主な環境テクスチャ",
+    "zh-CN": "主要环境贴图"
+  },
+  "마지막 충돌 · 후일담 음악": {
+    "en": "Final crash · Epilogue music",
+    "ja": "最後の衝突 · 後日談の音楽",
+    "zh-CN": "最终碰撞 · 后记音乐"
+  },
+  "오리지널 합성 음향 · 「남겨진 편지」": {
+    "en": "Original synthesized audio · “The Letter Left Behind”",
+    "ja": "オリジナル合成音響 · 「残された手紙」",
+    "zh-CN": "原创合成音效 ·《留下的信》"
+  },
+  "CC0 · 외부 샘플 및 기존 곡 사용 없음": {
+    "en": "CC0 · No external samples or existing music",
+    "ja": "CC0 · 外部サンプル・既存曲は不使用",
+    "zh-CN": "CC0 · 未使用外部采样或现有曲目"
+  },
+  "추격 음악": {
+    "en": "Chase music",
+    "ja": "追跡時の音楽",
+    "zh-CN": "追逐音乐"
+  },
+  "오리지널 합성 작곡 · 144 BPM": {
+    "en": "Original synthesized composition · 144 BPM",
+    "ja": "オリジナル合成楽曲 · 144 BPM",
+    "zh-CN": "原创合成曲 · 144 BPM"
+  },
+  "외부 샘플 및 기존 곡 사용 없음": {
+    "en": "No external samples or existing music",
+    "ja": "外部サンプル・既存曲は不使用",
+    "zh-CN": "未使用外部采样或现有曲目"
+  },
+  "후일담 장면": {
+    "en": "Epilogue scenes",
+    "ja": "後日談の場面",
+    "zh-CN": "后记场景"
+  },
+  "게임 속 차량과 도로의 3D 장면": {
+    "en": "3D scenes using the game's vehicles and road",
+    "ja": "ゲーム内の車両と道路を使った3Dシーン",
+    "zh-CN": "使用游戏内车辆与道路的3D场景"
+  },
+  "귀가 (歸家)": {
+    "en": "Homecoming (歸家)",
+    "ja": "帰家 (歸家)",
+    "zh-CN": "归家 (歸家)"
+  },
+  "기록 종료": {
+    "en": "End of record",
+    "ja": "記録終了",
+    "zh-CN": "记录结束"
+  },
+  "마지막으로 남은 것": {
+    "en": "What was left behind",
+    "ja": "最後に残されたもの",
+    "zh-CN": "最后留下的东西"
+  },
+  "현재 목표": {
+    "en": "Current objective",
+    "ja": "現在の目標",
+    "zh-CN": "当前目标"
+  },
+  "해야 할 일": {
+    "en": "What to do",
+    "ja": "するべきこと",
+    "zh-CN": "待办事项"
+  },
+  "새 목표 안내": {
+    "en": "New objective",
+    "ja": "新しい目標",
+    "zh-CN": "新目标提示"
+  },
+  "잊지 마.": {
+    "en": "Don't forget.",
+    "ja": "忘れるな。",
+    "zh-CN": "别忘了。"
+  },
+  "숨 고르기": {
+    "en": "Catch your breath",
+    "ja": "息を整える",
+    "zh-CN": "调整呼吸"
+  },
+  "달리기 가능": {
+    "en": "Ready to sprint",
+    "ja": "走れる",
+    "zh-CN": "可以奔跑"
+  },
+  "체력": {
+    "en": "Stamina",
+    "ja": "スタミナ",
+    "zh-CN": "体力"
+  },
+  "달리기 체력": {
+    "en": "Running stamina",
+    "ja": "走行スタミナ",
+    "zh-CN": "奔跑体力"
+  },
+  "· 걸으며 회복 중": {
+    "en": "· Recovering while walking",
+    "ja": "· 歩いて回復中",
+    "zh-CN": "· 行走中恢复"
+  },
+  "아직 적어 둔 기록이 없다.": {
+    "en": "No records yet.",
+    "ja": "まだ記録がない。",
+    "zh-CN": "尚无记录。"
+  },
+  "발견한 문서와 직접 확인한 사실이 여기에 남습니다.": {
+    "en": "Documents and facts you discover are kept here.",
+    "ja": "発見した文書や自分で確認した事実がここに残ります。",
+    "zh-CN": "发现的文书和亲自确认的事实将保存在这里。"
+  },
+  "조사 수첩": {
+    "en": "Investigation notebook",
+    "ja": "調査ノート",
+    "zh-CN": "调查笔记"
+  },
+  "백로아파트 · 내가 확인한 것": {
+    "en": "Baekro Apartments · What I have verified",
+    "ja": "白鷺アパート · 確かめたこと",
+    "zh-CN": "白鹭公寓 · 我确认的事实"
+  },
+  "그날 밤의 순서": {
+    "en": "The sequence of that night",
+    "ja": "あの夜の順序",
+    "zh-CN": "那一夜的经过"
+  },
+  "개의 기록": {
+    "en": " records",
+    "ja": "件の記録",
+    "zh-CN": "条记录"
+  },
+  "수첩 닫기": {
+    "en": "Close notebook",
+    "ja": "ノートを閉じる",
+    "zh-CN": "关闭笔记"
+  },
+  "사고 시간대 정리": {
+    "en": "Accident timeline",
+    "ja": "事故の時系列",
+    "zh-CN": "事故时间线"
+  },
+  "아직 그날의 시간대를 대조할 기록은 없다.": {
+    "en": "No records to compare that night's timeline yet.",
+    "ja": "まだあの夜の時系列を照合できる記録がない。",
+    "zh-CN": "尚无可对照当晚时间线的记录。"
+  },
+  "남겨진 생활": {
+    "en": "A life left behind",
+    "ja": "残された暮らし",
+    "zh-CN": "留下的生活痕迹"
+  },
+  "아직 확인하지 못한 것": {
+    "en": "Still unverified",
+    "ja": "まだ確かめていないこと",
+    "zh-CN": "尚未确认的事"
+  },
+  "세 기록에서 반복되는 일": {
+    "en": "What the three records have in common",
+    "ja": "三つの記録に繰り返されること",
+    "zh-CN": "三份记录中重复出现的事"
+  },
+  "발견한 문서와 기록": {
+    "en": "Documents and records found",
+    "ja": "見つけた文書と記録",
+    "zh-CN": "发现的文书与记录"
+  },
+  "장소를 펼쳐 원문을 다시 읽을 수 있습니다.": {
+    "en": "Expand a location to reread the original records.",
+    "ja": "場所を開くと原文を読み返せます。",
+    "zh-CN": "展开地点可重读原始记录。"
+  },
+  "귀가 · 03:17": {
+    "en": "Homecoming · 03:17",
+    "ja": "帰家 · 03:17",
+    "zh-CN": "归家 · 03:17"
+  },
+  "음주운전 뺑소니 사고 사흘 뒤, 함께 귀가한 원혼이 찾아온다. 오래된 고층 아파트에서 펼쳐지는 1인칭 공포게임.": {
+    "en": "Three days after a drunk-driving hit-and-run, the spirit that followed you home returns. A first-person horror game set in an aging high-rise apartment building.",
+    "ja": "飲酒運転のひき逃げ事故から三日後、ともに帰ってきた怨霊が訪れる。古い高層アパートが舞台の一人称ホラーゲーム。",
+    "zh-CN": "酒驾肇事逃逸的三天后，一同归家的怨魂找上门来。以老旧高层公寓为背景的第一人称恐怖游戏。"
+  },
+  "게임 자료를 불러오는 중": {
+    "en": "Loading game data",
+    "ja": "ゲームデータを読み込み中",
+    "zh-CN": "正在加载游戏数据"
+  },
+  "공간의 질감을 준비하는 중": {
+    "en": "Preparing environment textures",
+    "ja": "環境テクスチャを準備中",
+    "zh-CN": "正在准备环境贴图"
+  },
+  "공간과 조명을 준비하는 중": {
+    "en": "Preparing rooms and lighting",
+    "ja": "空間と照明を準備中",
+    "zh-CN": "正在准备场景与灯光"
+  },
+  "화면을 열 수 없습니다. 하드웨어 가속을 지원하는 최신 브라우저에서 다시 열어주세요.": {
+    "en": "The game could not start. Reopen it in an up-to-date browser with hardware acceleration.",
+    "ja": "画面を開けません。ハードウェアアクセラレーション対応の最新ブラウザで開き直してください。",
+    "zh-CN": "无法启动游戏。请使用支持硬件加速的最新版浏览器重新打开。"
+  },
+  "게임을 불러오지 못했습니다. 연결을 확인하고 다시 불러와 주세요.": {
+    "en": "Could not load the game. Check your connection and reload.",
+    "ja": "ゲームを読み込めませんでした。接続を確認して再読み込みしてください。",
+    "zh-CN": "游戏加载失败。请检查网络连接后重新加载。"
+  },
+  "조작 안내": {
+    "en": "Controls",
+    "ja": "操作ガイド",
+    "zh-CN": "操作说明"
+  },
+  "이동": {
+    "en": "Move",
+    "ja": "移動",
+    "zh-CN": "移动"
+  },
+  "달리기": {
+    "en": "Run",
+    "ja": "走る",
+    "zh-CN": "奔跑"
+  },
+  "확인 · 숨기": {
+    "en": "Interact · Hide",
+    "ja": "調べる · 隠れる",
+    "zh-CN": "调查 · 躲藏"
+  },
+  "스마트폰 플래시": {
+    "en": "Phone flashlight",
+    "ja": "スマホのライト",
+    "zh-CN": "手机手电筒"
+  },
+  "몸 낮추기": {
+    "en": "Crouch",
+    "ja": "しゃがむ",
+    "zh-CN": "蹲下"
+  },
+  "일시정지": {
+    "en": "Paused",
+    "ja": "一時停止",
+    "zh-CN": "暂停"
+  },
+  "마우스 또는 화면 드래그로 둘러봅니다. 터치 화면에서는 이동 버튼과 「달리기 ↑」를 사용하세요.": {
+    "en": "Look around with the mouse or by dragging the screen. On touchscreens, use the movement buttons and “Run ↑”.",
+    "ja": "マウスや画面のドラッグで見回します。タッチ画面では移動ボタンと「走る ↑」を使ってください。",
+    "zh-CN": "用鼠标或拖动画面环顾四周。触屏设备请使用移动按钮和“奔跑 ↑”。"
+  },
+  "소리": {
+    "en": "Audio",
+    "ja": "サウンド",
+    "zh-CN": "声音"
+  },
+  "전체 음량": {
+    "en": "Master volume",
+    "ja": "全体音量",
+    "zh-CN": "主音量"
+  },
+  "배경 음악": {
+    "en": "Music",
+    "ja": "BGM",
+    "zh-CN": "背景音乐"
+  },
+  "환경 · 효과음": {
+    "en": "Ambience · Effects",
+    "ja": "環境音 · 効果音",
+    "zh-CN": "环境音 · 音效"
+  },
+  "목소리 · 비명": {
+    "en": "Voices · Screams",
+    "ja": "声 · 悲鳴",
+    "zh-CN": "语音 · 尖叫"
+  },
+  "화면 · 자막": {
+    "en": "Display · Subtitles",
+    "ja": "画面 · 字幕",
+    "zh-CN": "画面 · 字幕"
+  },
+  "화면 밝기": {
+    "en": "Brightness",
+    "ja": "画面の明るさ",
+    "zh-CN": "画面亮度"
+  },
+  "시야각": {
+    "en": "Field of view",
+    "ja": "視野角",
+    "zh-CN": "视野"
+  },
+  "자막 크기": {
+    "en": "Subtitle size",
+    "ja": "字幕サイズ",
+    "zh-CN": "字幕大小"
+  },
+  "목표 안내 표시": {
+    "en": "Show objectives",
+    "ja": "目標を表示",
+    "zh-CN": "显示目标提示"
+  },
+  "필름 질감": {
+    "en": "Film grain",
+    "ja": "フィルム粒子",
+    "zh-CN": "胶片颗粒"
+  },
+  "걸을 때 카메라 흔들림": {
+    "en": "Head bob while walking",
+    "ja": "歩行時のカメラ揺れ",
+    "zh-CN": "行走时镜头晃动"
+  },
+  "화면 흔들림 · 점멸 줄이기": {
+    "en": "Reduce motion · Flashing",
+    "ja": "揺れ・点滅を減らす",
+    "zh-CN": "减少晃动与闪烁"
+  },
+  "조작": {
+    "en": "Input",
+    "ja": "操作",
+    "zh-CN": "控制"
+  },
+  "시점 감도": {
+    "en": "Look sensitivity",
+    "ja": "視点感度",
+    "zh-CN": "视角灵敏度"
+  },
+  "키를 누른 뒤 새 키를 입력하세요. ESC는 취소, J는 기록입니다.": {
+    "en": "Select a binding, then press a new key. ESC cancels; J opens the notebook.",
+    "ja": "割り当てを選んで新しいキーを押してください。ESCでキャンセル、Jは記録です。",
+    "zh-CN": "选择按键后按下新键。ESC取消，J打开笔记。"
+  },
+  "이미 사용 중이거나 예약된 키입니다. 다른 키를 입력하세요.": {
+    "en": "That key is already assigned or reserved. Choose another.",
+    "ja": "使用中または予約済みのキーです。別のキーを押してください。",
+    "zh-CN": "此键已被使用或保留，请选择其他按键。"
+  },
+  "입력…": {
+    "en": "Press a key…",
+    "ja": "キーを入力…",
+    "zh-CN": "请按键…"
+  },
+  "설정과 구간 진행은 이 브라우저에 저장됩니다.": {
+    "en": "Settings and checkpoint progress are saved in this browser.",
+    "ja": "設定と区間の進行状況はこのブラウザに保存されます。",
+    "zh-CN": "设置和检查点进度保存在此浏览器中。"
+  },
+  "정전된 아파트를 탐색하는 1인칭 공포게임 화면": {
+    "en": "First-person horror game exploring a blacked-out apartment building",
+    "ja": "停電したアパートを探索する一人称ホラーゲーム画面",
+    "zh-CN": "探索停电公寓的第一人称恐怖游戏画面"
+  },
+  "다음 공간 준비": {
+    "en": "Preparing the next area",
+    "ja": "次の空間を準備中",
+    "zh-CN": "准备下一区域"
+  },
+  "문 너머의 공간을 준비하고 있습니다…": {
+    "en": "Preparing the space beyond the door…",
+    "ja": "扉の向こうの空間を準備しています…",
+    "zh-CN": "正在准备门后的空间…"
+  },
+  "준비하는 동안 시간과 추격이 멈춥니다.": {
+    "en": "Time and pursuit are paused while loading.",
+    "ja": "準備中は時間と追跡が止まります。",
+    "zh-CN": "加载期间时间与追逐将暂停。"
+  },
+  "다시 시도": {
+    "en": "Try again",
+    "ja": "再試行",
+    "zh-CN": "重试"
+  },
+  "제": {
+    "en": "Chapter",
+    "ja": "第",
+    "zh-CN": "第"
+  },
+  "장 ·": {
+    "en": " ·",
+    "ja": "章 ·",
+    "zh-CN": "章 ·"
+  },
+  "운전석 탑승": {
+    "en": "Enter driver's seat",
+    "ja": "運転席に乗る",
+    "zh-CN": "坐进驾驶座"
+  },
+  "문 벌리기": {
+    "en": "Pry the door open",
+    "ja": "扉をこじ開ける",
+    "zh-CN": "撬开门"
+  },
+  "수첩": {
+    "en": "Notebook",
+    "ja": "ノート",
+    "zh-CN": "笔记"
+  },
+  "스마트폰 없음": {
+    "en": "No phone",
+    "ja": "スマホなし",
+    "zh-CN": "没有手机"
+  },
+  "켜짐": {
+    "en": "On",
+    "ja": "オン",
+    "zh-CN": "开启"
+  },
+  "꺼짐": {
+    "en": "Off",
+    "ja": "オフ",
+    "zh-CN": "关闭"
+  },
+  "· 몸을 낮춤": {
+    "en": "· Crouching",
+    "ja": "· しゃがみ中",
+    "zh-CN": "· 蹲下中"
+  },
+  "앞으로 이동": {
+    "en": "Move forward",
+    "ja": "前に移動",
+    "zh-CN": "向前移动"
+  },
+  "왼쪽 이동": {
+    "en": "Move left",
+    "ja": "左に移動",
+    "zh-CN": "向左移动"
+  },
+  "뒤로 이동": {
+    "en": "Move backward",
+    "ja": "後ろに移動",
+    "zh-CN": "向后移动"
+  },
+  "오른쪽 이동": {
+    "en": "Move right",
+    "ja": "右に移動",
+    "zh-CN": "向右移动"
+  },
+  "앞으로 달리기": {
+    "en": "Run forward",
+    "ja": "前へ走る",
+    "zh-CN": "向前奔跑"
+  },
+  "달리기 ↑": {
+    "en": "Run ↑",
+    "ja": "走る ↑",
+    "zh-CN": "奔跑 ↑"
+  },
+  "일어서기": {
+    "en": "Stand up",
+    "ja": "立つ",
+    "zh-CN": "站起"
+  },
+  "스마트폰 플래시 전환": {
+    "en": "Toggle phone flashlight",
+    "ja": "スマホのライト切替",
+    "zh-CN": "切换手机手电筒"
+  },
+  "길게 눌러 탑승": {
+    "en": "Hold to get in",
+    "ja": "長押しで乗る",
+    "zh-CN": "长按上车"
+  },
+  "길게 누르기": {
+    "en": "Hold",
+    "ja": "長押し",
+    "zh-CN": "长按"
+  },
+  "확인": {
+    "en": "Interact",
+    "ja": "調べる",
+    "zh-CN": "调查"
+  },
+  "사흘 전의 기억": {
+    "en": "Memory of three days ago",
+    "ja": "三日前の記憶",
+    "zh-CN": "三天前的记忆"
+  },
+  "마지막 귀가": {
+    "en": "The last homecoming",
+    "ja": "最後の帰家",
+    "zh-CN": "最后的归家"
+  },
+  "기억 건너뛰기": {
+    "en": "Skip memory",
+    "ja": "記憶をスキップ",
+    "zh-CN": "跳过回忆"
+  },
+  "사흘 뒤": {
+    "en": "Three days later",
+    "ja": "三日後",
+    "zh-CN": "三天后"
+  },
+  "28층 2803호 · 03:17": {
+    "en": "28F, Unit 2803 · 03:17",
+    "ja": "28階2803号室 · 03:17",
+    "zh-CN": "28层2803室 · 03:17"
+  },
+  "일시정지 메뉴 열기": {
+    "en": "Open pause menu",
+    "ja": "一時停止メニューを開く",
+    "zh-CN": "打开暂停菜单"
+  },
+  "메뉴": {
+    "en": "Menu",
+    "ja": "メニュー",
+    "zh-CN": "菜单"
+  },
+  "재시도 화면으로": {
+    "en": "Go to retry screen",
+    "ja": "再挑戦画面へ",
+    "zh-CN": "前往重试画面"
+  },
+  "알림 닫기": {
+    "en": "Dismiss notification",
+    "ja": "通知を閉じる",
+    "zh-CN": "关闭通知"
+  },
+  "계속하기": {
+    "en": "Resume",
+    "ja": "再開",
+    "zh-CN": "继续"
+  },
+  "일시정지 탐색": {
+    "en": "Pause menu navigation",
+    "ja": "一時停止メニューの移動",
+    "zh-CN": "暂停菜单导航"
+  },
+  "환경 설정": {
+    "en": "Settings",
+    "ja": "設定",
+    "zh-CN": "设置"
+  },
+  "수집한 기록": {
+    "en": "Collected records",
+    "ja": "集めた記録",
+    "zh-CN": "收集的记录"
+  },
+  "전체 화면": {
+    "en": "Fullscreen",
+    "ja": "全画面表示",
+    "zh-CN": "全屏"
+  },
+  "귀가 시작 화면": {
+    "en": "Homecoming title screen",
+    "ja": "帰家のタイトル画面",
+    "zh-CN": "归家标题画面"
+  },
+  "백로아파트": {
+    "en": "Baekro Apartments",
+    "ja": "白鷺アパート",
+    "zh-CN": "白鹭公寓"
+  },
+  "28층": {
+    "en": "28F",
+    "ja": "28階",
+    "zh-CN": "28层"
+  },
+  "2803호": {
+    "en": "Unit 2803",
+    "ja": "2803号室",
+    "zh-CN": "2803室"
+  },
+  "한밤의 귀가 기록": {
+    "en": "A record of a midnight return",
+    "ja": "真夜中の帰家記録",
+    "zh-CN": "午夜归家记录"
+  },
+  "분명, 혼자 돌아왔는데.": {
+    "en": "I was sure I came home alone.",
+    "ja": "確かに、一人で帰ってきたはずなのに。",
+    "zh-CN": "明明，是一个人回来的。"
+  },
+  "다시 불러오기": {
+    "en": "Reload",
+    "ja": "再読み込み",
+    "zh-CN": "重新加载"
+  },
+  "← 시작 화면으로": {
+    "en": "← Back to title",
+    "ja": "← タイトルへ",
+    "zh-CN": "← 返回标题"
+  },
+  "게임 시작 메뉴": {
+    "en": "Start menu",
+    "ja": "開始メニュー",
+    "zh-CN": "开始菜单"
+  },
+  "이어하기": {
+    "en": "Continue",
+    "ja": "続きから",
+    "zh-CN": "继续游戏"
+  },
+  "· 저장된 기록": {
+    "en": "· Saved progress",
+    "ja": "· 保存した記録",
+    "zh-CN": "· 已保存进度"
+  },
+  "새 게임": {
+    "en": "New game",
+    "ja": "ニューゲーム",
+    "zh-CN": "新游戏"
+  },
+  "헤드폰 권장": {
+    "en": "Headphones recommended",
+    "ja": "ヘッドホン推奨",
+    "zh-CN": "建议佩戴耳机"
+  },
+  "1인칭 공포 · 혼자 플레이": {
+    "en": "First-person horror · Single player",
+    "ja": "一人称ホラー · 一人用",
+    "zh-CN": "第一人称恐怖 · 单人游戏"
+  },
+  "28층과 비상계단": {
+    "en": "28F and the emergency stairs",
+    "ja": "28階と非常階段",
+    "zh-CN": "28层与应急楼梯"
+  },
+  "가족 · 남겨진 생활": {
+    "en": "Family · A life left behind",
+    "ja": "家族 · 残された暮らし",
+    "zh-CN": "家人 · 留下的生活痕迹"
+  },
+  "임시 관리실": {
+    "en": "Temporary management office",
+    "ja": "仮設管理室",
+    "zh-CN": "临时管理室"
+  },
+  "중정 · 인계 기록": {
+    "en": "Courtyard · Handover records",
+    "ja": "中庭 · 引継ぎ記録",
+    "zh-CN": "中庭 · 交接记录"
+  },
+  "관리사무소 · 미수령 우편": {
+    "en": "Management office · Unclaimed mail",
+    "ja": "管理事務所 · 未受領の郵便",
+    "zh-CN": "管理处 · 未领取邮件"
+  },
+  "지하계단 · 출입 홀": {
+    "en": "Basement stairs · Entrance hall",
+    "ja": "地下階段 · 出入口ホール",
+    "zh-CN": "地下楼梯 · 出入口大厅"
+  },
+  "주차장": {
+    "en": "Parking garage",
+    "ja": "駐車場",
+    "zh-CN": "停车场"
+  },
+  "그 밖의 기록": {
+    "en": "Other records",
+    "ja": "その他の記録",
+    "zh-CN": "其他记录"
+  },
+  "돌아오겠다는 말": {
+    "en": "A promise to come home",
+    "ja": "帰るという言葉",
+    "zh-CN": "说好要回家"
+  },
+  "「거의 다 왔어. 먼저 자. 내일 전화할게.」 집에 돌아와 지킬 약속이 있었다.": {
+    "en": "“I'm almost home. Go to sleep. I'll call tomorrow.” There was a promise to keep after coming home.",
+    "ja": "「もうすぐ着くよ。先に寝てて。明日電話するね」帰ってから果たす約束があった。",
+    "zh-CN": "“快到了，你先睡吧。明天给你打电话。”回家后，还有要兑现的承诺。"
+  },
+  "직접 들은 음성메시지": {
+    "en": "Voicemail heard firsthand",
+    "ja": "自分で聞いた音声メッセージ",
+    "zh-CN": "亲耳听到的语音留言"
+  },
+  "늦게 켜진 제동등": {
+    "en": "Brake lights too late",
+    "ja": "遅れて点いたブレーキランプ",
+    "zh-CN": "亮得太迟的刹车灯"
+  },
+  "횡단보도의 충돌": {
+    "en": "The collision at the crossing",
+    "ja": "横断歩道での衝突",
+    "zh-CN": "人行横道上的碰撞"
+  },
+  "보행 신호는 녹색이었다. 제동등은 충돌 직전에야 켜졌다. 갑자기 뛰어들었다는 내 기억과 다르다.": {
+    "en": "The pedestrian light was green. The brake lights came on only just before impact. She had not run out suddenly, as I remembered.",
+    "ja": "歩行者信号は青だった。ブレーキランプは衝突の直前にようやく点いた。突然飛び出してきたという私の記憶とは違う。",
+    "zh-CN": "行人信号是绿灯，刹车灯直到碰撞前一刻才亮起。这与我记忆中她突然冲出来的情景不同。"
+  },
+  "술을 마시고 운전했다. 사람을 친 뒤 현장을 떠났다. 충돌 직전의 상황은 원본과 대조하지 않았다.": {
+    "en": "I drove drunk, hit someone, and left the scene. I have not compared the moments before impact with the original footage.",
+    "ja": "酒を飲んで運転した。人をはねて現場を去った。衝突直前の状況は原本と照合していない。",
+    "zh-CN": "我酒后开车，撞人后逃离了现场。尚未与原始录像对照碰撞前的情况。"
+  },
+  "술을 마시고 운전했다. 사람을 친 뒤 현장을 떠났다. 나는 그 사람이 갑자기 뛰어들었다고 생각했다.": {
+    "en": "I drove drunk, hit someone, and left the scene. I told myself they had suddenly run out.",
+    "ja": "酒を飲んで運転した。人をはねて現場を去った。あの人が突然飛び出してきたのだと思っていた。",
+    "zh-CN": "我酒后开车，撞人后逃离了现场。我以为是那个人突然冲了出来。"
+  },
+  "도로 원본 · 대조 완료": {
+    "en": "Original road footage · Verified",
+    "ja": "道路映像の原本 · 照合済み",
+    "zh-CN": "道路原始录像 · 已对照"
+  },
+  "사진 배송봉투와 그날의 기억 · 영상 미확인": {
+    "en": "Photo envelope and my memory · Footage unverified",
+    "ja": "写真の配送封筒と当日の記憶 · 映像未確認",
+    "zh-CN": "照片快递信封与当日记忆 · 录像未确认"
+  },
+  "그날의 내 기억": {
+    "en": "My memory of that day",
+    "ja": "あの日の私の記憶",
+    "zh-CN": "我对那天的记忆"
+  },
+  "내가 끊은 통화": {
+    "en": "The call I ended",
+    "ja": "私が切った通話",
+    "zh-CN": "被我挂断的电话"
+  },
+  "현장으로 돌아와 달라는 호출": {
+    "en": "A request to return to the scene",
+    "ja": "現場に戻るよう求める呼び出し",
+    "zh-CN": "要求返回现场的来电"
+  },
+  "양방향 통화 원본": {
+    "en": "Original two-way call recording",
+    "ja": "双方向通話の原本",
+    "zh-CN": "双向通话原始录音"
+  },
+  "「잘못 거셨어요.」 내 대답 뒤, 수신자 쪽에서 통화가 끊겼다. 돌아와 달라는 말을 못 들은 것이 아니었다.": {
+    "en": "“Wrong number.” After my reply, the recipient ended the call. It wasn't that I hadn't heard the request to return.",
+    "ja": "「間違い電話です」私の返答の後、受信者側から通話が切られた。戻ってほしいという言葉が聞こえなかったわけではない。",
+    "zh-CN": "“你打错了。”我回答后，接听方挂断了电话。并不是我没听见让人回去的话。"
+  },
+  "경비원은 차량 번호를 확인하고 현장으로 돌아와 달라고 했다. 통신실의 보조 녹음에는 수신자 쪽 대답이 없다.": {
+    "en": "The guard checked the plate number and asked me to return. The auxiliary recording in the communications room has no reply from the recipient.",
+    "ja": "警備員は車両番号を確認し、現場に戻るよう求めた。通信室の補助録音には受信者側の返答がない。",
+    "zh-CN": "保安确认车牌后，要求我返回现场。通信室的辅助录音里没有接听方的回答。"
+  },
+  "정문 비상벨에서 등록 휴대전화로 연결된 양방향 원본이다. 아직 양쪽의 말과 통화 종료음을 대조하지 않았다.": {
+    "en": "This is the original two-way call from the main gate's emergency bell to the registered phone. I have not compared both voices and the disconnect sound yet.",
+    "ja": "正門の非常ベルから登録携帯電話につながった双方向の原本だ。まだ双方の言葉と終話音を照合していない。",
+    "zh-CN": "这是从正门紧急呼叫器连到登记手机的双向原始录音。尚未对照双方的话语和挂断声。"
+  },
+  "양방향 통화 원본 · 대조 완료": {
+    "en": "Original two-way call · Verified",
+    "ja": "双方向通話の原本 · 照合済み",
+    "zh-CN": "双向通话原始录音 · 已对照"
+  },
+  "발신측 보조 녹음": {
+    "en": "Caller-side auxiliary recording",
+    "ja": "発信側の補助録音",
+    "zh-CN": "拨号方辅助录音"
+  },
+  "아직 살아 있던 목소리": {
+    "en": "A voice still alive",
+    "ja": "まだ生きていた声",
+    "zh-CN": "仍然活着的声音"
+  },
+  "지하 입차": {
+    "en": "Entry into the underground garage",
+    "ja": "地下への入庫",
+    "zh-CN": "驶入地下车库"
+  },
+  "충돌 아홉 분 뒤, 아내 한서연은 창밖에서 문을 열어 달라고 했다. 아직 살아 있었다. 나는 운전석에 남아 문을 잠갔다.": {
+    "en": "Nine minutes after the collision, my wife, Han Seo-yeon, stood outside the window asking me to open the door. She was still alive. I stayed in the driver's seat and locked the doors.",
+    "ja": "衝突の九分後、妻のハン・ソヨンは窓の外から扉を開けてほしいと頼んだ。まだ生きていた。私は運転席に残り、扉を施錠した。",
+    "zh-CN": "碰撞九分钟后，妻子韩瑞妍在车窗外求我开门。她还活着。我留在驾驶座，锁上了车门。"
+  },
+  "내 차가 돌아왔다. 열람본에서 정차 뒤 아홉 초가 빠져 있다. 다음 화면에는 문이 이미 닫혀 있다.": {
+    "en": "My car returned. Nine seconds after it stopped are missing from the viewing copy. In the next image, the doors are already closed.",
+    "ja": "私の車が戻ってきた。閲覧用映像では停車後の九秒が抜けている。次の画面では扉がもう閉まっている。",
+    "zh-CN": "我的车回来了。供查阅的副本中缺少停车后的九秒，下一帧里车门已经关上。"
+  },
+  "영상보존 통지서에 CAM-04 / 03:26과 내가 삭제해 달라고 한 아홉 초가 적혀 있다. 우편을 읽었지만 영상은 아직 확인하지 않았다.": {
+    "en": "The preservation notice lists CAM-04 / 03:26 and the nine seconds I asked them to delete. I read the letter, but have not checked the footage.",
+    "ja": "映像保全通知にはCAM-04 / 03:26と、私が削除を頼んだ九秒が記されている。郵便は読んだが映像はまだ確認していない。",
+    "zh-CN": "录像保存通知上写着CAM-04 / 03:26，以及我要求删除的九秒。我读了邮件，但尚未查看录像。"
+  },
+  "2803호 등록 차량의 입차 기록이 남아 있다. 현장을 떠나 이 건물로 돌아왔던 시각이다.": {
+    "en": "An entry record remains for the vehicle registered to Unit 2803. It marks my return to this building after leaving the scene.",
+    "ja": "2803号室の登録車両の入庫記録が残っている。現場を去り、この建物に戻った時刻だ。",
+    "zh-CN": "2803室登记车辆的入库记录还在。那是离开现场后回到这栋楼的时间。"
+  },
+  "입차 원본 · 대조 완료": {
+    "en": "Original garage footage · Verified",
+    "ja": "入庫映像の原本 · 照合済み",
+    "zh-CN": "入库原始录像 · 已对照"
+  },
+  "관리실 통지 우편 · 영상 미확인": {
+    "en": "Management notice · Footage unverified",
+    "ja": "管理室からの通知 · 映像未確認",
+    "zh-CN": "管理室通知邮件 · 录像未确认"
+  },
+  "관리실 · 인계 기록": {
+    "en": "Management office · Handover records",
+    "ja": "管理室 · 引継ぎ記録",
+    "zh-CN": "管理室 · 交接记录"
+  },
+  "사진 배송장에 한서연과 2803호 주소가 적혀 있다. 결혼사진 속 여자는 내 아내다. 아이의 사진도 함께 인화해 두었다.": {
+    "en": "The photo delivery label names Han Seo-yeon and Unit 2803. The woman in the wedding photo is my wife. She had prints made of our child, too.",
+    "ja": "写真の配送伝票にはハン・ソヨンと2803号室の住所が記されている。結婚写真の女性は私の妻だ。子供の写真も一緒に焼き増ししていた。",
+    "zh-CN": "照片快递单上写着韩瑞妍和2803室的地址。婚纱照里的女人是我的妻子，她还一起冲印了孩子的照片。"
+  },
+  "상담 회신의 신청인은 한서연. 배우자와 함께 도움을 받으려 한 기록이 남아 있다.": {
+    "en": "The counseling reply names Han Seo-yeon as the applicant. She had sought help for both of us.",
+    "ja": "相談の返信にある申込者はハン・ソヨン。配偶者とともに支援を受けようとした記録が残る。",
+    "zh-CN": "咨询回函的申请人是韩瑞妍。记录表明她想和配偶一起寻求帮助。"
+  },
+  "영상 속 한서연은 내 아내다. 갑자기 뛰어든 사람이 아니었다.": {
+    "en": "Han Seo-yeon in the footage is my wife. She did not suddenly run out.",
+    "ja": "映像のハン・ソヨンは私の妻だ。突然飛び出してきた人ではなかった。",
+    "zh-CN": "录像中的韩瑞妍是我的妻子。她并不是突然冲出来的人。"
+  },
+  "「다음에는 맑은 날에. 우리 셋이.」 냉장고에는 끝내 지키지 못한 약속이 남아 있다.": {
+    "en": "“Next time, on a sunny day. The three of us.” A promise never kept remains on the fridge.",
+    "ja": "「今度は晴れた日に。私たち三人で」冷蔵庫には、とうとう果たせなかった約束が残っている。",
+    "zh-CN": "“下次，等晴天。我们一家三口。”冰箱上还留着最终没能兑现的承诺。"
+  },
+  "일상이 계속될 거라고 믿었던 목소리다.": {
+    "en": "A voice that believed life would go on.",
+    "ja": "日常が続くと信じていた声だ。",
+    "zh-CN": "那是相信日常还会继续的声音。"
+  },
+  "보관한 생활 기록에 한서연의 이름이 있다. 아직 모든 사실을 확인하지는 않았다.": {
+    "en": "Han Seo-yeon's name appears in the household records. Not all the facts have been verified yet.",
+    "ja": "保管された生活の記録にハン・ソヨンの名がある。まだすべての事実を確かめたわけではない。",
+    "zh-CN": "保存的生活记录中有韩瑞妍的名字。但还没有确认所有事实。"
+  },
+  "충돌 직전의 보행 신호와 제동등은 언제 바뀌었을까? 세 기록을 확인하고 CCTV에서 누락 영상을 재생해야 한다.": {
+    "en": "When did the pedestrian signal and brake lights change before impact? Check all three records, then play the missing CCTV footage.",
+    "ja": "衝突直前、歩行者信号とブレーキランプはいつ変わったのか。三つの記録を確認し、CCTVで欠落映像を再生しなければならない。",
+    "zh-CN": "碰撞前，行人信号和刹车灯是什么时候变化的？需要查看三份记录，再在监控上播放缺失录像。"
+  },
+  "03:20, 수신자 쪽에서는 무슨 말을 했을까? 세 기록을 확인하고 CCTV 원본을 이어 봐야 한다.": {
+    "en": "At 03:20, what did the recipient say? Check all three records and continue watching the original CCTV recording.",
+    "ja": "03:20、受信者側は何を言ったのか。三つの記録を確認し、CCTVの原本を続けて見なければならない。",
+    "zh-CN": "03:20，接听方说了什么？需要查看三份记录，再继续观看监控原始录像。"
+  },
+  "입차 뒤 빠진 아홉 초에는 무슨 일이 있었을까? CCTV에서 누락 영상을 재생하면 확인할 수 있다.": {
+    "en": "What happened in the missing nine seconds after the car arrived? Play the missing CCTV footage to find out.",
+    "ja": "入庫後に抜けた九秒に何があったのか。CCTVで欠落映像を再生すれば確かめられる。",
+    "zh-CN": "入库后缺失的九秒发生了什么？在监控上播放缺失录像就能确认。"
+  },
+  "충돌 뒤 현장을 떠났다. 돌아와 달라는 전화를 끊었다. 살아 있는 사람의 구조 요청을 듣고도 문을 잠갔다. 충돌 장면이 아니라 그 뒤의 아홉 초를 삭제해 달라고 했다. 기록에서 반복되는 것은 내가 외면한 순간들이다.": {
+    "en": "I left the scene after the collision. I hung up on the call asking me to return. I heard a living person asking for help and locked the doors. I asked them to delete not the collision, but the nine seconds afterward. The records repeat the moments when I chose to turn away.",
+    "ja": "衝突後、現場を去った。戻ってほしいという電話を切った。生きている人の救助を求める声を聞きながら扉を施錠した。衝突ではなく、その後の九秒を消してほしいと頼んだ。記録に繰り返されるのは、私が目を背けた瞬間だ。",
+    "zh-CN": "碰撞后我离开现场，挂断了要求返回的电话。听见活人的求救声，仍锁上车门。我要求删除的不是碰撞画面，而是之后的九秒。记录里不断重复的，是我选择视而不见的瞬间。"
+  },
+  "앞으로": {
+    "en": "Forward",
+    "ja": "前進",
+    "zh-CN": "前进"
+  },
+  "뒤로": {
+    "en": "Backward",
+    "ja": "後退",
+    "zh-CN": "后退"
+  },
+  "왼쪽": {
+    "en": "Left",
+    "ja": "左",
+    "zh-CN": "左"
+  },
+  "오른쪽": {
+    "en": "Right",
+    "ja": "右",
+    "zh-CN": "右"
+  },
+  "상호작용": {
+    "en": "Interact",
+    "ja": "調べる",
+    "zh-CN": "交互"
+  },
+  "Language / 언어": {
+    "en": "Language",
+    "ja": "言語 / Language",
+    "zh-CN": "语言 / Language"
+  },
+  "제 {0} 장 · {1}": {
+    "en": "Chapter {0} · {1}",
+    "ja": "第{0}章 · {1}",
+    "zh-CN": "第{0}章 · {1}"
+  },
+  "미션 메모": {
+    "en": "Mission note",
+    "ja": "目標メモ",
+    "zh-CN": "任务便笺"
+  },
+  "미션 메모 열기": {
+    "en": "Open mission note",
+    "ja": "目標メモを開く",
+    "zh-CN": "打开任务便笺"
+  },
+  "미션 메모 (Tab)": {
+    "en": "Mission note (Tab)",
+    "ja": "目標メモ (Tab)",
+    "zh-CN": "任务便笺 (Tab)"
+  },
+  "미션 메모 닫기": {
+    "en": "Close mission note",
+    "ja": "目標メモを閉じる",
+    "zh-CN": "关闭任务便笺"
+  },
+  "아직 적힌 미션이 없다.": {
+    "en": "Nothing is written here yet.",
+    "ja": "まだ何も書かれていない。",
+    "zh-CN": "这里还没有写下任务。"
+  },
+  "접어 두기": {
+    "en": "Fold away",
+    "ja": "たたんでしまう",
+    "zh-CN": "折好收起"
+  },
+  "메모를 읽는 동안 시간은 멈춥니다.": {
+    "en": "Time stops while you read.",
+    "ja": "読んでいる間、時間は止まります。",
+    "zh-CN": "阅读便笺时，时间暂停。"
+  }
+}

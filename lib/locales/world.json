@@ -1,0 +1,1992 @@
+{
+  "경비 휴게실": {
+    "en": "Guard lounge",
+    "ja": "警備員休憩室",
+    "zh-CN": "保安休息室"
+  },
+  "정문 로비": {
+    "en": "Main entrance lobby",
+    "ja": "正面ロビー",
+    "zh-CN": "正门大厅"
+  },
+  "정문  /  당기세요": {
+    "en": "Main entrance  /  PULL",
+    "ja": "正面入口  /  引く",
+    "zh-CN": "正门  /  请拉"
+  },
+  "누전 · 작동 금지\n중정 우회": {
+    "en": "Electrical fault · Do not operate\nDetour through courtyard",
+    "ja": "漏電・操作禁止\n中庭へ迂回",
+    "zh-CN": "漏电 · 禁止操作\n请绕行中庭"
+  },
+  "백로아파트 · 공동시설 1층\n정문 → 동측 로비 / 셔터 고장\n서측: 우편실 · 세탁실\n동측: 경비 휴게실 · 통신실\n우회: 북쪽 중정 → 지하 → 주차장": {
+    "en": "Baekro Apartments · Shared facilities 1F\nMain entrance → East lobby / Shutter broken\nWest: Mailroom · Laundry\nEast: Guard lounge · Communications room\nDetour: North courtyard → Basement → Parking",
+    "ja": "白鷺アパート・共用施設1階\n正面入口 → 東ロビー / シャッター故障\n西側：郵便室・洗濯室\n東側：警備員休憩室・通信室\n迂回：北中庭 → 地下 → 駐車場",
+    "zh-CN": "白鹭公寓 · 公共设施1层\n正门 → 东侧大厅 / 卷帘门故障\n西侧：收发室 · 洗衣房\n东侧：保安休息室 · 通信室\n绕行：北侧中庭 → 地下 → 停车场"
+  },
+  "우편실 · 반송 우편 접수": {
+    "en": "Mailroom · Returned mail",
+    "ja": "郵便室・返送郵便受付",
+    "zh-CN": "收发室 · 退件接收"
+  },
+  "공동세탁실 · 정비대": {
+    "en": "Shared laundry · Workbench",
+    "ja": "共同洗濯室・整備台",
+    "zh-CN": "公共洗衣房 · 维修台"
+  },
+  "← 우편 접수": {
+    "en": "← Mail desk",
+    "ja": "← 郵便受付",
+    "zh-CN": "← 邮件接收"
+  },
+  "← 세탁실 · 정비대": {
+    "en": "← Laundry · Workbench",
+    "ja": "← 洗濯室・整備台",
+    "zh-CN": "← 洗衣房 · 维修台"
+  },
+  "백로아파트 · 101동 우편함": {
+    "en": "Baekro Apartments · Block 101 mailboxes",
+    "ja": "白鷺アパート・101棟郵便受け",
+    "zh-CN": "白鹭公寓 · 101栋信箱"
+  },
+  "급수 밸브 · 사용 후 잠금": {
+    "en": "Water valve · Close after use",
+    "ja": "給水バルブ・使用後は閉める",
+    "zh-CN": "供水阀 · 用后关闭"
+  },
+  "주차장 →": {
+    "en": "Parking →",
+    "ja": "駐車場 →",
+    "zh-CN": "停车场 →"
+  },
+  "← 주차장": {
+    "en": "← Parking",
+    "ja": "← 駐車場",
+    "zh-CN": "← 停车场"
+  },
+  "보수 창고\n관계자 외 출입금지": {
+    "en": "Maintenance storage\nStaff only",
+    "ja": "補修倉庫\n関係者以外立入禁止",
+    "zh-CN": "维修仓库\n闲人免进"
+  },
+  "관리문서 보관실": {
+    "en": "Management records room",
+    "ja": "管理書類保管室",
+    "zh-CN": "管理档案室"
+  },
+  "비상계단": {
+    "en": "Emergency stairs",
+    "ja": "非常階段",
+    "zh-CN": "消防楼梯"
+  },
+  "지하주차장": {
+    "en": "Underground parking",
+    "ja": "地下駐車場",
+    "zh-CN": "地下停车场"
+  },
+  "공동현관": {
+    "en": "Shared entrance",
+    "ja": "共同玄関",
+    "zh-CN": "公共入口"
+  },
+  "경비실": {
+    "en": "Guard office",
+    "ja": "警備室",
+    "zh-CN": "保安室"
+  },
+  "야간 근무일지\n관리용 열쇠 · 북측 연결문": {
+    "en": "Night shift log\nMaintenance key · North connecting door",
+    "ja": "夜間勤務日誌\n管理用の鍵・北側連絡扉",
+    "zh-CN": "夜班日志\n管理钥匙 · 北侧连通门"
+  },
+  "관리용": {
+    "en": "Maintenance",
+    "ja": "管理用",
+    "zh-CN": "管理专用"
+  },
+  "북측 연결문 관리용 열쇠": {
+    "en": "Maintenance key to north connecting door",
+    "ja": "北側連絡扉の管理用の鍵",
+    "zh-CN": "北侧连通门管理钥匙"
+  },
+  "1층 피난안내도": {
+    "en": "1F evacuation map",
+    "ja": "1階避難案内図",
+    "zh-CN": "1层疏散图"
+  },
+  "1층 안내도와 주차장 우회로": {
+    "en": "1F map and parking detour",
+    "ja": "1階案内図と駐車場迂回路",
+    "zh-CN": "1层导览图及停车场绕行路线"
+  },
+  "정문 통행 불가\n북측 관리사무소로 우회": {
+    "en": "Main entrance blocked\nDetour via north management office",
+    "ja": "正面入口通行不可\n北側管理事務所へ迂回",
+    "zh-CN": "正门无法通行\n请绕行北侧物业办公室"
+  },
+  "낙하물 · 통행 금지": {
+    "en": "Falling debris · No entry",
+    "ja": "落下物・通行禁止",
+    "zh-CN": "坠物危险 · 禁止通行"
+  },
+  "← 북측 연결문": {
+    "en": "← North connecting door",
+    "ja": "← 北側連絡扉",
+    "zh-CN": "← 北侧连通门"
+  },
+  "관리문서 보관실 · 이용 안내\n세 기록 확인 후 CCTV 재생\n비상계단은 북측 문": {
+    "en": "Management records room · Instructions\nCheck all three records, then play CCTV\nEmergency stairs: North door",
+    "ja": "管理書類保管室・利用案内\n3件の記録を確認後、CCTVを再生\n非常階段は北側の扉",
+    "zh-CN": "管理档案室 · 使用说明\n查看三份记录后播放监控\n消防楼梯位于北侧门"
+  },
+  "기록 이용 안내": {
+    "en": "Records instructions",
+    "ja": "記録利用案内",
+    "zh-CN": "档案使用说明"
+  },
+  "1 사고기록\n03:17 정문 앞 횡단보도": {
+    "en": "1 Accident record\n03:17 Crosswalk at main entrance",
+    "ja": "1 事故記録\n03:17 正面入口前の横断歩道",
+    "zh-CN": "1 事故记录\n03:17 正门前人行横道"
+  },
+  "2 통화기록\n03:20 비상벨 → 2803": {
+    "en": "2 Call record\n03:20 Emergency bell → 2803",
+    "ja": "2 通話記録\n03:20 非常ベル → 2803",
+    "zh-CN": "2 通话记录\n03:20 紧急呼叫铃 → 2803"
+  },
+  "3 입차기록\n03:26 지하주차장": {
+    "en": "3 Vehicle entry record\n03:26 Underground parking",
+    "ja": "3 入庫記録\n03:26 地下駐車場",
+    "zh-CN": "3 入场记录\n03:26 地下停车场"
+  },
+  "CCTV 누락 영상 재생": {
+    "en": "Play missing CCTV footage",
+    "ja": "CCTV欠落映像を再生",
+    "zh-CN": "播放缺失的监控录像"
+  },
+  "1 사고기록 · 2 통화기록 · 3 입차기록 / 세 기록 확인 후 CCTV 재생": {
+    "en": "1 Accident · 2 Call · 3 Vehicle entry / Check all three, then play CCTV",
+    "ja": "1 事故・2 通話・3 入庫 / 3件を確認後、CCTVを再生",
+    "zh-CN": "1 事故 · 2 通话 · 3 入场 / 查看三份记录后播放监控"
+  },
+  "1층 · 공동현관": {
+    "en": "1F · Shared entrance",
+    "ja": "1階・共同玄関",
+    "zh-CN": "1层 · 公共入口"
+  },
+  "편집실": {
+    "en": "Editing room",
+    "ja": "編集室",
+    "zh-CN": "剪辑室"
+  },
+  "1F 관리문서 보관실\n북측 비상계단으로 이동": {
+    "en": "1F Management records room\nProceed to north emergency stairs",
+    "ja": "1F 管理書類保管室\n北側非常階段へ",
+    "zh-CN": "1F 管理档案室\n前往北侧消防楼梯"
+  },
+  "1 사고기록 · 2 통화기록 · 3 입차기록\n세 기록 확인 후 CCTV 재생": {
+    "en": "1 Accident · 2 Call · 3 Vehicle entry\nCheck all three, then play CCTV",
+    "ja": "1 事故・2 通話・3 入庫\n3件を確認後、CCTVを再生",
+    "zh-CN": "1 事故 · 2 通话 · 3 入场\n查看三份记录后播放监控"
+  },
+  "A호기 · 운행 중지": {
+    "en": "Lift A · Out of service",
+    "ja": "A号機・運転停止",
+    "zh-CN": "A号电梯 · 停运"
+  },
+  "B호기": {
+    "en": "Lift B",
+    "ja": "B号機",
+    "zh-CN": "B号电梯"
+  },
+  "열쇠": {
+    "en": "Key",
+    "ja": "鍵",
+    "zh-CN": "钥匙"
+  },
+  "현위치": {
+    "en": "You are here",
+    "ja": "現在地",
+    "zh-CN": "当前位置"
+  },
+  "정문 폐쇄": {
+    "en": "Main entrance closed",
+    "ja": "正面入口閉鎖",
+    "zh-CN": "正门封闭"
+  },
+  "관리사무소": {
+    "en": "Management office",
+    "ja": "管理事務所",
+    "zh-CN": "物业办公室"
+  },
+  "B1 비상계단": {
+    "en": "B1 Emergency stairs",
+    "ja": "B1 非常階段",
+    "zh-CN": "B1 消防楼梯"
+  },
+  "B1 주차장": {
+    "en": "B1 Parking",
+    "ja": "B1 駐車場",
+    "zh-CN": "B1 停车场"
+  },
+  "북 ↑": {
+    "en": "North ↑",
+    "ja": "北 ↑",
+    "zh-CN": "北 ↑"
+  },
+  "주차장으로 가는 길": {
+    "en": "Route to parking",
+    "ja": "駐車場への経路",
+    "zh-CN": "停车场路线"
+  },
+  "B호기 → 공동현관": {
+    "en": "Lift B → Shared entrance",
+    "ja": "B号機 → 共同玄関",
+    "zh-CN": "B号电梯 → 公共入口"
+  },
+  "경비실 책상에서 관리용 열쇠": {
+    "en": "Maintenance key on guard office desk",
+    "ja": "警備室の机に管理用の鍵",
+    "zh-CN": "保安室桌上的管理钥匙"
+  },
+  "관리사무소: 세 기록 확인": {
+    "en": "Management office: Check three records",
+    "ja": "管理事務所：3件の記録を確認",
+    "zh-CN": "物业办公室：查看三份记录"
+  },
+  "CCTV 재생 후 B1 비상계단": {
+    "en": "Play CCTV, then take B1 emergency stairs",
+    "ja": "CCTV再生後、B1非常階段へ",
+    "zh-CN": "播放监控后前往B1消防楼梯"
+  },
+  "계단을 내려가 B1 주차장": {
+    "en": "Down the stairs to B1 parking",
+    "ja": "階段を下りてB1駐車場へ",
+    "zh-CN": "下楼前往B1停车场"
+  },
+  "정문 통행 불가": {
+    "en": "Main entrance blocked",
+    "ja": "正面入口通行不可",
+    "zh-CN": "正门无法通行"
+  },
+  "보수 작업 · 낙하물 위험": {
+    "en": "Repairs · Falling debris hazard",
+    "ja": "補修工事・落下物注意",
+    "zh-CN": "维修施工 · 当心坠物"
+  },
+  "승강기는 지하로 연결되지 않습니다": {
+    "en": "Lifts do not serve the basement",
+    "ja": "エレベーターは地下に通じていません",
+    "zh-CN": "电梯不通往地下"
+  },
+  "이 도면은 연결 개략도입니다": {
+    "en": "This is a schematic route map",
+    "ja": "この図は接続の概略図です",
+    "zh-CN": "此图仅为路线示意图"
+  },
+  "화재 시 승강기 사용 금지": {
+    "en": "Do not use lifts in a fire",
+    "ja": "火災時はエレベーター使用禁止",
+    "zh-CN": "火灾时禁止使用电梯"
+  },
+  "공동현관 · 관리사무소 · B1": {
+    "en": "Shared entrance · Management office · B1",
+    "ja": "共同玄関・管理事務所・B1",
+    "zh-CN": "公共入口 · 物业办公室 · B1"
+  },
+  "A 도로 · 1": {
+    "en": "A Road · 1",
+    "ja": "A 道路・1",
+    "zh-CN": "A 道路 · 1"
+  },
+  "B 통화 · 2": {
+    "en": "B Call · 2",
+    "ja": "B 通話・2",
+    "zh-CN": "B 通话 · 2"
+  },
+  "C 입차 · 3": {
+    "en": "C Vehicle entry · 3",
+    "ja": "C 入庫・3",
+    "zh-CN": "C 入场 · 3"
+  },
+  "원본 재생": {
+    "en": "Play original",
+    "ja": "原本を再生",
+    "zh-CN": "播放原始录像"
+  },
+  "1초 되감기 · ←": {
+    "en": "Back 1 second · ←",
+    "ja": "1秒戻る・←",
+    "zh-CN": "后退1秒 · ←"
+  },
+  "정지 / 재생 · Space": {
+    "en": "Pause / Play · Space",
+    "ja": "停止 / 再生・Space",
+    "zh-CN": "暂停 / 播放 · Space"
+  },
+  "1초 앞으로 · →": {
+    "en": "Forward 1 second · →",
+    "ja": "1秒進む・→",
+    "zh-CN": "前进1秒 · →"
+  },
+  "판단할 장면 표시 · Enter": {
+    "en": "Mark scene for review · Enter",
+    "ja": "検証する場面をマーク・Enter",
+    "zh-CN": "标记待判断画面 · Enter"
+  },
+  "4 · 첫 번째 사실 대조": {
+    "en": "4 · Compare first fact",
+    "ja": "4・1つ目の事実を照合",
+    "zh-CN": "4 · 核对第一项事实"
+  },
+  "5 · 두 번째 사실 대조": {
+    "en": "5 · Compare second fact",
+    "ja": "5・2つ目の事実を照合",
+    "zh-CN": "5 · 核对第二项事实"
+  },
+  "1 · 2 · 3 원본 / 4 · 5 사실 대조": {
+    "en": "1 · 2 · 3 Originals / 4 · 5 Compare facts",
+    "ja": "1・2・3 原本 / 4・5 事実照合",
+    "zh-CN": "1 · 2 · 3 原始录像 / 4 · 5 核对事实"
+  },
+  "Space  원본만 정지 / 재생": {
+    "en": "Space  Pause / Play original only",
+    "ja": "Space  原本のみ停止 / 再生",
+    "zh-CN": "Space  仅暂停 / 播放原始录像"
+  },
+  "← · →  1초     Enter  장면 표시": {
+    "en": "← · →  1 second     Enter  Mark scene",
+    "ja": "←・→  1秒     Enter  場面をマーク",
+    "zh-CN": "← · →  1秒     Enter  标记画面"
+  },
+  "회수한 원본부터 검토할 수 있음": {
+    "en": "Review recovered originals first",
+    "ja": "回収した原本から確認可能",
+    "zh-CN": "可先查看已找回的原始录像"
+  },
+  "기록 편집실": {
+    "en": "Records editing room",
+    "ja": "記録編集室",
+    "zh-CN": "档案剪辑室"
+  },
+  "사용 후 문을 닫아 주세요": {
+    "en": "Please close the door after use",
+    "ja": "使用後は扉を閉めてください",
+    "zh-CN": "用后请关门"
+  },
+  "편집실 문 닫기": {
+    "en": "Close editing room door",
+    "ja": "編集室の扉を閉める",
+    "zh-CN": "关闭剪辑室门"
+  },
+  "편집실 문 열기": {
+    "en": "Open editing room door",
+    "ja": "編集室の扉を開ける",
+    "zh-CN": "打开剪辑室门"
+  },
+  "승강기 호출 버튼 누르기": {
+    "en": "Press lift call button",
+    "ja": "エレベーター呼出ボタンを押す",
+    "zh-CN": "按下电梯呼叫按钮"
+  },
+  "시설 방문 안내문": {
+    "en": "Facility visitor notice",
+    "ja": "施設訪問案内",
+    "zh-CN": "设施来访须知"
+  },
+  "백로아파트 · 1994년 준공": {
+    "en": "Baekro Apartments · Built in 1994",
+    "ja": "白鷺アパート・1994年竣工",
+    "zh-CN": "白鹭公寓 · 1994年竣工"
+  },
+  "1층 누르기": {
+    "en": "Press 1F",
+    "ja": "1階を押す",
+    "zh-CN": "按下1层"
+  },
+  "길게 눌러 문 벌리기": {
+    "en": "Hold to pry door open",
+    "ja": "長押しで扉をこじ開ける",
+    "zh-CN": "长按撬开门"
+  },
+  "정원 9명 · 600kg": {
+    "en": "Capacity: 9 people · 600kg",
+    "ja": "定員9名・600kg",
+    "zh-CN": "限载9人 · 600kg"
+  },
+  "승강기 검사 유효기간 경과": {
+    "en": "Lift inspection overdue",
+    "ja": "エレベーター検査期限切れ",
+    "zh-CN": "电梯检验已过期"
+  },
+  "복도 끝 비상계단": {
+    "en": "Emergency stairs at end of hall",
+    "ja": "廊下の奥の非常階段",
+    "zh-CN": "走廊尽头消防楼梯"
+  },
+  "24층 · 연결 복도": {
+    "en": "24F · Connecting corridor",
+    "ja": "24階・連絡通路",
+    "zh-CN": "24层 · 连通走廊"
+  },
+  "공동 배관실": {
+    "en": "Shared pipe room",
+    "ja": "共用配管室",
+    "zh-CN": "公共管道间"
+  },
+  "전기 설비실": {
+    "en": "Electrical room",
+    "ja": "電気設備室",
+    "zh-CN": "配电室"
+  },
+  "공용부 설비 점검표": {
+    "en": "Shared facilities inspection checklist",
+    "ja": "共用設備点検表",
+    "zh-CN": "公共设施检查表"
+  },
+  "연결 복도": {
+    "en": "Connecting corridor",
+    "ja": "連絡通路",
+    "zh-CN": "连通走廊"
+  },
+  "방화문 열기": {
+    "en": "Open fire door",
+    "ja": "防火扉を開ける",
+    "zh-CN": "打开防火门"
+  },
+  "아래층 계단": {
+    "en": "Stairs down",
+    "ja": "下階への階段",
+    "zh-CN": "下行楼梯"
+  },
+  "아래층 방화문 열기": {
+    "en": "Open fire door downstairs",
+    "ja": "下階の防火扉を開ける",
+    "zh-CN": "打开下层防火门"
+  },
+  "23층": {
+    "en": "23F",
+    "ja": "23階",
+    "zh-CN": "23层"
+  },
+  "아래층 ↓": {
+    "en": "Downstairs ↓",
+    "ja": "下階 ↓",
+    "zh-CN": "下层 ↓"
+  },
+  "17층": {
+    "en": "17F",
+    "ja": "17階",
+    "zh-CN": "17层"
+  },
+  "외벽 공사로 폐쇄\n아래층 계단 이용 ↓": {
+    "en": "Closed for exterior repairs\nUse stairs down ↓",
+    "ja": "外壁工事のため閉鎖\n下階への階段を利用 ↓",
+    "zh-CN": "外墙施工封闭\n请走下行楼梯 ↓"
+  },
+  "하부층 침수로 폐쇄\n위층 연결 복도 이용 ↑": {
+    "en": "Closed due to flooding below\nUse connecting corridor upstairs ↑",
+    "ja": "下階浸水のため閉鎖\n上階の連絡通路を利用 ↑",
+    "zh-CN": "下层积水封闭\n请走上层连通走廊 ↑"
+  },
+  "백로아파트 · 사고 다음 날 06:40 인계\n\n작성: 박정호 / 전임 야간 당직: 한서연\n03:17  정문 횡단보도 보행자 사망 / 검은 차량 이탈\n03:26  파손 차량 입차 / 정차 직후 영상 9초 누락\n누락 구간은 지하 기록보관실 원본과 대조할 것.\n\n감시 설비 정전 시: 서고 예비 퓨즈 사용\n비상 공급 6A / 구역등 4A · CCTV 2A · 승강기 제어 4A\n퓨즈를 홀더에 설치하고 필요한 부하만 선택 후 전원 투입\n승강기 C 4A / CCTV 열람은 B 2A 선택 연결\n승강기 열쇠 보관: CCTV 오른쪽 책상": {
+    "en": "Baekro Apartments · Handover 06:40, day after accident\n\nWritten by: Park Jeong-ho / Previous night duty: Han Seo-yeon\n03:17  Pedestrian killed at main entrance crosswalk / Black vehicle fled\n03:26  Damaged vehicle entered / 9 seconds missing just after stopping\nCompare missing segment with originals in basement archives.\n\nSurveillance power failure: Use spare fuse in archive room\nEmergency supply 6A / Area lights 4A · CCTV 2A · Lift control 4A\nFit fuse in holder, select only required loads, then switch on\nLift: Select C 4A / CCTV viewing: Select B 2A\nLift key location: Desk to right of CCTV",
+    "ja": "白鷺アパート・事故翌日06:40引継ぎ\n\n記入：パク・ジョンホ / 前夜当直：ハン・ソヨン\n03:17  正面横断歩道で歩行者死亡 / 黒い車が逃走\n03:26  破損車両入庫 / 停車直後の映像9秒欠落\n欠落部分は地下記録保管室の原本と照合すること。\n\n監視設備停電時：書庫の予備ヒューズを使用\n非常電源6A / 区画灯4A・CCTV 2A・昇降機制御4A\nホルダーにヒューズを装着し、必要な負荷のみ選択して通電\n昇降機はC 4A / CCTV閲覧はB 2Aを選択接続\n昇降機の鍵：CCTV右側の机",
+    "zh-CN": "白鹭公寓 · 事故次日06:40交班\n\n填写：朴正浩 / 上一班夜间值班：韩瑞妍\n03:17  正门人行横道行人死亡 / 黑色车辆逃离\n03:26  受损车辆入场 / 停车后立即缺失9秒录像\n缺失片段须与地下档案室原始录像核对。\n\n监控设备断电时：使用档案室备用保险丝\n应急电源6A / 区域照明4A · CCTV 2A · 电梯控制4A\n将保险丝装入底座，仅选择所需负载后送电\n电梯选择C 4A / 查看监控选择B 2A\n电梯钥匙位置：监控右侧桌上"
+  },
+  "야간 근무일지 읽기": {
+    "en": "Read night shift log",
+    "ja": "夜間勤務日誌を読む",
+    "zh-CN": "阅读夜班日志"
+  },
+  "선택한 CCTV 기록 재생": {
+    "en": "Play selected CCTV record",
+    "ja": "選択したCCTV記録を再生",
+    "zh-CN": "播放所选监控记录"
+  },
+  "CCTV 시간 선택": {
+    "en": "Select CCTV time",
+    "ja": "CCTV時刻を選択",
+    "zh-CN": "选择监控时间"
+  },
+  "시간 선택": {
+    "en": "Select time",
+    "ja": "時刻を選択",
+    "zh-CN": "选择时间"
+  },
+  "관리용 승강기 열쇠 챙기기": {
+    "en": "Take service lift key",
+    "ja": "管理用昇降機の鍵を取る",
+    "zh-CN": "拿取管理电梯钥匙"
+  },
+  "예비 제어 퓨즈 챙기기": {
+    "en": "Take spare control fuse",
+    "ja": "予備制御ヒューズを取る",
+    "zh-CN": "拿取备用控制保险丝"
+  },
+  "예비 퓨즈": {
+    "en": "Spare fuse",
+    "ja": "予備ヒューズ",
+    "zh-CN": "备用保险丝"
+  },
+  "비상전원 6A · 필요한 부하만 선택": {
+    "en": "Emergency power 6A · Select required loads only",
+    "ja": "非常電源6A・必要な負荷のみ選択",
+    "zh-CN": "应急电源6A · 仅选择所需负载"
+  },
+  "A 구역등 4A": {
+    "en": "A Area lights 4A",
+    "ja": "A 区画灯4A",
+    "zh-CN": "A 区域照明4A"
+  },
+  "C 승강기 4A": {
+    "en": "C Lift 4A",
+    "ja": "C 昇降機4A",
+    "zh-CN": "C 电梯4A"
+  },
+  "구역 조명 회로 · 4A": {
+    "en": "Area lighting circuit · 4A",
+    "ja": "区画照明回路・4A",
+    "zh-CN": "区域照明回路 · 4A"
+  },
+  "CCTV 기록장치 · 2A": {
+    "en": "CCTV recorder · 2A",
+    "ja": "CCTV記録装置・2A",
+    "zh-CN": "监控录像设备 · 2A"
+  },
+  "승강기 제어 회로 · 4A": {
+    "en": "Lift control circuit · 4A",
+    "ja": "昇降機制御回路・4A",
+    "zh-CN": "电梯控制回路 · 4A"
+  },
+  "퓨즈 홀더": {
+    "en": "Fuse holder",
+    "ja": "ヒューズホルダー",
+    "zh-CN": "保险丝底座"
+  },
+  "가져온 퓨즈 설치": {
+    "en": "Install collected fuse",
+    "ja": "持ってきたヒューズを装着",
+    "zh-CN": "安装已取得的保险丝"
+  },
+  "선택한 회로에 비상전원 투입": {
+    "en": "Supply emergency power to selected circuits",
+    "ja": "選択した回路に非常電源を投入",
+    "zh-CN": "向所选回路接入应急电源"
+  },
+  "전원 투입": {
+    "en": "Switch power on",
+    "ja": "電源投入",
+    "zh-CN": "接通电源"
+  },
+  "퓨즈 없음": {
+    "en": "No fuse",
+    "ja": "ヒューズなし",
+    "zh-CN": "无保险丝"
+  },
+  "서고": {
+    "en": "Archive room",
+    "ja": "書庫",
+    "zh-CN": "档案库"
+  },
+  "배전반": {
+    "en": "Switchboard",
+    "ja": "配電盤",
+    "zh-CN": "配电盘"
+  },
+  "관리용 승강기 열기": {
+    "en": "Open service lift",
+    "ja": "管理用昇降機を開ける",
+    "zh-CN": "打开管理电梯"
+  },
+  "관리용 승강기 · 1F": {
+    "en": "Service lift · 1F",
+    "ja": "管理用昇降機・1F",
+    "zh-CN": "管理电梯 · 1F"
+  },
+  "17층 · 구 관리사무소": {
+    "en": "17F · Old management office",
+    "ja": "17階・旧管理事務所",
+    "zh-CN": "17层 · 旧物业办公室"
+  },
+  "기록 선택 ·": {
+    "en": "Select record ·",
+    "ja": "記録選択・",
+    "zh-CN": "选择记录 ·"
+  },
+  "전원 없음 · B CCTV 2A": {
+    "en": "No power · B CCTV 2A",
+    "ja": "電源なし・B CCTV 2A",
+    "zh-CN": "无电源 · B CCTV 2A"
+  },
+  "선택 {0} / 6A · {1}": {
+    "en": "Selected {0} / 6A · {1}",
+    "ja": "選択 {0} / 6A・{1}",
+    "zh-CN": "已选 {0} / 6A · {1}"
+  },
+  "공급 중": {
+    "en": "Power on",
+    "ja": "供給中",
+    "zh-CN": "供电中"
+  },
+  "전원 대기": {
+    "en": "Power standby",
+    "ja": "電源待機",
+    "zh-CN": "电源待机"
+  },
+  "보행자 출구": {
+    "en": "Pedestrian exit",
+    "ja": "歩行者出口",
+    "zh-CN": "行人出口"
+  },
+  "백로아파트  B1": {
+    "en": "Baekro Apartments  B1",
+    "ja": "白鷺アパート  B1",
+    "zh-CN": "白鹭公寓  B1"
+  },
+  "28 가 0317": {
+    "en": "28 GA 0317",
+    "ja": "28 ガ 0317",
+    "zh-CN": "28 GA 0317"
+  },
+  "{0} 나 {1}": {
+    "en": "{0} NA {1}",
+    "ja": "{0} ナ {1}",
+    "zh-CN": "{0} NA {1}"
+  },
+  "조수석 문 열기": {
+    "en": "Open passenger door",
+    "ja": "助手席のドアを開ける",
+    "zh-CN": "打开副驾驶车门"
+  },
+  "가방에서 열쇠 꺼내기": {
+    "en": "Take key from bag",
+    "ja": "鞄から鍵を取り出す",
+    "zh-CN": "从包中取出钥匙"
+  },
+  "운전석 문 열고 탑승": {
+    "en": "Open driver door and get in",
+    "ja": "運転席のドアを開けて乗る",
+    "zh-CN": "打开驾驶座车门并上车"
+  },
+  "소\n화\n전": {
+    "en": "FIRE\nHOSE\nREEL",
+    "ja": "消\n火\n栓",
+    "zh-CN": "消\n火\n栓"
+  },
+  "화재경보기 작동": {
+    "en": "Activate fire alarm",
+    "ja": "火災報知器を作動させる",
+    "zh-CN": "启动火灾报警器"
+  },
+  "누름": {
+    "en": "PUSH",
+    "ja": "押す",
+    "zh-CN": "按下"
+  },
+  "발신기": {
+    "en": "Alarm call point",
+    "ja": "発信機",
+    "zh-CN": "手动报警按钮"
+  },
+  "서측 급수 밸브 잠그기": {
+    "en": "Close west water valve",
+    "ja": "西側給水バルブを閉める",
+    "zh-CN": "关闭西侧供水阀"
+  },
+  "동측 급수 밸브 잠그기": {
+    "en": "Close east water valve",
+    "ja": "東側給水バルブを閉める",
+    "zh-CN": "关闭东侧供水阀"
+  },
+  "서측 급수": {
+    "en": "West water supply",
+    "ja": "西側給水",
+    "zh-CN": "西侧供水"
+  },
+  "동측 급수": {
+    "en": "East water supply",
+    "ja": "東側給水",
+    "zh-CN": "东侧供水"
+  },
+  "배수 펌프 가동": {
+    "en": "Run drainage pump",
+    "ja": "排水ポンプを稼働",
+    "zh-CN": "启动排水泵"
+  },
+  "배수 설비": {
+    "en": "Drainage equipment",
+    "ja": "排水設備",
+    "zh-CN": "排水设备"
+  },
+  "양측 급수 차단 후 가동": {
+    "en": "Shut off both water supplies before starting",
+    "ja": "両側の給水を止めてから稼働",
+    "zh-CN": "关闭两侧供水后启动"
+  },
+  "조수석 가방 · 차 열쇠": {
+    "en": "Passenger-seat bag · Car key",
+    "ja": "助手席の鞄・車の鍵",
+    "zh-CN": "副驾驶座上的包 · 车钥匙"
+  },
+  "조수석 가방 · 설비 열쇠": {
+    "en": "Passenger-seat bag · Equipment key",
+    "ja": "助手席の鞄・設備の鍵",
+    "zh-CN": "副驾驶座上的包 · 设备钥匙"
+  },
+  "보행자 출구 →": {
+    "en": "Pedestrian exit →",
+    "ja": "歩行者出口 →",
+    "zh-CN": "行人出口 →"
+  },
+  "호출": {
+    "en": "Call",
+    "ja": "呼出",
+    "zh-CN": "呼叫"
+  },
+  "101동 · 시설 점검 안내\n\n17층 외벽 공사 중\n임시 관리실 1703호\n야간 당직 내선 17\n\n2803호  방문 / 부재\n비상벨 통화 확인 요청": {
+    "en": "Block 101 · Facility inspection notice\n\n17F exterior work in progress\nTemporary office: Unit 1703\nNight duty extension: 17\n\nUnit 2803  Visited / Absent\nPlease confirm emergency bell call",
+    "ja": "101棟・設備点検のお知らせ\n\n17階外壁工事中\n臨時管理室1703号室\n夜間当直内線17\n\n2803号室  訪問 / 不在\n非常ベル通話の確認依頼",
+    "zh-CN": "101栋 · 设施检查通知\n\n17层外墙施工中\n临时管理室1703室\n夜间值班分机17\n\n2803室  到访 / 无人\n请求核实紧急呼叫通话"
+  },
+  "24층 · 설비 점검표\n\n승강기 반대편 비상계단\n17층 관리실 공사 중\n임시 관리실 1703호\n\n인접 세대 연결문\n야간 통행 후 잠금 확인": {
+    "en": "24F · Equipment checklist\n\nEmergency stairs opposite lift\n17F management office under construction\nTemporary office: Unit 1703\n\nConnecting door to adjacent unit\nCheck lock after nighttime passage",
+    "ja": "24階・設備点検表\n\n昇降機の反対側に非常階段\n17階管理室工事中\n臨時管理室1703号室\n\n隣接住戸への連絡扉\n夜間通行後は施錠確認",
+    "zh-CN": "24层 · 设备检查表\n\n电梯对面为消防楼梯\n17层管理室施工中\n临时管理室1703室\n\n相邻住户连通门\n夜间通行后确认锁好"
+  },
+  "소화기": {
+    "en": "Fire extinguisher",
+    "ja": "消火器",
+    "zh-CN": "灭火器"
+  },
+  "2803호 차량 소유자 요청\n「입차 직후 9초 지워 주세요」\n삭제 접수 거절 · 원본 보존\n서명: 2803호": {
+    "en": "Request from Unit 2803 vehicle owner\n“Please erase the 9 seconds after entry.”\nDeletion refused · Original preserved\nSigned: Unit 2803",
+    "ja": "2803号室の車両所有者からの依頼\n「入庫直後の9秒を消してください」\n削除受付拒否・原本保存\n署名：2803号室",
+    "zh-CN": "2803室车主请求\n“请删除入场后的9秒。”\n拒绝删除 · 保留原始录像\n签名：2803室"
+  },
+  "1F · 외부 중정": {
+    "en": "1F · Outdoor courtyard",
+    "ja": "1F・屋外中庭",
+    "zh-CN": "1F · 室外中庭"
+  },
+  "B1 기록보관실": {
+    "en": "B1 Archives",
+    "ja": "B1 記録保管室",
+    "zh-CN": "B1 档案室"
+  },
+  "서측 경비초소": {
+    "en": "West guard booth",
+    "ja": "西側警備詰所",
+    "zh-CN": "西侧保安岗亭"
+  },
+  "놀이터": {
+    "en": "Playground",
+    "ja": "遊び場",
+    "zh-CN": "游乐场"
+  },
+  "금고 보관 초소": {
+    "en": "Booth with safe",
+    "ja": "金庫保管詰所",
+    "zh-CN": "保险柜岗亭"
+  },
+  "비상전화": {
+    "en": "Emergency phone",
+    "ja": "非常電話",
+    "zh-CN": "紧急电话"
+  },
+  "백로아파트\n101동": {
+    "en": "Baekro Apartments\nBlock 101",
+    "ja": "白鷺アパート\n101棟",
+    "zh-CN": "白鹭公寓\n101栋"
+  },
+  "백로아파트\n102동": {
+    "en": "Baekro Apartments\nBlock 102",
+    "ja": "白鷺アパート\n102棟",
+    "zh-CN": "白鹭公寓\n102栋"
+  },
+  "공동시설": {
+    "en": "Shared facilities",
+    "ja": "共用施設",
+    "zh-CN": "公共设施"
+  },
+  "외벽 보수공사 · 중앙 진입 금지": {
+    "en": "Exterior repairs · No entry through center",
+    "ja": "外壁補修工事・中央進入禁止",
+    "zh-CN": "外墙维修 · 禁止从中央进入"
+  },
+  "← 서측 초소       동측 비상전화 →": {
+    "en": "← West booth       East emergency phone →",
+    "ja": "← 西側詰所       東側非常電話 →",
+    "zh-CN": "← 西侧岗亭       东侧紧急电话 →"
+  },
+  "인계: 원본 폐기 요청 접수 거절\n동측 보관함 열쇠: 이 판 뒤\n03:26 / 2803호 입차": {
+    "en": "Handover: Request to destroy originals refused\nEast locker key: Behind this board\n03:26 / Unit 2803 vehicle entered",
+    "ja": "引継ぎ：原本廃棄の依頼は受付拒否\n東側保管庫の鍵：この板の裏\n03:26 / 2803号室の車両入庫",
+    "zh-CN": "交班：拒绝销毁原始录像的请求\n东侧储物柜钥匙：此板背面\n03:26 / 2803室车辆入场"
+  },
+  "야간 근무표\n순찰 · 열쇠 반납": {
+    "en": "Night shift roster\nPatrol · Key return",
+    "ja": "夜間勤務表\n巡回・鍵返却",
+    "zh-CN": "夜班排班表\n巡逻 · 归还钥匙"
+  },
+  "동측 열쇠 보관 초소": {
+    "en": "East key storage booth",
+    "ja": "東側鍵保管詰所",
+    "zh-CN": "东侧钥匙保管岗亭"
+  },
+  "인계서와 보관함 열쇠 챙기기": {
+    "en": "Take handover note and locker key",
+    "ja": "引継書と保管庫の鍵を取る",
+    "zh-CN": "拿取交班单和储物柜钥匙"
+  },
+  "인계 열쇠로 보관함 열기": {
+    "en": "Open locker with handover key",
+    "ja": "引継ぎの鍵で保管庫を開ける",
+    "zh-CN": "用交接钥匙打开储物柜"
+  },
+  "금고 안 지하문 열쇠 집기": {
+    "en": "Take basement door key from safe",
+    "ja": "金庫の地下扉の鍵を取る",
+    "zh-CN": "拿取保险柜中的地下门钥匙"
+  },
+  "비상전화 · 야간 당직 17": {
+    "en": "Emergency phone · Night duty 17",
+    "ja": "非常電話・夜間当直17",
+    "zh-CN": "紧急电话 · 夜间值班17"
+  },
+  "비상전화 통화": {
+    "en": "Use emergency phone",
+    "ja": "非常電話で通話",
+    "zh-CN": "拨打紧急电话"
+  },
+  "비상전화 종료": {
+    "en": "End emergency call",
+    "ja": "非常電話を切る",
+    "zh-CN": "结束紧急通话"
+  },
+  "야간 점검\n정문 횡단보도 · 비상벨": {
+    "en": "Night inspection\nMain crosswalk · Emergency bell",
+    "ja": "夜間点検\n正面横断歩道・非常ベル",
+    "zh-CN": "夜间检查\n正门人行横道 · 紧急呼叫铃"
+  },
+  "전조등 조각과 당직 수첩": {
+    "en": "Headlight fragment and duty notebook",
+    "ja": "ヘッドライトの破片と当直手帳",
+    "zh-CN": "车灯碎片和值班手册"
+  },
+  "정문 폐쇄\n지하 통로 이용": {
+    "en": "Main entrance closed\nUse basement passage",
+    "ja": "正面入口閉鎖\n地下通路を利用",
+    "zh-CN": "正门封闭\n请走地下通道"
+  },
+  "정문 폐쇄 · 지하 우회 통로\n기록보관실 → 배수 기계실 → 주차장\n지하문 열쇠: 동측 초소 금고\n열쇠 인계 기록: 서측 경비초소": {
+    "en": "Main entrance closed · Basement detour\nArchives → Drainage plant → Parking\nBasement key: Safe in east booth\nKey handover record: West guard booth",
+    "ja": "正面入口閉鎖・地下迂回路\n記録保管室 → 排水機械室 → 駐車場\n地下扉の鍵：東側詰所の金庫\n鍵の引継記録：西側警備詰所",
+    "zh-CN": "正门封闭 · 地下绕行通道\n档案室 → 排水机房 → 停车场\n地下门钥匙：东侧岗亭保险柜\n钥匙交接记录：西侧保安岗亭"
+  },
+  "입구의 우회 통로 안내 확인": {
+    "en": "Check detour notice at entrance",
+    "ja": "入口の迂回路案内を確認",
+    "zh-CN": "查看入口绕行指示"
+  },
+  "기록보관실 계단 문 열기": {
+    "en": "Open archives stair door",
+    "ja": "記録保管室の階段扉を開ける",
+    "zh-CN": "打开档案室楼梯门"
+  },
+  "냉장 · 냉동": {
+    "en": "Fridge · Freezer",
+    "ja": "冷蔵・冷凍",
+    "zh-CN": "冷藏 · 冷冻"
+  },
+  "차량 외관 수리 견적\n앞범퍼 / 우측 헤드램프\n입고: 내일 오전\n고객 요청: 보험 접수 없이": {
+    "en": "Vehicle body repair estimate\nFront bumper / Right headlamp\nDrop-off: Tomorrow morning\nCustomer request: No insurance claim",
+    "ja": "車体修理見積書\nフロントバンパー / 右ヘッドライト\n入庫：明日午前\n顧客要望：保険申請なし",
+    "zh-CN": "车辆外观维修报价\n前保险杠 / 右前大灯\n送修：明天上午\n客户要求：不走保险"
+  },
+  "소주": {
+    "en": "Soju",
+    "ja": "焼酎",
+    "zh-CN": "烧酒"
+  },
+  "통화": {
+    "en": "Call",
+    "ja": "通話",
+    "zh-CN": "通话"
+  },
+  "종료": {
+    "en": "End",
+    "ja": "終了",
+    "zh-CN": "结束"
+  },
+  "연결 중": {
+    "en": "Connecting",
+    "ja": "接続中",
+    "zh-CN": "连接中"
+  },
+  "수신 중": {
+    "en": "Incoming",
+    "ja": "着信中",
+    "zh-CN": "来电中"
+  },
+  "기록 17 · 통화 종료": {
+    "en": "Record 17 · Call ended",
+    "ja": "記録17・通話終了",
+    "zh-CN": "记录17 · 通话结束"
+  },
+  "야간 당직 17": {
+    "en": "Night duty 17",
+    "ja": "夜間当直17",
+    "zh-CN": "夜间值班17"
+  },
+  "1F · 공동현관": {
+    "en": "1F · Shared entrance",
+    "ja": "1F・共同玄関",
+    "zh-CN": "1F · 公共入口"
+  },
+  "관리사무소 연결문": {
+    "en": "Management office connecting door",
+    "ja": "管理事務所連絡扉",
+    "zh-CN": "物业办公室连通门"
+  },
+  "우편함": {
+    "en": "Mailboxes",
+    "ja": "郵便受け",
+    "zh-CN": "信箱"
+  },
+  "1층 안내도": {
+    "en": "1F map",
+    "ja": "1階案内図",
+    "zh-CN": "1层导览图"
+  },
+  "1F · 관리사무소": {
+    "en": "1F · Management office",
+    "ja": "1F・管理事務所",
+    "zh-CN": "1F · 物业办公室"
+  },
+  "사고기록": {
+    "en": "Accident record",
+    "ja": "事故記録",
+    "zh-CN": "事故记录"
+  },
+  "통화기록": {
+    "en": "Call record",
+    "ja": "通話記録",
+    "zh-CN": "通话记录"
+  },
+  "입차기록": {
+    "en": "Vehicle entry record",
+    "ja": "入庫記録",
+    "zh-CN": "入场记录"
+  },
+  "1F → B1 · 비상계단": {
+    "en": "1F → B1 · Emergency stairs",
+    "ja": "1F → B1・非常階段",
+    "zh-CN": "1F → B1 · 消防楼梯"
+  },
+  "B1 지하주차장": {
+    "en": "B1 Underground parking",
+    "ja": "B1 地下駐車場",
+    "zh-CN": "B1 地下停车场"
+  },
+  "1층 계단참": {
+    "en": "1F landing",
+    "ja": "1階踊り場",
+    "zh-CN": "1层楼梯平台"
+  },
+  "중간 계단참": {
+    "en": "Middle landing",
+    "ja": "中間踊り場",
+    "zh-CN": "中间楼梯平台"
+  },
+  "지하 계단참": {
+    "en": "Basement landing",
+    "ja": "地下踊り場",
+    "zh-CN": "地下楼梯平台"
+  },
+  "주차장 연결문": {
+    "en": "Parking connecting door",
+    "ja": "駐車場連絡扉",
+    "zh-CN": "停车场连通门"
+  },
+  "중정 계단": {
+    "en": "Courtyard stairs",
+    "ja": "中庭階段",
+    "zh-CN": "中庭楼梯"
+  },
+  "기록보관실": {
+    "en": "Archives",
+    "ja": "記録保管室",
+    "zh-CN": "档案室"
+  },
+  "공동시설 안내도": {
+    "en": "Shared facilities map",
+    "ja": "共用施設案内図",
+    "zh-CN": "公共设施导览图"
+  },
+  "정문 손잡이 확인": {
+    "en": "Check main door handle",
+    "ja": "正面入口の取っ手を確認",
+    "zh-CN": "检查正门把手"
+  },
+  "2803호 · 반송 안내문": {
+    "en": "Unit 2803 · Returned mail notice",
+    "ja": "2803号室・返送通知",
+    "zh-CN": "2803室 · 退件通知"
+  },
+  "야간 설비 점검 · 한서연\n비상통신: 축전지 공급 유지\n침수 시 외부조명만 차단": {
+    "en": "Night equipment inspection · Han Seo-yeon\nEmergency communications: Keep battery supply on\nIf flooded, cut outdoor lighting only",
+    "ja": "夜間設備点検・ハン・ソヨン\n非常通信：蓄電池供給を維持\n浸水時は外灯のみ遮断",
+    "zh-CN": "夜间设备检查 · 韩瑞妍\n紧急通信：保持蓄电池供电\n积水时仅切断室外照明"
+  },
+  "당직": {
+    "en": "On duty",
+    "ja": "当直",
+    "zh-CN": "值班"
+  },
+  "한서연 · 야간 당직 명찰": {
+    "en": "Han Seo-yeon · Night duty badge",
+    "ja": "ハン・ソヨン・夜間当直名札",
+    "zh-CN": "韩瑞妍 · 夜班工作牌"
+  },
+  "건전지 라디오 켜기": {
+    "en": "Turn on battery radio",
+    "ja": "電池式ラジオをつける",
+    "zh-CN": "打开电池收音机"
+  },
+  "백로아파트 시설관리\n한서연\n야간 당직 · 0917": {
+    "en": "Baekro Apartments facilities management\nHan Seo-yeon\nNight duty · 0917",
+    "ja": "白鷺アパート施設管理\nハン・ソヨン\n夜間当直・0917",
+    "zh-CN": "白鹭公寓设施管理\n韩瑞妍\n夜间值班 · 0917"
+  },
+  "비상통신 · 공급 중": {
+    "en": "Emergency communications · Powered",
+    "ja": "非常通信・供給中",
+    "zh-CN": "紧急通信 · 供电中"
+  },
+  "03:20 · 비상벨 녹음기": {
+    "en": "03:20 · Emergency bell recorder",
+    "ja": "03:20・非常ベル録音機",
+    "zh-CN": "03:20 · 紧急呼叫录音机"
+  },
+  "통화 기록 확인": {
+    "en": "Check call record",
+    "ja": "通話記録を確認",
+    "zh-CN": "查看通话记录"
+  },
+  "지우기 / 통화 종료": {
+    "en": "Clear / End call",
+    "ja": "消去 / 通話終了",
+    "zh-CN": "清除 / 结束通话"
+  },
+  "세대 / 내선 호출": {
+    "en": "Call unit / extension",
+    "ja": "住戸 / 内線呼出",
+    "zh-CN": "呼叫住户 / 分机"
+  },
+  "입력": {
+    "en": "Enter",
+    "ja": "入力",
+    "zh-CN": "输入"
+  },
+  "CALL · 세대 / 내선 호출": {
+    "en": "CALL · Call unit / extension",
+    "ja": "CALL・住戸 / 内線呼出",
+    "zh-CN": "CALL · 呼叫住户 / 分机"
+  },
+  "CLEAR · 지우기 / 종료": {
+    "en": "CLEAR · Clear / End",
+    "ja": "CLEAR・消去 / 終了",
+    "zh-CN": "CLEAR · 清除 / 结束"
+  },
+  "구내 전용 · 외부 발신 불가\n세대 4자리 / 당직 내선 17\n숫자·Enter 호출 / CLEAR 종료": {
+    "en": "Internal only · No outside calls\n4-digit unit / Duty extension 17\nNumbers + Enter to call / CLEAR to end",
+    "ja": "構内専用・外線発信不可\n住戸4桁 / 当直内線17\n数字・Enterで呼出 / CLEARで終了",
+    "zh-CN": "仅限内线 · 无法拨打外线\n住户4位数 / 值班分机17\n数字·Enter呼叫 / CLEAR结束"
+  },
+  "기록 인계 대장": {
+    "en": "Records handover ledger",
+    "ja": "記録引継台帳",
+    "zh-CN": "档案交接登记簿"
+  },
+  "A / 정문 도로 영상": {
+    "en": "A / Main entrance road footage",
+    "ja": "A / 正面道路映像",
+    "zh-CN": "A / 正门道路录像"
+  },
+  "B / 비상 호출 기록": {
+    "en": "B / Emergency call record",
+    "ja": "B / 非常呼出記録",
+    "zh-CN": "B / 紧急呼叫记录"
+  },
+  "C / 지하 입차 영상": {
+    "en": "C / Basement vehicle entry footage",
+    "ja": "C / 地下入庫映像",
+    "zh-CN": "C / 地下车辆入场录像"
+  },
+  "A · 정문 도로": {
+    "en": "A · Main entrance road",
+    "ja": "A・正面道路",
+    "zh-CN": "A · 正门道路"
+  },
+  "B · 통화 기록": {
+    "en": "B · Call record",
+    "ja": "B・通話記録",
+    "zh-CN": "B · 通话记录"
+  },
+  "C · 지하 입차": {
+    "en": "C · Basement vehicle entry",
+    "ja": "C・地下入庫",
+    "zh-CN": "C · 地下入场"
+  },
+  "복원된 기록 재생": {
+    "en": "Play restored records",
+    "ja": "復元した記録を再生",
+    "zh-CN": "播放恢复的记录"
+  },
+  "A · 03:17 / 도로": {
+    "en": "A · 03:17 / Road",
+    "ja": "A・03:17 / 道路",
+    "zh-CN": "A · 03:17 / 道路"
+  },
+  "B · 03:20 / 통화": {
+    "en": "B · 03:20 / Call",
+    "ja": "B・03:20 / 通話",
+    "zh-CN": "B · 03:20 / 通话"
+  },
+  "C · 03:26 / 입차": {
+    "en": "C · 03:26 / Vehicle entry",
+    "ja": "C・03:26 / 入庫",
+    "zh-CN": "C · 03:26 / 入场"
+  },
+  "임의 폐기 금지\n사고 관련 원본 보존": {
+    "en": "Do not discard without approval\nPreserve accident-related originals",
+    "ja": "無断廃棄禁止\n事故関連の原本を保存",
+    "zh-CN": "禁止擅自销毁\n保留事故相关原始记录"
+  },
+  "서측 저장탱크 / 동측 급수관\n↓ 集水井 · 집수정 ↓\n흡입망 → 펌프 → 토출 선택기\n환수 / 차단 / 외부 우수관\n서측: 배관 점검 · 동측: 전기실": {
+    "en": "West storage tank / East supply pipe\n↓ Sump well ↓\nIntake screen → Pump → Discharge selector\nRecirculate / Shut off / External storm drain\nWest: Pipe inspection · East: Electrical room",
+    "ja": "西側貯水槽 / 東側給水管\n↓ 集水井・集水槽 ↓\n吸込網 → ポンプ → 吐出切替器\n還水 / 遮断 / 外部雨水管\n西側：配管点検・東側：電気室",
+    "zh-CN": "西侧储水罐 / 东侧供水管\n↓ 集水井 · 集水坑 ↓\n进水滤网 → 水泵 → 出水选择阀\n回流 / 关闭 / 室外雨水管\n西侧：管道检查 · 东侧：配电室"
+  },
+  "배수 계통도 확인": {
+    "en": "Check drainage diagram",
+    "ja": "排水系統図を確認",
+    "zh-CN": "查看排水系统图"
+  },
+  "서측 급수 차단": {
+    "en": "Shut off west water supply",
+    "ja": "西側給水を遮断",
+    "zh-CN": "切断西侧供水"
+  },
+  "동측 급수 차단": {
+    "en": "Shut off east water supply",
+    "ja": "東側給水を遮断",
+    "zh-CN": "切断东侧供水"
+  },
+  "배수": {
+    "en": "Drainage",
+    "ja": "排水",
+    "zh-CN": "排水"
+  },
+  "환기": {
+    "en": "Ventilation",
+    "ja": "換気",
+    "zh-CN": "通风"
+  },
+  "외부조명": {
+    "en": "Outdoor lighting",
+    "ja": "外灯",
+    "zh-CN": "室外照明"
+  },
+  "회로 전환": {
+    "en": "Switch circuit",
+    "ja": "回路切替",
+    "zh-CN": "切换回路"
+  },
+  "배수 펌프 기동": {
+    "en": "Start drainage pump",
+    "ja": "排水ポンプを起動",
+    "zh-CN": "启动排水泵"
+  },
+  "배수 기동": {
+    "en": "Start drainage",
+    "ja": "排水起動",
+    "zh-CN": "启动排水"
+  },
+  "환기 연동 · 모터 보호\n외부조명 누전: 사용 금지": {
+    "en": "Ventilation interlock · Motor protection\nOutdoor lighting short: Do not use",
+    "ja": "換気連動・モーター保護\n外灯漏電：使用禁止",
+    "zh-CN": "通风联动 · 电机保护\n室外照明漏电：禁止使用"
+  },
+  "수위 HIGH\n급수 차단 후 전원 연결": {
+    "en": "Water level HIGH\nShut off water supply before powering on",
+    "ja": "水位HIGH\n給水遮断後に電源接続",
+    "zh-CN": "水位HIGH\n切断供水后接通电源"
+  },
+  "침수 · 좌우 통로로 우회": {
+    "en": "Flooded · Detour via side passages",
+    "ja": "浸水・左右の通路へ迂回",
+    "zh-CN": "积水 · 请绕行两侧通道"
+  },
+  "외부 우수관 ←": {
+    "en": "External storm drain ←",
+    "ja": "外部雨水管 ←",
+    "zh-CN": "室外雨水管 ←"
+  },
+  "집수정 환수 ↓": {
+    "en": "Sump recirculation ↓",
+    "ja": "集水槽還水 ↓",
+    "zh-CN": "集水坑回流 ↓"
+  },
+  "환수": {
+    "en": "Recirculate",
+    "ja": "還水",
+    "zh-CN": "回流"
+  },
+  "토출 선택기 돌리기": {
+    "en": "Turn discharge selector",
+    "ja": "吐出切替器を回す",
+    "zh-CN": "转动出水选择阀"
+  },
+  "흡입망에 걸린 천 걷어내기": {
+    "en": "Remove cloth from intake screen",
+    "ja": "吸込網の布を取り除く",
+    "zh-CN": "清除进水滤网上的布"
+  },
+  "01 흡입망 · 이물 확인": {
+    "en": "01 Intake screen · Check for debris",
+    "ja": "01 吸込網・異物確認",
+    "zh-CN": "01 进水滤网 · 检查异物"
+  },
+  "노랑=직전시험 / 빨강=현재": {
+    "en": "Yellow=Last test / Red=Current",
+    "ja": "黄＝前回試験 / 赤＝現在",
+    "zh-CN": "黄色=上次测试 / 红色=当前"
+  },
+  "토출 MPa": {
+    "en": "Discharge MPa",
+    "ja": "吐出 MPa",
+    "zh-CN": "出水压力 MPa"
+  },
+  "흡입 · 막힘 →": {
+    "en": "Intake · Blockage →",
+    "ja": "吸込・詰まり →",
+    "zh-CN": "进水 · 堵塞 →"
+  },
+  "원본 보존": {
+    "en": "Preserve originals",
+    "ja": "原本保存",
+    "zh-CN": "保留原始记录"
+  },
+  "설비 부품": {
+    "en": "Equipment parts",
+    "ja": "設備部品",
+    "zh-CN": "设备零件"
+  },
+  "회수한 원본을 선택하세요\n장면 표시 → 4·5 사실 대조": {
+    "en": "Select a recovered original\nMark scene → 4·5 Compare facts",
+    "ja": "回収した原本を選択\n場面をマーク → 4・5 事実照合",
+    "zh-CN": "选择已找回的原始录像\n标记画面 → 4·5 核对事实"
+  },
+  "기록 연결 완료\n재생 버튼을 누르세요": {
+    "en": "Records linked\nPress Play",
+    "ja": "記録接続完了\n再生ボタンを押してください",
+    "zh-CN": "记录已连接\n请按播放按钮"
+  },
+  "현재 03:17 / 편집실\n네 뒤에 있어": {
+    "en": "Now 03:17 / Editing room\nBehind you",
+    "ja": "現在03:17 / 編集室\nあなたの後ろにいる",
+    "zh-CN": "当前03:17 / 剪辑室\n就在你身后"
+  },
+  "회수한 원본부터 검토할 수 있습니다": {
+    "en": "You can review recovered originals first",
+    "ja": "回収した原本から確認できます",
+    "zh-CN": "可先查看已找回的原始录像"
+  },
+  "2803 연결됨\n북쪽 방화문 잠금 해제": {
+    "en": "Connected to 2803\nNorth fire door unlocked",
+    "ja": "2803接続済み\n北側防火扉のロック解除",
+    "zh-CN": "已接通2803\n北侧防火门已解锁"
+  },
+  "통화 기록 · 수신 세대 확인\n네 자리 입력 → CALL": {
+    "en": "Call record · Identify receiving unit\nEnter four digits → CALL",
+    "ja": "通話記録・着信住戸を確認\n4桁入力 → CALL",
+    "zh-CN": "通话记录 · 确认接听住户\n输入四位数 → CALL"
+  },
+  "수위 LOW\n주차장 통행 가능": {
+    "en": "Water level LOW\nParking accessible",
+    "ja": "水位LOW\n駐車場通行可能",
+    "zh-CN": "水位LOW\n停车场可以通行"
+  },
+  "배수 가동 중\n젖은 통로에 접근 금지": {
+    "en": "Drainage running\nKeep clear of wet passages",
+    "ja": "排水稼働中\n濡れた通路に近づかない",
+    "zh-CN": "正在排水\n禁止靠近积水通道"
+  },
+  "수위 HIGH / 토출 {0}\n{1}": {
+    "en": "Water level HIGH / Discharge {0}\n{1}",
+    "ja": "水位HIGH / 吐出 {0}\n{1}",
+    "zh-CN": "水位HIGH / 出水 {0}\n{1}"
+  },
+  "외부": {
+    "en": "External",
+    "ja": "外部",
+    "zh-CN": "室外"
+  },
+  "현장 확인 후 시험 기동": {
+    "en": "Inspect site before test run",
+    "ja": "現場確認後に試験起動",
+    "zh-CN": "现场检查后试运行"
+  },
+  "배수 준비 완료": {
+    "en": "Drainage ready",
+    "ja": "排水準備完了",
+    "zh-CN": "排水准备就绪"
+  },
+  "수위 HIGH\n유입 · 펌프실 점검": {
+    "en": "Water level HIGH\nCheck inflow and pump room",
+    "ja": "水位HIGH\n流入・ポンプ室を点検",
+    "zh-CN": "水位HIGH\n检查进水及泵房"
+  },
+  "{0}\n{1} {2}초 / {3}초": {
+    "en": "{0}\n{1} {2}s / {3}s",
+    "ja": "{0}\n{1} {2}秒 / {3}秒",
+    "zh-CN": "{0}\n{1} {2}秒 / {3}秒"
+  },
+  "재생": {
+    "en": "Play",
+    "ja": "再生",
+    "zh-CN": "播放"
+  },
+  "정지": {
+    "en": "Pause",
+    "ja": "停止",
+    "zh-CN": "暂停"
+  },
+  "차량 출구": {
+    "en": "Vehicle exit",
+    "ja": "車両出口",
+    "zh-CN": "车辆出口"
+  },
+  "2호기": {
+    "en": "Lift 2",
+    "ja": "2号機",
+    "zh-CN": "2号电梯"
+  },
+  "1호기 · 운행 중지": {
+    "en": "Lift 1 · Out of service",
+    "ja": "1号機・運転停止",
+    "zh-CN": "1号电梯 · 停运"
+  },
+  "점검 중\n사용 금지": {
+    "en": "Under inspection\nDo not use",
+    "ja": "点検中\n使用禁止",
+    "zh-CN": "检修中\n禁止使用"
+  },
+  "2호기 · 1층": {
+    "en": "Lift 2 · 1F",
+    "ja": "2号機・1階",
+    "zh-CN": "2号电梯 · 1层"
+  },
+  "야간 근무일지\n관리사무소 · 비상계단 열쇠": {
+    "en": "Night shift log\nManagement office · Emergency stairs key",
+    "ja": "夜間勤務日誌\n管理事務所・非常階段の鍵",
+    "zh-CN": "夜班日志\n物业办公室 · 消防楼梯钥匙"
+  },
+  "관리사무소 연결문 열쇠": {
+    "en": "Management office connecting door key",
+    "ja": "管理事務所連絡扉の鍵",
+    "zh-CN": "物业办公室连通门钥匙"
+  },
+  "정문 통행 불가\n관리사무소 · B1 계단으로": {
+    "en": "Main entrance blocked\nVia management office · B1 stairs",
+    "ja": "正面入口通行不可\n管理事務所・B1階段へ",
+    "zh-CN": "正门无法通行\n请走物业办公室 · B1楼梯"
+  },
+  "보수 공사 · 통행 금지": {
+    "en": "Repairs · No entry",
+    "ja": "補修工事・通行禁止",
+    "zh-CN": "维修施工 · 禁止通行"
+  },
+  "발송: {0}\n수신: 백로아파트 2803호\n{1}\n관리실 대리수령": {
+    "en": "From: {0}\nTo: Baekro Apartments, Unit 2803\n{1}\nReceived by management office",
+    "ja": "差出人：{0}\n宛先：白鷺アパート2803号室\n{1}\n管理室が代理受領",
+    "zh-CN": "发件人：{0}\n收件地址：白鹭公寓2803室\n{1}\n管理室代收"
+  },
+  "한서연 님": {
+    "en": "Han Seo-yeon",
+    "ja": "ハン・ソヨン様",
+    "zh-CN": "韩瑞妍女士"
+  },
+  "부부 동반 상담 회신": {
+    "en": "Couples counseling reply",
+    "ja": "夫婦同伴カウンセリングの返信",
+    "zh-CN": "夫妻共同咨询回函"
+  },
+  "등록 차량 소유자": {
+    "en": "Registered vehicle owner",
+    "ja": "登録車両所有者",
+    "zh-CN": "登记车主"
+  },
+  "CCTV 보존영상 열람\nCAM-04 / 03:26 · 2803호 등록 차량\n요청한 구간은 삭제되지 않았습니다": {
+    "en": "Preserved CCTV footage\nCAM-04 / 03:26 · Unit 2803 registered vehicle\nThe requested segment was not deleted",
+    "ja": "CCTV保存映像の閲覧\nCAM-04 / 03:26・2803号室登録車両\n依頼された区間は削除されていません",
+    "zh-CN": "查看保存的监控录像\nCAM-04 / 03:26 · 2803室登记车辆\n请求删除的片段并未删除"
+  },
+  "CCTV 보존영상\nCAM-04 / 03:26 · 2803호 등록 차량": {
+    "en": "Preserved CCTV footage\nCAM-04 / 03:26 · Unit 2803 registered vehicle",
+    "ja": "CCTV保存映像\nCAM-04 / 03:26・2803号室登録車両",
+    "zh-CN": "保存的监控录像\nCAM-04 / 03:26 · 2803室登记车辆"
+  },
+  "1F 관리사무소\nB1 비상계단으로 이동": {
+    "en": "1F Management office\nProceed to B1 emergency stairs",
+    "ja": "1F 管理事務所\nB1非常階段へ",
+    "zh-CN": "1F 物业办公室\n前往B1消防楼梯"
+  },
+  "3동 2803호": {
+    "en": "Block 3, Unit 2803",
+    "ja": "3棟2803号室",
+    "zh-CN": "3栋2803室"
+  },
+  "야간에는 조용히": {
+    "en": "Quiet at night",
+    "ja": "夜間はお静かに",
+    "zh-CN": "夜间请保持安静"
+  },
+  "관리비 납부서": {
+    "en": "Maintenance fee bill",
+    "ja": "管理費納付書",
+    "zh-CN": "物业费缴费单"
+  },
+  "백로 관리사무소": {
+    "en": "Baekro management office",
+    "ja": "白鷺管理事務所",
+    "zh-CN": "白鹭物业办公室"
+  },
+  "외벽 보수 안내": {
+    "en": "Exterior repair notice",
+    "ja": "外壁補修のお知らせ",
+    "zh-CN": "外墙维修通知"
+  },
+  "공사 일정 미정": {
+    "en": "Work schedule pending",
+    "ja": "工事日程未定",
+    "zh-CN": "施工日期待定"
+  },
+  "난간에 기대지 마세요": {
+    "en": "Do not lean on railing",
+    "ja": "手すりにもたれないでください",
+    "zh-CN": "请勿倚靠栏杆"
+  },
+  "1994년 준공": {
+    "en": "Built in 1994",
+    "ja": "1994年竣工",
+    "zh-CN": "1994年竣工"
+  },
+  "백로아파트 3동": {
+    "en": "Baekro Apartments, Block 3",
+    "ja": "白鷺アパート3棟",
+    "zh-CN": "白鹭公寓3栋"
+  },
+  "승강기": {
+    "en": "Lift",
+    "ja": "エレベーター",
+    "zh-CN": "电梯"
+  },
+  "복도 끝 28층": {
+    "en": "28F, end of hall",
+    "ja": "廊下の奥・28階",
+    "zh-CN": "走廊尽头28层"
+  },
+  "안전 안내": {
+    "en": "Safety notice",
+    "ja": "安全案内",
+    "zh-CN": "安全须知"
+  },
+  "문 끼임 주의": {
+    "en": "Keep clear of closing doors",
+    "ja": "扉の挟まれ注意",
+    "zh-CN": "当心夹门"
+  },
+  "이상 발생 시": {
+    "en": "In case of malfunction",
+    "ja": "異常発生時",
+    "zh-CN": "发生故障时"
+  },
+  "비상 버튼": {
+    "en": "Emergency button",
+    "ja": "非常ボタン",
+    "zh-CN": "紧急按钮"
+  },
+  "대피 안내": {
+    "en": "Evacuation guide",
+    "ja": "避難案内",
+    "zh-CN": "疏散指引"
+  },
+  "화재 시 승강기": {
+    "en": "In a fire, lifts",
+    "ja": "火災時はエレベーター",
+    "zh-CN": "火灾时电梯"
+  },
+  "사용 금지": {
+    "en": "Do not use",
+    "ja": "使用禁止",
+    "zh-CN": "禁止使用"
+  },
+  "출입 제한": {
+    "en": "Restricted access",
+    "ja": "立入制限",
+    "zh-CN": "限制出入"
+  },
+  "17층 공사 구역": {
+    "en": "17F construction zone",
+    "ja": "17階工事区域",
+    "zh-CN": "17层施工区域"
+  },
+  "야간 당직 일지": {
+    "en": "Night duty log",
+    "ja": "夜間当直日誌",
+    "zh-CN": "夜间值班日志"
+  },
+  "사흘 전": {
+    "en": "Three days ago",
+    "ja": "3日前",
+    "zh-CN": "三天前"
+  },
+  "교통 사망 사고": {
+    "en": "Fatal traffic accident",
+    "ja": "交通死亡事故",
+    "zh-CN": "致命交通事故"
+  },
+  "세대 안내": {
+    "en": "Unit directory",
+    "ja": "住戸案内",
+    "zh-CN": "住户指南"
+  },
+  "2801 · 입주": {
+    "en": "2801 · Occupied",
+    "ja": "2801・入居",
+    "zh-CN": "2801 · 已入住"
+  },
+  "2802 · 공실": {
+    "en": "2802 · Vacant",
+    "ja": "2802・空室",
+    "zh-CN": "2802 · 空置"
+  },
+  "목격 제보": {
+    "en": "Witness information wanted",
+    "ja": "目撃情報募集",
+    "zh-CN": "征集目击线索"
+  },
+  "사흘 전 03:17": {
+    "en": "Three days ago, 03:17",
+    "ja": "3日前03:17",
+    "zh-CN": "三天前03:17"
+  },
+  "뺑소니 사고": {
+    "en": "Hit-and-run",
+    "ja": "ひき逃げ事故",
+    "zh-CN": "肇事逃逸"
+  },
+  "입주민 주차장": {
+    "en": "Residents parking",
+    "ja": "住民用駐車場",
+    "zh-CN": "住户停车场"
+  },
+  "외부 차량 주차 금지": {
+    "en": "No visitor parking",
+    "ja": "外部車両駐車禁止",
+    "zh-CN": "外来车辆禁止停车"
+  },
+  "비상구": {
+    "en": "Emergency exit",
+    "ja": "非常口",
+    "zh-CN": "安全出口"
+  },
+  "보행자 전용": {
+    "en": "Pedestrians only",
+    "ja": "歩行者専用",
+    "zh-CN": "行人专用"
+  },
+  "백로아파트  ｜  서행": {
+    "en": "Baekro Apartments  ｜  Slow",
+    "ja": "白鷺アパート  ｜  徐行",
+    "zh-CN": "白鹭公寓  ｜  慢行"
+  },
+  "새 메시지": {
+    "en": "New message",
+    "ja": "新着メッセージ",
+    "zh-CN": "新消息"
+  },
+  "백로아파트  출구": {
+    "en": "Baekro Apartments  Exit",
+    "ja": "白鷺アパート  出口",
+    "zh-CN": "白鹭公寓  出口"
+  },
+  "야간 당직 · 한서연\n1703호 임시 관리실\n\n연결문 여벌 열쇠는\n책상 가운데 서랍\n\n내일 오후 두 시. 꼭 갈 것.": {
+    "en": "Night duty · Han Seo-yeon\nTemporary office, Unit 1703\n\nSpare connecting door key:\nMiddle desk drawer\n\nTomorrow at two. Must go.",
+    "ja": "夜間当直・ハン・ソヨン\n1703号室臨時管理室\n\n連絡扉の予備の鍵は\n机の中央の引き出し\n\n明日午後2時。必ず行くこと。",
+    "zh-CN": "夜间值班 · 韩瑞妍\n1703室临时管理室\n\n连通门备用钥匙在\n书桌中间抽屉\n\n明天下午两点。一定要去。"
+  },
+  "서재 책상 · 가운데 서랍 당기기": {
+    "en": "Study desk · Pull middle drawer",
+    "ja": "書斎の机・中央の引き出しを引く",
+    "zh-CN": "书房书桌 · 拉开中间抽屉"
+  },
+  "1703호 연결문 열쇠 챙기기": {
+    "en": "Take Unit 1703 connecting door key",
+    "ja": "1703号室連絡扉の鍵を取る",
+    "zh-CN": "拿取1703室连通门钥匙"
+  },
+  "한서연의 야간 당직 수첩 읽기": {
+    "en": "Read Han Seo-yeon's night duty notebook",
+    "ja": "ハン・ソヨンの夜間当直手帳を読む",
+    "zh-CN": "阅读韩瑞妍的夜班手册"
+  },
+  "{0}호기": {
+    "en": "Lift {0}",
+    "ja": "{0}号機",
+    "zh-CN": "{0}号电梯"
+  },
+  "{0}호기 호출": {
+    "en": "Call lift {0}",
+    "ja": "{0}号機を呼ぶ",
+    "zh-CN": "呼叫{0}号电梯"
+  },
+  "비상계단 문 열기": {
+    "en": "Open emergency stair door",
+    "ja": "非常階段の扉を開ける",
+    "zh-CN": "打开消防楼梯门"
+  },
+  "운행층 1–28": {
+    "en": "Floors served: 1–28",
+    "ja": "運転階1–28",
+    "zh-CN": "运行楼层1–28"
+  },
+  "지하주차장: 1층 계단 이용": {
+    "en": "Underground parking: Use 1F stairs",
+    "ja": "地下駐車場：1階の階段を利用",
+    "zh-CN": "地下停车场：请走1层楼梯"
+  },
+  "{0}층": {
+    "en": "Floor {0}",
+    "ja": "{0}階",
+    "zh-CN": "{0}层"
+  },
+  "20층 복도문 · 밀어서 열기": {
+    "en": "20F corridor door · Push to open",
+    "ja": "20階廊下扉・押して開ける",
+    "zh-CN": "20层走廊门 · 推开"
+  },
+  "한빛 세탁소": {
+    "en": "Hanbit Laundry",
+    "ja": "ハンビッ洗濯店",
+    "zh-CN": "韩光洗衣店"
+  },
+  "부동산 · 상가": {
+    "en": "Real estate · Shops",
+    "ja": "不動産・店舗",
+    "zh-CN": "房地产 · 商铺"
+  },
+  "백로 전기철물": {
+    "en": "Baekro Electrical & Hardware",
+    "ja": "白鷺電気金物店",
+    "zh-CN": "白鹭电器五金"
+  },
+  "동네 슈퍼": {
+    "en": "Neighborhood grocery",
+    "ja": "町のスーパー",
+    "zh-CN": "社区超市"
+  },
+  "수선 · 열쇠": {
+    "en": "Repairs · Keys",
+    "ja": "修理・鍵",
+    "zh-CN": "修理 · 配钥匙"
+  },
+  "백로 101": {
+    "en": "Baekro 101",
+    "ja": "白鷺101",
+    "zh-CN": "白鹭101"
+  },
+  "101동": {
+    "en": "Block 101",
+    "ja": "101棟",
+    "zh-CN": "101栋"
+  },
+  "외벽 보수 공사": {
+    "en": "Exterior repair work",
+    "ja": "外壁補修工事",
+    "zh-CN": "外墙维修施工"
+  },
+  "발신자 표시 제한": {
+    "en": "Private number",
+    "ja": "非通知",
+    "zh-CN": "隐藏号码"
+  },
+  "저장된 음성 메시지": {
+    "en": "Saved voice message",
+    "ja": "保存済み音声メッセージ",
+    "zh-CN": "已保存的语音消息"
+  },
+  "9월 19일": {
+    "en": "September 19",
+    "ja": "9月19日",
+    "zh-CN": "9月19日"
+  },
+  "수신 전화": {
+    "en": "Incoming call",
+    "ja": "着信",
+    "zh-CN": "来电"
+  },
+  "플래시 켜짐": {
+    "en": "Flashlight on",
+    "ja": "ライト点灯",
+    "zh-CN": "手电筒已开启"
+  },
+  "03:16  ·  재생 중": {
+    "en": "03:16  ·  Playing",
+    "ja": "03:16  ・  再生中",
+    "zh-CN": "03:16  ·  播放中"
+  },
+  "▶  메시지 듣기": {
+    "en": "▶  Listen to message",
+    "ja": "▶  メッセージを聞く",
+    "zh-CN": "▶  收听消息"
+  },
+  "시설기록": {
+    "en": "Facility records",
+    "ja": "施設記録",
+    "zh-CN": "设施记录"
+  },
+  "당직일지": {
+    "en": "Duty log",
+    "ja": "当直日誌",
+    "zh-CN": "值班日志"
+  },
+  "입출기록": {
+    "en": "Entry/exit records",
+    "ja": "入退記録",
+    "zh-CN": "出入记录"
+  },
+  "설비점검": {
+    "en": "Equipment inspection",
+    "ja": "設備点検",
+    "zh-CN": "设备检查"
+  },
+  "입주문서": {
+    "en": "Resident documents",
+    "ja": "入居書類",
+    "zh-CN": "入住文件"
+  },
+  "원본보존": {
+    "en": "Original preservation",
+    "ja": "原本保存",
+    "zh-CN": "原始记录保存"
+  },
+  "보수일지": {
+    "en": "Repair log",
+    "ja": "補修日誌",
+    "zh-CN": "维修日志"
+  },
+  "보존문서": {
+    "en": "Archived documents",
+    "ja": "保存書類",
+    "zh-CN": "存档文件"
+  },
+  "운영일지": {
+    "en": "Operations log",
+    "ja": "運営日誌",
+    "zh-CN": "运行日志"
+  },
+  "설비대장": {
+    "en": "Equipment register",
+    "ja": "設備台帳",
+    "zh-CN": "设备登记簿"
+  },
+  "원본기록": {
+    "en": "Original records",
+    "ja": "原本記録",
+    "zh-CN": "原始记录"
+  },
+  "LIVE  CAM-08  관리실 서고  {0}": {
+    "en": "LIVE  CAM-08  Office archives  {0}",
+    "ja": "LIVE  CAM-08  管理室書庫  {0}",
+    "zh-CN": "LIVE  CAM-08  管理室档案库  {0}"
+  },
+  "BAEKRO / 감시 기록 장치": {
+    "en": "BAEKRO / Surveillance recorder",
+    "ja": "BAEKRO / 監視記録装置",
+    "zh-CN": "BAEKRO / 监控录像设备"
+  },
+  "저장": {
+    "en": "Save",
+    "ja": "保存",
+    "zh-CN": "保存"
+  },
+  "원본": {
+    "en": "Original",
+    "ja": "原本",
+    "zh-CN": "原始记录"
+  },
+  "정문 비상벨 → 2803 등록 휴대전화": {
+    "en": "Main entrance emergency bell → Unit 2803 registered mobile",
+    "ja": "正面非常ベル → 2803登録携帯電話",
+    "zh-CN": "正门紧急呼叫铃 → 2803登记手机"
+  },
+  "수신자 통화 종료": {
+    "en": "Recipient ended call",
+    "ja": "受信者が通話終了",
+    "zh-CN": "接听方结束通话"
+  },
+  "녹색 보행 신호 / CAM-01": {
+    "en": "Green pedestrian signal / CAM-01",
+    "ja": "歩行者信号・青 / CAM-01",
+    "zh-CN": "行人绿灯 / CAM-01"
+  },
+  "제동등 점등 / 충돌 직전": {
+    "en": "Brake lights on / Before impact",
+    "ja": "ブレーキランプ点灯 / 衝突直前",
+    "zh-CN": "刹车灯亮起 / 碰撞前"
+  },
+  "충돌 후 / 제동 유지": {
+    "en": "After impact / Brakes held",
+    "ja": "衝突後 / 制動継続",
+    "zh-CN": "碰撞后 / 持续制动"
+  },
+  "「현장에 사람이 아직 있어요. 돌아와 주세요.」": {
+    "en": "“Someone is still here at the scene. Please come back.”",
+    "ja": "「現場にまだ人がいます。戻ってきてください。」",
+    "zh-CN": "“现场还有人。请回来。”"
+  },
+  "「잘못 거셨어요.」": {
+    "en": "“You have the wrong number.”",
+    "ja": "「番号をお間違えです。」",
+    "zh-CN": "“你打错了。”"
+  },
+  "03:26 · 「문 좀 열어 주세요.」": {
+    "en": "03:26 · “Please open the door.”",
+    "ja": "03:26・「ドアを開けてください。」",
+    "zh-CN": "03:26 · “请开一下门。”"
+  },
+  "잠금음 / 운전석 미하차": {
+    "en": "Lock sound / Driver did not exit",
+    "ja": "施錠音 / 運転席から降車なし",
+    "zh-CN": "落锁声 / 驾驶员未下车"
+  },
+  "2803 등록 차량 · 입차": {
+    "en": "Unit 2803 registered vehicle · Entry",
+    "ja": "2803登録車両・入庫",
+    "zh-CN": "2803登记车辆 · 入场"
+  },
+  "03:26:03–11 / 기록 9초 누락": {
+    "en": "03:26:03–11 / 9 seconds missing",
+    "ja": "03:26:03–11 / 記録9秒欠落",
+    "zh-CN": "03:26:03–11 / 缺失9秒录像"
+  },
+  "귀가자 2명 / 2803호": {
+    "en": "Two people returning / Unit 2803",
+    "ja": "帰宅者2名 / 2803号室",
+    "zh-CN": "归家者2人 / 2803室"
+  },
+  "현재 영상 · 기록 작성 중": {
+    "en": "Live footage · Recording",
+    "ja": "現在映像・記録作成中",
+    "zh-CN": "实时画面 · 正在录像"
+  },
+  "네 뒤에 있어": {
+    "en": "Behind you",
+    "ja": "あなたの後ろにいる",
+    "zh-CN": "就在你身后"
+  },
+  "4·5 사실 대조 / ←·→ 원본 다시 보기": {
+    "en": "4·5 Compare facts / ←·→ Review originals",
+    "ja": "4・5 事実照合 / ←・→ 原本を再確認",
+    "zh-CN": "4·5 核对事实 / ←·→ 重看原始录像"
+  },
+  "신호 없음": {
+    "en": "No signal",
+    "ja": "信号なし",
+    "zh-CN": "无信号"
+  },
+  "회수한 원본부터 검토하세요\n장면 표시 → 4·5 사실 대조": {
+    "en": "Review recovered originals first\nMark scene → 4·5 Compare facts",
+    "ja": "回収した原本から確認してください\n場面をマーク → 4・5 事実照合",
+    "zh-CN": "请先查看已找回的原始录像\n标记画面 → 4·5 核对事实"
+  },
+  "28층 · 바깥 복도 승강기": {
+    "en": "28F · Lift in outer corridor",
+    "ja": "28階・外廊下のエレベーター",
+    "zh-CN": "28层 · 外走廊电梯"
+  },
+  "현관문 확인": {
+    "en": "Check front door",
+    "ja": "玄関扉を確認",
+    "zh-CN": "检查入户门"
+  },
+  "젖은 신발": {
+    "en": "Wet shoes",
+    "ja": "濡れた靴",
+    "zh-CN": "湿鞋"
+  },
+  "심야 뉴스": {
+    "en": "Late-night news",
+    "ja": "深夜ニュース",
+    "zh-CN": "深夜新闻"
+  },
+  "03:17   서울 / 비": {
+    "en": "03:17   Seoul / Rain",
+    "ja": "03:17   ソウル / 雨",
+    "zh-CN": "03:17   首尔 / 雨"
+  },
+  "사흘 전 뺑소니 사망 사고 · 제보를 기다립니다": {
+    "en": "Fatal hit-and-run three days ago · Information wanted",
+    "ja": "3日前のひき逃げ死亡事故・情報をお待ちしています",
+    "zh-CN": "三天前肇事逃逸致死事故 · 征集线索"
+  },
+  "식탁 위 차량 수리 견적 확인": {
+    "en": "Check car repair estimate on dining table",
+    "ja": "食卓の車両修理見積書を確認",
+    "zh-CN": "查看餐桌上的修车报价单"
+  },
+  "주방 타이머 울리기": {
+    "en": "Ring kitchen timer",
+    "ja": "キッチンタイマーを鳴らす",
+    "zh-CN": "让厨房计时器响起"
+  },
+  "라디오 끄기": {
+    "en": "Turn off radio",
+    "ja": "ラジオを消す",
+    "zh-CN": "关闭收音机"
+  },
+  "전등 스위치 켜기": {
+    "en": "Turn on light switch",
+    "ja": "照明スイッチを入れる",
+    "zh-CN": "打开电灯开关"
+  },
+  "스마트폰 집어 들기": {
+    "en": "Pick up smartphone",
+    "ja": "スマートフォンを拾う",
+    "zh-CN": "拿起手机"
+  },
+  "수신 전화 받기": {
+    "en": "Answer incoming call",
+    "ja": "着信に出る",
+    "zh-CN": "接听来电"
+  },
+  "장롱에 숨기": {
+    "en": "Hide in wardrobe",
+    "ja": "洋服だんすに隠れる",
+    "zh-CN": "躲进衣柜"
+  },
+  "분전반": {
+    "en": "Breaker panel",
+    "ja": "分電盤",
+    "zh-CN": "配电箱"
+  },
+  "차단기 확인": {
+    "en": "Check breaker",
+    "ja": "ブレーカーを確認",
+    "zh-CN": "检查断路器"
+  }
+}
