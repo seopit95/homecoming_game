@@ -1,0 +1,7 @@
+# 귀가 · 고층 아파트 탈출
+
+The user requests implementation and delegates the continuation. Extend the existing solo first-person game: 28층 2803호 wardrobe escape → lift stops at 24층 → hold E to force doors → ghost beside the lift → corridor chase → looping 23층 stairs → abandoned 17층 management office → B1 alarm lure and exit.
+
+The apartment keeps its investigation. After hiding, the ghost searches the bathroom, leaving a limited escape window. The lift visibly descends four floors before failure. The corridor provides sprinting space and obstacles. Descending the stairs repeats 23층; a note reveals that climbing up is the way out. At 17층, find a maintenance log, fuse, restore security power and inspect CCTV to obtain the exit key. CCTV shows someone still inside the protagonist's wardrobe. The maintenance log describes how a fire alarm draws the figure. At B1, inspect the sealed pedestrian exit, activate the distant alarm, and run past parked cars to escape. The final call comes from 2803호.
+
+Keep Three.js/React/WebAudio and Korean text. No new runtime dependencies. Story state owns transitions, notes and checkpoint stage. World roots are disposed on scene changes; each area exposes bounds, targets, spawn and stair elevation. Game loop handles lift/door animations, hold progress, pause and collision-aware chase paths. Retry restores the current section; a notebook pauses gameplay and preserves clues. Keep the site owner-only at the existing URL. Do not claim measured playtime or browser playthrough without evidence.
