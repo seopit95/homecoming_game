@@ -1,0 +1,215 @@
+import * as T from 'three';
+import type {Area,Action} from './story';
+import type {Bounds,Solid,Target} from './world';
+import {surface,boxUV,softBox} from './materials.ts';
+import {dressApartment,nightWindow} from './japan.ts';
+
+export const landing={halfWidth:3,halfLength:32,spawnZ:29.5,liftZ:-31.75,fallTriggerZ:12,fallZ:-4} as const;
+
+export {createGhost as makeFigure} from './ghost.ts';
+import {createGhost as makeFigure} from './ghost.ts';
+export function buildBuilding(root:T.Group,area:Exclude<Area,'apartment'>){
+  const solids:Solid[]=[],targets:Target[]=[],lamps:T.PointLight[]=[];
+  const bounds:Bounds=area==='corridor'?{x:14.8,z:38.8}:area==='parking'?{x:24.8,z:42.8}:area==='landing'?{x:landing.halfWidth-.2,z:landing.halfLength-.2}:area==='office'?{x:11.8,z:15.8}:area==='lift'?{x:1.8,z:2.8}:{x:6.8,z:8.8};
+  const mat=(color:string,extra:object={})=>new T.MeshStandardMaterial({color,roughness:.84,...extra});
+  const wallMat=surface(area==='parking'||area==='stairs'?'concrete':'wall',area==='parking'?'#b3babd':'#bbbcb2'),floorMat=surface(area==='parking'||area==='stairs'?'concrete':'tile','#acaea6',{roughness:area==='parking'?.6:.44}),metal=mat('#4e5d60',{metalness:.65,roughness:.4}),dark=mat('#101a19'),wood=surface('wood','#aaa297'),stripe=mat('#a1a792');
+  function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false){
+    const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;
+  }
+  function wall(x:number,z:number,w:number,d:number,y=1.6,h=3.2){box(x,y,z,w,h,d,wallMat,true);box(x,y-h/2+.5,z,w+.025,.95,d+.025,surface(area==='parking'||area==='stairs'?'concrete':'tile','#838b87'));}
+  function label(text:string,x:number,y:number,z:number,ry=0,w=1.4,h=.34,color='#d5ddbd',background='#172c27'){
+    const canvas=document.createElement('canvas');canvas.width=768;canvas.height=192;const ctx=canvas.getContext('2d')!;
+    const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
+    const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:texture}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);
+    const update=(text:string)=>{ctx.fillStyle=background;ctx.fillRect(0,0,768,192);ctx.fillStyle=color;ctx.font='58px "Apple SD Gothic Neo",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,384,96);texture.needsUpdate=true;};update(text);
+    return {mesh,update};
+  }
+  function light(x:number,y:number,z:number,color='#9cb9b1',intensity=7){const l=new T.PointLight(color,intensity,11,2);l.position.set(x,y,z);root.add(l);lamps.push(l);return l;}
+  function fixture(x:number,z:number,color='#b0c6bb'){box(x,3.02,z,.2,.08,1.25,mat('#bbbfa6',{emissive:color,emissiveIntensity:.75}));light(x,2.75,z,color);}
+  function target(id:Action,label:string,mesh:T.Object3D,x:number,y:number,z:number){targets.push({id,label,mesh,point:new T.Vector3(x,y,z)});}
+  function door(id:Action,text:string,x:number,z:number,y=0){const mesh=box(x,y+1.22,z,1.65,2.44,.13,metal);box(x+.56,y+1.05,z+.16,.2,.07,.1,stripe);label(({stairs:'非常階段',up:'上階  ↑',down:'下階  ↓',service_exit:'地下 避難通路',exit:'非常口  EXIT'} as Partial<Record<Action,string>>)[id]||text,x,y+2.7,z+.11,0,1.7,.3);target(id,text,mesh,x,y+1.25,z+.3);return mesh;}
+  function cable(x:number,z:number,length:number){box(x,2.86,z,.075,.075,length,mat('#642f28'));}
+  const spawn=new T.Vector3(0,1.65,7);let heading=0,heightAt:((x:number,z:number)=>number)=()=>0;
+  let liftDoors:{left:T.Mesh;right:T.Mesh}|undefined;
+  let setDisplay:((text:string)=>void)|undefined;
+  let fallingFigure:T.Group|undefined;
+  const figure=makeFigure(root),shoes=new T.Group(),phoneGlow=new T.PointLight(),radioLight=new T.PointLight();
+  const bx=bounds.x+.2,bz=bounds.z+.2;
+  if(area!=='stairs'){
+    box(0,-.12,0,bx*2,.24,bz*2,floorMat);box(0,3.25,0,bx*2,.15,bz*2,mat('#394643'));
+    if(area!=='landing')wall(-bx,0,.2,bz*2);
+    wall(bx,0,.2,bz*2);wall(0,bz,bx*2,.2);
+    // An actual doorway, not a sliding leaf laid over an unbroken wall.
+    const opening=area==='parking'?5:area==='landing'||area==='lift'?2.3:1.9;
+    for(const side of [-1,1])wall(side*(bx+opening/2)/2,-bz,bx-opening/2,.2);
+    box(0,3,-bz,opening,.4,.2,wallMat);
+    box(0,-.1,-bz-2,opening,.2,4,floorMat);
+    for(const side of [-1,1])box(side*opening/2,1.4,-bz-2,.12,2.8,4,wallMat);
+    if(area!=='parking')box(0,1.4,-bz-4,opening,2.8,.15,wallMat);
+    light(0,2.4,-bz-2,'#a6c3b7',5);
+  }
+  if(area==='landing'||area==='lift'){
+    const dz=area==='landing'?landing.liftZ:-2.75;
+    const left=box(-.48,1.3,dz,.94,2.6,.11,metal),right=box(.48,1.3,dz,.94,2.6,.11,metal);liftDoors={left,right};
+    box(-1.1,1.4,dz,.14,2.8,.18,dark);box(1.1,1.4,dz,.14,2.8,.18,dark);box(0,2.81,dz,2.3,.17,.18,dark);
+    const display=label('28',0,2.46,dz+.16,0,.55,.25,'#e29a69','#08110f');setDisplay=display.update;
+    if(area==='landing'){
+      spawn.set(0,1.65,landing.spawnZ);label('28F',-1.9,2,-31.8,0,.9,.55);label('エレベーター  ↑',0,2.72,17,0,2.3,.26);
+      const call=box(1.48,1.3,dz+.1,.25,.44,.16,metal);label('▽',1.48,1.35,dz+.2,0,.17,.2,'#d19369');target('call','엘리베이터 호출',call,1.48,1.35,dz+.35);target('enter','엘리베이터에 타기',left,0,1.3,dz+.4);
+      const stained=surface('concrete','#858d83'),rust=surface('concrete','#65544b',{metalness:.45}),oldDoor=surface('concrete','#727d70',{metalness:.28});
+      box(-3,.45,0,.22,.9,64,stained,true).name='landing-parapet';
+      for(const y of [.97,1.27])box(-3,y,0,.075,.06,64,rust);
+      for(let z=-31;z<=31;z+=1.25)box(-3,1.11,z,.04,.3,.04,rust);
+      box(-2.74,.006,0,.25,.016,64,mat('#303c3b'));box(2.72,.035,0,.38,.07,64,stained);
+      for(let z=-29;z<=31;z+=6){
+        box(-2.95,1.62,z,.23,3.24,.25,stained,true);box(-2.95,2.99,z,.42,.24,.42,stained);
+        box(2.87,1.2,z-1.5,.16,2.4,1.12,oldDoor);box(2.76,1.17,z-1.12,.09,.045,.16,rust);
+        label(z===31?'2803':String(2804+(31-z)/6),2.755,2.48,z-1.5,-Math.PI/2,.43,.16,'#c3c3aa','#35423b');
+        box(2.83,1.4,z+.7,.2,.55,.42,rust);box(2.76,2.2,z+.7,.06,1.2,.06,rust);
+      }
+      for(let z=-28;z<=28;z+=8)fixture(.45,z,'#8eaaa0');
+      cable(2.55,0,63);box(2.72,2.85,0,.1,.1,63,rust);
+      // The exposed slab edge and repeated lower floors establish the 28-storey drop.
+      for(let y=-3.2;y>=-80;y-=3.2){box(-.05,y-.1,0,6.1,.22,64,stained);box(-3,y+.45,0,.18,.9,64,stained);}
+      for(const y of [3.2,6.4,9.6]){box(-.05,y+3.15,0,6.1,.18,64,stained);box(-3,y+.45,0,.18,.9,64,stained);}
+      const skyline=new T.Mesh(new T.PlaneGeometry(120,90),nightWindow());skyline.position.set(-36,-26,-5);skyline.rotation.y=Math.PI/2;root.add(skyline);
+      fallingFigure=makeFigure(root);fallingFigure.name='falling-apparition';fallingFigure.position.set(-4.15,9,landing.fallZ);fallingFigure.rotation.set(.25,Math.PI/2,-.45);fallingFigure.visible=false;
+      // A small fill makes the pale silhouette readable against the open night sky.
+      const fallLight=new T.PointLight('#c2d5df',5,4,2);fallLight.position.set(-1,1,1);fallingFigure.add(fallLight);
+    }else{
+      spawn.set(0,1.65,1.5);heading=0;fixture(0,.2,'#d4d3ac');
+      for(const x of [-1.7,1.7])box(x,1.02,0,.055,.07,4.4,metal);
+      const panel=box(1.75,1.5,-1.2,.08,.85,.55,metal);label('1F  ↓',1.67,1.65,-1.2,-Math.PI/2,.4,.2,'#daa969');
+      target('panel','1층 누르기',panel,1.5,1.5,-1.2);target('pry','길게 눌러 문 벌리기',left,0,1.4,dz+.3);target('leave_lift','벌어진 문으로 나가기',right,0,1.3,dz+.4);
+      label('定員 13名',0,2.2,2.85,Math.PI,1.1,.23);label('ドアに手を触れないで下さい',0,1.8,2.85,Math.PI,1.3,.22);
+      for(let y=.25;y<2.5;y+=.35)box(1.76,y,0,.03,.015,5.2,stripe);
+    }
+  }
+  if(area==='corridor'){
+    spawn.set(0,1.65,37);heading=0;door('stairs','비상계단  EXIT',0,-38.78);
+    label('24F · 東西連絡廊下',0,2.6,38.85,Math.PI,4,.6,'#aa947a');
+    // Two apartment wings loop around service cores, connected by a cross passage.
+    for(const z of [-15,15]){box(0,1.6,z,12,3.2,24,wallMat,true);for(const x of [-6.06,6.06])label(z<0?'設備室 / 立入禁止':'共同洗濯室',x,2,z,x<0?-Math.PI/2:Math.PI/2,2,.35);}
+    for(let z=-33;z<=33;z+=6)for(const x of [-14.83,14.83]){box(x,1.2,z,.1,2.4,1.4,wood);label(String(2400+Math.round((z+39)/6)+(x>0?20:0)),x*.995,2,z,x<0?Math.PI/2:-Math.PI/2,.5,.17);}
+    for(const x of [-10,10])for(const z of [-32,-20,-8,8,20,32])fixture(x,z,'#83989f');
+    for(const x of [-12.7,12.7])for(const z of [-22,-8,8,22]){box(x,.58,z,2.1,1.16,2.6,wood,true);box(x,.08,z,2.3,.15,2.8,dark);}
+    for(const x of [-8,8])for(let z=-35;z<36;z+=3)box(x,.014,z,.08,.025,1.2,mat('#acc09a',{emissive:'#8aae6d',emissiveIntensity:.6}));
+    for(const z of [-30,0,30]){label('← 非常階段 →',0,2.6,z,0,3,.4);light(0,2.5,z,'#688d83',6);}
+    cable(-8,0,76);cable(8,0,76);light(0,2.4,-37,'#67b28f',10);
+    box(0,1.2,38.87,1.9,2.4,.1,metal);
+  }
+  if(area==='stairs'){
+    // Two separate flights meet on the central landing; continuous collision height follows each flight.
+    heightAt=(x,z)=>z>=0?0:(x<0?1:-1)*Math.min(2.8,-z*2.8/6);
+    box(0,-.15,4.5,14,.3,9,floorMat);box(-3.5,2.65,-7.5,7,.3,3,floorMat);box(3.5,-2.95,-7.5,7,.3,3,floorMat);
+    wall(-7,0,.2,18,1.5,10);wall(7,0,.2,18,1.5,10);wall(0,-9,14,.2,1.5,10);wall(0,9,14,.2,1.5,10);wall(0,-4.6,.22,9,1.5,10);
+    box(0,6.3,0,14,.15,18,mat('#293b37'));
+    for(let i=0;i<18;i++)for(const side of [-1,1]){
+      const z=-(i+.5)/3,y=-side*(i+.5)*2.8/18;
+      box(side*3.5,y-.09,z,6.7,.18,1/3,floorMat);box(side*3.5,y+.006,z-.13,6.4,.015,.04,stripe);
+      box(side*.4,y+.48,z,.045,.96,.045,metal);
+    }
+    door('up','위층  ↑',-3.5,-8.8,2.8);door('down','아래층  ↓',3.5,-8.8,-2.8);
+    const note=label('点検記録',0,1.7,8.78,Math.PI,1.5,.5,'#1e2720','#c8bd98');target('stair_note','계단 점검 메모 읽기',note.mesh,0,1.65,8.55);
+    label('23F',-6.85,2,4,Math.PI/2,2,1);label('↓ 下り階段',3.5,1,0,0,2,.32);label('↑ 上り階段',-3.5,3.7,-7,0,2,.32);
+    light(0,4.5,4,'#9aad90',12);light(-3.5,5.5,-6,'#b3a17b',9);light(3.5,-.3,-6,'#7b9c8b',9);
+    spawn.set(0,1.65,5.5);
+  }
+  if(area==='office'){
+    spawn.set(0,1.65,14);
+    for(const x of [-1.35,1.35]){wall(x,-5.5,.16,6.5);wall(x,1,.16,2);wall(x,7.7,.16,2.5);}
+    wall(-4.2,-1.5,5.5,.17);wall(4.2,-1.5,5.5,.17);
+    // Gaps at z=-1.5..-2.25 and z=2..6.45 keep all rooms connected.
+    for(const z of [-6,1,6])fixture(0,z,'#8da293');
+    const desk=box(-4.3,.7,4.5,2.8,1.4,1.1,wood,true);box(-4.8,1.435,4.58,.5,.03,.4,mat('#c3b38c'));target('record','야간 근무일지 읽기',desk,-4.8,1.5,4.7);
+    const monitor=box(-3.65,1.79,4.4,.88,.65,.2,dark);const screen=label('신호 없음',-3.65,1.8,4.52,0,.77,.48,'#81ae8f','#0a1711');setDisplay=screen.update;target('monitor','CCTV 확인 · 비상 열쇠 챙기기',monitor,-3.65,1.8,4.7);
+    box(-3,1.44,4.6,.18,.04,.12,mat('#b8ac75',{metalness:.7}));
+    box(-5.5,.5,7,1,.7,.9,wood,true);label('夜間管理室',-4.3,2.5,-1.38,0,2,.35);
+    for(const x of [-6.2,-4.4]){box(x,1.1,-6,.7,2.2,3.3,wood,true);for(let z=-7.2;z<-4.5;z+=.4)for(const y of [.5,1.2,1.9])box(x+.38,y,z,.08,.43,.26,mat('#8c8169'));}
+    const fuse=box(-2.5,1.38,-7.8,.24,.34,.18,mat('#c9c5a1'));box(-2.5,.6,-7.8,1.1,1.2,.6,wood,true);target('fuse','예비 퓨즈 챙기기',fuse,-2.5,1.4,-7.4);label('予備ヒューズ',-2.5,1.7,-8.7,0,1.3,.25);
+    const power=box(6.78,1.5,-5,.19,1.2,.9,metal);target('security_power','퓨즈 장착 · CCTV 전원 복구',power,6.52,1.5,-5);label('監視カメラ 電源',6.65,2.3,-5,-Math.PI/2,1.3,.26);
+    // The rear archive rooms open from the corridor near z=-2.
+    light(-4.5,2.7,-5,'#a29578',5);light(4,2.7,-5,'#7c9f9d',5);light(-4.4,2.7,5,'#bfa16f',6);
+    door('service_exit','B1 비상 연결계단',0,-15.8);label('17F  管理室',0,2.7,15.7,Math.PI,2.1,.34);
+    for(let z=1;z<7;z+=1.4)box(6.85,1.75,z,.035,1.6,.8,mat('#122824',{emissive:'#132e27',emissiveIntensity:.4}));
+    for(const x of [-9,9])for(const z of [-11,-3,5,12]){box(x,1.1,z,1.2,2.2,3.1,wood,true);for(const y of [.4,1.1,1.8])box(x,y,z,1.3,.07,3.3,metal);}
+    for(const x of [-5,5]){box(x,.7,11.5,3,1.4,1.5,wood,true);fixture(x,12);label(x<0?'記録保管庫':'旧管理室',x,2.5,15.85,Math.PI,2,.4);}
+    label('C · しゃがんで隠れる',0,2.6,13,0,3,.3);light(0,2.6,-12,'#687f83',5);
+  }
+  if(area==='parking'){
+    spawn.set(0,1.65,40.5);
+    const concrete=surface('concrete','#a4aaa6'),white=mat('#d6dddb'),rubber=mat('#171b1d'),glass=mat('#28393e',{metalness:.3,roughness:.16});
+    const floor=box(0,.005,0,49.5,.02,85.5,mat('#596d66',{roughness:.38}));floor.name='garage-epoxy-floor';
+    label('B1  /  시라사기 하이츠',0,2.65,42.78,Math.PI,5,.55,'#eef0e7','#355e58');
+    for(const x of [-21,0,21])for(const z of [-28,-10,8,26]){
+      box(x,1.6,z,.75,3.2,.75,concrete,true);
+      box(x,.8,z,.79,1.25,.79,mat('#457568'));
+      for(const side of [-1,1])box(x+side*.42,.55,z,.08,.8,.9,rubber);
+      label((x<0?'A':x>0?'C':'B')+' / '+String(Math.round((z+40)/6)).padStart(2,'0'),x,1.9,z+.4,0,.7,.3,'#f1f1e7','#315c51');
+    }
+    for(const z of [-34,-16,2,20,38]){
+      box(0,2.98,z,50,.38,.55,concrete);
+      for(const x of [-12,12]){box(x,2.65,z,3,.35,1.1,metal);for(let i=-5;i<=5;i++)box(x+i*.22,2.46,z,.06,.02,.9,dark);}
+    }
+    for(const x of [-23,-2,2,23]){
+      cable(x,0,84);
+      for(let z=-40;z<41;z+=6){box(x,2.91,z,.3,.05,.08,metal);box(x,3.06,z,.035,.3,.035,metal);}
+    }
+    const paints=['#ccd2d0','#535d64','#813632','#293f46','#dedbd3','#24292c'].map(color=>mat(color,{metalness:.55,roughness:.28}));
+    function vehicle(x:number,z:number,index:number,own=false){
+      const suv=index%3===0,paint=own?paints[5]:paints[index%paints.length],height=suv?.78:.62;
+      const body=box(x,.64,z,1.95,1,4.5,paint,true);body.name=own?'hit-and-run-car':'parked-vehicle';
+      box(x,1.2,z-.25,1.74,height,2.25,glass);
+      box(x,1.2+height/2,z-.3,1.65,.08,1.8,paint);
+      const hood=box(x,1.1,z+1.5,1.8,.08,1.25,paint);hood.rotation.x=own?.15:.06;
+      if(own)hood.rotation.z=-.12;
+      box(x,.45,z+2.23,1.7,.18,.1,rubber);box(x,.81,z+2.26,.66,.25,.04,rubber);
+      for(const side of [-1,1]){
+        for(const dz of [-1.4,1.4]){
+          const tire=new T.Mesh(new T.CylinderGeometry(.34,.34,.23,16),rubber);tire.rotation.z=Math.PI/2;tire.position.set(x+side*.95,.37,z+dz);root.add(tire);
+          const hub=new T.Mesh(new T.CylinderGeometry(.2,.2,.24,10),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);root.add(hub);
+        }
+        box(x+side*.89,1.22,z-.15,.06,height,.11,paint);
+        box(x+side*1.04,1.13,z+.75,.23,.14,.26,paint);
+        box(x+side*.985,.94,z-.6,.03,.04,.18,metal);
+        const head=box(x+side*.66,.9,z+2.25,.44,.18,.03,mat('#cad7cf',{emissive:'#e1e9d5',emissiveIntensity:own?1.2:.1}));if(own)head.name='own-car-signal';
+        box(x+side*.72,.84,z-2.26,.31,.17,.03,mat('#882b27'));
+      }
+      for(const xx of [x-1.5,x+1.5])box(xx,.024,z,.065,.025,5.1,white);
+      box(x,.027,z-2.52,3,.025,.07,white);box(x,.09,z-1.95,1.4,.16,.18,rubber);
+      return body;
+    }
+    let carIndex=0;
+    for(const x of [-18,-14,-10,-6,6,10,14,18])for(const z of [-30,-18,-6,6,18,30]){
+      if((carIndex++%5)!==0)vehicle(x,z,carIndex);
+      else {for(const xx of [x-1.5,x+1.5])box(xx,.024,z,.065,.025,5.1,white);box(x,.027,z-2.52,3,.025,.07,white);}
+    }
+    const own=vehicle(7,-38,5,true);
+    label('03-17',7,.61,-35.72,0,.58,.16,'#25322b','#d1d6c9');label('B / 2803',7,2,-42.76,0,1.8,.38);
+    target('find_car','차키로 내 차 확인',own,5.7,1.15,-37.3);
+    target('board_car','운전석에 타고 문 잠그기',own,5.7,1.15,-37.3);
+    const fracture:number[]=[];for(let i=0;i<9;i++){const angle=i*2.4;fracture.push(7.15,1.4,-37.1,7.15+Math.cos(angle)*(.2+i*.055),1.4+Math.sin(angle)*(.08+i*.02),-37.1);}
+    root.add(new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(fracture,3)),new T.LineBasicMaterial({color:'#b4c7c5',transparent:true,opacity:.7})));
+    const post=box(-2.2,.65,-41.5,.5,1.3,.5,mat('#c2c7c4'),true);
+    const gate=new T.Group();gate.name='vehicle-gate';gate.position.set(-2.2,1.15,-41.5);root.add(gate);
+    const arm=new T.Mesh(new T.BoxGeometry(4.5,.13,.13),white);arm.position.x=2.25;gate.add(arm);
+    for(let x=.4;x<4.5;x+=.7){const red=new T.Mesh(new T.BoxGeometry(.25,.14,.14),mat('#a43b32'));red.position.x=x;gate.add(red);}
+    target('exit','차량 출구 차단기 확인',post,-1.85,1.2,-40.8);
+    label('출구 EXIT ↑',0,2.65,-41.4,0,3.5,.5,'#d3e8df','#235542');
+    const ramp=box(0,.5,-47.8,5,.2,10,floorMat);ramp.rotation.x=.12;ramp.name='vehicle-exit-ramp';
+    for(const side of [-1,1])box(side*2.6,1.5,-47.8,.2,3,10,concrete);
+    for(let z=-44;z>-52;z-=.4)box(0,(-z-43)*.12,z,4.7,.018,.045,rubber);
+    // Three-sided booth opens toward the central aisle; the switch is reachable.
+    box(-20,1.35,36,7,2.7,.12,glass,true);box(-23.6,1.35,38,.12,2.7,4,concrete,true);
+    box(-20,2.77,38,7,.15,4,concrete);box(-20,.76,38,3,.12,.8,metal,true);
+    label('주차 관리 / 비상 전원',-20,2.3,36.1,0,3,.35);
+    const power=box(-23.4,1.4,38.8,.2,.8,.6,metal);target('gate_power','차단기 비상 전원 올리기',power,-23.1,1.4,38.8);
+    const alarm=box(-23.5,1.4,30,.5,.65,.3,mat('#962f25',{emissive:'#681a10',emissiveIntensity:.5}));target('alarm','화재경보기 작동',alarm,-23.3,1.4,30.3);label('화재경보기',-23.5,2.1,30.18,0,1.3,.3,'#e2c6a1','#651b13');
+    for(const z of [-37,-19,-1,17,35])for(const x of [-22,-11,0,11,22])fixture(x,z,'#a9bfb6');
+    for(let z=-39;z<41;z+=4)box(0,.03,z,.1,.02,1.8,white);
+    for(const z of [-34,-4,26]){const arrow=label('↑  출구',0,.035,z,0,1.6,.5,'#d8dfd9','#596d66');arrow.mesh.rotation.x=-Math.PI/2;}
+    light(-23,2.6,30,'#d15338',5);figure.position.set(11,0,-26);figure.visible=true;
+  }
+  dressApartment(root,area);
+  return {solids,targets,lamps,shoes,figure,phoneGlow,radioLight,bounds,spawn,heading,heightAt,liftDoors,setDisplay,fallingFigure};
+}
