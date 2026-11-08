@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {boxUV,surface,softBox,upholstery} from './materials.ts';
 import {createLeatherShoe} from './entry-props.ts';
@@ -13,11 +14,11 @@ export function dressApartment(root:T.Group,area:Area){
   function cylinder(x:number,y:number,z:number,r:number,h:number,m:T.Material){const mesh=new T.Mesh(new T.CylinderGeometry(r,r,h,16),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);return mesh;}
   function rod(a:T.Vector3,b:T.Vector3,r=.022,m:T.Material=steel){const mesh=cylinder(0,0,0,r,a.distanceTo(b),m);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),b.clone().sub(a).normalize());return mesh;}
   function notice(lines:string[],x:number,y:number,z:number,ry=0,w=.8,h=1,color='#353d39',background='#cec5ae'){
-    const canvas=document.createElement('canvas');canvas.width=768;canvas.height=Math.round(768*h/w);const ctx=canvas.getContext('2d')!;
+    const canvas=document.createElement('canvas');canvas.width=768;canvas.height=Math.round(768*h/w);const ctx=localizedContext(canvas)!;
     const font=Math.min(canvas.height/(lines.length*1.7),700/Math.max(...lines.map(l=>[...l].length),1));
     ctx.fillStyle=background;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';
     for(let i=0;i<lines.length;i++){ctx.font=`${i===0?'bold ':''}${font}px "Apple SD Gothic Neo","Malgun Gothic",sans-serif`;ctx.fillText(lines[i],canvas.width/2,canvas.height/2+(i-(lines.length-1)/2)*font*1.4);}
-    const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
+    const texture=localizedTexture(new T.CanvasTexture(canvas));texture.colorSpace=T.SRGBColorSpace;
     const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:texture,roughness:.95}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);return mesh;
   }
   function extinguisher(x:number,z:number){const red=new T.MeshStandardMaterial({color:'#773b31',metalness:.2,roughness:.5});cylinder(x,.36,z,.11,.58,red);box(x,.7,z,.21,.05,.1,dark);rod(new T.Vector3(x+.11,.68,z),new T.Vector3(x+.15,.23,z),.016,dark);}

@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {boxUV,softBox,surface,sharePrintedTexture} from './materials.ts';
 import {roundPipe} from './props.ts';
@@ -8,10 +9,10 @@ function box(root:T.Group,x:number,y:number,z:number,w:number,h:number,d:number,
  const mesh=new T.Mesh(boxUV(softBox(w,h,d,Math.min(.007,w/4,h/4,d/4)),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=mesh.receiveShadow=true;root.add(mesh);return mesh;
 }
 function print(root:T.Group,text:string,x:number,y:number,z:number,w:number,h:number,bg='#c8c3ae',fg='#293630'){
- const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,lines=text.split('\n'),size=Math.min(c.height/(lines.length*1.6),690/Math.max(...lines.map(s=>[...s].length)));
+ const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=localizedContext(c)!,lines=text.split('\n'),size=Math.min(c.height/(lines.length*1.6),690/Math.max(...lines.map(s=>[...s].length)));
  ctx.fillStyle=bg;ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#786f5520';for(let i=0;i<350;i++)ctx.fillRect(i*179%c.width,i*137%c.height,1+i%3,1);
  ctx.fillStyle=fg;ctx.font=`${size}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';lines.forEach((line,i)=>ctx.fillText(line,384,c.height/2+(i-(lines.length-1)/2)*size*1.4));
- const map=sharePrintedTexture(new T.CanvasTexture(c),['common-gallery-v1',text,bg,fg]);map.colorSpace=T.SRGBColorSpace;
+ const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(c)),['common-gallery-v1',text,bg,fg]);map.colorSpace=T.SRGBColorSpace;
  const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.83}));mesh.position.set(x,y,z);root.add(mesh);return mesh;
 }
 

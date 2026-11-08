@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import {buildResidentialGallery,buildResidentialLift} from './residential-gallery.ts';
 import {buildResidentialStairs} from './residential-stairs.ts';
 import {buildGroundSupport} from './ground-support.ts';
@@ -59,10 +60,10 @@ function buildLegacyBuilding(root:T.Group,area:Exclude<Area,'apartment'|'transfe
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false){const mesh=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
   function wall(x:number,z:number,w:number,d:number,y=ceiling/2,h=ceiling){const mesh=box(x,y,z,w,h,d,wallMat,true);box(x,y-h/2+.46,z,w+.012,.9,d+.012,area==='lift'?metal:parkingLower);return mesh;}
   function label(text:string,x:number,y:number,z:number,ry=0,w=1.1,h=.26,color='#c9ceaf',background='#25372f',lit=false,dynamic=false){
-    let c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);let ctx=c.getContext('2d')!;const texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;let shared=false;
+    let c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);let ctx=localizedContext(c)!;const texture=localizedTexture(new T.CanvasTexture(c));texture.colorSpace=T.SRGBColorSpace;let shared=false;
     const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map:texture}):new T.MeshStandardMaterial({map:texture,roughness:.9}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);
     const update=(text:string)=>{
-      if(shared){const width=c.width,height=c.height;texture.dispose();c=document.createElement('canvas');c.width=width;c.height=height;ctx=c.getContext('2d')!;texture.source=new T.Source(c);shared=false;}
+      if(shared){const width=c.width,height=c.height;texture.dispose();c=document.createElement('canvas');c.width=width;c.height=height;ctx=localizedContext(c)!;texture.source=new T.Source(c);shared=false;}
       const lines=text.split('\n'),font=Math.min(lines.length===1?c.height*.56:c.height/(lines.length*1.55),700/Math.max(1,...lines.map(line=>[...line].length)));
       ctx.fillStyle=background;ctx.fillRect(0,0,c.width,c.height);
       if(lines.length>1){
@@ -337,10 +338,10 @@ function buildLegacyBuilding(root:T.Group,area:Exclude<Area,'apartment'|'transfe
     }
     for(const x of [-5.2,5.2])for(const z of [-10,-3,4,11])car(x,z,(Math.round(z)%3===0?'#8b8e87':x<0?'#354044':'#6c655d'));
     carDeparture=buildCarDeparture(root,solids);const own=carDeparture.car;
+    label('B1 · 0317',5,2.35,-20.7,0,1.6,.3);light(4.6,2.4,-18.3,'#94a3a6',5,8);
     for(const dx of [-1.27,1.27])garageMarking(root,L.car.x+dx,L.car.z,.055,4.85,garage.floorPaint);garageMarking(root,L.car.x,L.car.z+2.45,2.59,.055,garage.floorPaint);
     for(const dx of [-.55,.55])box(L.car.x+dx,.07,L.car.z+2.45,.55,.14,.16,dark);
-    target('car_passenger','조수석 문 열기',carDeparture.passengerDoor,6.02,1.1,-17.8);carDeparture.passengerDoor.userData.approach={x:7.1,z:-17.8};
-    target('car_search','가방에서 열쇠 꺼내기',carDeparture.key,5.415,.31,-17.83);carDeparture.key.userData.approach={x:7.1,z:-17.8};target('car_board','운전석 문 열고 탑승',own.getObjectByName('hero-driver-door')!,3.98,1.1,-17.8);
+    target('car_board','운전석 문 열고 탑승',own.getObjectByName('hero-driver-door')!,3.98,1.1,-17.8);
     box(-11.3,1.35,15.82,1.4,2.7,.24,concrete,true);
     const cabinet=box(L.alarm.x,1.25,15.96,.55,1.85,.12,metal);cabinet.name='fire-alarm-cabinet';
     const enamel=surface('steel','#8e3c31',{roughness:.68});

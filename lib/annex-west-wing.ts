@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {surface,boxUV,softBox,upholstery} from './materials.ts';
 import {roundPipe} from './props.ts';
@@ -13,7 +14,7 @@ export function buildAnnexWestWing(root:T.Group,solids:Solid[]){
  // enamel face into the source's heavily rusted exposed steel.
  steel.map?.dispose();steel.map=null;steel.metalnessMap=null;steel.metalness=.22;steel.normalScale.setScalar(.24);
  const box=(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,parent:T.Group=wing,solid=false)=>{const p=new T.Mesh(boxUV(softBox(w,h,d,Math.min(.005,w/4,h/4,d/4)),x,y,z),m);p.position.set(x,y,z);p.castShadow=p.receiveShadow=true;parent.add(p);if(solid)solids.push({x,y,z,w,h,d});return p;};
- function sign(text:string,x:number,y:number,z:number,w:number,h:number,ry:number){const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!;ctx.fillStyle='#b9b59f';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#2b3a31';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${c.height*.55}px sans-serif`;ctx.fillText(text,384,c.height/2);const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.9}));mesh.position.set(x,y,z);mesh.rotation.y=ry;wing.add(mesh);return mesh;}
+ function sign(text:string,x:number,y:number,z:number,w:number,h:number,ry:number){const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=localizedContext(c)!;ctx.fillStyle='#b9b59f';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#2b3a31';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${c.height*.55}px sans-serif`;ctx.fillText(text,384,c.height/2);const map=localizedTexture(new T.CanvasTexture(c));map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.9}));mesh.position.set(x,y,z);mesh.rotation.y=ry;wing.add(mesh);return mesh;}
  const partitions=new T.Group();partitions.name='annex-west-room-partitions';wing.add(partitions);
  box(-11.705,1.4,23.2,10.41,2.8,.14,plaster,partitions,true);
  for(const [a,b] of [[17,20],[21.4,23.2],[-9,-1.5],[1.5,8]])box(-6.5,1.4,(a+b)/2,.14,2.8,b-a,plaster,partitions,true);
@@ -27,9 +28,9 @@ export function buildAnnexWestWing(root:T.Group,solids:Solid[]){
  solids.push({x:-11,y:1.05,z:22.99,w:3.02,h:2.1,d:.28});
  box(0,.31,0,3.02,.62,.28,steel,bank);box(0,1.36,.13,3.02,1.48,.02,steel,bank);box(0,.645,0,3.02,.05,.28,edge,bank);box(0,2.09,0,3.02,.02,.28,edge,bank);
  for(const x of [-1.5,1.5])box(x,1.36,0,.02,1.48,.28,edge,bank);
- const c=document.createElement('canvas');c.width=2048;c.height=1400;const ctx=c.getContext('2d')!,units:number[]=[];ctx.fillStyle='#c4c6b4';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='29px sans-serif';
+ const c=document.createElement('canvas');c.width=2048;c.height=1400;const ctx=localizedContext(c)!,units:number[]=[];ctx.fillStyle='#c4c6b4';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='29px sans-serif';
  for(let row=0;row<14;row++)for(let col=0;col<8;col++){const x=(col-3.5)*.36,y=.72+row*.1,unit=(row*2+1+Math.floor(col/4))*100+col%4+1;units.push(unit);box(x,y,-.12,.345,.09,.014,steel,bank);box(x,y+.022,-.128,.24,.007,.003,dark,bank);box(x+.14,y-.015,-.13,.009,.013,.006,edge,bank);ctx.fillText(String(unit),(7-col+.5)*256,(13-row+.64)*100);}
- const addresses=new T.CanvasTexture(c);addresses.colorSpace=T.SRGBColorSpace;const sheet=new T.Mesh(new T.PlaneGeometry(2.88,1.4),new T.MeshStandardMaterial({map:addresses,alphaTest:.5,roughness:.9}));sheet.name='mailbox-addresses';sheet.userData.units=units;sheet.rotation.y=Math.PI;sheet.position.set(0,1.37,-.1275);bank.add(sheet);
+ const addresses=localizedTexture(new T.CanvasTexture(c));addresses.colorSpace=T.SRGBColorSpace;const sheet=new T.Mesh(new T.PlaneGeometry(2.88,1.4),new T.MeshStandardMaterial({map:addresses,alphaTest:.5,roughness:.9}));sheet.name='mailbox-addresses';sheet.userData.units=units;sheet.rotation.y=Math.PI;sheet.position.set(0,1.37,-.1275);bank.add(sheet);
  sign('백로아파트 · 101동 우편함',-11,2.22,23.1295,2.4,.16,Math.PI);
  // Utility backs give the machines real water/service connections and wet tile.
  const tile=[0,1,2].map(i=>surface('ceramic',['#9da99b','#a6afa0','#b0b6a5'][i],{roughness:.42})),grout=new T.MeshStandardMaterial({color:'#52635b',roughness:.95});

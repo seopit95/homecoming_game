@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {boxUV,softBox,sharePrintedTexture} from './materials.ts';
@@ -8,7 +9,7 @@ const cartonTile=(i:number):Tile=>({x:(i%4)*256,y:512,w:256,h:256});
 
 // One atlas per room; rack instances own geometry but share these disposable materials.
 export function storageMaterials(){
-  const canvas=document.createElement('canvas');canvas.width=canvas.height=1024;const ctx=canvas.getContext('2d')!;
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=1024;const ctx=localizedContext(canvas)!;
   ctx.fillStyle='#b4aa91';ctx.fillRect(0,0,1024,1024);
   const colors=['#535e53','#47575d','#716551','#5c635b','#4c5255','#766e5d','#686b5b','#54594f'];
   const titles=['시설기록','당직일지','입출기록','통화기록','설비점검','입주문서','원본보존','보수일지'];
@@ -18,7 +19,7 @@ export function storageMaterials(){
     ctx.fillStyle='#8b8c78';ctx.fillRect(x+3,5,2,502);ctx.fillRect(x+123,5,2,502);
     ctx.fillStyle='#d0c6a9';ctx.fillRect(x+22,66,84,213);ctx.fillStyle='#8a806a';ctx.fillRect(x+26,267,76,1);
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='24px sans-serif';ctx.fillStyle='#494b41';
-    ctx.fillText(titles[i].slice(0,2),x+64,126);ctx.fillText(titles[i].slice(2),x+64,160);
+    ctx.fillText(titles[i],x+64,143,78);
     ctx.font='17px monospace';ctx.fillText(`0${i+1}`,x+64,235);
     // The opening is dark behind the metal rim, with no emission or painted highlight.
     ctx.fillStyle='#121815';for(let y=-15;y<=15;y++){const r=Math.sqrt(225-y*y);ctx.fillRect(x+64-r,376+y,r*2,1);}
@@ -28,16 +29,16 @@ export function storageMaterials(){
     const x=i*256,y=512;ctx.fillStyle=['#9b8565','#a49373','#948568','#ad9977'][i];ctx.fillRect(x,y,256,256);
     ctx.fillStyle='#7b6c53';for(let j=0;j<75;j++)ctx.fillRect(x+(j*73)%250,y+(j*47)%250,2+(j%4),1);
     ctx.fillStyle='#cbc3a8';ctx.fillRect(x+43,y+118,170,100);ctx.fillStyle='#514f40';ctx.font='25px sans-serif';
-    ctx.fillText(['보존문서','운영일지','설비대장','원본기록'][i],x+128,y+153);ctx.font='14px monospace';ctx.fillText(`BAEKRO / 0${i+1}`,x+128,y+190);
+    ctx.fillText(['보존문서','운영일지','설비대장','원본기록'][i],x+128,y+153,160);ctx.font='14px monospace';ctx.fillText(`BAEKRO / 0${i+1}`,x+128,y+190);
   }
   // The inner cardboard receives little indirect light through the small handhold.
   ctx.fillStyle='#201d17';ctx.fillRect(0,800,128,128);
-  const atlas=sharePrintedTexture(new T.CanvasTexture(canvas),['storage-covers-v1']);atlas.colorSpace=T.SRGBColorSpace;atlas.anisotropy=8;
+  const atlas=sharePrintedTexture(localizedTexture(new T.CanvasTexture(canvas)),['storage-covers-v1']);atlas.colorSpace=T.SRGBColorSpace;atlas.anisotropy=8;
   const printed=new T.MeshStandardMaterial({map:atlas,roughness:.89});printed.name='storage-covers-and-cartons';
-  const pages=document.createElement('canvas');pages.width=pages.height=256;const pageCtx=pages.getContext('2d')!;
+  const pages=document.createElement('canvas');pages.width=pages.height=256;const pageCtx=localizedContext(pages)!;
   pageCtx.fillStyle='#c6bda3';pageCtx.fillRect(0,0,256,256);
   for(let y=0;y<256;y+=2){pageCtx.fillStyle=y%6?'#b9b298':'#a9a48d';pageCtx.fillRect(0,y,256,1);}
-  const pageMap=sharePrintedTexture(new T.CanvasTexture(pages),['storage-pages-v1']);pageMap.colorSpace=T.SRGBColorSpace;pageMap.anisotropy=8;
+  const pageMap=sharePrintedTexture(localizedTexture(new T.CanvasTexture(pages)),['storage-pages-v1']);pageMap.colorSpace=T.SRGBColorSpace;pageMap.anisotropy=8;
   const paper=new T.MeshStandardMaterial({map:pageMap,roughness:.96});paper.name='storage-paper-edges';
   return {printed,paper};
 }

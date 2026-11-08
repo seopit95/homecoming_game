@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {softBox,residentPhotoMaterial} from './materials.ts';
 
@@ -45,18 +46,18 @@ export function createAnsweringMachine(purpose:'answerphone'|'intercom'='answerp
   for(let i=0;i<keyLabels.length;i++)keypad.push(box('telephone-key',.061-(i%3)*.036,.085,-.035-Math.floor(i/3)*.024,.029,.009,.019,ivory));
   const playButton=box('answerphone-play',.126,.085,-.09,.034,.009,.027,new T.MeshStandardMaterial({color:'#657b6b',roughness:.65}));
   const stopButton=box('answerphone-stop',.126,.085,-.05,.034,.009,.022,ivory);
-  const face=document.createElement('canvas');face.width=768;face.height=576;const ink=face.getContext('2d')!;ink.fillStyle='#3c433c';ink.textAlign='center';ink.textBaseline='middle';ink.font='24px sans-serif';
+  const face=document.createElement('canvas');face.width=768;face.height=576;const ink=localizedContext(face)!;ink.fillStyle='#3c433c';ink.textAlign='center';ink.textBaseline='middle';ink.font='24px sans-serif';
   const px=(x:number)=>(.175-x)/.35*768,pz=(z:number)=>(.13-z)/.26*576;
   keypad.forEach((key,i)=>ink.fillText(keyLabels[i],px(key.position.x),pz(key.position.z)));
   ink.font='16px sans-serif';ink.fillText(purpose==='intercom'?'CALL':'PLAY',px(.126),pz(-.09));ink.fillText(purpose==='intercom'?'CLEAR':'STOP',px(.126),pz(-.05));
-  const faceMap=new T.CanvasTexture(face);faceMap.colorSpace=T.SRGBColorSpace;
+  const faceMap=localizedTexture(new T.CanvasTexture(face));faceMap.colorSpace=T.SRGBColorSpace;
   const keyInk=new T.MeshStandardMaterial({map:faceMap,transparent:true,depthWrite:false,roughness:.85});
   for(const key of [...keypad,playButton,stopButton]){
     const width=(key===playButton||key===stopButton) ? .034 : .029,depth=key===playButton ? .027 : key===stopButton ? .022 : .019,geometry=new T.PlaneGeometry(width,depth),uv=geometry.getAttribute('uv');
     for(let i=0;i<uv.count;i++)uv.setXY(i,.5-key.position.x/.35+(uv.getX(i)-.5)*width/.35,.5+key.position.z/.26+(uv.getY(i)-.5)*depth/.26);
     const legend=new T.Mesh(geometry,keyInk);legend.name='key-legend';legend.rotation.set(-Math.PI/2,0,Math.PI);legend.position.y=.0046;key.add(legend);
   }
-  const screen=document.createElement('canvas');screen.width=256;screen.height=80;const ctx=screen.getContext('2d')!,map=new T.CanvasTexture(screen);map.colorSpace=T.SRGBColorSpace;
+  const screen=document.createElement('canvas');screen.width=256;screen.height=80;const ctx=localizedContext(screen)!,map=localizedTexture(new T.CanvasTexture(screen));map.colorSpace=T.SRGBColorSpace;
   box('lcd-surround',.06,.084,.092,.134,.004,.039,edge);
   const display=new T.Mesh(new T.PlaneGeometry(.124,.03),new T.MeshStandardMaterial({map,roughness:.4}));display.rotation.set(-Math.PI/2,0,Math.PI);display.position.set(.06,.0865,.092);root.add(display);
   const ledMaterial=new T.MeshStandardMaterial({color:'#842f21',emissive:'#8e3523',emissiveIntensity:.5,roughness:.35});box('answerphone-message-led',.143,.086,.09,.006,.003,.006,ledMaterial);

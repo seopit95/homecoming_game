@@ -11,6 +11,9 @@ const gravity=new T.Quaternion(),bend=new T.Quaternion();
 const relative=new T.Matrix4(),cachedToCurrent=new T.Matrix4(),localGravity=new T.Vector3(),probe=new T.Vector3();
 const circle=Array.from({length:3},(_,i)=>new T.Vector2(Math.cos(i*Math.PI*2/3),Math.sin(i*Math.PI*2/3)));
 let radiusScale=1;
+// One CPU-only rest template. Every rig clones writable GPU/pose buffers;
+// disposing or animating a room cannot change another room's apparition.
+let restTemplate:{geometry:T.BufferGeometry;scalp:T.BufferGeometry;state:Omit<StrandState,'cache'>}|undefined;
 
 function reusablePose(cache:HairCache,tails:T.Group,time:number,floor:number,length:number,open:number,cabin:boolean,heightAt?: (x:number,z:number)=>number){
   if(!cache.valid||time<cache.time||time-cache.time>=.05||floor!==cache.floor||length!==cache.length||open!==cache.open||heightAt!==cache.support||cabin!==cache.cabin)return false;
@@ -67,11 +70,13 @@ function writeStrands(geometry:T.BufferGeometry,state:StrandState){
 export function createHair(head:T.Group){
   const hair=new T.Group();hair.name='ghost-scalp-hair';head.add(hair);
   const tails=new T.Group();tails.name='ghost-long-hair';head.add(tails);
-  const scalpGeometry=new T.BufferGeometry();scalpGeometry.setAttribute('position',new T.Float32BufferAttribute(authored.scalp.position,3));scalpGeometry.setAttribute('normal',new T.Float32BufferAttribute(authored.scalp.normal,3));scalpGeometry.setIndex(authored.scalp.index);
+  const scalpGeometry=restTemplate?.scalp.clone()??new T.BufferGeometry();if(!restTemplate){scalpGeometry.setAttribute('position',new T.Float32BufferAttribute(authored.scalp.position,3));scalpGeometry.setAttribute('normal',new T.Float32BufferAttribute(authored.scalp.normal,3));scalpGeometry.setIndex(authored.scalp.index);}
   const scalpMaterial=new T.MeshStandardMaterial({color:'#10110f',roughness:.9});scalpMaterial.name='surface-dark-scalp-underlay';
   const scalp=new T.Mesh(scalpGeometry,scalpMaterial);scalp.name='ghost-inner-crown';scalp.castShadow=scalp.receiveShadow=true;hair.add(scalp);
 
-  const center=new Float32Array(authored.center),state:StrandState={center,delta:new Float32Array(authored.skinDelta),posed:center.slice(),seeds:new Float32Array(center.length),weights:new Float32Array(center.length/3),radius:new Float32Array(authored.radius),offsets:new Uint32Array(center.length/3),cache:{valid:false,time:0,floor:0,length:1,open:0,cabin:false,relative:new T.Matrix4(),world:new T.Matrix4(),worldInverse:new T.Matrix4(),gravity:new T.Vector3(),bounds:new T.Box3()}};
+  const saved=restTemplate?.state,center=new Float32Array(saved?.center??authored.center),state:StrandState={center,delta:new Float32Array(saved?.delta??authored.skinDelta),posed:center.slice(),seeds:saved?saved.seeds.slice():new Float32Array(center.length),weights:saved?saved.weights.slice():new Float32Array(center.length/3),radius:new Float32Array(saved?.radius??authored.radius),offsets:saved?saved.offsets.slice():new Uint32Array(center.length/3),cache:{valid:false,time:0,floor:0,length:1,open:0,cabin:false,relative:new T.Matrix4(),world:new T.Matrix4(),worldInverse:new T.Matrix4(),gravity:new T.Vector3(),bounds:new T.Box3()}};
+  const geometry=restTemplate?.geometry.clone()??new T.BufferGeometry();
+  if(!restTemplate){
   const index:number[]=[],color=new Float32Array(authored.metadata.strandVertices*3);let cursor=0;
   for(const [start,count,release,shade,sides] of authored.strands){
     for(let j=0;j<count;j++){
@@ -84,8 +89,10 @@ export function createHair(head:T.Group){
     }
     const root=state.offsets[start],tip=state.offsets[start+count-1];for(let side=1;side<sides-1;side++)index.push(root,root+side+1,root+side,tip,tip+side,tip+side+1);
   }
-  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(new Float32Array(authored.metadata.strandVertices*3),3));geometry.setAttribute('normal',new T.BufferAttribute(new Float32Array(authored.metadata.strandVertices*3),3));geometry.setAttribute('color',new T.BufferAttribute(color,3));geometry.setIndex(index);
+  geometry.setAttribute('position',new T.BufferAttribute(new Float32Array(authored.metadata.strandVertices*3),3));geometry.setAttribute('normal',new T.BufferAttribute(new Float32Array(authored.metadata.strandVertices*3),3));geometry.setAttribute('color',new T.BufferAttribute(color,3));geometry.setIndex(index);
   fit.identity();inverse.identity();linear.identity();normalToLocal.identity();gravity.identity();radiusScale=1;writeStrands(geometry,state);
+  restTemplate={geometry:geometry.clone(),scalp:scalpGeometry.clone(),state:{center:state.center.slice(),delta:state.delta.slice(),posed:state.posed.slice(),seeds:state.seeds.slice(),weights:state.weights.slice(),radius:state.radius.slice(),offsets:state.offsets.slice()}};
+  }
   // A conservative bound covers the rotating/gravity-settled lengths without
   // scanning the strand vertices or allocating a new sphere on every pose.
   geometry.boundingSphere=new T.Sphere(new T.Vector3(0,-.45,0),1.95);

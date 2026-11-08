@@ -14,8 +14,34 @@ export function sedanWindshieldPoint(u:number,v:number){
  return [x,.923+v*.48+.047*bow*v+.025*bow*Math.sin(v*Math.PI),.968-v*.592+.033*bow*Math.sin(v*Math.PI)];
 }
 
-// Generic late-1990s compact sedan, in metres. The front points along +Z.
+// At most eight CPU-only rest templates. No template enters a renderer, and
+// every car owns its writable geometry, materials and Texture wrappers.
+const sedanTemplates=new Map<number,{root:T.Group;paint:T.MeshPhysicalMaterial}>();
 export function createSedan(color:string,damaged=false,driving=false,passengerAccess=false){
+  const key=Number(damaged)*4+Number(driving)*2+Number(passengerAccess);
+  let template=sedanTemplates.get(key);
+  if(!template){template=buildSedan('#ffffff',damaged,driving,passengerAccess);sedanTemplates.set(key,template);}
+  const root=template.root.clone(true),geometries=new Map<T.BufferGeometry,T.BufferGeometry>(),materials=new Map<T.Material,T.Material>(),textures=new Map<T.Texture,T.Texture>();
+  const copyMaterial=(source:T.Material)=>{
+    let material=materials.get(source);if(material)return material;
+    material=source.clone();
+    // oxlint-disable-next-line typescript/unbound-method -- Three invokes copied hooks on their cloned material.
+    material.onBeforeCompile=source.onBeforeCompile;material.customProgramCacheKey=source.customProgramCacheKey;
+    for(const [name,value] of Object.entries(source))if(value instanceof T.Texture){
+      let texture=textures.get(value);if(!texture){texture=value.clone();textures.set(value,texture);}Object.assign(material,{[name]:texture});
+    }
+    if(source===template.paint)(material as T.MeshPhysicalMaterial).color.set(color);
+    materials.set(source,material);return material;
+  };
+  root.traverse(object=>{if(object instanceof T.Mesh){
+    const source=object.geometry as T.BufferGeometry,geometry=geometries.get(source)??source.clone();geometries.set(source,geometry);object.geometry=geometry;
+    object.material=Array.isArray(object.material)?object.material.map(copyMaterial):copyMaterial(object.material);
+  }});
+  return root;
+}
+
+// Generic late-1990s compact sedan, in metres. The front points along +Z.
+function buildSedan(color:string,damaged:boolean,driving:boolean,passengerAccess:boolean){
   const root=new T.Group();root.name=damaged?'hit-and-run-car':'parked-sedan';
   const door=new T.Group();door.name='hero-driver-door';door.position.set(.86,0,.94);if(driving)root.add(door);const passengerDoor=new T.Group();passengerDoor.name='hero-passenger-door';passengerDoor.position.set(-.86,0,.94);if(driving&&passengerAccess)root.add(passengerDoor);let onDoor=false,onPassenger=false,onHood=false;
   const hood=new T.Group();hood.name='hero-hood';hood.position.set(0,.9,.968);if(driving)root.add(hood);
@@ -219,5 +245,5 @@ export function createSedan(color:string,damaged=false,driving=false,passengerAc
     const geometry=mergeGeometries(parts)!;parts.forEach(g=>g.dispose());
     const mesh=new T.Mesh(geometry,material);mesh.castShadow=material!==glass;mesh.receiveShadow=true;parent.add(mesh);
   }
-  return root;
+  return {root,paint};
 }

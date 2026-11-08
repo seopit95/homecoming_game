@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {boxUV,softBox,surface,cottonUpholstery,sharePrintedTexture} from './materials.ts';
@@ -22,9 +23,9 @@ function batch(root:T.Object3D){
  }
 }
 function printed(text:string,w:number,h:number){
- const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=Math.round(1024*h/w);const ctx=canvas.getContext('2d')!,lines=text.split('\n'),font=Math.min(canvas.height/(lines.length*1.7),940/Math.max(...lines.map(l=>[...l].length)));
+ const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=Math.round(1024*h/w);const ctx=localizedContext(canvas)!,lines=text.split('\n'),font=Math.min(canvas.height/(lines.length*1.7),940/Math.max(...lines.map(l=>[...l].length)));
  ctx.fillStyle='#d4cbb5';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#303a36';ctx.font=`${font}px "Apple SD Gothic Neo",sans-serif`;lines.forEach((line,i)=>ctx.fillText(line,512,canvas.height/2+(i-(lines.length-1)/2)*font*1.5));
- const map=sharePrintedTexture(new T.CanvasTexture(canvas),['domestic-paper',text]);map.colorSpace=T.SRGBColorSpace;return new T.MeshStandardMaterial({map,roughness:.94});
+ const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(canvas)),['domestic-paper',text]);map.colorSpace=T.SRGBColorSpace;return new T.MeshStandardMaterial({map,roughness:.94});
 }
 export function createDomesticKitchen(width:number,home=false){
  const root=new T.Group();root.name='installed-domestic-kitchen';
@@ -116,8 +117,8 @@ export function createKitchenTimer(){
  const root=new T.Group();root.name='home-mechanical-timer';const cream=new T.MeshStandardMaterial({color:'#c4c2ac',roughness:.45}),dark=new T.MeshStandardMaterial({color:'#414b43',roughness:.7});
  const profile=[[0,0],[.044,0],[.062,.012],[.068,.044],[.061,.09],[.037,.12],[0,.13]].map(([r,y])=>new T.Vector2(r,y));const shell=new T.Mesh(new T.LatheGeometry(profile,32),cream);shell.castShadow=shell.receiveShadow=true;root.add(shell);
  const bezel=cylinder(root,0,.065,-.058,.052,.018,dark);bezel.rotation.x=Math.PI/2;
- const canvas=document.createElement('canvas');canvas.width=canvas.height=512;const c=canvas.getContext('2d')!;c.fillStyle='#c9c6ad';c.fillRect(0,0,512,512);c.fillStyle='#303d34';c.strokeStyle='#303d34';c.lineWidth=4;c.textAlign='center';c.textBaseline='middle';c.font='39px sans-serif';
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=512;const c=localizedContext(canvas)!;c.fillStyle='#c9c6ad';c.fillRect(0,0,512,512);c.fillStyle='#303d34';c.strokeStyle='#303d34';c.lineWidth=4;c.textAlign='center';c.textBaseline='middle';c.font='39px sans-serif';
  for(let i=0;i<60;i++){const a=i/60*Math.PI*2-Math.PI/2,r=i%5?207:195;c.beginPath();c.moveTo(256+Math.cos(a)*r,256+Math.sin(a)*r);c.lineTo(256+Math.cos(a)*220,256+Math.sin(a)*220);c.stroke();if(i%10===0)c.fillText(String(i),256+Math.cos(a)*160,256+Math.sin(a)*160);}
- c.lineWidth=12;c.beginPath();c.moveTo(256,274);c.lineTo(256,106);c.stroke();const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
+ c.lineWidth=12;c.beginPath();c.moveTo(256,274);c.lineTo(256,106);c.stroke();const map=localizedTexture(new T.CanvasTexture(canvas));map.colorSpace=T.SRGBColorSpace;
  const face=new T.Mesh(new T.CircleGeometry(.047,48),new T.MeshStandardMaterial({map,roughness:.63}));face.position.set(0,.065,-.0673);face.rotation.y=Math.PI;root.add(face);batch(root);return root;
 }

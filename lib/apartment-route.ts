@@ -34,7 +34,7 @@ export function apartmentRouteTransition(s:Story,a:Action):Story|undefined{
  }
  if(s.stage.startsWith('plant_')){
   if(a==='plant_exit')return note(s,'basement_route','plant_departure');
-  if(a==='parking_enter'&&s.stage==='plant_departure')return {...s,stage:'parking_gate'};
+  if(a==='parking_enter'&&s.stage==='plant_departure')return {...s,stage:'parking_alarm'};
   return s;
  }
  return undefined;
@@ -58,7 +58,7 @@ export function normalizeApartmentRoute(s:Story):Story{
  const stage=s.stage;
  if(stage==='stairs_ground')return {...s,stage:'transfer_panel'};
  if(stage==='stairs_reverse'||stage==='stairs_clue'||stage==='stairs_passage')return {...s,stage:'stairs_loop'};
- if(stage==='parking_alarm')return {...s,notes:s.notes.filter(id=>id!=='alarm')};
+ if(stage.startsWith('parking'))return {...s,stage:'parking_alarm',notes:[...new Set([...s.notes.filter(id=>!['alarm','car_passenger','car_search'].includes(id)),'home_car_key','basement_route'])]};
  if(stage.startsWith('resident')||stage.startsWith('office')||stage.startsWith('service_')||stage.startsWith('court_'))return {...s,stage:readyFoyer(s),circuit:[],officeSupply:false};
  if(stage.startsWith('annex_'))return {...s,stage:stage==='annex_departure'?stage:readyFoyer(s),circuit:[]};
  if(stage.startsWith('archive_')&&!['archive_playback','archive_escape','archive_departure'].includes(stage))return {...s,stage:records.every(id=>s.notes.includes(id))?'archive_reveal':s.notes.some(id=>records.includes(id as typeof records[number]))?'archive_search':'archive_arrival',circuit:[]};

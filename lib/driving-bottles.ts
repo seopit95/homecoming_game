@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {sharePrintedTexture} from './materials.ts';
 
@@ -5,9 +6,9 @@ import {sharePrintedTexture} from './materials.ts';
 export function createDrivingBottles(car:T.Group,hands:T.Group){
   const green=new T.MeshStandardMaterial({color:'#216c37',roughness:.24,metalness:.08,emissive:'#12351b',emissiveIntensity:.15});
   const dark=new T.MeshStandardMaterial({color:'#07170a',roughness:.35});
-  const c=document.createElement('canvas');c.width=256;c.height=128;const ctx=c.getContext('2d')!;
+  const c=document.createElement('canvas');c.width=256;c.height=128;const ctx=localizedContext(c)!;
   ctx.fillStyle='#dbdeca';ctx.fillRect(0,0,256,128);ctx.fillStyle='#1d4a2b';ctx.font='bold 52px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('소주',128,66);
-  const map=sharePrintedTexture(new T.CanvasTexture(c),['unbranded-soju-v1']);map.colorSpace=T.SRGBColorSpace;
+  const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(c)),['unbranded-soju-v1']);map.colorSpace=T.SRGBColorSpace;
   const label=new T.MeshStandardMaterial({map,roughness:.75,emissive:'#81846b',emissiveIntensity:.09});
   function bottle(name:string){
     const group=new T.Group();group.name=name;car.add(group);

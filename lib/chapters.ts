@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import {connectionPassage,setDoorAngle,buildStairDoor} from './passage.ts';
 import type {Occupant} from './collision.ts';
 import * as T from 'three';
@@ -25,10 +26,10 @@ export function buildStoryRoom(root:T.Group,area:'resident'|'aftermath'){
   const dark=new T.MeshStandardMaterial({color:'#16191a',roughness:.8}),paper=new T.MeshStandardMaterial({color:'#c4b99a',roughness:.95});
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=root){const o=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);if(solid)solids.push({x,z,w,d,y,h});return o;}
   function label(text:string,x:number,y:number,z:number,w=1,h=.3,ry=0,bg='#b6ac90',fg='#29322d'){
-    const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,lines=text.split('\n'),font=Math.min(c.height/(lines.length*1.65),700/Math.max(...lines.map(l=>[...l].length),1));
+    const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=localizedContext(c)!,lines=text.split('\n'),font=Math.min(c.height/(lines.length*1.65),700/Math.max(...lines.map(l=>[...l].length),1));
     ctx.fillStyle=bg;ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle=fg;ctx.font=`${font}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
     lines.forEach((line,i)=>ctx.fillText(line,c.width/2,c.height/2+(i-(lines.length-1)/2)*font*1.35));
-    const map=sharePrintedTexture(new T.CanvasTexture(c),['story-room-label-v1',text,bg,fg]);map.colorSpace=T.SRGBColorSpace;const o=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.92}));o.position.set(x,y,z);o.rotation.y=ry;root.add(o);return o;
+    const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(c)),['story-room-label-v1',text,bg,fg]);map.colorSpace=T.SRGBColorSpace;const o=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.92}));o.position.set(x,y,z);o.rotation.y=ry;root.add(o);return o;
   }
   function target(id:Action,text:string,mesh:T.Object3D,x:number,y:number,z:number){targets.push({id,label:text,mesh,point:new T.Vector3(x,y,z)});}
   function light(x:number,y:number,z:number,color:string,power:number,radius=8){const l=new T.PointLight(color,power,radius,2);l.position.set(x,y,z);l.userData.base=power;root.add(l);lamps.push(l);return l;}
@@ -159,10 +160,10 @@ export function buildResidentGallery(root:T.Group,closedStairs=true){
   const dark=new T.MeshStandardMaterial({color:'#16191a',roughness:.8});
   function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=root){const o=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);if(solid)solids.push({x,z,w,d,y,h});return o;}
   function label(text:string,x:number,y:number,z:number,w=1,h=.3,ry=0,bg='#b6ac90',fg='#29322d'){
-    const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=c.getContext('2d')!,lines=text.split('\n'),font=Math.min(c.height/(lines.length*1.65),700/Math.max(...lines.map(l=>[...l].length),1));
+    const c=document.createElement('canvas');c.width=768;c.height=Math.round(768*h/w);const ctx=localizedContext(c)!,lines=text.split('\n'),font=Math.min(c.height/(lines.length*1.65),700/Math.max(...lines.map(l=>[...l].length),1));
     ctx.fillStyle=bg;ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle=fg;ctx.font=`${font}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
     lines.forEach((line,i)=>ctx.fillText(line,c.width/2,c.height/2+(i-(lines.length-1)/2)*font*1.35));
-    const map=sharePrintedTexture(new T.CanvasTexture(c),['story-room-label-v1',text,bg,fg]);map.colorSpace=T.SRGBColorSpace;const o=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.92}));o.position.set(x,y,z);o.rotation.y=ry;root.add(o);return o;
+    const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(c)),['story-room-label-v1',text,bg,fg]);map.colorSpace=T.SRGBColorSpace;const o=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.92}));o.position.set(x,y,z);o.rotation.y=ry;root.add(o);return o;
   }
   function light(x:number,y:number,z:number,color:string,power:number,radius=8){const l=new T.PointLight(color,power,radius,2);l.position.set(x,y,z);l.userData.base=power;root.add(l);lamps.push(l);return l;}
     const plaster=surface('decayWall','#9da598'),galleryFloor=surface('oldTile','#9a9e91',{roughness:.65});

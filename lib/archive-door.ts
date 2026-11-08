@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {surface,boxUV,softBox,sharePrintedTexture} from './materials.ts';
 import {doorHardware} from './props.ts';
@@ -16,8 +17,8 @@ export function createArchiveDoor(root:T.Group,solids:Solid[],targets:Target[]){
  const rearHandle=new T.Group();rearHandle.scale.z=-1;
  for(const part of leaf.children)if(part.position.y<.05&&part.position.z>.04)rearHandle.add(part.clone());leaf.add(rearHandle);
  for(const side of [-1,1]){const plate=new T.Mesh(boxUV(softBox(1.15,.29,.006)),metal);plate.position.set(0,-.87,side*.036);leaf.add(plate);}
- const canvas=document.createElement('canvas');canvas.width=512;canvas.height=192;const ink=canvas.getContext('2d')!;ink.fillStyle='#b9bdab';ink.fillRect(0,0,512,192);ink.fillStyle='#293b30';ink.textAlign='center';ink.textBaseline='middle';ink.font='65px sans-serif';ink.fillText('기록 편집실',256,76);ink.font='31px sans-serif';ink.fillText('사용 후 문을 닫아 주세요',256,143);
- const map=sharePrintedTexture(new T.CanvasTexture(canvas),['archive-booth-door-sign']);map.colorSpace=T.SRGBColorSpace;const signMaterial=new T.MeshStandardMaterial({map,roughness:.87});
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=192;const ink=localizedContext(canvas)!;ink.fillStyle='#b9bdab';ink.fillRect(0,0,512,192);ink.fillStyle='#293b30';ink.textAlign='center';ink.textBaseline='middle';ink.font='65px sans-serif';ink.fillText('기록 편집실',256,76);ink.font='31px sans-serif';ink.fillText('사용 후 문을 닫아 주세요',256,143);
+ const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(canvas)),['archive-booth-door-sign']);map.colorSpace=T.SRGBColorSpace;const signMaterial=new T.MeshStandardMaterial({map,roughness:.87});
  for(const front of [-1,1]){const sign=new T.Mesh(new T.PlaneGeometry(.65,.244),signMaterial);sign.position.set(0,.48,front*.033);sign.rotation.y=front<0?Math.PI:0;leaf.add(sign);}
  const block:Solid={x:5.8,z:-17.2,w:1.30,d:.075,y:1.143,h:2.28,yaw:Math.PI/2};solids.push(block);
  const target:Target={id:'archive_booth_door',label:'편집실 문 닫기',mesh:leaf,point:new T.Vector3()};targets.push(target);

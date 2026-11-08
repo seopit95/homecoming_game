@@ -44,10 +44,10 @@ export function buildCarDeparture(root:T.Group,solids:Solid[]):CarDeparture{
   const seatEuler=new T.Euler(-.055,0,0,'YXZ'),doorEuler=new T.Euler();
   const doorCenter=new T.Vector3(.025,.88,-.585),eye=new T.Vector3(-.38,1.22,-.24),approach=new T.Vector3(),startRotation=new T.Quaternion(),seatRotation=new T.Quaternion(),doorRotation=new T.Quaternion(),temp=new T.Vector3();
   let captured=false,inspectionAt=-1;
-  function reset(){captured=false;inspectionAt=-1;car.position.set(5,0,-18);car.rotation.set(0,0,0);rig.pose(0,0,false);passengerDoor.rotation.y=0;key.visible=true;shutter.position.y=1.3;shutter.scale.y=1;shutterBlock.y=1.3;shutterBlock.h=2.6;sync();}
-  function inspect(_stage:Stage,time:number,story?:Story,occupants:Occupant[]=[]){
-    const notes=story?.notes??[],desired=notes.includes('car_passenger')&&!notes.includes('car_search')?1.18:0,dt=inspectionAt<0?0:Math.max(0,Math.min(1.2,time-inspectionAt));inspectionAt=time;
-    key.visible=!notes.includes('car_search');
+  function reset(){captured=false;inspectionAt=-1;car.position.set(5,0,-18);car.rotation.set(0,0,0);rig.pose(0,0,false);passengerDoor.rotation.y=0;key.visible=false;shutter.position.y=1.3;shutter.scale.y=1;shutterBlock.y=1.3;shutterBlock.h=2.6;sync();}
+  function inspect(_stage:Stage,time:number,_story?:Story,occupants:Occupant[]=[]){
+    const desired=0,dt=inspectionAt<0?0:Math.max(0,Math.min(1.2,time-inspectionAt));inspectionAt=time;
+    key.visible=false;
     const angle=T.MathUtils.clamp(desired,passengerDoor.rotation.y-dt*1.5,passengerDoor.rotation.y+dt*1.5);
     setDoorAngle(passengerDoor,passengerBlock,angle,-.025,-.585,occupants);sync();
   }

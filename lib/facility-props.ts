@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {boxUV,softBox,surface} from './materials.ts';
@@ -23,11 +24,11 @@ export function portableRadio(){
  for(const x of [-.126,.126])for(const z of [-.038,.038])a.box(x,.004,z,.026,.008,.024,dark);
  a.box(0,.115,0,.33,.214,.118,enamel);a.box(0,.115,.06,.318,.199,.006,dark);
  // Fine perforations and printed scale share a single front decal.
- const c=document.createElement('canvas');c.width=1024;c.height=640;const ctx=c.getContext('2d')!;ctx.fillStyle='#454f42';ctx.fillRect(0,0,1024,640);
+ const c=document.createElement('canvas');c.width=1024;c.height=640;const ctx=localizedContext(c)!;ctx.fillStyle='#454f42';ctx.fillRect(0,0,1024,640);
  ctx.fillStyle='#131d16';for(let y=72;y<546;y+=14)for(let x=35;x<615;x+=14){ctx.beginPath();ctx.arc(x+(y%28?0:7),y,3,0,Math.PI*2);ctx.fill();}
  ctx.fillStyle='#b5b79a';ctx.font='25px sans-serif';ctx.fillText('FM / AM',670,88);ctx.fillText('BATTERY',680,585);ctx.font='19px sans-serif';
  ctx.fillStyle='#303c30';ctx.fillRect(657,115,320,78);ctx.fillStyle='#c2c5a0';ctx.fillText('88  92  96  100  108',672,138);for(let i=0;i<33;i++)ctx.fillRect(672+i*9,151,1,i%4?14:25);ctx.fillStyle='#c68c58';ctx.fillRect(812,146,3,38);
- const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;const face=new T.Mesh(new T.PlaneGeometry(.31,.194),new T.MeshStandardMaterial({map,roughness:.82}));face.position.set(0,.115,.0632);a.group.add(face);
+ const map=localizedTexture(new T.CanvasTexture(c));map.colorSpace=T.SRGBColorSpace;const face=new T.Mesh(new T.PlaneGeometry(.31,.194),new T.MeshStandardMaterial({map,roughness:.82}));face.position.set(0,.115,.0632);a.group.add(face);
  for(const [x,y,r] of [[.108,.09,.023],[.108,.147,.014]]){const knob=a.mesh(new T.CylinderGeometry(r,r,.015,32),dark,x,y,.077);knob.rotation.x=Math.PI/2;const mark=a.box(x,y+r*.5,.086,.002,r*.5,.0015,edge);mark.rotation.z=-.4;}
  for(const x of [-.118,.118])a.box(x,.229,-.007,.021,.022,.034,dark);
  a.pipe([-.118,.24,-.007],[-.118,.27,-.007],.007,dark);a.pipe([.118,.24,-.007],[.118,.27,-.007],.007,dark);a.pipe([-.118,.27,-.007],[.118,.27,-.007],.008,dark);

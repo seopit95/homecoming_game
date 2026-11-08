@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {writingTable} from './props.ts';
 import {boxUV,softBox} from './materials.ts';
@@ -33,7 +34,7 @@ export function createResidentStudy(wood:T.Material){
  const shape=new T.Shape();for(const [i,[x,z]] of [[-.056,-.004],[-.033,-.004],[-.033,-.009],[-.023,-.009],[-.023,-.004],[.002,-.004],[.002,.004],[-.056,.004]].entries())i?shape.lineTo(x,-z):shape.moveTo(x,-z);shape.closePath();
  const blade=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:.0028,bevelEnabled:true,bevelSize:.0004,bevelThickness:.0004,bevelSegments:1,steps:1}),brass);blade.rotation.x=-Math.PI/2;blade.position.y=.0006;blade.castShadow=true;key.add(blade);
  const keyTag=box(key,'resident-study-key-tag',.065,.00225,0,.07,.0045,.035,tag);
- function ink(text:string,w:number,h:number,font:number){const c=document.createElement('canvas');c.width=w;c.height=h;const p=c.getContext('2d')!;p.fillStyle='#c2b99d';p.fillRect(0,0,w,h);p.fillStyle='#313a31';p.textAlign='center';p.textBaseline='middle';p.font=`${font}px "Apple SD Gothic Neo",sans-serif`;const lines=text.split('\n');lines.forEach((line,i)=>p.fillText(line,w/2,h/2+(i-(lines.length-1)/2)*font*1.45));const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;return new T.MeshStandardMaterial({map,roughness:.93});}
+ function ink(text:string,w:number,h:number,font:number){const c=document.createElement('canvas');c.width=w;c.height=h;const p=localizedContext(c)!;p.fillStyle='#c2b99d';p.fillRect(0,0,w,h);p.fillStyle='#313a31';p.textAlign='center';p.textBaseline='middle';p.font=`${font}px "Apple SD Gothic Neo",sans-serif`;const lines=text.split('\n');lines.forEach((line,i)=>p.fillText(line,w/2,h/2+(i-(lines.length-1)/2)*font*1.45));const map=localizedTexture(new T.CanvasTexture(c));map.colorSpace=T.SRGBColorSpace;return new T.MeshStandardMaterial({map,roughness:.93});}
  const tagInk=new T.Mesh(new T.PlaneGeometry(.058,.026),ink('1703',256,128,62));tagInk.rotation.x=-Math.PI/2;tagInk.position.set(.065,.0046,0);key.add(tagInk);
  box(root,'resident-shift-cover',.5,.813,0,.43,.006,.30,wood);box(root,'resident-shift-pages',.5,.82,0,.414,.008,.286,paper);
  const page=new T.Mesh(new T.PlaneGeometry(.402,.274),ink('야간 당직 · 한서연\n1703호 임시 관리실\n\n연결문 여벌 열쇠는\n책상 가운데 서랍\n\n내일 오후 두 시. 꼭 갈 것.',1024,768,48));page.name='resident-shift-page';page.rotation.x=-Math.PI/2;page.position.set(.5,.8242,0);root.add(page);

@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {createSmartphone} from './smartphone.ts';
 import {configureShadow} from './lighting.ts';
@@ -105,9 +106,9 @@ function buildApartment(scene:T.Group) {
     box(x,1.5,z,w,3,d,wallMat,true);box(x,.055,z,w+.035,.11,d+.035,trim);box(x,2.94,z,w+.045,.1,d+.045,cream);
   }
   function print(text:string,fg='#c6c6b5',bg='#232b27',size=35,w=512,h=128){
-    const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d')!;
+    const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=localizedContext(c)!;
     ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);ctx.fillStyle=fg;ctx.font=`${size}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,w/2,h/2);
-    const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;return tex;
+    const tex=localizedTexture(new T.CanvasTexture(c));tex.colorSpace=T.SRGBColorSpace;return tex;
   }
   function sign(text:string,x:number,y:number,z:number,ry=0,w=.75,h=.19){
     const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:print(text),roughness:.85}));mesh.position.set(x,y,z);mesh.rotation.y=ry;scene.add(mesh);return mesh;
@@ -147,10 +148,15 @@ function buildApartment(scene:T.Group) {
   at(-3.15,2.4);
   const phoneTable=writingTable(1.2,.535,1.8,wood);phoneTable.name='home-phone-table';phoneTable.position.set(-3.15,0,2.4);scene.add(phoneTable);solids.push({x:-3.15,z:2.4,w:1.2,d:1.8,y:.2675,h:.535});
   box(-3.1,.545,1.91,.45,.02,.33,cream);
+  const carKey=new T.Group();carKey.name='home-car-key';carKey.position.set(-2.93,.552,2.4);scene.add(carKey);
+  box(0,0,0,.075,.025,.12,dark,false,carKey);box(.019,.002,-.104,.025,.012,.10,metal,false,carKey);
+  for(const z of [-.09,-.12])box(.038,.002,z,.018,.012,.014,metal,false,carKey);
+  const keyRing=new T.Mesh(new T.TorusGeometry(.034,.004,6,16),metal);keyRing.rotation.x=-Math.PI/2;keyRing.position.set(0,0,.081);carKey.add(keyRing);
+  targets.push({id:'home_car_key',point:new T.Vector3(-3.15*S+.22,.567,2.4*S),label:'거실 탁자 · 차키 챙기기',mesh:carKey});
   at(-6.12,2.4);
   const tvCabinet=drawerUnit(2.8,.86,.62,wood);tvCabinet.name='home-tv-cabinet';tvCabinet.rotation.y=Math.PI/2;tvCabinet.position.set(-6.12,0,2.4);scene.add(tvCabinet);solids.push({x:-6.12,z:2.4,w:.62,d:2.8,y:.43,h:.86});box(-6.39,1.43,2.4,.13,1.13,2.3,dark);
   const tvCanvas=document.createElement('canvas');tvCanvas.width=640;tvCanvas.height=320;
-  const tvContext=tvCanvas.getContext('2d')!,tvTexture=new T.CanvasTexture(tvCanvas);tvTexture.colorSpace=T.SRGBColorSpace;
+  const tvContext=localizedContext(tvCanvas)!,tvTexture=localizedTexture(new T.CanvasTexture(tvCanvas));tvTexture.colorSpace=T.SRGBColorSpace;
   const tvMaterial=new T.MeshBasicMaterial({map:tvTexture,color:0x000000});
   const tvScreen=new T.Mesh(new T.PlaneGeometry(2.15,.97),tvMaterial);tvScreen.position.set(-6.31,1.43,2.4);tvScreen.rotation.y=Math.PI/2;tvScreen.name='apartment-tv-screen';scene.add(tvScreen);box(-6.31,.93,2.4,.1,.22,.07,metal);
   const tvLight=new T.PointLight('#a5bcdb',0,6);tvLight.position.set(-5.95,1.5,2.4);tvLight.name='apartment-tv-light';scene.add(tvLight);
@@ -233,7 +239,8 @@ function buildApartment(scene:T.Group) {
   const doorSolid={x:0,z:door.position.z,w:1.45,d:.13,y:1.22,h:2.44};solids.push(doorSolid);
   let openedAt=-1;
   function updateStory(stage:import('./story').Stage,time:number,reduced:boolean,_story?:import('./story').Story,occupants:Occupant[]=[]){
-    const open=!!door.userData.openRequested;
+    carKey.visible=!_story?.notes.includes('home_car_key');
+    const open=!!door.userData.openRequested&&!!_story?.notes.includes('home_car_key');
     if(open&&openedAt<0)openedAt=time;
     setDoorAngle(door,doorSolid,open?1.42*T.MathUtils.smoothstep(time-openedAt,0,reduced?.2:1.1):0,.725,0,occupants);
     doorwayGlow.intensity=door.rotation.y/1.42*7;

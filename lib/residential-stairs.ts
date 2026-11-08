@@ -40,6 +40,9 @@ export function buildResidentialStairs(root:T.Group,preview=false){
  }
  box('stair-back-wall',0,middle,4.7,4.4,height,.2,wall,true);
  box('stair-central-spine',0,middle,1.6,.4,height,3.2,wall,true);
+ // Close the bounded shaft below the last flight, including the guarded well.
+ // This is structural geometry, not a new navigable continuation.
+ box('stair-shaft-base',0,low-.11,1.5,4.4,.22,6.4,concrete,true,true);
  box('stair-roof',0,2.89,1.5,4.4,.18,6.4,concrete,true,true);
 
  const doors=new Map<number,ReturnType<typeof buildStairDoor>>();

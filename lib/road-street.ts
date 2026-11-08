@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {boxUV,sharePrintedTexture,surface} from './materials.ts';
 import {batchStaticGeometry} from './static-geometry.ts';
@@ -24,8 +25,8 @@ export function buildRoadStreet(parent:T.Group,ending:boolean){
  function sign(text:string,w:number,h:number,x:number,y:number,z:number,side=0,bg='#343e3a',ink='#bfbba8',owner:T.Group=root){
   const key=JSON.stringify([text,bg,ink]);let material=signMaterials.get(key);
   if(!material){
-  const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d')!;ctx.fillStyle=bg;ctx.fillRect(0,0,512,128);ctx.fillStyle=ink;ctx.font='46px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,67);
-  const map=sharePrintedTexture(new T.CanvasTexture(c),['street-v95',text,bg,ink]);map.colorSpace=T.SRGBColorSpace;
+  const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=localizedContext(c)!;ctx.fillStyle=bg;ctx.fillRect(0,0,512,128);ctx.fillStyle=ink;ctx.font='46px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,67);
+  const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(c)),['street-v95',text,bg,ink]);map.colorSpace=T.SRGBColorSpace;
   material=new T.MeshStandardMaterial({map,roughness:.85});signMaterials.set(key,material);}
   const p=mesh(new T.PlaneGeometry(w,h),material,x,y,z,owner);p.rotation.y=-side*Math.PI/2;p.castShadow=false;
  }

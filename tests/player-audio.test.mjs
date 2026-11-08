@@ -6,7 +6,7 @@ import {HorrorAudio} from '../lib/audio.ts';
 
 test('V135 breathing tracks the longer sprint reserve and recovers smoothly',()=>{
  let stamina=freshStamina(),load=0;const levels=[];
- for(let i=0;i<368;i++){stamina=stepStamina(stamina,.025,true,true);load=stepBreathing(load,.025,stamina,true);if(i===39||i===223||i===367)levels.push(load);}
+ for(let i=0;i<600;i++){stamina=stepStamina(stamina,.025,true,true);load=stepBreathing(load,.025,stamina,true);if(i===39||i===335||i===599)levels.push(load);}
  assert.ok(levels[0]>.05&&levels[0]<.35);assert.ok(levels[1]>levels[0]+.25);assert.ok(levels[2]>.9);assert.ok(stamina.value<.001);
  const before=load;stamina=stepStamina(stamina,.025,false,false);load=stepBreathing(load,.025,stamina,false);assert.ok(load>before-.05);
  assert.equal(stepBreathing(load,0,stamina,false),load,'pause cannot advance the recovery');for(let i=0;i<700;i++){stamina=stepStamina(stamina,.025,false,false);load=stepBreathing(load,.025,stamina,false);}assert.equal(load,0);

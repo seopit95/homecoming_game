@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {softBox,surface} from './materials.ts';
 import {roundPipe} from './props.ts';
@@ -19,7 +20,7 @@ export function createCourtyardSafe(){
  const keyhole=box(hinge,'safe-keyhole',.42,.36,.04,.012,.027,.006,dark);
  const handle=box(hinge,'safe-unlock-handle',.42,.22,.076,.18,.035,.04,dark);for(const x of [.35,.49])box(hinge,'safe-handle-mount',x,.22,.055,.025,.05,.036,steel);
  for(const y of [.18,.64]){const pin=new T.Mesh(new T.CylinderGeometry(.016,.016,.11,16),steel);pin.position.set(-.008,y,.02);hinge.add(pin);}
- function paper(text:string,x:number,y:number,z:number,w:number,h:number){const c=document.createElement('canvas');c.width=512;c.height=Math.round(512*h/w);const ink=c.getContext('2d')!;ink.fillStyle='#bdb59b';ink.fillRect(0,0,c.width,c.height);ink.fillStyle='#292e27';const lines=text.split('\n'),base=c.height*.12;ink.font=`${base}px sans-serif`;const size=base*Math.min(1,c.width*.88/Math.max(...lines.map(line=>ink.measureText?.(line)?.width??[...line].length*base))),row=size*1.75;ink.font=`${size}px sans-serif`;ink.textAlign='center';ink.textBaseline='middle';lines.forEach((line,i)=>ink.fillText(line,c.width/2,c.height/2+(i-(lines.length-1)/2)*row));const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const o=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:tex,roughness:.95}));o.name='safe-handover-note';o.position.set(x,y,z);root.add(o);return o;}
+ function paper(text:string,x:number,y:number,z:number,w:number,h:number){const c=document.createElement('canvas');c.width=512;c.height=Math.round(512*h/w);const ink=localizedContext(c)!;ink.fillStyle='#bdb59b';ink.fillRect(0,0,c.width,c.height);ink.fillStyle='#292e27';const lines=text.split('\n'),base=c.height*.12;ink.font=`${base}px sans-serif`;const size=base*Math.min(1,c.width*.88/Math.max(...lines.map(line=>ink.measureText?.(line)?.width??[...line].length*base))),row=size*1.75;ink.font=`${size}px sans-serif`;ink.textAlign='center';ink.textBaseline='middle';lines.forEach((line,i)=>ink.fillText(line,c.width/2,c.height/2+(i-(lines.length-1)/2)*row));const tex=localizedTexture(new T.CanvasTexture(c));tex.colorSpace=T.SRGBColorSpace;const o=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:tex,roughness:.95}));o.name='safe-handover-note';o.position.set(x,y,z);root.add(o);return o;}
  paper('2803호 차량 소유자 요청\n「입차 직후 9초 지워 주세요」\n삭제 접수 거절 · 원본 보존\n서명: 2803호',-.23,.47,-.5146,.26,.24);
  roundPipe(root,[.08,.63,-.515],[.08,.63,-.397],.004,steel);roundPipe(root,[.08,.63,-.397],[.08,.61,-.397],.004,steel);
  const key=new T.Group();key.name='courtyard-basement-key';key.position.set(.08,.60,-.397);root.add(key);

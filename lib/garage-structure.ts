@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {surface,boxUV,softBox} from './materials.ts';
 import {roundPipe} from './props.ts';
@@ -41,8 +42,8 @@ export function buildGarageStructure(root:T.Group){
   for(const x of [-10,-6,-2,2,6,10]){roundPipe(structure,[x,2.34,z],[x,2.7,z],.006,steel);box(structure,x,2.693,z,.10,.014,.10,steel);}
  }
  // A muted, worn epoxy stencil shares a metre-scale alpha mask across the floor.
- const c=document.createElement('canvas');c.width=c.height=128;const ctx=c.getContext('2d')!;ctx.fillStyle='#fff';ctx.fillRect(0,0,128,128);ctx.fillStyle='#000';let seed=7301;for(let i=0;i<135;i++){seed=(seed*1664525+1013904223)>>>0;const x=seed%128;seed=(seed*1664525+1013904223)>>>0;ctx.fillRect(x,seed%128,1+(seed%7),1+(i%2));}
- const alpha=new T.CanvasTexture(c);alpha.wrapS=alpha.wrapT=T.RepeatWrapping;
+ const c=document.createElement('canvas');c.width=c.height=128;const ctx=localizedContext(c)!;ctx.fillStyle='#fff';ctx.fillRect(0,0,128,128);ctx.fillStyle='#000';let seed=7301;for(let i=0;i<135;i++){seed=(seed*1664525+1013904223)>>>0;const x=seed%128;seed=(seed*1664525+1013904223)>>>0;ctx.fillRect(x,seed%128,1+(seed%7),1+(i%2));}
+ const alpha=localizedTexture(new T.CanvasTexture(c));alpha.wrapS=alpha.wrapT=T.RepeatWrapping;
  const floorPaint=new T.MeshStandardMaterial({color:'#b0b2a1',roughness:.94,alphaMap:alpha,alphaTest:.5,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});floorPaint.name='garage-floor-paint';
  const markings=new T.Group();markings.name='garage-direction-paint';structure.add(markings);
  for(const x of [-2.2,2.2])for(const z of [-16,-6,6,18]){
@@ -53,7 +54,7 @@ export function buildGarageStructure(root:T.Group){
  // The vehicle exit board is an actual supported object below the slab.
  const exit=new T.Group();exit.name='garage-vehicle-exit-board';structure.add(exit);
  box(exit,5.8,2.45,-21.5,2.1,.28,.045,dark);for(const x of [5,6.6])roundPipe(structure,[x,2.59,-21.5],[x,2.7,-21.5],.007,steel);
- const face=document.createElement('canvas');face.width=768;face.height=100;const f=face.getContext('2d')!;f.fillStyle='#2e423b';f.fillRect(0,0,768,100);f.fillStyle='#c8cdb7';f.font='50px sans-serif';f.textAlign='center';f.textBaseline='middle';f.fillText('차량 출구',384,50);const map=new T.CanvasTexture(face);map.colorSpace=T.SRGBColorSpace;const panel=new T.Mesh(new T.PlaneGeometry(2.02,.22),new T.MeshStandardMaterial({map,roughness:.88}));panel.position.set(5.8,2.45,-21.477);exit.add(panel);
+ const face=document.createElement('canvas');face.width=768;face.height=100;const f=localizedContext(face)!;f.fillStyle='#2e423b';f.fillRect(0,0,768,100);f.fillStyle='#c8cdb7';f.font='50px sans-serif';f.textAlign='center';f.textBaseline='middle';f.fillText('차량 출구',384,50);const map=localizedTexture(new T.CanvasTexture(face));map.colorSpace=T.SRGBColorSpace;const panel=new T.Mesh(new T.PlaneGeometry(2.02,.22),new T.MeshStandardMaterial({map,roughness:.88}));panel.position.set(5.8,2.45,-21.477);exit.add(panel);
  batchStaticGeometry(transverse,[]);batchStaticGeometry(longitudinal,[]);batchStaticGeometry(duct,[]);batchStaticGeometry(services,[]);batchStaticGeometry(markings,[]);batchStaticGeometry(structure,[]);
  return {root:structure,floorPaint};
 }

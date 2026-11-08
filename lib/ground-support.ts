@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {boxUV,softBox,sharePrintedTexture,surface} from './materials.ts';
 import {connectionPassage,setDoorAngle} from './passage.ts';
@@ -25,9 +26,9 @@ export function buildGroundSupport(root:T.Group,area:'annex'|'archive',preview=f
  function box(x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=root){const mesh=new T.Mesh(boxUV(softBox(w,h,d,Math.min(.007,w/3,h/3,d/3)),x,y,z),m);mesh.position.set(x,y,z);mesh.castShadow=!m.transparent;mesh.receiveShadow=true;parent.add(mesh);if(solid)solids.push({x,z,w,d,y,h});return mesh;}
  function wall(x:number,z:number,w:number,d:number){box(x,1.4,z,w,2.8,d,plaster,true);box(x,.43,z,w+.01,.86,d+.01,lower);box(x,.045,z,w+.018,.09,d+.018,dark);}
  function print(text:string,x:number,y:number,z:number,w:number,h:number,ry=0,parent:T.Object3D=root){
-  const c=document.createElement('canvas');c.width=1024;c.height=Math.max(96,Math.round(1024*h/w));const ink=c.getContext('2d')!,lines=text.split('\n'),size=Math.min(c.height/(lines.length*1.6),950/Math.max(1,...lines.map(l=>l.length)));
+  const c=document.createElement('canvas');c.width=1024;c.height=Math.max(96,Math.round(1024*h/w));const ink=localizedContext(c)!,lines=text.split('\n'),size=Math.min(c.height/(lines.length*1.6),950/Math.max(1,...lines.map(l=>l.length)));
   ink.fillStyle='#c6c0ae';ink.fillRect(0,0,c.width,c.height);ink.fillStyle='#293a30';ink.font=`${size}px "Apple SD Gothic Neo",sans-serif`;ink.textAlign='center';ink.textBaseline='middle';lines.forEach((line,i)=>ink.fillText(line,c.width/2,c.height/2+(i-(lines.length-1)/2)*size*1.4));
-  const map=sharePrintedTexture(new T.CanvasTexture(c),['ground-support-v133',text]);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.92}));mesh.position.set(x,y,z);mesh.rotation.y=ry;mesh.userData.text=text;parent.add(mesh);return mesh;
+  const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(c)),['ground-support-v133',text]);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map,roughness:.92}));mesh.position.set(x,y,z);mesh.rotation.y=ry;mesh.userData.text=text;parent.add(mesh);return mesh;
  }
  function target(id:Action,label:string,mesh:T.Object3D,point:[number,number,number],approach:[number,number]){mesh.userData.approach={x:approach[0],z:approach[1]};targets.push({id,label,mesh,point:new T.Vector3(...point)});}
  function fixture(x:number,z:number){box(x,2.745,z,.18,.1,.76,steel);const tube=new T.MeshStandardMaterial({color:'#b2b2ad',emissive:'#b4b5c0',emissiveIntensity:.18});box(x,2.687,z,.13,.014,.66,tube);const light=new T.PointLight('#aeb3c2',2.4,7,2);light.position.set(x,2.5,z);light.userData.base=2.4;light.userData.bulb=tube;light.userData.moodSeed=(area==='annex'?300:500)+Math.abs(Math.round(x*11+z*17));root.add(light);lamps.push(light);}

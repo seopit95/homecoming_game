@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {surface,boxUV,softBox,sharePrintedTexture} from './materials.ts';
 import {createGhost} from './ghost.ts';
@@ -16,7 +17,7 @@ function tools(root:T.Group,solids:Solid[],lamps:T.PointLight[]){
  const floor=surface('oldTile','#b0b1a4',{roughness:.68}),wall=surface('decayWall','#aab0a2'),concrete=surface('castConcrete','#8f9690'),steel=surface('steel','#7f8884',{roughness:.55,metalness:.4}),dark=new T.MeshStandardMaterial({color:'#101818',roughness:.9});
  function box(name:string,x:number,y:number,z:number,w:number,h:number,d:number,m:T.Material,solid=false,parent:T.Object3D=root){const o=new T.Mesh(boxUV(softBox(w,h,d),x,y,z),m);o.name=name;o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;parent.add(o);if(solid)solids.push({x,y,z,w,h,d});return o;}
  function light(x:number,y:number,z:number,power=3){const l=new T.PointLight('#91a69a',power,7);l.position.set(x,y,z);l.userData.base=power;l.userData.moodSeed=Math.abs(Math.round((root.userData.floorNo??0)*71+x*11+z*17));root.add(l);lamps.push(l);return l;}
- function display(x:number,y:number,z:number,text:string){const c=document.createElement('canvas');c.width=256;c.height=128;const ctx=c.getContext('2d')!,map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;const m=new T.MeshBasicMaterial({map}),o=new T.Mesh(new T.PlaneGeometry(.38,.17),m);o.position.set(x,y,z);root.add(o);return{mesh:o,update(t:string){ctx.fillStyle='#0a1010';ctx.fillRect(0,0,256,128);ctx.fillStyle='#b88161';ctx.font='70px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,128,70);map.needsUpdate=true;},init(){this.update(text);}};}
+ function display(x:number,y:number,z:number,text:string){const c=document.createElement('canvas');c.width=256;c.height=128;const ctx=localizedContext(c)!,map=localizedTexture(new T.CanvasTexture(c));map.colorSpace=T.SRGBColorSpace;const m=new T.MeshBasicMaterial({map}),o=new T.Mesh(new T.PlaneGeometry(.38,.17),m);o.position.set(x,y,z);root.add(o);return{mesh:o,update(t:string){ctx.fillStyle='#0a1010';ctx.fillRect(0,0,256,128);ctx.fillStyle='#b88161';ctx.font='70px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,128,70);map.needsUpdate=true;},init(){this.update(text);}};}
  return{floor,wall,concrete,steel,dark,box,light,display};
 }
 
@@ -29,8 +30,11 @@ export function buildResidentialGallery(root:T.Group,area:'landing'|'corridor'|'
  box('gallery-lift-lobby-floor',1.15,-.1,-21.375,4.9,.2,2.75,a.floor);box('gallery-lift-lobby-ceiling',1.15,2.88,-21.375,4.9,.16,2.75,a.concrete);
  for(const [lo,hi]of[[-20.1,19.75],[21.25,23]])box('',1.3,1.4,(lo+hi)/2,.18,2.8,hi-lo,a.wall,true);
  box('',1.3,2.64,20.5,.18,.32,1.5,a.wall);box('',3.6,1.4,-22.1,.18,2.8,4.6,a.wall,true);box('',2.45,1.4,-20.05,2.3,2.8,.18,a.wall,true);
- box('',-1.3,.44,1,.14,.88,44,a.concrete,true);
- for(const y of[.95,1.14])roundPipe(root,[-1.3,y,-21],[-1.3,y,23],.022,a.steel);
+ // The lobby continues beyond the long gallery: carry its outside guardrail
+ // all the way to the lift-bank wall, instead of leaving a 1.75m open end.
+ box('gallery-exterior-parapet',-1.3,.44,(G.liftZ+23)/2,.14,.88,23-G.liftZ,a.concrete,true);
+ for(const y of[.95,1.14])roundPipe(root,[-1.3,y,G.liftZ],[-1.3,y,23],.022,a.steel).name='gallery-exterior-handrail';
+ roundPipe(root,[-1.3,.87,-21],[-1.3,1.14,-21],.018,a.steel).name='gallery-lobby-rail-support';
  for(let z=-20;z<=22;z+=5.5){box('',-1.3,1.4,z,.18,2.8,.22,a.concrete,true);box('',.15,2.74,z,.2,.12,1.05,a.steel);a.light(.15,2.6,z,z===2?.5:3.6);}
  const paint=galleryPaint();for(const [z,n]of[[-12,1],[4,2],[20.5,3]] as const){
   if(n!==3)galleryDoor(root,1.18,z,`${floorNo}0${n}`,paint,a.steel,a.dark);

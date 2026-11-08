@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import {apartmentEscapeLayout} from './escape-layout.ts';
 import * as T from 'three';
 import {connectionPassage,setDoorAngle} from './passage.ts';
@@ -42,9 +43,9 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  }
  function wallAt(x:number,z:number,w:number,d:number){box(x,1.4,z,w,2.8,d,wall,true);box(x,.43,z,w+.015,.86,d+.015,lower);box(x,.045,z,w+.025,.09,d+.025,dark);}
  function label(text:string,x:number,y:number,z:number,w=1.3,h=.4,ry=0,lit=false,dynamic=false){
-  const canvas=document.createElement('canvas');canvas.width=768;canvas.height=Math.max(64,Math.round(768*h/w));const ctx=canvas.getContext('2d')!,lines=text.split('\n'),size=Math.min(canvas.height/(lines.length*1.5),700/Math.max(...lines.map(l=>l.length),1));
+  const canvas=document.createElement('canvas');canvas.width=768;canvas.height=Math.max(64,Math.round(768*h/w));const ctx=localizedContext(canvas)!,lines=text.split('\n'),size=Math.min(canvas.height/(lines.length*1.5),700/Math.max(...lines.map(l=>l.length),1));
   ctx.fillStyle=lit?'#182d24':'#b6b098';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle=lit?'#b6d1af':'#28372f';ctx.font=`${size}px "Apple SD Gothic Neo",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';lines.forEach((line,i)=>ctx.fillText(line,384,canvas.height/2+(i-(lines.length-1)/2)*size*1.3));
-  const map=new T.CanvasTexture(canvas);if(!dynamic)sharePrintedTexture(map,['expansion-label-v1',text,lit]);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map}):new T.MeshStandardMaterial({map,roughness:.91}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);return mesh;
+  const map=localizedTexture(new T.CanvasTexture(canvas));if(!dynamic)sharePrintedTexture(map,['expansion-label-v1',text,lit]);map.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map}):new T.MeshStandardMaterial({map,roughness:.91}));mesh.position.set(x,y,z);mesh.rotation.y=ry;root.add(mesh);return mesh;
  }
  function target(id:Action,caption:string,mesh:T.Object3D,p:[number,number,number],approach:[number,number]){mesh.userData.approach={x:approach[0],z:approach[1]};targets.push({id,label:caption,mesh,point:new T.Vector3(...p)});return mesh;}
  function fixture(x:number,z:number,power=3.2,color='#a4b6a3'){
@@ -105,7 +106,7 @@ export function buildExpansion(root:T.Group,area:Exclude<ExpansionArea,'courtyar
  let display:T.Mesh|undefined;let intercom:ReturnType<typeof createAnsweringMachine>|undefined,intercomStatus='';
  let surveillance:Surveillance|undefined;let archiveDoor:ReturnType<typeof createArchiveDoor>|undefined;
  const archiveReview=area==='archive'?createArchiveReview():undefined;
- const faceText=(text:string)=>{if(!display)return;const map=(display.material as T.MeshStandardMaterial).map! as T.CanvasTexture;const c=map.image as HTMLCanvasElement,ctx=c.getContext('2d')!;ctx.fillStyle='#101d18';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#b7cdae';ctx.font=`${Math.min(c.height*.26,650/Math.max(1,...text.split('\n').map(l=>l.length)))}px sans-serif`;ctx.textAlign='center';text.split('\n').forEach((l,i)=>ctx.fillText(l,c.width/2,c.height*(.34+i*.3)));map.needsUpdate=true;};
+ const faceText=(text:string)=>{if(!display)return;const map=(display.material as T.MeshStandardMaterial).map! as T.CanvasTexture;const c=map.image as HTMLCanvasElement,ctx=localizedContext(c)!;ctx.fillStyle='#101d18';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#b7cdae';ctx.font=`${Math.min(c.height*.26,650/Math.max(1,...text.split('\n').map(l=>l.length)))}px sans-serif`;ctx.textAlign='center';text.split('\n').forEach((l,i)=>ctx.fillText(l,c.width/2,c.height*(.34+i*.3)));map.needsUpdate=true;};
  const X=bx-6;
  let water:T.Mesh|undefined;
  let filterCloth:T.Group|undefined,routeHandle:T.Group|undefined,fan:T.Group|undefined,pumpMotor:T.Group|undefined;

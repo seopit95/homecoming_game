@@ -2,7 +2,7 @@ import {apartmentRouteTransition,apartmentRouteObjective,normalizeApartmentRoute
 import {expansionObjectives,expansionJournal,expansionTransition,expansionObjective,isExpansion,type ExpansionStage,type ExpansionAction,type ExpansionArea} from './expansion-story.ts';
 export type Stage = ExpansionStage|'lift_climb'|'transfer_gallery'|'transfer_wait'|'transfer_enter'|'transfer_boarding'|'transfer_panel'|'transfer_ride'|'transfer_exit'|'stairs_ground'|'stairs_descent'|'corridor_departure'|'stairs_passage'|'resident_arrival'|'resident_departure'|'car_departure'|'car_escape'|'car_voice'|'car_crash'|'drive'|'impact'|'flee'|'sleep'|'tv'|'wake_ring'|'light_switch'|'find_torch'|'phone'|'power'|'shoes'|'radio'|'listen'|'hide'|'wait'|'escape'|'lift_call'|'lift_wait'|'lift_enter'|'lift_boarding'|'lift_button'|'descent'|'pry'|'lift_exit'|'corridor_run'|'stairs_loop'|'stairs_clue'|'stairs_reverse'|'office_record'|'office_fuse'|'office_power'|'office_tape'|'office_playback'|'office_key'|'office_leave'|'parking_gate'|'parking_key'|'parking_pump'|'parking_alarm'|'parking_run'|'resident_entry'|'resident_memory'|'resident_return'|'road_exit'|'road_evidence'|'road_call'|'road_wait'|'dying'|'ended';
 export type Area = ExpansionArea|'transfer'|'apartment'|'landing'|'lift'|'corridor'|'stairs'|'office'|'parking'|'resident'|'aftermath';
-export type Action = ExpansionAction|'climbed'|'ground_arrived'|'shelter'|'home_repair'|'annex_radio'|'gallery_notice'|'core_notice'|'office_install'|'car_passenger'|'stair_loop'|'stair_enter'|'stair_exit'|'resident_open'|'office_entry'|'car_departed'|'car_board'|'passenger'|'wreck'|'fatal'|'collision'|'fled'|'home'|'wake'|'skip_memory'|'blackout'|'awake'|'switch'|'flashlight'|'circuit_a'|'circuit_b'|'circuit_c'|'tape_next'|'car_search'|'valve_a'|'valve_b'|'pump'|'phone'|'breaker'|'shoes'|'radio'|'heard'|'closet'|'survived'|'door'|'caught'|'call'|'arrived'|'enter'|'sealed'|'panel'|'stopped'|'pry'|'leave_lift'|'stairs'|'down'|'stair_note'|'up'|'record'|'fuse'|'security_power'|'monitor'|'office_finish'|'service_key'|'service_exit'|'exit'|'alarm'|'dead'|'belongings'|'portrait'|'answerphone'|'resident_leave'|'car_door'|'road_bag'|'road_phone'|'stay'|'lure'|'resident_drawer'|'resident_key'|'resident_shift';
+export type Action = ExpansionAction|'home_car_key'|'climbed'|'ground_arrived'|'shelter'|'home_repair'|'annex_radio'|'gallery_notice'|'core_notice'|'office_install'|'car_passenger'|'stair_loop'|'stair_enter'|'stair_exit'|'resident_open'|'office_entry'|'car_departed'|'car_board'|'passenger'|'wreck'|'fatal'|'collision'|'fled'|'home'|'wake'|'skip_memory'|'blackout'|'awake'|'switch'|'flashlight'|'circuit_a'|'circuit_b'|'circuit_c'|'tape_next'|'car_search'|'valve_a'|'valve_b'|'pump'|'phone'|'breaker'|'shoes'|'radio'|'heard'|'closet'|'survived'|'door'|'caught'|'call'|'arrived'|'enter'|'sealed'|'panel'|'stopped'|'pry'|'leave_lift'|'stairs'|'down'|'stair_note'|'up'|'record'|'fuse'|'security_power'|'monitor'|'office_finish'|'service_key'|'service_exit'|'exit'|'alarm'|'dead'|'belongings'|'portrait'|'answerphone'|'resident_leave'|'car_door'|'road_bag'|'road_phone'|'stay'|'lure'|'resident_drawer'|'resident_key'|'resident_shift';
 export type Story = {stage:Stage;hidden:boolean;ending:'crashed'|'caught'|null;resume:Stage;notes:string[];circuit:Action[];officeSupply:boolean;tapeIndex:number;code?:string};
 export const chaseStages:Stage[]=['transfer_gallery','transfer_wait','transfer_enter','court_search','court_code','court_safe_open','court_unlocked','court_departure','office_departure','annex_arrival','annex_fuse','annex_restore','annex_search','annex_unlock','annex_exit_ready','annex_departure','archive_search','archive_edit','archive_reveal','archive_playback','archive_escape','archive_departure','plant_isolate','plant_power','plant_drain','plant_exit_ready','plant_departure','hide','escape','lift_call','lift_wait','lift_enter','corridor_run','corridor_departure','stairs_loop','stairs_descent','stairs_clue','stairs_reverse','stairs_passage','office_record','office_fuse','office_power','office_tape','office_playback','office_key','office_leave','parking_gate','parking_key','parking_pump','parking_alarm','parking_run','resident_arrival','resident_entry','resident_memory','resident_return','resident_departure'];
 export const opening:Partial<Record<Stage,{duration:number;action:Action;label:string;text:string;cues?:{at:number;text:string}[]}>>={
@@ -66,6 +66,7 @@ function officePhase(s:Story):Stage{
 }
 export function objectiveFor(story:Story){
   const route=apartmentRouteObjective(story);if(route)return route;
+  if(story.stage==='escape')return story.notes.includes('home_car_key')?'차키를 챙겼다. 현관문으로 나간다.\n복도 끝 승강기로 내려가야 한다.':'거실 탁자에서 차키를 챙긴다.\n내 차를 타고 이곳을 벗어나야 한다.';
   if(story.stage.startsWith('office')&&!['office_departure','office_boarding','office_playback'].includes(story.stage)){
     if(officeCanLeave(story))return '관리용 승강기에서 모터 소리가 돌아온다. 오래 기다릴 수는 없다.';
     if(officeCanWatch(story)&&!story.notes.includes('monitor'))return 'CCTV 화면이 켜졌다. 내 차가 돌아왔던 시간은 기억한다.';
@@ -95,6 +96,7 @@ export const parkingBoardDuration=.2;
 export function parkingCanBoard(stage:Stage){return stage==='parking_alarm'||stage==='parking_run';}
 export function parkingAlarmActive(s:Pick<Story,'stage'|'notes'>){return s.notes.includes('alarm')||s.stage==='parking_run';}
 export function retryStage(stage:Stage):Stage{
+  if(stage==='escape')return 'escape';
   if(['annex_fuse','annex_restore','annex_search'].includes(stage))return 'annex_unlock';
   if(stage==='stairs_ground')return 'transfer_gallery';
   if(stage==='lift_climb')return 'lift_exit';
@@ -114,6 +116,8 @@ export function retryStage(stage:Stage):Stage{
 export function checkpoint(state?:Story):Story{
   const current=state?.stage;
   let stage:Stage=current&&current!=='ended'&&current!=='dying'?retryStage(current):state?.resume||'radio';
+  if(current&&['hide','wait'].includes(current)&&(state?.notes.includes('home_retreat')||state?.notes.includes('home_car_key')))stage='escape';
+  if(stage==='escape'&&!state?.notes.includes('home_retreat')&&!state?.notes.includes('home_car_key'))stage='radio';
   if(state?.stage==='corridor_run')stage='lift_exit';
   if(state?.stage==='parking_run')stage='parking_alarm';
   if(stage==='parking_gate'&&state?.notes.includes('car_search'))stage=parkingAfterKey(state);
@@ -136,7 +140,7 @@ export function transition(state:Story,action:Action):Story{
   if(action==='skip_memory'&&isMemory(state.stage))return {...state,stage:'wake_ring',notes:state.notes.includes('wake')?state.notes:[...state.notes,'wake']};
   if(state.stage==='dying')return action==='dead'?{...state,stage:'ended'}:state;
   if(action==='caught'&&chaseStages.includes(state.stage)&&!state.hidden){
-    const resume=retryStage(state.stage);
+    const resume=state.stage==='escape'&&!state.notes.includes('home_retreat')&&!state.notes.includes('home_car_key')?'radio':retryStage(state.stage);
     return {...state,stage:'dying',ending:'caught',resume};
   }
   const routed=apartmentRouteTransition(state,action);if(routed)return routed;
@@ -145,11 +149,12 @@ export function transition(state:Story,action:Action):Story{
     if(state.stage==='wait')return {...state,stage:'escape',hidden:false};
     if(state.stage==='escape')return {...state,hidden:!state.hidden,stage:state.hidden?'escape':'wait'};
   }
-  if(state.stage==='wait'&&state.hidden&&action==='survived')return {...state,stage:'escape'};
+  if(state.stage==='wait'&&state.hidden&&action==='survived')return {...state,stage:'escape',notes:[...new Set([...state.notes,'home_retreat'])]};
   if(state.hidden)return state;
+  if(action==='home_car_key')return state.stage==='escape'&&!state.notes.includes(action)?{...state,notes:[...state.notes,action]}:state;
   if(action==='home_repair'&&areaFor(state)==='apartment'&&hasFlashlight(state))return state.notes.includes(action)?state:{...state,notes:[...state.notes,action]};
   if(action==='gallery_notice'&&['lift_call','lift_wait','lift_enter'].includes(state.stage)||action==='core_notice'&&['corridor_run','corridor_departure'].includes(state.stage))return state.notes.includes(action)?state:{...state,notes:[...state.notes,action]};
-  if(action==='door'&&['hide','escape'].includes(state.stage))return {...state,stage:'lift_call'};
+  if(action==='door'&&['hide','escape'].includes(state.stage))return state.notes.includes('home_car_key')?{...state,stage:'lift_call'}:state;
   if(['resident_entry','resident_memory','resident_return'].includes(state.stage)){
     if(action==='resident_leave')return state.notes.includes('resident_key')?{...state,stage:'resident_departure'}:state;
     if(action==='resident_key'){
@@ -185,8 +190,8 @@ export function transition(state:Story,action:Action):Story{
     if(next)return {...next,stage:officePhase(next)};
   }
   if(state.stage.startsWith('parking')){
+    if(action==='car_passenger'||action==='car_search')return state;
     if(action==='exit')return state.notes.includes(action)?state:{...state,stage:state.stage==='parking_gate'?(state.notes.includes('car_search')?parkingAfterKey(state):'parking_key'):state.stage,notes:[...state.notes,action]};
-    if(action==='car_passenger'&&['parking_gate','parking_key'].includes(state.stage))return state.notes.includes(action)?state:{...state,stage:'parking_key',notes:[...state.notes,action]};
     if(action==='car_board'&&parkingCanBoard(state.stage))return {...state,stage:'car_departure'};
   }
   if(state.stage==='parking_key'){
@@ -233,9 +238,10 @@ export const objectives:Record<Stage,string>={lift_climb:'문턱을 짚고 올�
   drive:'사흘 전의 기억',impact:'사람이었다',flee:'나는 도망쳤다',sleep:'집으로 돌아와 잠들었다',tv:'사흘 뒤',wake_ring:'전화벨에 잠이 깬다',light_switch:"침실 입구의 전등 스위치를 켠다.\n내 방인데, 어둠이 낯설다.",find_torch:"침대 옆 스마트폰을 집는다.\n꺼진 방에서 화면만 눈을 뜬다.",phone:"스마트폰 전화를 받는다.\n발신자 표시 제한. 이 시간에 누가.",power:"다용도실 배전반을 확인한다.\n타는 냄새가 난다. 우리 집만 어둡다.",shoes:"현관의 젖은 신발을 살핀다.\n문은 잠겨 있었는데.",radio:"침실 라디오를 끈다.\n분명, 내가 꺼 두었는데.",listen:"복도에서 들리는 소리에 귀를 기울인다.\n라디오는 꺼졌는데, 소리는 멎지 않는다.",hide:"침실 장롱에 몸을 숨긴다.\n발소리가 멈추지 않는다.",wait:"장롱 안에서 조용히 기다린다.\n발소리가 멀어질 때까지.",escape:"지금 현관문으로 나간다.\n뒤를 확인할 시간은 없다.",
   lift_call:"복도 끝 승강기의 호출 버튼을 누른다.\n발소리가 복도까지 따라온다.",lift_wait:"승강기 문이 열리기를 기다린다.\n올라오는 것은 맞겠지.",lift_enter:"열린 승강기 안으로 들어간다.\n복도에 더 머물 수 없다.",lift_boarding:'탑승했다. 문이 닫히고 있다',lift_button:"승강기 1층 버튼을 누른다.\n이번에는 멈추지 마.",descent:'1층으로 내려가는 중',pry:"문 앞에서 E를 길게 눌러 벌린다.\n문틈 너머에서 찬 공기가 샌다.",lift_exit:"벌어진 문틈으로 나간다.\n아래에 발 디딜 바닥이 보인다.",corridor_run:"반대편 비상계단으로 달린다.\n또 같은 복도다.",
   corridor_departure:'방화문 너머 계단. 문을 닫을 시간은 없다.',stairs_loop:"비상계단을 따라 아래로 내려간다.\n위에서 발을 끄는 소리가 난다.",stairs_descent:'아래로. 발소리가 바로 위 계단에서 들린다.',stairs_clue:'아래쪽은 막혔다. 위쪽 방화문 너머로 내려갈 길이 보인다.',stairs_reverse:'17층. 위쪽 방화문을 통해 1층으로 내려간다.',stairs_passage:'열린 문을 지나 복도로 나간다.',office_record:'관리실 책상의 야간 근무일지를 확인하세요',office_fuse:'서고의 예비 부품대에서 퓨즈를 찾으세요',office_power:'전기실 배전반에 퓨즈를 설치하고 6A 한도 안에서 필요한 회로를 선택하세요',office_tape:'CCTV 시간 선택 버튼으로 내 차가 입차한 기록을 찾아 재생하세요',office_playback:'재생 중 · 지하 입차 기록의 누락 구간을 확인하세요',office_key:'CCTV 오른쪽 책상에 놓인 관리용 승강기 열쇠를 챙기세요',office_leave:'복도 끝 관리용 승강기를 열어 1층으로 내려가세요',
-  parking_gate:'주차장. 내 차만 그대로 서 있다. 출구 쪽에는 물이 차 있다.',parking_key:'내 차 오른쪽 조수석 문을 열고 가방에서 설비 열쇠를 찾으세요',parking_pump:'물이 계속 밀려든다. 펌프보다 먼저 유입을 멈춰야 한다.',parking_alarm:"운전석 문 앞에서 E를 눌러 탄다.\n다시 혼자 나갈 수 있을까.",parking_run:"기둥과 차체 뒤로 피해 운전석에 탄다.\n경보가 멎으면 나를 향해 온다.",resident_arrival:'1704호. 전화벨과 명패의 이름이 겹친다. 한서연.',resident_departure:'연결문이 열렸다. 뒤에서는 더 이상 발소리가 나지 않는다.',resident_entry:'1704호. 현관에 그 신발 한 짝이 남아 있다',resident_memory:'서재의 수첩과 서랍을 살펴 연결문 열쇠를 찾으세요',resident_return:'연결문 열쇠를 챙겼다. 뒤쪽 1703호로 피하세요',road_exit:'03:17. 이번에는 차 문을 연다',road_evidence:'횡단보도 위에 떨어진 가방을 확인한다',road_call:'가방 곁의 금 간 전화기를 든다. 이번에는 신고한다',road_wait:'도망치지 않고, 구조를 기다린다',car_departure:'',car_escape:'',car_voice:'',car_crash:'',dying:'',ended:'',
+  parking_gate:'주차장. 내 차만 그대로 서 있다. 출구 쪽에는 물이 차 있다.',parking_key:'내 차 오른쪽 조수석 문을 열고 가방에서 설비 열쇠를 찾으세요',parking_pump:'물이 계속 밀려든다. 펌프보다 먼저 유입을 멈춰야 한다.',parking_alarm:"안쪽 오른편, 앞이 찌그러진 내 차의 운전석으로 간다.\n집에서 챙긴 차키가 손에 있다.",parking_run:"기둥과 차체 뒤로 피해 운전석에 탄다.\n경보가 멎으면 나를 향해 온다.",resident_arrival:'1704호. 전화벨과 명패의 이름이 겹친다. 한서연.',resident_departure:'연결문이 열렸다. 뒤에서는 더 이상 발소리가 나지 않는다.',resident_entry:'1704호. 현관에 그 신발 한 짝이 남아 있다',resident_memory:'서재의 수첩과 서랍을 살펴 연결문 열쇠를 찾으세요',resident_return:'연결문 열쇠를 챙겼다. 뒤쪽 1703호로 피하세요',road_exit:'03:17. 이번에는 차 문을 연다',road_evidence:'횡단보도 위에 떨어진 가방을 확인한다',road_call:'가방 곁의 금 간 전화기를 든다. 이번에는 신고한다',road_wait:'도망치지 않고, 구조를 기다린다',car_departure:'',car_escape:'',car_voice:'',car_crash:'',dying:'',ended:'',
 };
 export const journal:Partial<Record<Action,{title:string;text:string}>>={
+  home_car_key:{title:'2803호 · 차키',text:'장롱에서 나와 거실 탁자에서 차키를 챙겼다. 지하주차장에 있는 내 차로 나가야 한다.'},
   home_repair:{title:'2803호 · 신고보다 먼저',text:'식탁 위 차량 수리 견적. 앞범퍼와 우측 헤드램프. 내일 오전 입고 예약. 아래에 「고객 요청: 보험 접수 없이」라고 적혀 있다.\n\n사업이 무너지고 빚이 쌓인 뒤 술로 밤을 넘겼다. 기억이 듬성듬성 비는 날이 있었지만, 이것은 내가 날짜까지 정해 예약한 일이었다.\n\n사고 다음 날, 사진을 보내고 견적을 받았다. 어디에 부딪혔느냐는 물음에 주차장 기둥이라고 답했다. 신고 전화 대신 수리점을 찾아봤다. 내가 사흘 동안 아무것도 하지 않은 것은 아니었다.'},
   gallery_notice:{title:'28층 · 열어 주지 않은 문',text:'101동 시설 점검 안내. 17층 외벽 공사로 관리실을 1703호로 옮겼다고 적혀 있다. 야간 당직 내선은 17. 아래에는 새 종이 한 장이 덧붙어 있다. 「2803호 방문 / 부재. 비상벨 통화 확인 요청.」\n\n나는 사흘 동안 집에 있었다. 초인종이 울려도 아무 소리도 내지 않았다. 집에 없는 척하면 그날도 지나갈 줄 알았다. 저 문이 내 문인데, 지금은 돌아갈 수가 없다.'},
   core_notice:{title:'24층 · 익숙한 안내판',text:'승강기 반대편에 비상계단이 있다. 관리실은 17층 공사 때문에 1703호로 옮겼고, 인접 세대와 이어진 연결문은 야간 통행 후 잠그라는 내용이다. 손때가 묻은 공용부 점검표. 평소에는 읽지도 않고 지나쳤다.\n\n층수는 24. 네 세대의 번호와 비상계단 위치까지 내가 알던 아파트 그대로다. 그런데 문 안에서는 아무 소리도 들리지 않는다. 집집마다 나처럼 숨을 죽이고 있는 것 같았다.'},
@@ -266,6 +272,7 @@ export const journal:Partial<Record<Action,{title:string;text:string}>>={
 };
 export function journalEntry(id:Action,story:Pick<Story,'notes'>){
   if(id==='archive_play'&&!['archive_sequence_road','archive_sequence_call','archive_sequence_gate'].every(note=>story.notes.includes(note)))return {title:'관리사무소 · 원본 재생 시작',text:'우편의 영상보존 통지서에 적힌 원본을 불러왔다. 도로 영상, 양방향 통화, 입차 기록이 시간순으로 이어진다. 화면과 소리를 끝까지 확인해야 한다.'};
+  if(id==='exit'&&story.notes.includes('home_car_key'))return {title:'B1 · 막힌 보행자 출구',text:'보행자 출구는 공사 셔터에 막혀 있다. 안쪽 오른편의 앞이 찌그러진 차가 내 차다. 차키는 집에서 챙겼다. 운전석에 타고 차량 경사로로 나간다. 붉은 경보기는 필요할 때만 쓰는 유인 수단이다.'};
   if(id==='exit')return {title:'B1 · 막힌 보행자 출구',text:'보행자 출구는 바깥의 공사 셔터에 막혀 있다. 차량 경사로로 나가야 한다. '+(parkingDrained(story)?'차량 통로는 열려 있다. 차에 타면 차량 출구로 나갈 수 있다. ':'차량 출구에 물이 고여 있다. 양측 급수를 잠근 뒤 펌프를 가동해야 한다. ')+(story.notes.includes('car_search')?'열쇠는 이미 챙겼다. ':'조수석 가방에서 열쇠를 찾아야 한다. ')+'차체와 기둥 뒤로 돌아갈 수 있고, 필요하면 입구 경보기로 반대쪽에서 소리를 낼 수도 있다.'};
   if(parkingDrained(story)){
     if(id==='car_search')return {title:'B1 · 내 차 열쇠',text:'젖은 조수석 가방에서 차 열쇠를 꺼냈다. 그날 운전대를 잡았던 손이 다시 떨린다. 차량 출구까지 통행할 수 있다. 차체와 기둥 뒤로 돌아 운전석에 갈 수 있다. 입구 쪽에는 붉은 경보기가 있다. 너무 가까이 따라오면 반대쪽에서 큰 소리를 낼 방법이 될 것이다.'};

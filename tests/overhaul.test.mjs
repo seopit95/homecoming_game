@@ -22,7 +22,7 @@ test('parking escape requires key, both isolation valves and drainage before the
  s=transition(s,'valve_a');assert.equal(transition(s,'pump'),s);s=transition(s,'valve_b');s=transition(s,'pump');assert.equal(s.stage,'parking_alarm');
 });
 test('sprinting exhausts, cannot restart immediately, and recovers without trapping walking',()=>{
- let s=freshStamina();for(let i=0;i<190;i++)s=stepStamina(s,.05,true,true);assert.equal(s.value,0);assert.equal(canSprint(s),false);
+ let s=freshStamina();for(let i=0;i<300;i++)s=stepStamina(s,.05,true,true);assert.equal(s.value,0);assert.equal(canSprint(s),false);
  for(let i=0;i<25;i++)s=stepStamina(s,.05,false,true);assert.equal(s.value,0);
  for(let i=0;i<100;i++)s=stepStamina(s,.05,false,true);assert.ok(s.value>.25);assert.equal(canSprint(s),true);
  const rested=freshStamina();assert.deepEqual(stepStamina(rested,5,true,false),rested);

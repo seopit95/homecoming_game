@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {sharePrintedTexture,softBox,surface} from './materials.ts';
 import {apartmentEscapeLayout} from './escape-layout.ts';
@@ -6,13 +7,13 @@ const korean='"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif';
 const ink='#2d3d36',green='#3f5d50',sheet='#dedbcf';
 
 function canvas(width:number,height:number){
- const c=document.createElement('canvas');c.width=width;c.height=height;return {c,g:c.getContext('2d')!};
+ const c=document.createElement('canvas');c.width=width;c.height=height;return {c,g:localizedContext(c)!};
 }
 function lettering(g:CanvasRenderingContext2D,text:string,x:number,y:number,size:number,weight=500,color=ink,align:CanvasTextAlign='left'){
  g.font=`${weight} ${size}px ${korean}`;g.fillStyle=color;g.textAlign=align;g.textBaseline='middle';g.fillText(text,x,y);
 }
 function printed(c:HTMLCanvasElement,key:(string|number|boolean)[]){
- const map=sharePrintedTexture(new T.CanvasTexture(c),['apartment-signage-v134',...key]);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;return map;
+ const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(c)),['apartment-signage-v134',...key]);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;return map;
 }
 
 export type ApartmentPlaqueOptions={

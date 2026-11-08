@@ -9,6 +9,7 @@ import {createDress,poseDress,poseDressArms} from './ghost-dress.ts';
 import {createNeck,poseNeck,anchorHeadAtNeck,constrainSeatedSkin} from './ghost-neck.ts';
 import {extremity} from './ghost-anatomy.ts';
 import type {Solid} from './world.ts';
+import type {WallSupport} from './ghost-exterior.ts';
 
 type Clearance={side:number;front:number;back:number};
 type Contact={point:T.Vector3;rotation:T.Quaternion;stance:boolean;withdrawing:boolean;from:T.Vector3;fromRotation:T.Quaternion};
@@ -94,7 +95,7 @@ function poseGhost(figure:T.Group,time:number,moving:number,proximity:number,red
   }
   anchorHeadAtNeck(rig.head,rig.headOffset);return rig;
 }
-export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,heightAt?:(x:number,z:number)=>number,solids:Solid[]=[],pursuit=0){
+export function animateGhost(figure:T.Group,time:number,moving:number,proximity:number,reducedMotion:boolean,phase=time*6.1,crawl=0,heightAt?:(x:number,z:number)=>number,solids:Solid[]=[],pursuit=0,support?:WallSupport|{blend:0}){
   const tuck=crawlClearance(figure,solids);
   const previous=rigs.get(figure)?.steps,dt=previous?time-previous.time:0;
   const turned=previous?Math.abs(Math.atan2(Math.sin(figure.rotation.y-previous.yaw),Math.cos(figure.rotation.y-previous.yaw))):0;
@@ -109,10 +110,40 @@ export function animateGhost(figure:T.Group,time:number,moving:number,proximity:
   const rig=poseGhost(figure,time,moving,proximity,reducedMotion,phase,crawl,tuck,moving>.01||live,kneeGround,menace);if(!rig)return;
   // Quantized tissue poses avoid recomputing the face normals every chase frame.
   poseFace(rig.face,Math.round(menace*.32*12)/12);rig.mouth.visible=menace>.02;
-  if(heightAt)groundGhost(figure,heightAt,false);
-  plantContacts(figure,rig,time,phase,crawl,moving,live,continuous?previous:undefined);
+  if(support?.blend)wallGhost(figure,rig,support as WallSupport,phase,moving);
+  else if(heightAt)groundGhost(figure,heightAt,false);
+  plantContacts(figure,rig,time,phase,crawl,moving,live,continuous&&(!support?.blend||support.blend===1)?previous:undefined);
   poseDress(rig.gown,rig.hem,rig.torso,rig.knees,crawl,false,tuck.back,tuck.side,tuck.front);
-  settleHair(rig.tails,figure,time,crawlFloor(rig),heightAt);poseArms(rig);bloodDrops(rig,time);
+  settleHair(rig.tails,figure,time,crawlFloor(rig),support?.blend?undefined:heightAt);poseArms(rig);bloodDrops(rig,time);
+}
+
+// The navigation root stays on its collision-tested path. Only the supported
+// body crosses the clear strip to the adjoining wall, with hands/feet solving
+// against the actual floor or masonry rather than an imaginary tilted floor.
+function wallGhost(figure:T.Group,rig:Rig,support:WallSupport,phase:number,moving:number){
+  const {nx,nz,distance,blend}=support,scale=figure.scale.x,up=new T.Vector3(0,1,0),normal=new T.Vector3(nx,0,nz);
+  const inverse=figure.getWorldQuaternion(new T.Quaternion()).invert(),localNormal=normal.clone().applyQuaternion(inverse);
+  rig.body.quaternion.identity().slerp(new T.Quaternion().setFromUnitVectors(up,localNormal),blend);
+  rig.body.position.copy(new T.Vector3(-nx*distance*blend,1.2*blend,-nz*distance*blend).applyQuaternion(inverse).divideScalar(scale));
+  rig.kneel=0;rig.spider=1;figure.updateMatrixWorld(true);
+  for(let i=0;i<2;i++)for(const arm of [true,false]){
+    const upper=arm?rig.arms[i]:rig.legs[i],lower=arm?rig.forearms[i]:rig.knees[i],tip=arm?rig.palms[i]:rig.ankles[i];
+    const target=tip.getWorldPosition(new T.Vector3()),floorDistance=target.y-figure.position.y;
+    const wallDistance=(target.x-figure.position.x)*nx+(target.z-figure.position.z)*nz+distance;
+    const nearWall=(i===0?-1:1)*localNormal.x<0;
+    // Transfer the near supports first; the opposite pair still bears weight
+    // on the floor. On descent the same sequence runs backwards.
+    const transfer=T.MathUtils.smoothstep(blend,nearWall?.25:.65,nearWall?.5:.9);
+    const n=up.clone().lerp(normal,transfer).normalize(),u=T.MathUtils.euclideanModulo(phase+i*Math.PI+(arm?0:Math.PI/2),Math.PI*2)/(Math.PI*2);
+    const lift=(u<.36?Math.sin(u/.36*Math.PI):0)*.075*moving*scale,clearance=(arm?.075:.095)*scale+lift;
+    const onFloor=target.clone().addScaledVector(up,clearance-floorDistance),onWall=target.clone().addScaledVector(normal,clearance-wallDistance);
+    target.copy(onFloor).lerp(onWall,transfer);
+    const pole=upper.parent!.worldToLocal(lower.getWorldPosition(new T.Vector3())).sub(upper.position);
+    reach(upper,lower,upper.parent!.worldToLocal(target),arm?.46:.42,arm?.49:.42,i===0?-1:1,pole);
+    const orientation=new T.Quaternion().setFromUnitVectors(up,n).multiply(new T.Quaternion().setFromEuler(new T.Euler(arm?-Math.PI/2:0,figure.rotation.y,0,'YXZ')));
+    tip.quaternion.copy(lower.getWorldQuaternion(new T.Quaternion()).invert().multiply(orientation));
+    figure.updateMatrixWorld(true);
+  }
 }
 
 // A support belongs to the floor, not the translating/turning animation root.
@@ -167,7 +198,7 @@ function plantContacts(figure:T.Group,rig:Rig,time:number,phase:number,crawl:num
 // needs shorter, slower steps; a parallel wall only changes the elbow bend.
 export function ghostStrideLength(figure:T.Group,solids:Solid[],crawl:boolean){
   const tuck=crawlClearance(figure,solids);
-  return crawl?.82*(1-tuck.front*.86):1.56*(1-Math.max(tuck.front,tuck.back)*.65);
+  return figure.scale.x*(crawl?.82*(1-tuck.front*.86):1.56*(1-Math.max(tuck.front,tuck.back)*.65));
 }
 export function ghostStep(turn:number,speed:number,dt:number,stride:number,crawl:boolean){
   const budget=stride*(crawl?5.2:1.3)*dt,limit=Math.min(2.4*dt,budget/.25),rotation=T.MathUtils.clamp(turn,-limit,limit),facing=Math.max(0,Math.cos(turn));
@@ -177,20 +208,20 @@ export function ghostStep(turn:number,speed:number,dt:number,stride:number,crawl
 // Reserve room for the full reaching pose, then gather the limbs toward the
 // body before a wall can enter their sweep. Ray tests use door-local axes.
 function crawlClearance(figure:T.Group,solids:Solid[],height=1.3){
-  const p=figure.position,yaw=figure.rotation.y,c=Math.cos(yaw),s=Math.sin(yaw),tuck:Clearance={side:0,front:0,back:0};
+  const scale=figure.scale.x,p=figure.position,yaw=figure.rotation.y,c=Math.cos(yaw),s=Math.sin(yaw),tuck:Clearance={side:0,front:0,back:0};
   for(const b of solids){
-    if((b.y??1.5)+(b.h??3)/2<p.y+.02||(b.y??1.5)-(b.h??3)/2>p.y+height)continue;
-    if(Math.hypot(b.x-p.x,b.z-p.z)>Math.hypot(b.w,b.d)/2+1.85)continue;
+    if((b.y??1.5)+(b.h??3)/2<p.y+.02||(b.y??1.5)-(b.h??3)/2>p.y+height*scale)continue;
+    if(Math.hypot(b.x-p.x,b.z-p.z)>Math.hypot(b.w,b.d)/2+1.85*scale)continue;
     const bc=Math.cos(b.yaw??0),bs=Math.sin(b.yaw??0),ox=bc*(p.x-b.x)-bs*(p.z-b.z),oz=bs*(p.x-b.x)+bc*(p.z-b.z);
     for(let angle=0;angle<Math.PI*2;angle+=Math.PI/16){
-      const ux=Math.cos(angle),uz=Math.sin(angle),length=Math.min(1.03/Math.max(.0001,Math.abs(ux)),(uz<0?1.3:1.25)/Math.max(.0001,Math.abs(uz))),x=ux*length,z=uz*length;
+      const ux=Math.cos(angle),uz=Math.sin(angle),length=scale*Math.min(1.03/Math.max(.0001,Math.abs(ux)),(uz<0?1.3:1.25)/Math.max(.0001,Math.abs(uz))),x=ux*length,z=uz*length;
       const wx=c*x+s*z,wz=-s*x+c*z,dx=bc*wx-bs*wz,dz=bs*wx+bc*wz;let lo=0,hi=1,entryAxis=0;
       for(const [axis,[origin,d,half]] of [[ox,dx,b.w/2+.035],[oz,dz,b.d/2+.035]].entries()){
         if(Math.abs(d)<1e-8){if(Math.abs(origin)>=half){hi=-1;break;}}
         else{const near=(-half-origin)/d,far=(half-origin)/d,entry=Math.min(near,far);if(entry>lo){lo=entry;entryAxis=axis;}hi=Math.min(hi,Math.max(near,far));}
       }
       if(lo<hi&&lo<1&&hi>0){
-        const amount=T.MathUtils.clamp((length-lo*length)/(length-.43),0,1),nx=entryAxis===0?bc:bs,nz=entryAxis===0?-bs:bc;
+        const amount=T.MathUtils.clamp((length-lo*length)/(length-.43*scale),0,1),nx=entryAxis===0?bc:bs,nz=entryAxis===0?-bs:bc;
         tuck.side=Math.max(tuck.side,amount*T.MathUtils.smoothstep(Math.abs(nx*c-nz*s),.05,.35));
         const end=uz<0?'back':'front';tuck[end]=Math.max(tuck[end],amount*T.MathUtils.smoothstep(Math.abs(nx*s+nz*c),.05,.35));
       }
@@ -221,12 +252,12 @@ function crawlFloor(rig:Rig){return rig.torso.position.y<.8?.018:0;}
 
 // Fit the visual body to the stairs while the navigation root stays on its path.
 function groundSlope(figure:T.Group,heightAt:(x:number,z:number)=>number){
-  const p=figure.position,c=Math.cos(figure.rotation.y),s=Math.sin(figure.rotation.y),center=p.z-.35*c,span=1.05*Math.abs(c)+.34*Math.abs(s);
+  const p=figure.position,scale=figure.scale.x,c=Math.cos(figure.rotation.y),s=Math.sin(figure.rotation.y),center=p.z-.35*c*scale,span=(1.05*Math.abs(c)+.34*Math.abs(s))*scale;
   return (heightAt(p.x,center+span)-heightAt(p.x,center-span))/(2*span);
 }
 export function groundGhost(figure:T.Group,heightAt:(x:number,z:number)=>number,finish=true){
   const rig=rigs.get(figure);if(!rig)return;
-  const p=figure.position,yaw=figure.rotation.y,c=Math.cos(yaw),s=Math.sin(yaw);
+  const scale=figure.scale.x,p=figure.position,yaw=figure.rotation.y,c=Math.cos(yaw),s=Math.sin(yaw);
   // A solid divider separates the flights: a turning limb must not sample the opposite floor.
   const floorAt=(z:number)=>heightAt(p.x,z);
   const slope=groundSlope(figure,heightAt);
@@ -234,26 +265,26 @@ export function groundGhost(figure:T.Group,heightAt:(x:number,z:number)=>number,
   rig.body.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),normal);
   let clearance=0;const point=new T.Vector3();
   for(const x of [-.34,.34])for(const z of [-1.4,-.7,0,.7]){
-    point.set(x,0,z).applyQuaternion(rig.body.quaternion);
+    point.set(x,0,z).applyQuaternion(rig.body.quaternion).multiplyScalar(scale);
     clearance=Math.max(clearance,floorAt(p.z-s*point.x+c*point.z)-p.y-point.y);
   }
   // Each visible tread differs from the continuous navigation slope by at most 8.3 cm.
   rig.kneel*=1-T.MathUtils.smoothstep(Math.abs(slope),0,.05);
   const flatSupport=Math.max(rig.kneel,rig.spider);
-  rig.body.position.y=clearance+.085*(1-flatSupport);
+  rig.body.position.y=clearance/scale+.085*(1-flatSupport);
   figure.updateMatrixWorld(true);
   for(let i=0;i<2;i++)for(const arm of [true,false]){
     if(!arm&&rig.kneel>0){
       const target=rig.knees[i].getWorldPosition(new T.Vector3()),lift=Math.max(0,rig.body.worldToLocal(target.clone()).y-.065);
       const support=Math.max(...[-.08,.08].map(z=>floorAt(target.z+z)));
-      target.y=support+.065+lift;poseCrawlKnee(rig,i,rig.body.worldToLocal(target),rig.kneel);continue;
+      target.y=support+(.065+lift)*scale;poseCrawlKnee(rig,i,rig.body.worldToLocal(target),rig.kneel);continue;
     }
     const upper=arm?rig.arms[i]:rig.legs[i],lower=arm?rig.forearms[i]:rig.knees[i],tip=arm?rig.palms[i]:rig.ankles[i];
     const target=tip.getWorldPosition(new T.Vector3()),orientation=new T.Quaternion().setFromEuler(new T.Euler(arm?-Math.PI/2:0,yaw+(arm?(i===0?1:-1)*.25*armTuck(rig.tuck):0),arm?(i===0?-1:1)*.16:0,'YXZ'));
     const lift=rig.body.worldToLocal(target.clone()).y;
     const bearing=yaw+(arm?(i===0?1:-1)*.25*armTuck(rig.tuck):0);
     const support=Math.max(...[-.1,.1].flatMap(x=>[-.07,arm?.38:.24].map(z=>floorAt(target.z+Math.cos(bearing)*z-Math.sin(bearing)*x))));
-    target.y=support+lift+.055*(1-flatSupport);
+    target.y=support+(lift+.055*(1-flatSupport))*scale;
     // Keep the authored elbow direction, including crawl blends and reduced motion,
     // while fitting the wrist to the floor. Replacing it here made slopes symmetric.
     const side=i===0?-1:1,pole=arm&&rig.crawl>0||!arm&&rig.spider>0?upper.parent!.worldToLocal(lower.getWorldPosition(new T.Vector3())).sub(upper.position):arm?new T.Vector3(side*.55,.18,-.55).lerp(new T.Vector3(0,0,-1).applyQuaternion(rig.torso.quaternion.clone().invert()),armTuck(rig.tuck)):new T.Vector3(side*.18,-1,.3).lerp(new T.Vector3(0,0,1),rig.tuck.back);

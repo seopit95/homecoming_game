@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {crtScreenGeometry} from './crt-monitor.ts';
 import {createSedan} from './sedan.ts';
@@ -33,7 +34,7 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
   }
   for(let z=-1.9;z<2;z+=.7)box(road,0,.004,z,7.6,.008,.35,white);
   box(road,-3.9,1.4,2.6,.065,2.8,.065,dark);box(road,-3.9,2.55,2.6,.30,.60,.18,dark);
-  const lampCanvas=document.createElement('canvas');lampCanvas.width=lampCanvas.height=128;const lampInk=lampCanvas.getContext('2d')!;lampInk.fillStyle='#131b17';lampInk.fillRect(0,0,128,128);lampInk.fillStyle='#83d994';for(const [x,y,w,h] of [[56,15,15,15],[53,35,20,33],[37,44,21,10],[70,42,21,10],[28,49,15,10],[86,33,10,16],[47,66,13,22],[35,84,18,13],[29,95,14,10],[65,66,13,22],[74,84,13,21],[84,99,12,9]])lampInk.fillRect(x,y,w,h);const lampMap=new T.CanvasTexture(lampCanvas);lampMap.colorSpace=T.SRGBColorSpace;
+  const lampCanvas=document.createElement('canvas');lampCanvas.width=lampCanvas.height=128;const lampInk=localizedContext(lampCanvas)!;lampInk.fillStyle='#131b17';lampInk.fillRect(0,0,128,128);lampInk.fillStyle='#83d994';for(const [x,y,w,h] of [[56,15,15,15],[53,35,20,33],[37,44,21,10],[70,42,21,10],[28,49,15,10],[86,33,10,16],[47,66,13,22],[35,84,18,13],[29,95,14,10],[65,66,13,22],[74,84,13,21],[84,99,12,9]])lampInk.fillRect(x,y,w,h);const lampMap=localizedTexture(new T.CanvasTexture(lampCanvas));lampMap.colorSpace=T.SRGBColorSpace;
   const signal=new T.Mesh(new T.PlaneGeometry(.24,.24),new T.MeshBasicMaterial({map:lampMap,toneMapped:false}));signal.name='cctv-walk-signal';signal.position.set(-3.9,2.42,2.698);road.add(signal);
   const stopped=new T.Mesh(new T.CircleGeometry(.10,24),new T.MeshStandardMaterial({color:'#252c25',roughness:.8}));stopped.position.set(-3.9,2.70,2.698);road.add(stopped);
   box(garage,0,-.06,-3,11,.12,23,concrete);box(garage,0,2.77,-3,11,.16,23,concrete);
@@ -56,8 +57,8 @@ export function createSurveillance(kind:'archive'|'office'='archive'){
   const palm=hand.geometry.getAttribute('position');let protrusion=-Infinity;for(let i=0;i<palm.count;i++)protrusion=Math.max(protrusion,palm.getX(i)-(.814-(palm.getY(i)-.923)*(.149/.48)));
   hand.geometry.translate(-protrusion-.008,0,0);hand.position.set(0,0,0);hand.rotation.set(0,0,0);car.add(hand);
   const image=new T.Mesh(crtScreenGeometry(.72,.54),new T.MeshBasicMaterial({map:target.texture,color:'#a2b3a8'}));root.add(image);
-  const canvas=document.createElement('canvas');canvas.width=640;canvas.height=480;const ctx=canvas.getContext('2d')!;
-  const overlayMap=new T.CanvasTexture(canvas);overlayMap.colorSpace=T.SRGBColorSpace;
+  const canvas=document.createElement('canvas');canvas.width=640;canvas.height=480;const ctx=localizedContext(canvas)!;
+  const overlayMap=localizedTexture(new T.CanvasTexture(canvas));overlayMap.colorSpace=T.SRGBColorSpace;
   const overlay=new T.Mesh(crtScreenGeometry(.72,.54),new T.MeshBasicMaterial({map:overlayMap,transparent:true,toneMapped:false,depthWrite:false}));overlay.position.z=.0006;root.add(overlay);
   let mode='idle',lastKey='',pending=true,clock=0,disposed=false;
   function update(stage:Stage,time:number,text:string,review?:ArchiveFrame){

@@ -16,8 +16,10 @@ async function compiled(relative,imports={}){
  for(const [name,url] of Object.entries({'react/jsx-runtime':import.meta.resolve('react/jsx-runtime'),...imports}))js=js.replaceAll(JSON.stringify(name),JSON.stringify(url)).replaceAll("'"+name+"'",JSON.stringify(url));
  return 'data:text/javascript;base64,'+Buffer.from(js).toString('base64');
 }
+const i18n=await compiled('lib/i18n.ts',Object.fromEntries(['ui','story','game','world'].map(name=>['./locales/'+name+'.json',new URL('../lib/locales/'+name+'.json',import.meta.url).href])));
+const localization=await compiled('app/localization.tsx',{'react':import.meta.resolve('react'),'../lib/i18n':i18n});
 const icons=await compiled('lib/icons.tsx');
-const {TitleScreen}=await import(await compiled('app/title-screen.tsx',{'../lib/icons':icons}));
+const {TitleScreen}=await import(await compiled('app/title-screen.tsx',{'../lib/icons':icons,'./localization':localization,'react':import.meta.resolve('react')}));
 const title=renderToStaticMarkup(createElement(TitleScreen,{ready:false,phase:'게임 자료를 불러오는 중',error:'',canContinue:false,showSettings:false,settingsPanel:null}));
 const hints=JSON.parse(await readFile(path.join(root,'lib/visual-preloads.json'),'utf8'));
 const links=hints.map(href=>`<link rel="preload" as="fetch" href=".${href}" crossorigin="anonymous" fetchpriority="low"/>`).join('\n');
@@ -25,7 +27,7 @@ const html=(await readFile(path.join(root,'itch/index.template.html'),'utf8')).r
 await writeFile(path.join(root,'itch/index.html'),html);
 await build({configFile:path.join(root,'vite.itch.config.ts')});
 const out=path.join(root,'dist/itch');
-await writeFile(path.join(out,'README.txt'),'귀가 · 03:17\n무료 브라우저용 1인칭 공포게임.\nWASD 이동 / Shift 달리기 / E 확인 / F 스마트폰 플래시 / J 기록 / ESC 일시정지.\n마우스 또는 화면 드래그로 시점을 움직입니다. 소리는 게임 시작을 누른 뒤 켜집니다.\n내용 안내: 음주운전 사고, 가족의 상실, 공포·추격·비명.\n설정과 진행은 현재 브라우저에 저장됩니다.\n음원/질감 출처는 게임 크레딧과 각 자산 폴더의 LICENSE/sources 문서를 확인해 주세요.\n');
+await writeFile(path.join(out,'README.txt'),'Homecoming (귀가) · 03:17\nLanguages: English (default), 한국어, 日本語, 简体中文. Change Language in Settings or the pause menu. Settings are saved in this browser.\n무료 브라우저용 1인칭 공포게임.\nWASD 이동 / Shift 달리기 / E 확인 / F 스마트폰 플래시 / J 기록 / ESC 일시정지.\n마우스 또는 화면 드래그로 시점을 움직입니다. 소리는 게임 시작을 누른 뒤 켜집니다.\n내용 안내: 음주운전 사고, 가족의 상실, 공포·추격·비명.\n설정과 진행은 현재 브라우저에 저장됩니다.\n음원/질감 출처는 게임 크레딧과 각 자산 폴더의 LICENSE/sources 문서를 확인해 주세요.\n');
 const files=[];
 async function walk(dir){for(const e of await readdir(dir,{withFileTypes:true})){const full=path.join(dir,e.name);if(e.isDirectory())await walk(full);else if(e.isFile())files.push({name:path.relative(out,full).split(path.sep).join('/'),bytes:(await stat(full)).size});}}
 await walk(out);

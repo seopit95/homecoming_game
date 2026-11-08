@@ -1,6 +1,5 @@
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {softBox} from './materials.ts';
 import type {Solid} from './world.ts';
 
 // One vertex-coloured batch per room keeps small physical traces within the draw budget.
@@ -47,12 +46,6 @@ export function dressLivingSpace(root:T.Group,solids:Solid[],area:'apartment'|'r
     vessel(table,-.2,.58,.535,.095,.18,'#bbb6a5');
     add(table,new T.TorusGeometry(.052,.014,8,22),[-.305,.638,.58],'#bbb6a5');
     vessel(desk,.62,.12,.80,.062,.19,'#7e908c');
-    add(table,new T.TorusGeometry(.035,.005,8,24),[.35,.540,-.48],'#969e98',[Math.PI/2,0,0]);
-    for(const [i,a] of [[0,.22],[1,-.38]]){
-      add(table,new T.TorusGeometry(.018,.004,8,18),[.355+i*.03,.539,-.43],'#969e98',[Math.PI/2,0,a]);
-      add(table,softBox(.014,.007,.075),[.355+i*.03,.5385,-.38],'#969e98',[0,a,0]);
-      add(table,softBox(.024,.007,.01),[.365+i*.03,.5385,-.348],'#969e98',[0,a,0]);
-    }
     clothing(sofa,0,.07,.50,'#414b4b',true);
   }else{
     const bed=root.getObjectByName('resident-bed')!,desk=root.getObjectByName('resident-study-desk')!;

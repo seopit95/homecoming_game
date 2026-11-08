@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {boxUV,softBox,sharePrintedTexture,surface} from './materials.ts';
 import {connectionPassage,setDoorAngle} from './passage.ts';
@@ -33,11 +34,11 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
   box(x,ground+1.4,z,w,2.8,d,wall,true);box(x,ground+.44,z,w+.012,.88,d+.012,lower);box(x,ground+.045,z,w+.02,.09,d+.02,dark);
  }
  function print(text:string,x:number,y:number,z:number,w:number,h:number,ry=0,parent:T.Object3D=root,lit=false){
-  const c=document.createElement('canvas');c.width=1024;c.height=Math.max(96,Math.round(1024*h/w));const ink=c.getContext('2d')!,lines=text.replaceAll(' / ','\n').split('\n');
+  const c=document.createElement('canvas');c.width=1024;c.height=Math.max(96,Math.round(1024*h/w));const ink=localizedContext(c)!,lines=text.replaceAll(' / ','\n').split('\n');
   const size=Math.min(c.height/(lines.length*1.55),950/Math.max(1,...lines.map(line=>line.length)));
   ink.fillStyle=lit?'#253a2d':'#bcb69f';ink.fillRect(0,0,c.width,c.height);ink.fillStyle=lit?'#c2d1ae':'#2b3930';ink.font=`${size}px "Apple SD Gothic Neo",sans-serif`;ink.textAlign='center';ink.textBaseline='middle';
   lines.forEach((line,i)=>ink.fillText(line,c.width/2,c.height/2+(i-(lines.length-1)/2)*size*1.35));
-  const map=sharePrintedTexture(new T.CanvasTexture(c),['apartment-escape-v126',text,lit]);map.colorSpace=T.SRGBColorSpace;
+  const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(c)),['apartment-escape-v126',text,lit]);map.colorSpace=T.SRGBColorSpace;
   const mesh=new T.Mesh(new T.PlaneGeometry(w,h),lit?new T.MeshBasicMaterial({map}):new T.MeshStandardMaterial({map,roughness:.92}));mesh.position.set(x,y,z);mesh.rotation.y=ry;mesh.userData.text=text;parent.add(mesh);return mesh;
  }
  function target(id:Action,caption:string,mesh:T.Object3D,point:[number,number,number],approach:[number,number]){
@@ -71,9 +72,14 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
    box(bx,.1,3,.18,.2,3.8,steel);box(bx,2.66,3,.18,.28,3.8,wall);
   }else wallAt(bx,0,.18,bz*2);
  }else{
+  // Seal the full well below the flights and both unused end-wall bands.
+  // Route rails still prevent entering these non-walkable parts of the shaft.
+  box(0,-3.01,0,bx*2,.22,bz*2,wall).name='plant-shaft-base';
+  box(0,-1.51,bz,bx*2,3.02,.18,wall).name='plant-entry-lower-wall';
+  box(0,1.4,-bz,bx*2,2.8,.18,wall).name='plant-exit-upper-wall';
   // The two flights occupy different rectangles; heightAt never needs a floor index.
   box(0,-.1,6,6,.2,4,floor);box(0,-1.5,-1,6,.2,2,floor);box(0,-2.9,-7,6,.2,2,floor);
-  for(const x of [-bx,bx]){box(x,0,0,.18,5.6,16,wall,true);box(x,-2.36,0,.192,.88,16,lower);}
+  for(const x of [-bx,bx]){box(x,-.11,0,.18,5.82,16,wall,true);box(x,-2.36,0,.192,.88,16,lower);}
   function flight(name:string,x:number,startZ:number,startY:number){
    const group=new T.Group();group.name=name;root.add(group);
    for(let i=0;i<10;i++)box(x,startY-(i+.5)*.14-.075,startZ-(i+.5)*.4,2.55,.15,.4,floor,false,group);
@@ -92,8 +98,10 @@ export function buildApartmentEscape(root:T.Group,area:ApartmentEscapeArea):Retu
    roundPipe(root,[x-w/2,y+.94,z],[x+w/2,y+.94,z],.024,steel);solids.push({x,z,w,d:.075,y:y+.5,h:1,seeThrough:true});
   }
   landingRail(1.5,4,0,2.85);landingRail(1.5,0,-1.4,2.85);landingRail(-1.5,-2,-1.4,2.85);landingRail(-1.5,-6,-2.8,2.85);
-  for(const [x,y,z,text] of [[-2.9095,.62,-1,'주차장 →'],[2.9095,-.72,-6.7,'← 주차장']] as const){
-   if(x<0)createApartmentPlaque(root,{name:'plant-midlanding-direction',text,code:'B1',width:1.24,height:.24,position:[x,1.15,z],rotationY:Math.PI/2,lit:true});
+  for(const [x,y,z,text] of [[-2.8645,-.1,-1,'주차장 →'],[2.9095,-1.3,-6.7,'← 주차장']] as const){
+   // The midlanding plate is on the maintenance door face, not buried
+   // behind it; both plates follow their landing's ground height.
+   createApartmentPlaque(root,{name:x<0?'plant-midlanding-direction':'plant-lower-direction',text,code:'B1',width:x<0?.86:1.24,height:.24,position:[x,y,z],rotationY:x<0?Math.PI/2:-Math.PI/2,lit:true});
    const light=new T.PointLight('#a6baa0',1.8,5.5,2);light.position.set(x+(x<0?.2:-.2),y+.35,z);light.userData.base=1.8;root.add(light);lamps.push(light);
   }
   const maintenance=new T.Group();maintenance.name='plant-closed-maintenance-door';maintenance.position.set(-2.89,-1.4,-1);maintenance.rotation.y=Math.PI/2;root.add(maintenance);

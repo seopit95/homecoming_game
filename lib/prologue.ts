@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {configureShadow} from './lighting.ts';
 import {buildRoadStreet} from './road-street.ts';
@@ -29,8 +30,8 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   function rod(a:number[],b:number[],r:number,m:T.Material,parent:T.Object3D=root,r2=r){const av=new T.Vector3(...a as [number,number,number]),bv=new T.Vector3(...b as [number,number,number]);const o=mesh(new T.CylinderGeometry(r2,r,av.distanceTo(bv),12),m,av.clone().add(bv).multiplyScalar(.5).toArray(),parent);o.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),bv.sub(av).normalize());return o;}
   function tube(points:number[][],r:number,m:T.Material,parent:T.Object3D=root){return mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p as [number,number,number]))),20,r,6,false),m,[0,0,0],parent);}
   function label(text:string,w:number,h:number,p:number[],parent:T.Object3D=root,background='#111c22',ink='#c6d0c4'){
-    const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d')!;ctx.fillStyle=background;ctx.fillRect(0,0,512,128);ctx.fillStyle=ink;ctx.font='42px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,69);
-    const map=sharePrintedTexture(new T.CanvasTexture(c),['road-label-v1',text,background,ink]);map.colorSpace=T.SRGBColorSpace;return mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map}),p,parent);
+    const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=localizedContext(c)!;ctx.fillStyle=background;ctx.fillRect(0,0,512,128);ctx.fillStyle=ink;ctx.font='42px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,69);
+    const map=sharePrintedTexture(localizedTexture(new T.CanvasTexture(c)),['road-label-v1',text,background,ink]);map.colorSpace=T.SRGBColorSpace;return mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map}),p,parent);
   }
   const roadCenter=escapeDrive?-6.5:18,roadLength=escapeDrive?311:360;
   box(0,-.12,roadCenter,9,.24,roadLength,asphalt);
@@ -111,7 +112,11 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
   const distraction=box(.12,1.04,-.735,.075,.012,.145,rubber,phoneMount);distraction.rotation.x=.8;distraction.name='memory-distraction-phone';
   box(0,-.002,.058,.09,.022,.014,rubber,distraction);
   const message=label('새 메시지',.065,.119,[0,.007,0],distraction,'#1d343b','#a8c6c2');message.rotation.x=-Math.PI/2;
-  const pedestrian=createPedestrian(root),victim=pedestrian.root,carryHand=victim.getObjectByName('pedestrian-carry-hand')!;
+  // The ending never shows or poses the opening pedestrian. Keep only the
+  // named empty marker used by scene inspection, not its unused full rig.
+  const pedestrian=escapeDrive?null:createPedestrian(root),victim=pedestrian?.root??new T.Group();
+  if(!pedestrian){victim.name='memory-pedestrian';victim.visible=false;root.add(victim);}
+  const carryHand=victim.getObjectByName('pedestrian-carry-hand')!;
   const pants=new T.MeshStandardMaterial({color:'#30383d',roughness:.93});
   const bag=new T.Group();bag.name='memory-bag';root.add(bag);const bagLeather=surface('leather','#342d29',{roughness:.68});
   mesh(softBox(.26,.24,.095,.025),bagLeather,[0,0,0],bag);mesh(softBox(.235,.13,.012,.014),bagLeather,[0,.046,.049],bag);box(0,.005,.06,.034,.018,.008,steel,bag);
@@ -232,7 +237,7 @@ export function buildRoad(scene:T.Scene,escapeDrive=false){
       victim.position.set(2.15+.14*wrap+1.05*slide,-.12*wrap-.6*slide,-1.85-1.4*wrap-.55*slide);
       victim.rotation.set(0,Math.PI/2-.18*slide,0);
     }
-    pedestrian.pose(driving?clock:driveDuration,driving?null:hitTime);
+    pedestrian!.pose(driving?clock:driveDuration,driving?null:hitTime);
     if(!driving){contactBounds.setFromObject(victim,true);victim.position.y+=Math.max(0,.002-contactBounds.min.y);}
     victim.updateWorldMatrix(true,true);
     if(impact)aftermathView(t,camera,reduced);

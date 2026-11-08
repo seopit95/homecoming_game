@@ -1,3 +1,4 @@
+import {localizedContext,localizedTexture} from './localized-canvas.ts';
 import * as T from 'three';
 import {softBox} from './materials.ts';
 
@@ -6,7 +7,7 @@ export type PhoneState='idle'|'ringing'|'torch'|'voicemail'|'playing';
 export function createSmartphone(){
  const root=new T.Group();root.name='smartphone';
  const shell=new T.Mesh(softBox(.074,.153,.009,.004),new T.MeshStandardMaterial({color:'#171c20',metalness:.55,roughness:.36}));shell.name='smartphone-case';shell.castShadow=shell.receiveShadow=true;root.add(shell);
- const canvas=typeof document==='undefined'?null:document.createElement('canvas');if(canvas){canvas.width=256;canvas.height=512;}const ctx=canvas?.getContext('2d'),texture=canvas?new T.CanvasTexture(canvas):null;if(texture)texture.colorSpace=T.SRGBColorSpace;
+ const canvas=typeof document==='undefined'?null:document.createElement('canvas');if(canvas){canvas.width=256;canvas.height=512;}const ctx=localizedContext(canvas),texture=canvas?localizedTexture(new T.CanvasTexture(canvas)):null;if(texture)texture.colorSpace=T.SRGBColorSpace;
  const display=new T.MeshStandardMaterial({map:texture,emissiveMap:texture,emissive:'#aabac5',emissiveIntensity:.3,roughness:.3});
  const screen=new T.Mesh(new T.PlaneGeometry(.066,.141),display);screen.name='smartphone-screen';screen.position.z=.0047;root.add(screen);
  const island=new T.Mesh(softBox(.016,.003,.001,.0004),new T.MeshStandardMaterial({color:'#080b0d',roughness:.4}));island.position.set(0,.064,.0054);root.add(island);
