@@ -1,0 +1,15 @@
+# Surface material source and verification
+
+The apartment/building plaster and structural concrete now use separate photographic color, OpenGL normal and packed ambient-occlusion/roughness/metal maps. Only the color maps use sRGB decoding. The ordinary walls retain the authored paint tint; the roughness map controls the flashlight response rather than treating color variation as surface height.
+
+Sources: [Painted Plaster Wall by Amal Kumar](https://polyhaven.com/a/painted_plaster_wall) and [Concrete Floor 02](https://polyhaven.com/a/concrete_floor_02). Poly Haven publishes these assets under [CC0](https://polyhaven.com/license). Six original 1K JPEG maps total 3,213,629 bytes. Download URLs, upstream MD5 checksums and byte sizes are recorded in `public/textures/pbr/sources.json`; checksums were verified during download.
+
+The assets are bundled with the game; players do not depend on the source site being available. Geometry, prop support, other materials, lighting, animation and full-campaign visual review remain separate quality gates. This material change does not by itself establish photorealism or release readiness.
+
+## Furniture and wood flooring (2026-10-05)
+
+Furniture uses [Dark Wood](https://polyhaven.com/a/dark_wood): photography by Dimitrios Savva, baking by Dario Barresi and tiling by Rico Cilliers; its physical tile measures 2 × 2 m. Floors use [Old Wooden Floor 02](https://polyhaven.com/a/old_wooden_floor_02): scanning by Charlotte Baglioni and processing by Jenelle van Heerden; its physical tile measures 2.03 × 2.03 m. Both are [CC0](https://polyhaven.com/license). Six bundled original 1K JPEG channels (`Diffuse`, OpenGL `nor_gl`, packed `arm`) total exactly 3,562,562 additional bytes. Each download's upstream MD5 and byte count were verified before writing the game asset; per-file URLs, upstream MD5, local SHA-256 and byte sizes are appended to the manifest without changing the earlier plaster/concrete records.
+
+`prepareVisuals` decodes the sources once. `surface('wood')` and `surface('woodFloor')` return world-owned color, normal and ARM clones; roughness and occlusion share the single disposable ARM clone. Color alone is sRGB, while normal and ARM stay linear. The repeat is `1.8 / physicalWidthMeters` to match the existing world UV convention; wood normal strength is 0.25. Authored material options retain priority. Physical floors return before the legacy atlas bump/board-joint shader; joints and wear come from the photographic source.
+
+Prepared renderer evidence and the exact red/green, ownership, loading, TypeScript and source verification logs are recorded in `.superpowers/sdd/2026-10-05-lived-in-interiors/task-1-report.md`. This material task does not establish the final furnished scene, full campaign, frame-time budget or release readiness; those remain integration gates.
