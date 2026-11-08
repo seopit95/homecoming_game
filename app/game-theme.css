@@ -69,3 +69,109 @@
 .game-shell .error-note button{color:var(--ui-paper)}
 
 .space-loading{position:absolute;inset:0;z-index:100;display:grid;place-items:center;background:#080909e8;color:#e1ded4;padding:24px;text-align:center}.space-loading>div{max-width:32rem;border-block:1px solid #756c5c;padding:28px 12px}.space-loading p{font-family:var(--font-serif),serif;font-size:1.2rem;line-height:1.7}.space-loading span{display:block;font-size:.85rem;color:#b9b6ac;line-height:1.6}.space-loading button{margin-top:20px;padding:12px 28px;min-height:48px;border:1px solid #8e8070;background:#1e1c18;color:#f0ece3}.space-loading button:focus-visible{outline:2px solid #ddd4bd;outline-offset:4px}
+
+/* Native language names stay recognizable in every locale; no downloaded fonts. */
+.language-setting{display:flex!important;align-items:center;justify-content:space-between;gap:16px;padding:10px 0 16px;border-bottom:1px solid var(--line,#474344)}
+.language-setting>span{flex:1}.language-setting select{font:inherit;font-size:16px;color:#e5e1db;background:#171416;border:1px solid #70686b;border-radius:3px;padding:10px 32px 10px 12px;max-width:65%;min-height:44px}.language-setting select:focus-visible{outline:2px solid #e1d7c8;outline-offset:3px}
+html:lang(en) .entrance-title{font-size:clamp(38px,7.5vw,86px);letter-spacing:-.035em;overflow-wrap:normal}
+html:lang(en) .entrance-hanja{font-size:.23em;letter-spacing:.02em}
+html:lang(en) .entrance-content{width:min(600px,100%)}
+html:lang(en) .epilogue-brand{font-size:clamp(28px,4vw,48px)}
+.game-shell{font-family:"Apple SD Gothic Neo","Hiragino Kaku Gothic ProN","Yu Gothic","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+@media(max-width:600px){html:lang(en) .entrance-title{font-size:clamp(32px,9vw,48px)}.language-setting{gap:8px}}
+
+html:lang(ja) .game-shell .pause-sidebar h2{font-size:30px;letter-spacing:.04em;word-break:keep-all}
+html:lang(en) .game-shell .pause-sidebar h2{font-size:28px;letter-spacing:.025em;overflow-wrap:normal}
+
+/* Worn controls: these named controls deliberately exclude the mission paper.
+   Extra shell specificity keeps this skin above the later HUD/pause styles
+   without !important or a change to either build's stylesheet order. */
+:root .game-shell.game-shell :is(
+ .entrance-option,.entrance-back,.start-button,.quiet-button,.settings-toggle,
+ .pause-resume,.pause-restart,.pause-nav button,.pause-tabs button,
+ .pause-detail-heading button,.binding-grid button,.investigation-heading-controls button,
+ .epilogue-return,.epilogue-secondary,.epilogue-skip,.epilogue-credits-toggle,
+ .memory-top button,.skip-death,.menu-trigger,.hud-tools button,
+ .space-loading button,.error-note button,.touch-controls button,.interaction
+){
+ min-height:44px;
+ border:1px solid #b09a7759;
+ border-radius:18px 6px 16px 5px / 5px 15px 7px 17px;
+ background:radial-gradient(ellipse at 12% 0%,#8e735322,transparent 67%),linear-gradient(115deg,#211d18ed,#111311ed);
+ color:#e5ddcf;
+ box-shadow:inset 0 1px #d7bd8a12,inset 0 -2px #0005,0 2px 5px #0002;
+ overflow:visible;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ transition:background-color .16s,color .16s,border-color .16s;
+}
+
+/* Main choices are a rubbed charcoal stroke, not a row of application cards.
+   Only the decorative surface is cut. Text, hit areas and focus stay whole. */
+:root .game-shell.game-shell :is(.entrance-option,.pause-resume,.pause-nav button,.pause-restart,.epilogue-return,.epilogue-secondary){
+ position:relative;
+ isolation:isolate;
+ border-color:transparent;
+ background:transparent;
+ box-shadow:none;
+ padding-inline:16px;
+}
+:root .game-shell.game-shell :is(.entrance-option,.pause-resume,.pause-nav button,.pause-restart,.epilogue-return,.epilogue-secondary)::before{
+ content:"";
+ position:absolute;
+ z-index:-1;
+ inset:1px 0;
+ pointer-events:none;
+ border-radius:13% 5% 19% 4% / 22% 34% 14% 27%;
+ background:repeating-linear-gradient(176deg,transparent 0 5px,#d4b18409 6px,transparent 7px 13px),linear-gradient(95deg,#84705228,#302a2170 60%,#16161210);
+ clip-path:polygon(1% 12%,8% 6%,18% 9%,33% 3%,47% 7%,64% 2%,78% 8%,95% 4%,99% 18%,97% 36%,100% 61%,97% 85%,88% 92%,73% 88%,61% 97%,43% 92%,28% 98%,13% 90%,2% 95%,3% 71%,0 49%,2% 30%);
+}
+:root .game-shell.game-shell :is(.entrance-option.primary,.pause-resume,.pause-nav button[aria-pressed=true],.epilogue-return)::before{
+ background:repeating-linear-gradient(176deg,transparent 0 5px,#e0c5990d 6px,transparent 7px 13px),linear-gradient(95deg,#8f6b4561,#4b3a284f 65%,#18150f10);
+ box-shadow:inset 3px 0 #b69a71;
+}
+:root .game-shell.game-shell :is(.entrance-back,.quiet-button,.settings-toggle,.epilogue-credits-toggle){
+ padding-inline:12px;
+ border-color:transparent;
+ background:linear-gradient(175deg,transparent 83%,#9b805733 86%,transparent 89%);
+ box-shadow:none;
+}
+
+:root .game-shell.game-shell :is(
+ .entrance-option,.entrance-back,.start-button,.quiet-button,.settings-toggle,
+ .pause-resume,.pause-restart,.pause-nav button,.pause-tabs button,
+ .pause-detail-heading button,.binding-grid button,.investigation-heading-controls button,
+ .epilogue-return,.epilogue-secondary,.epilogue-skip,.epilogue-credits-toggle,
+ .memory-top button,.skip-death,.menu-trigger,.hud-tools button,
+ .space-loading button,.error-note button,.touch-controls button,.interaction
+):is(:hover,:focus-visible):not(:disabled){
+ color:#fff1da;
+ border-color:#c2a37c;
+ background-color:#493728;
+}
+:root .game-shell.game-shell :is(.binding-grid button.listening,.pause-tabs button[aria-pressed=true],.touch-actions button[aria-pressed=true]){
+ color:#fff1da;
+ border-color:#d0ab80;
+ background:linear-gradient(110deg,#59412e,#29231c);
+ box-shadow:inset 3px 0 #c29370;
+}
+:root .game-shell.game-shell :is(.touch-controls button,.hud-tools button,.error-note button){min-width:44px}
+:root .game-shell.game-shell .touch-controls button{
+ border-radius:43% 37% 44% 32% / 34% 42% 36% 46%;
+ background:radial-gradient(ellipse at 40% 25%,#373328ee,#111613f5);
+}
+:root .game-shell.game-shell .touch-controls .touch-run{border-radius:22px 13px 24px 12px / 12px 18px 11px 19px}
+:root .game-shell.game-shell .language-setting select{
+ border-radius:12px 4px 11px 5px / 4px 11px 5px 12px;
+ border-color:#a9957380;
+ background-color:#1a1915;
+ color:#e5ddcf;
+}
+/* Inset focus rings remain visible even beside a scroll container's edge. */
+:root .game-shell.game-shell :is(button,summary,select):not(:where(.mission-trigger,.mission-note *)):focus-visible{
+ outline:2px solid #f0d7ae;
+ outline-offset:-3px;
+}
+@media(prefers-reduced-motion:reduce){
+ :root .game-shell.game-shell :is(.entrance-option,.start-button,.pause-resume,.pause-nav button,.binding-grid button,.touch-controls button){transition:none}
+}

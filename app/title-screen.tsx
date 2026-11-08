@@ -1,3 +1,5 @@
+import {useContext} from 'react';
+import {LanguageContext,localizeTree} from './localization';
 import type {ReactNode} from 'react';
 import {ArrowRight,Headphones,SlidersHorizontal} from '../lib/icons';
 
@@ -9,7 +11,8 @@ type Props={
 
 // Server-rendered with the page: the title does not wait for Three.js or textures.
 export function TitleScreen({ready,phase,error,canContinue,savedLocation,showSettings,settingsPanel,onStart,onContinue,onSettings,onRetry}:Props){
-  return <section className={`entrance-screen${showSettings?' has-settings':''}`} aria-label="귀가 시작 화면">
+ const language=useContext(LanguageContext);
+  return localizeTree(<section className={`entrance-screen${showSettings?' has-settings':''}`} aria-label="귀가 시작 화면">
     <div className="entrance-scenery" aria-hidden="true"/>
     <header className="entrance-header"><span>백로아파트</span><span>28층 <i/> 2803호</span></header>
     <div className="entrance-content">
@@ -28,5 +31,5 @@ export function TitleScreen({ready,phase,error,canContinue,savedLocation,showSet
       </div>
     </div>
     <footer className="entrance-footer"><span><Headphones size={15}/>헤드폰 권장</span><span>1인칭 공포 · 혼자 플레이</span></footer>
-  </section>;
+  </section>,language);
 }

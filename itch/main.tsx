@@ -7,5 +7,6 @@ import '../app/game-theme.css';
 import '../app/ending-screen.css';
 import '../app/game-hud.css';
 import '../app/pause-menu.css';
+import '../app/mission-note.css';
 
 createRoot(document.getElementById('root')!).render(<Home/>);

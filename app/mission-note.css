@@ -1,0 +1,44 @@
+/* Offline, OFL handwriting. The actual fonts are shipped with the game. */
+@font-face{font-family:'Mission Caveat';src:url('/fonts/mission-caveat.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:'Mission Pen Script';src:url('/fonts/mission-nanum-pen.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:'Mission Klee One';src:url('/fonts/mission-klee-one.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:'Mission WenKai';src:url('/fonts/mission-wenkai.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+.game-shell .mission-trigger{position:absolute;right:32px;top:27px;z-index:12;width:50px;height:54px;padding:8px;border:1px solid #d9cdb45e;border-radius:13% 8% 16% 7% / 7% 16% 8% 12%;background:radial-gradient(ellipse at 20% 0,#b49b5c25,transparent 70%),#0b0c0bdc;color:#e2d4b9;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 14px #0005;transform:rotate(3deg)}
+.game-shell .mission-trigger:hover{background:#28241ce8;border-color:#d9cdb4aa;transform:rotate(0)}
+.mission-trigger svg{width:27px;height:29px}.mission-trigger:active{background:#494131}
+.game-shell .hud-position{max-width:calc(100% - 74px)}
+.game-shell .mission-note{position:fixed;inset:0;width:100vw;height:100svh;max-width:none;max-height:none;margin:0;padding:32px 18px;border:0;background:transparent;color:#352a20;overflow:auto;overscroll-behavior:contain;scrollbar-color:#b49c78 #201c1680}
+.game-shell .mission-note[open]{display:grid;place-items:center}
+.mission-note::backdrop{background:#0506069c;backdrop-filter:blur(2px)}
+/* The torn silhouette belongs to paint layers only: focus rings and text remain unclipped. */
+.mission-paper{
+ --note-font:'Mission Caveat','Mission Klee One','Mission WenKai',cursive;
+ --paper-tear:polygon(0 16px,2% 12px,3.5% 4px,7% 8px,11% 3px,15% 7px,19% 2px,22% 9px,26% 5px,29% 10px,34% 3px,39% 6px,43% 2px,47% 7px,51% 4px,55% 11px,59% 6px,64% 9px,68% 3px,73% 7px,77% 2px,82% 8px,87% 4px,90% 10px,94% 5px,97% 13px,100% 9px,calc(100% - 4px) 17%,calc(100% - 1px) 25%,calc(100% - 7px) 29%,calc(100% - 3px) 39%,100% 47%,calc(100% - 8px) 53%,calc(100% - 3px) 61%,calc(100% - 5px) 69%,100% 77%,calc(100% - 9px) 84%,calc(100% - 3px) 91%,calc(100% - 16px) calc(100% - 9px),94% calc(100% - 6px),90% calc(100% - 14px),87% calc(100% - 5px),82% calc(100% - 10px),78% calc(100% - 4px),74% calc(100% - 12px),68% calc(100% - 7px),63% calc(100% - 11px),59% calc(100% - 3px),54% calc(100% - 9px),50% calc(100% - 5px),46% calc(100% - 13px),41% calc(100% - 7px),35% calc(100% - 10px),31% 100%,27% calc(100% - 6px),23% calc(100% - 2px),19% calc(100% - 10px),15% calc(100% - 5px),11% calc(100% - 14px),7% calc(100% - 9px),2px calc(100% - 23px),7px 92%,2px 86%,8px 80%,3px 72%,6px 66%,0 59%,7px 51%,3px 46%,9px 38%,2px 31%,5px 24%,1px 19%,6px 11%);
+ position:relative;isolation:isolate;width:min(590px,100%);min-height:450px;margin:auto;padding:51px 49px 31px;box-sizing:border-box;font-family:var(--note-font);background:none;filter:drop-shadow(0 14px 22px #0009);transform:rotate(-.65deg)
+}
+.mission-paper::before{content:"";position:absolute;inset:0;z-index:-2;pointer-events:none;clip-path:var(--paper-tear);background:radial-gradient(ellipse at 0 15%,#79521b88,transparent 33%),radial-gradient(ellipse at 100% 96%,#62411780,transparent 30%),radial-gradient(ellipse at 70% -7%,#90652860,transparent 38%),linear-gradient(113deg,#b49764,#e0cda3 19%,#dbc59b 75%,#ad8d59);box-shadow:inset 0 0 24px #68441c77}
+.mission-paper::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;clip-path:var(--paper-tear);background:radial-gradient(ellipse 62px 79px at 97% 18%,transparent 54%,#7750241c 58%,#77502428 61%,transparent 67%),radial-gradient(ellipse 85px 60px at 5% 88%,#76501f15 27%,transparent 65%),radial-gradient(ellipse at 100% 0,#50391d36,transparent 17%),radial-gradient(ellipse at 0 100%,#4d351f40,transparent 18%),repeating-linear-gradient(7deg,#4f3e2412 0,#4f3e2412 .6px,transparent .9px,transparent 4px),repeating-linear-gradient(92deg,transparent 0,transparent 5px,#fff4d012 5.5px,#fff4d012 6px);box-shadow:inset 0 0 5px 4px #63471f55}
+.mission-paper-fold{position:absolute;inset:14px 12px;pointer-events:none;z-index:-1;background:linear-gradient(90deg,transparent 49%,#6b4f2430 49.65%,#fff4ce55 50.05%,transparent 50.8%),linear-gradient(0deg,transparent 63.3%,#63482225 63.9%,#fff2c655 64.3%,transparent 65%),linear-gradient(24deg,transparent 8%,#76532813 8.5%,#fff2c62b 9%,transparent 9.5%)}
+.mission-note[lang=ko] .mission-paper{--note-font:'Mission Pen Script','Mission Klee One','Mission WenKai',cursive}
+.mission-note[lang=ja] .mission-paper{--note-font:'Mission Klee One','Mission WenKai',cursive}
+.mission-note[lang=zh-CN] .mission-paper{--note-font:'Mission WenKai','Mission Klee One',cursive}
+.mission-paper header{margin:0 0 26px;padding-right:23px}
+.mission-note-place{display:block;font:400 17px/1.6 var(--note-font);color:#67513c;letter-spacing:.025em}
+.mission-note-place i{font-style:normal;opacity:.55;margin:0 7px}
+.game-shell .mission-paper h2{font:400 34px/1.4 var(--note-font);letter-spacing:.025em;color:#3e3022;margin:13px 0 9px;text-align:left}
+.mission-note-rule{display:block;width:115px;height:1px;background:#70523380;transform:rotate(-1deg);box-shadow:0 2px 0 #70523322}
+.game-shell .mission-note-close{position:absolute;right:19px;top:18px;min-width:44px;min-height:44px;border:0;background:transparent;color:#493b2c;font:32px/1 var(--note-font);padding:2px;cursor:pointer}
+.game-shell .mission-note-writing{min-height:150px;color:#33291f;text-align:left;overflow-wrap:anywhere}
+.game-shell .mission-note-writing p{margin:0;font:400 calc(29px * var(--subtitle-scale,1))/1.75 var(--note-font);letter-spacing:.015em;text-shadow:0 .3px #39281a30;white-space:pre-line}
+.game-shell .mission-note-writing p>strong{display:block;font-weight:400}
+.game-shell .mission-note-writing .objective-echo{display:block;color:#54402d;margin-top:20px;font:400 .85em/1.8 var(--note-font);letter-spacing:.015em}
+.mission-note[lang=ja] .mission-note-writing p,.mission-note[lang=zh-CN] .mission-note-writing p{font-size:calc(24px * var(--subtitle-scale,1));line-height:1.9}
+.mission-note[lang=ko] .mission-note-writing p{font-size:calc(32px * var(--subtitle-scale,1))}
+.mission-paper footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:38px;padding-top:13px;border-top:1px solid #765b363f;flex-wrap:wrap}
+.game-shell .mission-paper footer button{display:flex;align-items:center;gap:7px;min-height:44px;padding:5px 0;border:0;background:transparent;color:#4b3826;font:400 20px/1.6 var(--note-font);cursor:pointer;text-decoration:underline;text-decoration-color:#765b3655;text-underline-offset:5px}
+.game-shell .mission-paper button:hover{color:#20170e}
+.game-shell .mission-paper button:focus-visible{outline:2px solid #5c3f23;outline-offset:4px}
+.mission-note-paused{margin:13px 0 0;font:400 15px/1.6 var(--note-font);color:#725c44;text-align:right}
+@media(max-width:600px){.game-shell .mission-trigger{right:16px;top:15px;width:46px;height:49px}.game-shell .mission-note{padding:16px 10px}.mission-paper{padding:46px 28px 28px;min-height:410px;transform:none}.game-shell .mission-paper h2{font-size:30px}.game-shell .mission-note-writing p{font-size:calc(26px * var(--subtitle-scale,1))}.mission-note[lang=ko] .mission-note-writing p{font-size:calc(29px * var(--subtitle-scale,1))}.mission-note[lang=ja] .mission-note-writing p,.mission-note[lang=zh-CN] .mission-note-writing p{font-size:calc(22px * var(--subtitle-scale,1))}.mission-paper footer{margin-top:25px}.mission-note-place{font-size:15px}.mission-note-paused{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.mission-paper,.game-shell .mission-trigger{transform:none}.mission-note::backdrop{backdrop-filter:none}}
+.game-shell.reduce-motion .mission-paper,.game-shell.reduce-motion .mission-trigger{transform:none}

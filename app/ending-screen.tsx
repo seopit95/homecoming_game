@@ -1,4 +1,7 @@
 'use client';
+import {useContext} from 'react';
+import {LanguageContext,localizeTree} from './localization';
+
 import {useEffect,useState} from 'react';
 import {RotateCcw} from '../lib/icons';
 import {endings} from '../lib/story';
@@ -13,6 +16,7 @@ const creditsAt=40;
 type Props={ending:'crashed'|'caught'|null;elapsed:number;checkpointLabel:string;reducedMotion:boolean;onRestart:()=>void;onMusic?:(level:number)=>void};
 
 export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRestart,onMusic}:Props){
+ const language=useContext(LanguageContext);
   const [seconds,setSeconds]=useState(0),[showCredits,setShowCredits]=useState(false),[replay,setReplay]=useState(0);
   const crashed=ending==='crashed',complete=seconds>=creditsAt;
   useEffect(()=>{
@@ -27,14 +31,14 @@ export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRes
   useEffect(()=>{if(!crashed)return;onMusic?.(1);return()=>onMusic?.(0);},[crashed,replay,onMusic]);
   useEffect(()=>{if(crashed)onMusic?.(complete?.5:1);},[crashed,complete,replay,onMusic]);
   const duration=`${Math.floor(elapsed/60)}분 ${Math.floor(elapsed%60)}초`;
-  if(!crashed)return <section className="ending-screen caught-ending" aria-label="재시도 화면"><div>
+  if(!crashed)return localizeTree(<section className="ending-screen caught-ending" aria-label="재시도 화면"><div>
     <p className="overline">끝나지 않은 밤</p><h2>발소리가 멎었다.</h2><p className="ending-copy">{endings.caught}</p>
     <button type="button" className="start-button" onClick={onRestart}><span>{checkpointLabel}</span><RotateCcw size={18}/></button>
     <p className="ending-note">해당 구간부터 다시 시작합니다. 읽은 기록은 남습니다.</p>
-  </div></section>;
+  </div></section>,language);
   const beat=[...beats].reverse().find(item=>seconds>=item.at);
   function again(){setShowCredits(false);setSeconds(0);setReplay(value=>value+1);}
-  return <section className={`epilogue${seconds>=2?' has-scene':''}${complete?' is-complete':''}${reducedMotion?' is-still':''}`} aria-label="귀가 후일담">
+  return localizeTree(<section className={`epilogue${seconds>=2?' has-scene':''}${complete?' is-complete':''}${reducedMotion?' is-still':''}`} aria-label="귀가 후일담">
     <div className="epilogue-shade" aria-hidden="true"/>
     <header className="epilogue-header"><span>백로아파트 · 귀가 기록</span><time>03 : 17</time></header>
     {!complete?<>
@@ -62,5 +66,5 @@ export function EndingScreen({ending,elapsed,checkpointLabel,reducedMotion,onRes
       </aside>
     </div>}
     <footer className="epilogue-footer"><span>귀가 (歸家)</span><span>{complete?'기록 종료':'마지막으로 남은 것'}</span></footer>
-  </section>;
+  </section>,language);
 }

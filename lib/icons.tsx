@@ -10,3 +10,5 @@ export const Volume2=icon('M3 9h4l5-5v16l-5-5H3Zm13-2a7 7 0 0 1 0 10m3-13a11 11 
 export const Expand=icon('M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5');
 export const Flashlight=icon('M7 3h10v5l-3 4v9h-4v-9L7 8Zm0 5h10m-7 7h4');
 export const Smartphone=icon('M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Zm3 3h4m-3 14h2');
+
+export const Notebook=icon('M7 3h12a1 1 0 0 1 1 1v17H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm1 0v18M3 7h3M3 12h3M3 17h3m8-10h4m-4 4h4m-4 4h3');

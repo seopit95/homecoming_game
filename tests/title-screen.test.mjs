@@ -11,10 +11,12 @@ function compiled(relative,imports={}){
   for(const [name,url] of Object.entries({'react/jsx-runtime':import.meta.resolve('react/jsx-runtime'),...imports}))js=js.replaceAll(JSON.stringify(name),JSON.stringify(url)).replaceAll("'"+name+"'",JSON.stringify(url));
   return 'data:text/javascript;base64,'+Buffer.from(js).toString('base64');
 }
+const localization=compiled('../app/localization.tsx',{'react':import.meta.resolve('react'),'../lib/i18n':new URL('../lib/i18n.ts',import.meta.url).href});
+const {LanguageContext}=await import(localization);
 const icons=compiled('../lib/icons.tsx');
-const {TitleScreen}=await import(compiled('../app/title-screen.tsx',{'../lib/icons':icons}));
+const {TitleScreen}=await import(compiled('../app/title-screen.tsx',{'../lib/icons':icons,'./localization':localization,'../lib/i18n':new URL('../lib/i18n.ts',import.meta.url).href,'react':import.meta.resolve('react')}));
 const defaults={ready:false,phase:'게임 자료를 불러오는 중',error:'',canContinue:false,showSettings:false,settingsPanel:null,onStart(){},onContinue(){},onSettings(){},onRetry(){}};
-const render=props=>renderToStaticMarkup(createElement(TitleScreen,{...defaults,...props}));
+const render=props=>renderToStaticMarkup(createElement(LanguageContext.Provider,{value:'ko'},createElement(TitleScreen,{...defaults,...props})));
 
 test('initial server markup exposes the title and real loading status before game readiness',()=>{
   const html=render({});
